@@ -61,9 +61,11 @@ Pontos que a spec deixa para o plano.
    `0010_nutrition_close.sql` (Task 4), `0011_nutrition_week.sql` (Task 5),
    `0012_nutrition_progress.sql` (Task 6), `0013_nutrition_cron.sql` (Task 5). Nada foi aplicado em
    produção ainda, então a ordem é livre.
-2. **Marca de servidor.** GUC `perf.server_write`. `begin_server_write()` e `is_server_write()`
-   (Task 1). Os testes que inserem como superusuário eventos `server_only` chamam
-   `select public.begin_server_write()` na mesma transação (helper `serverWrite` na Task 1).
+2. **Escrita do servidor sem marca** (spec §5.4, revisão 3). O cliente escreve como
+   `authenticated`; funções `security definer` escrevem como o dono e não passam por RLS. Tipos
+   `server_only` são barrados pela política de insert de `activity_events`; o trigger de
+   `food_logs` é `security invoker` e só aplica as regras quando `current_user` é `authenticated`
+   ou `anon`. Nos testes, inserir como superusuário (`sql(db, ...)`) já é "o servidor".
 3. **Hora nos testes.** `app_now()` e `setClock` como na 1a. `validate_activity_event` continua com
    `now()` para os tipos da Força; os tipos `server_only` não passam pela janela, então os testes de
    fechamento não precisam desligar o trigger.
@@ -98,8 +100,7 @@ Pontos que a spec deixa para o plano.
 ```
 supabase/
 ├─ migrations/
-│  ├─ 0007_nutrition_base.sql        perfil, nutrition_periods, marca de servidor, server_only,
-│  │                                  delete_my_account com a marca
+│  ├─ 0007_nutrition_base.sql        perfil, nutrition_periods, server_only (RLS e janela)
 │  ├─ 0008_weekly_targets_pillar.sql weekly_targets por pilar e seus leitores
 │  ├─ 0009_nutrition_diary.sql       nutrition_targets, food_logs, user_foods, triggers, RLS
 │  ├─ 0010_nutrition_close.sql       nutrition_days, classificação, fechamento, ramo do award_xp
@@ -107,9 +108,9 @@ supabase/
 │  ├─ 0012_nutrition_progress.sql    progress_card, my_progress_extras, get_my_progress, radar
 │  └─ 0013_nutrition_cron.sql        close-nutrition-days às 06:30 UTC
 └─ tests/
-   ├─ helpers/nutrition.ts           N (uuid), enableNutrition, logItem, closeAs, serverWrite
+   ├─ helpers/nutrition.ts           N (uuid), enableNutrition, logItem, setTarget, closeAs
    ├─ fixtures/nutrition-scenarios.json  classificação e XP (paridade)
-   ├─ nutrition-base.test.ts         períodos, marca, server_only, exclusão de conta
+   ├─ nutrition-base.test.ts         períodos, server_only, exclusão de conta
    ├─ nutrition-weekly-targets.test.ts
    ├─ nutrition-diary.test.ts        janela, RLS, limites, última escrita vence, metas
    ├─ nutrition-close.test.ts        fechamento, classes, XP, fuso
@@ -156,7 +157,7 @@ public/privacidade.html, NOTICE.md, docs/SETUP.md, docs/ROADMAP.md
 
 ---
 
-### Task 1: Banco: períodos do pilar, marca de servidor e eventos `server_only`
+### Task 1: Banco: períodos do pilar e eventos `server_only`
 
 **Files:**
 - Create: `supabase/migrations/0007_nutrition_base.sql`
@@ -165,9 +166,9 @@ public/privacidade.html, NOTICE.md, docs/SETUP.md, docs/ROADMAP.md
 - Test: `supabase/tests/nutrition-base.test.ts`, `supabase/tests/delete-account.test.ts` (sem mudança; precisa continuar verde)
 
 **Interfaces:**
-- Consumes: `local_today(uuid)`, `app_now()` (0002); `validate_activity_event` (0001:161); `delete_my_account` (0006:157). Helpers `freshDb`, `addUser`, `asUser`, `A`, `B`, `sql`, `setClock`, `makeUser`, `ledger`.
-- Produces (SQL): colunas `profiles.activity_level`, `nutrition_pace`, `nutrition_enabled`, `nutrition_days_per_week` (spec §5.1); tabela `nutrition_periods(user_id, started_on, ended_on)`; `begin_server_write() → void`, `is_server_write() → boolean` (internas); `event_kinds.server_only`; linhas `('nutrition','day_logged',true)`, `('nutrition','day_on_target',true)`, `('nutrition','macros_balanced',true)`; `nutrition_active_on(p_user uuid, p_day date) → boolean` (interna, `stable`).
-- Produces (TS, `helpers/nutrition.ts`): `N` (uuid `…0e`), `enableNutrition(db, uid, on = true)` (update de `nutrition_enabled` como o dono), `serverWrite<T>(db, fn: () => Promise<T>)` (abre transação, chama `begin_server_write()`, roda `fn`, comita).
+- Consumes: `local_today(uuid)`, `app_now()` (0002); `validate_activity_event` e a política `activity_events_insert_own` (0001:161-190). Helpers `freshDb`, `addUser`, `asUser`, `A`, `B`, `sql`, `setClock`, `makeUser`, `ledger`.
+- Produces (SQL): colunas `profiles.activity_level`, `nutrition_pace`, `nutrition_enabled`, `nutrition_days_per_week` (spec §5.1); tabela `nutrition_periods(user_id, started_on, ended_on)`; `event_kinds.server_only`; linhas `('nutrition','day_logged',true)`, `('nutrition','day_on_target',true)`, `('nutrition','macros_balanced',true)`; `nutrition_active_on(p_user uuid, p_day date) → boolean` (interna, `stable`).
+- Produces (TS, `helpers/nutrition.ts`): `N` (uuid `…0e`), `enableNutrition(db, uid, on = true)` (update de `nutrition_enabled` como o dono).
 
 - [ ] **Step 1: Teste que falha.** `supabase/tests/nutrition-base.test.ts`, com `setClock(db, '2026-10-07T15:00:00Z')` (quarta) e `makeUser(db, A)`:
   - `it('opens a period on the day the pillar is turned on')`: `enableNutrition(A)` → `select started_on, ended_on from nutrition_periods` = `[{ started_on: '2026-10-07', ended_on: null }]`.
@@ -176,8 +177,9 @@ public/privacidade.html, NOTICE.md, docs/SETUP.md, docs/ROADMAP.md
   - `it('covers no day when turned on and off on the same day')`: liga quarta, desliga quarta → `ended_on = '2026-10-06'`, `nutrition_active_on(A, '2026-10-07')` false.
   - `it('opens a period for a profile created with the pillar on')`: `makeUser(db, B, { nutrition_enabled: true })` → uma linha para B.
   - `it('starts a new period after a gap')`: liga dia 1, desliga dia 3, religa dia 10 → duas linhas.
-  - `it('keeps the server mark away from clients')`: como `authenticated`, `select public.begin_server_write()` e `select public.is_server_write()` → `permission denied`; `select set_config('perf.server_write','on',true)` seguido de insert de `day_logged` como A → `server_only_kind`.
-  - `it('refuses server-only kinds from clients and accepts them from the server outside the window')`: insert como A de `('nutrition','day_logged', hoje)` → `server_only_kind`; via `serverWrite` com `occurred_on = '2026-09-01'` (fora dos 14 dias) → aceito.
+  - `it('refuses server-only kinds from clients, whatever they set')`: insert como A de `('nutrition','day_logged', hoje)` → erro de RLS (`row-level security`); o mesmo numa transação com `set_config('perf.server_write','on',true)` antes → também recusado.
+  - `it('accepts server-only kinds from the server outside the window')`: insert como dono (`sql`) com `occurred_on = '2026-09-01'` → aceito e o `award_xp` roda.
+  - `it('still accepts strength events from clients')`: `workout_completed` de hoje como A → aceito.
   - `it('lets clients read but not write periods')`: insert/update/delete em `nutrition_periods` como A → `permission denied`; select como B das linhas de A → `[]`.
   - `it('checks the new profile columns')`: `nutrition_days_per_week = 2` e `activity_level = 'x'` → erro de check.
 - [ ] **Step 2:** `npx vitest run supabase/tests/nutrition-base.test.ts` → FAIL (colunas e funções não existem).
@@ -186,14 +188,13 @@ public/privacidade.html, NOTICE.md, docs/SETUP.md, docs/ROADMAP.md
   - `nutrition_periods` com RLS `select` do próprio; `revoke insert, update, delete, truncate ... from anon, authenticated`.
   - Trigger `profiles_nutrition_period` `after insert or update of nutrition_enabled`, `security definer`: ligar → se existe período com `ended_on = local_today − 1`, zera `ended_on`; senão insere `(id, local_today)` com `on conflict (user_id, started_on) do update set ended_on = null`. Desligar → `update ... set ended_on = local_today − 1 where ended_on is null`.
   - `nutrition_active_on`: `exists (... started_on <= p_day and (ended_on is null or ended_on >= p_day))`.
-  - `begin_server_write`: `perform set_config('perf.server_write', 'on', true)`. `is_server_write`: `coalesce(current_setting('perf.server_write', true), '') = 'on'`.
   - `event_kinds.server_only boolean not null default false` + as três linhas.
-  - `validate_activity_event` (`create or replace`, mesma assinatura): depois do check de catálogo, `if v_server_only and not public.is_server_write() then raise exception 'server_only_kind' using errcode = '42501'`; se `v_server_only`, pula a janela de 14 dias.
-  - `delete_my_account` (`create or replace`): `perform public.begin_server_write();` antes do `delete from auth.users`.
+  - `drop policy activity_events_insert_own` e recriar com `with check (user_id = auth.uid() and not exists (select 1 from public.event_kinds k where k.pillar = activity_events.pillar and k.kind = activity_events.kind and k.server_only))`.
+  - `validate_activity_event` (`create or replace`, mesma assinatura): se o tipo é `server_only`, pula a janela de 14 dias; o resto igual.
   - Revokes da regra geral.
 - [ ] **Step 4:** `npx vitest run supabase/tests/nutrition-base.test.ts supabase/tests/delete-account.test.ts supabase/tests/activity-events.test.ts` → PASS.
 - [ ] **Step 5:** `database.types.ts` com as colunas e a tabela; `npm run typecheck && npm test && npm run build`.
-- [ ] **Step 6: Commit** `feat(nutrition): pillar periods, server write mark and server-only events`.
+- [ ] **Step 6: Commit** `feat(nutrition): pillar periods and server-only events`.
 
 ### Task 2: Banco: metas semanais por pilar
 
@@ -225,12 +226,12 @@ public/privacidade.html, NOTICE.md, docs/SETUP.md, docs/ROADMAP.md
 - Test: `supabase/tests/nutrition-diary.test.ts`
 
 **Interfaces:**
-- Consumes: Task 1 (`is_server_write`, `local_today`).
+- Consumes: Task 1; `local_today` (0002, `security definer`).
 - Produces (SQL): tabelas `nutrition_targets`, `food_logs`, `user_foods` exatamente como na spec §5.2; `target_on(p_user uuid, p_day date) → nutrition_targets` (interna, `stable`: linha com maior `valid_from <= p_day`).
 - Produces (TS helpers): `logItem(db, uid, day, meal, kcal, protein = 0, carbs = 0, fat = 0, id = randomUUID())` (insert como o usuário), `setTarget(db, uid, validFrom, { kcal, protein_g, carbs_g, fat_g }, mode = 'auto')` (insert como dono).
 
 - [ ] **Step 1: Teste que falha** (`nutrition-diary.test.ts`, relógio em quarta 2026-10-07 15:00 UTC, perfil em São Paulo):
-  - `it('accepts items for today and yesterday only')`: `'2026-10-07'` e `'2026-10-06'` ok; `'2026-10-05'` e `'2026-10-08'` → `day_closed`; update e delete de item de `'2026-10-05'` (inserido via `serverWrite`) → `day_closed`.
+  - `it('accepts items for today and yesterday only')`: `'2026-10-07'` e `'2026-10-06'` ok; `'2026-10-05'` e `'2026-10-08'` → `day_closed`; update e delete de item de `'2026-10-05'` (inserido como dono) → `day_closed`.
   - `it('uses the profile time zone')`: perfil `Asia/Tokyo`, relógio `2026-10-07T16:00:00Z` (já 08/10 em Tóquio) → `'2026-10-08'` ok, `'2026-10-06'` → `day_closed`.
   - `it('refuses moving an item to another day or person')`: update de `day` ou `user_id` → erro.
   - `it('refuses import items from clients')`: `source = 'import'` como A → erro.
@@ -240,9 +241,10 @@ public/privacidade.html, NOTICE.md, docs/SETUP.md, docs/ROADMAP.md
   - `it('lets the first target start today and later ones tomorrow')`: primeira meta com `valid_from = hoje` ok; segunda com hoje → erro; com amanhã ok; update de meta com `valid_from <= hoje` → nenhuma linha afetada.
   - `it('checks target ranges')`: `kcal = 999` → erro de check.
   - `it('caps saved foods at 500')`.
-  - `it('lets account deletion remove old items')`: item de 10 dias atrás via `serverWrite`, `delete_my_account()` como A → ok; `delete from auth.users` como dono (painel) → ok.
+  - `it('lets account deletion remove old items')`: item de 10 dias atrás inserido como dono, `delete_my_account()` como A → ok; outro usuário com item antigo, `delete from auth.users` como dono (painel) → ok.
+  - `it('lets server functions write any day')`: uma função `security definer` de teste criada no próprio teste (como dono) insere item de 10 dias atrás para A → ok.
 - [ ] **Step 2:** rodar → FAIL.
-- [ ] **Step 3: Migration.** Tabelas, índices, RLS e políticas da spec §5.3. Trigger `food_logs_guard` `before insert or update or delete`, `security definer`, nesta ordem: se `is_server_write()` ou (`TG_OP = 'DELETE'` e `pg_trigger_depth() > 1`) → passa; checa janela com `local_today(coalesce(new.user_id, old.user_id))`; recusa `import`; update não muda `user_id`/`day`; insert conta itens do dia com `id <> new.id`; `new.updated_at := least(new.updated_at, now())`; update com `new.updated_at < old.updated_at` → `return null`. Trigger de limite de `user_foods` (500) igual em estilo. `target_on`.
+- [ ] **Step 3: Migration.** Tabelas, índices, RLS e políticas da spec §5.3. Trigger `food_logs_guard` `before insert or update or delete`, **`security invoker`** (`set search_path = public`), nesta ordem: se `current_user not in ('authenticated', 'anon')` → passa (e devolve `coalesce(new, old)`); checa janela com `local_today(coalesce(new.user_id, old.user_id))`; recusa `import`; update não muda `user_id`/`day`; insert conta itens do dia com `id <> new.id`; `new.updated_at := least(new.updated_at, now())`; update com `new.updated_at < old.updated_at` → `return null`. Trigger de limite de `user_foods` (500) igual em estilo, também `security invoker`. `target_on`.
 - [ ] **Step 4:** `npx vitest run supabase/tests/nutrition-diary.test.ts supabase/tests/delete-account.test.ts` → PASS.
 - [ ] **Step 5:** tipos em `database.types.ts`; `npm run typecheck && npm test && npm run build`.
 - [ ] **Step 6: Commit** `feat(nutrition): food diary, targets and saved foods`.
@@ -264,7 +266,7 @@ public/privacidade.html, NOTICE.md, docs/SETUP.md, docs/ROADMAP.md
 
 - [ ] **Step 1: Fixture.** Pelo menos: limites exatos (kcal 90% e 110% contam, 89,9% não; proteína igual à meta conta; carboidrato a 120% conta, 120,1% não); 1 refeição com tudo não é `logged`; meta de exemplo 3010/160/404/84. Semanas: T = 3, 5 e 7 com 7 dias no alvo (awards e total 910/960 conforme T), extras limitados a 2, `macros_balanced` limitado a 3, `day_logged` 7×10.
 - [ ] **Step 2: Testes que falham.**
-  - `nutrition-parity.test.ts`: `it.each(days)` contra `classify_nutrition_day`; `it.each(weeks)` inserindo `nutrition_days` prontos e eventos via `serverWrite` (mesmo caminho do fechamento) e comparando o ledger sem `achievement:`.
+  - `nutrition-parity.test.ts`: `it.each(days)` contra `classify_nutrition_day`; `it.each(weeks)` inserindo eventos do pilar como dono (o mesmo papel do fechamento) e comparando o ledger sem `achievement:`.
   - `nutrition-close.test.ts` (relógio quarta 2026-10-07; pilar ligado segunda 05/10; meta 2000/150/200/60 desde 05/10):
     - `it('closes a day at the start of D+2')`: itens em 05/10 → `closeAs` fecha 05/10; 06/10 não.
     - `it('stores the totals and the target in force')`.
@@ -276,7 +278,7 @@ public/privacidade.html, NOTICE.md, docs/SETUP.md, docs/ROADMAP.md
     - `it('survives the largest day')`: 200 itens de 5000 kcal → fecha sem estouro.
     - `it('never touches strength reasons')`: depois de uma semana cheia de Nutrição, `achievement_stats(A)->'week_targets'` = 0 e `training_week` inalterado.
 - [ ] **Step 3:** rodar → FAIL.
-- [ ] **Step 4: Migration.** `nutrition_days` (select do próprio, sem escrita do cliente). `classify_nutrition_day` segundo a spec §6.2. `close_nutrition_days`: trava `xp:<user>`; `begin_server_write()`; para cada dia de `min(started_on)` até `local_today − 2` sem linha em `nutrition_days` e com `nutrition_active_on` e `target_on` não nulos: soma `food_logs`, conta refeições, grava a linha, insere os eventos que a classe der (`day_logged` se `logged`, `day_on_target` se `on_target`, `macros_balanced` se `balanced`), nessa ordem. `award_xp` ramo Nutrição com os limites de §6.3 usando `week_target_for(user, week, 'nutrition')` e os `reason` próprios; a meta semanal paga +150 no T-ésimo `nutrition_day`.
+- [ ] **Step 4: Migration.** `nutrition_days` (select do próprio, sem escrita do cliente). `classify_nutrition_day` segundo a spec §6.2. `close_nutrition_days` (`security definer`): trava `xp:<user>`; para cada dia de `min(started_on)` até `local_today − 2` sem linha em `nutrition_days` e com `nutrition_active_on` e `target_on` não nulos: soma `food_logs`, conta refeições, grava a linha, insere os eventos que a classe der (`day_logged` se `logged`, `day_on_target` se `on_target`, `macros_balanced` se `balanced`), nessa ordem. `award_xp` ramo Nutrição com os limites de §6.3 usando `week_target_for(user, week, 'nutrition')` e os `reason` próprios; a meta semanal paga +150 no T-ésimo `nutrition_day`.
 - [ ] **Step 5:** `npx vitest run supabase/tests` → PASS.
 - [ ] **Step 6: Commit** `feat(nutrition): close days on the server and pay pillar XP`.
 

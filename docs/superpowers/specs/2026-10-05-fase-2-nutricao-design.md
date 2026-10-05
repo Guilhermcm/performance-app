@@ -130,7 +130,7 @@ O dia D fecha no começo de D+2, no fuso do perfil. Fechar um dia avaliável:
 
 1. soma os itens e grava o resumo em `nutrition_days` com o retrato da meta em vigor;
 2. classifica o dia (§6.2);
-3. emite, com a marca de escrita do servidor (§5.4), os eventos do pilar com
+3. emite, como o dono das tabelas (§5.4), os eventos do pilar com
    `source_ref = 'nutrition:<AAAA-MM-DD>'`, que pagam XP pelo `award_xp`;
 4. avalia conquistas.
 
@@ -255,9 +255,9 @@ alimentos da TACO ou do OFF salvos como favoritos. Limite de 500 por pessoa.
 - `nutrition_targets`: select do próprio; insert do próprio com `valid_from > local_today`, exceto
   a primeira linha da pessoa (`valid_from = local_today`); update só de linhas com
   `valid_from > local_today` (checado no `using` e no `with check`); sem delete.
-- `food_logs`: CRUD do próprio. Trigger `before insert or update or delete`, ignorado sob a marca
-  de escrita do servidor e, no delete, quando `pg_trigger_depth() > 1` (cascata vinda de
-  `auth.users`, inclusive exclusão pelo painel do Supabase):
+- `food_logs`: CRUD do próprio. Trigger `before insert or update or delete`, aplicado só a
+  escritas do cliente (§5.4; a cascata vinda de `auth.users`, inclusive a exclusão pelo painel do
+  Supabase, roda como o dono e passa):
   - recusa `day` fora de `{local_today − 1, local_today}` (`day_closed`) e `source = 'import'`;
   - recusa mudar `user_id` ou `day` num update;
   - limite de 200 itens por dia (`too_many_items`), contando só ids diferentes do que chega (o
@@ -270,26 +270,30 @@ alimentos da TACO ou do OFF salvos como favoritos. Limite de 500 por pessoa.
 - `user_foods`: CRUD do próprio, até 500.
 - `profiles`: o cliente continua escrevendo as colunas do perfil; `nutrition_periods` é derivado
   por trigger.
-- Todos os triggers novos (`food_logs`, períodos em `profiles`, limite de `user_foods`, última
-  escrita vence) são `security definer set search_path = public`, como `validate_activity_event`,
-  porque leem tabelas e a marca do servidor que o cliente não pode ler.
+- O trigger de períodos em `profiles` é `security definer set search_path = public` (escreve em
+  `nutrition_periods`, que o cliente só lê). Os triggers de `food_logs` e de `user_foods` são
+  `security invoker` (§5.4) e usam `local_today`, que é `security definer`.
 
-### 5.4 Marca de escrita do servidor
+### 5.4 Escrita do servidor
 
-- `public.begin_server_write()` faz `set_config('perf.server_write', 'on', true)` (vale só na
-  transação). `public.is_server_write()` lê a marca e trata ausente ou `''` como desligada (depois
-  da primeira transação, o GUC fica como string vazia na sessão). As duas têm `execute` revogado
-  de `public`, `anon` e `authenticated`, então não ficam expostas pela API; só funções e triggers
-  `security definer` as chamam. Um teste PGlite confirma que, como `authenticated`, não há caminho
-  para ligar a marca (nem `set_config` direto vale, porque o PostgREST só expõe `public` e cada
-  requisição é uma transação).
-- Chamam `begin_server_write()`: as funções de fechamento de dia, `delete_my_account` e, na 2b, a
-  RPC de importação.
+Sem marca nem GUC: o papel de quem escreve já distingue cliente de servidor. Cliente escreve como
+`authenticated`; funções `security definer` escrevem como o dono das tabelas, que não passa por
+RLS.
+
 - `event_kinds` ganha `server_only boolean not null default false`. Entram
   `('nutrition','day_logged',true)`, `('nutrition','day_on_target',true)`,
   `('nutrition','macros_balanced',true)`.
-- `validate_activity_event`: tipo `server_only` sem a marca → `server_only_kind`; tipo
-  `server_only` com a marca dispensa a janela de 14 dias (fechamento atrasado não quebra).
+- A política `activity_events_insert_own` passa a exigir também que o tipo **não** seja
+  `server_only`. O cliente que tenta inserir `day_on_target` é barrado pelo RLS; o fechamento do
+  dia, que roda como o dono, insere normalmente.
+- `validate_activity_event` dispensa a janela de 14 dias para tipos `server_only` (fechamento
+  atrasado não quebra).
+- O trigger de `food_logs` é `security invoker` e só aplica as regras de §5.3 quando
+  `current_user` é `authenticated` ou `anon`. Funções `security definer` (a importação da 2b) e a
+  cascata de exclusão de conta passam direto. `local_today` já é `security definer`, então o
+  trigger não precisa ler `profiles` por conta própria.
+- Um teste PGlite confirma que, como `authenticated`, não há caminho para inserir um tipo
+  `server_only` nem para escrever em dia fechado, nem com `set_config` na mesma transação.
 
 ### 5.5 Metas semanais por pilar
 
@@ -330,7 +334,6 @@ contam `reason = 'week_target'`):
 | `progress_card(p_user)` | mesma assinatura; vira o cartão público (§6.5): sem conquistas `private`, com `week.max` e `week.pillars` |
 | `my_progress_extras(p_user)` | interna, `stable`: bloco `nutrition`, `radar` e a lista completa de conquistas, só para o próprio |
 | `get_my_progress` | congela o T dos dois pilares, fecha dias pendentes e semanas, e junta `progress_card` + `my_progress_extras` |
-| `delete_my_account` | chama `begin_server_write()` antes de apagar |
 
 Itens de hoje e ontem são lidos direto de `food_logs` pelo cliente.
 
@@ -572,7 +575,8 @@ não são traduzidos; refeições, níveis de atividade e estados do radar são.
 - `public/privacidade.html`: seção do pilar (o que é guardado, que é opcional, que só a pessoa vê,
   que amigos veem só nível e XP, que buscas e códigos de barras vão ao Open Food Facts com o IP).
   Data de atualização e `privacy-page.test.js` acompanham.
-- Exclusão de conta apaga tudo por cascata, com a marca de escrita do servidor (§5.4).
+- Exclusão de conta apaga tudo por cascata; a cascata roda como o dono e passa pela trava de dias
+  fechados (§5.4).
 
 ## 11. Testes da 2a
 
@@ -589,7 +593,7 @@ não são traduzidos; refeições, níveis de atividade e estados do radar são.
   máximos sem estouro, limite de itens sem barrar edição, cascata pelo painel,
   `progress_card(uuid)` sem segunda versão e sem `execute` para `public`, reasons próprios
   sem tocar `training_week`/`week_target_1`/`weeks_on_target`, conquistas e métricas,
-  `server_only` (cliente não insere; servidor insere fora da janela de 14 dias), `weekly_targets`
+  `server_only` (cliente não insere nem com `set_config`; servidor insere fora da janela de 14 dias), `weekly_targets`
   por pilar com `progress_card` e `get_friends` funcionando, `week.max` e segmentos, radar (janela,
   semanas ativas, nulo), RLS (A não lê nada de nutrição de B; `get_friends`, ranking e feed sem
   dado de nutrição nem conquista `private`), exclusão de conta com itens antigos.
@@ -613,8 +617,7 @@ Recebe seções detalhadas como esta antes do plano da 2b, a partir do que a 2a 
 - **Perfis prontos**: MyFitnessPal (totais por refeição e dia), Cronometer e FatSecret (itens).
   Cada perfil é escrito e testado com um export real do grupo; sem arquivo real, o perfil não
   entra. Apps sem export em arquivo (possivelmente o Tecnonutri) ficam de fora.
-- **Servidor**: RPC `import_nutrition_history(p_days jsonb)` em lotes, com a marca de escrita do
-  servidor; só dias anteriores ao primeiro período do pilar (ou a ontem, para quem nunca ativou);
+- **Servidor**: RPC `import_nutrition_history(p_days jsonb)` em lotes, `security definer` (§5.4); só dias anteriores ao primeiro período do pilar (ou a ontem, para quem nunca ativou);
   reimportar substitui os itens `import` do dia; limites de 3 anos e 50 itens por dia. Grava
   `food_logs` com `source = 'import'` e `nutrition_days` com `imported = true`.
 - **Sem XP**: dias importados nunca passam pelo fechamento nem entram em métricas, conquistas ou
@@ -656,7 +659,7 @@ apps de saúde, compartilhar refeições, radar de amigos e comparação no rada
 | Recharts pesar na abertura da Home | radar sob demanda com skeleton |
 | XP chegando dois dias depois ("cadê meu XP?") | prévia "confirma na <dia>" e toast com o dia da semana no fechamento |
 | Ranking da semana passada mudar até terça | aceito; o ranking padrão é a semana corrente |
-| Cliente forjar eventos do pilar | `server_only` + marca de servidor não exposta, com teste |
+| Cliente forjar eventos do pilar | `server_only` barrado pelo RLS para o cliente, com teste |
 | Dado de saúde vazar para amigos | conquistas `private`, bloco `nutrition` só no próprio, testes de payload |
 | Mudança em `weekly_targets` quebrar a Força | tabela de §5.5 vira tarefa explícita, com testes de `progress_card` e `get_friends` |
 | Export real dos apps diferente do esperado | perfis só com arquivo real do grupo; mapeador genérico como saída |
