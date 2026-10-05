@@ -279,6 +279,9 @@ create table public.streaks (
   `payload` ≤ 4 KB.
 - `xp_ledger`, `user_achievements`, `streaks`: só select do próprio; escrita apenas por funções
   security definer.
+- Fase 1a acrescentou `weekly_targets(user_id, week_start, target)` (meta T congelada por semana,
+  §5.2) e `achievement_catalog(code, metric, threshold, xp, sort)` (catálogo de §5.5 em tabela,
+  espelhado em `features/gamification/achievements.ts`), com as mesmas regras de RLS.
 
 ### 4.3 Social
 
@@ -353,7 +356,7 @@ Fechamento de semana e de desafios: avaliação **preguiçosa** (em `get_my_prog
 - **Consistência acima de força bruta**: cumprir o próprio plano vale o mesmo para todos.
 - **Recompensa sem punição**: não há perda de XP nem de nível.
 - **Servidor é a autoridade**: o cliente só emite eventos; XP é calculado no Postgres. O cliente
-  mostra uma prévia otimista (`lib/xp.ts`, espelho das regras) que é substituída pela resposta do
+  mostra uma prévia otimista (`features/gamification/xp.ts`, espelho das regras) que é substituída pela resposta do
   servidor.
 
 ### 5.2 Regras de XP — pilar Força (Fases 0/1)
@@ -369,8 +372,12 @@ Seja `T = profiles.days_per_week`.
 | `weight_logged` | 10 | 1 por dia |
 
 Máximo semanal do pilar = 600 + 150 + 50 + 90 + 70 = **960 XP para qualquer T**. Esse é o
-mecanismo de justiça do ranking. Mudar `days_per_week` vale a partir da semana seguinte (o valor é
-congelado no início da semana em `streaks`/ledger).
+mecanismo de justiça do ranking. Mudar `days_per_week` vale a partir da semana seguinte.
+
+A T-ésima sessão planejada paga o resto, `600 − round(600/T)·(T−1)`, para que a soma seja sempre
+600 (T = 7: seis de 86 e uma de 84). A meta de cada semana fica em `weekly_targets`, congelada pelo
+primeiro evento ou leitura da semana, pelo job diário ou, se o perfil mudar antes, com o valor
+antigo.
 
 Pilares futuros seguem o mesmo molde: **600 de consistência + 150 de meta semanal + até ~210 de
 extras**, para que cada pilar ativo pese igual no ranking.
@@ -406,6 +413,10 @@ extras**, para que cada pilar ativo pese igual no ranking.
 | `early_bird` | 5 treinos concluídos antes das 7h | 100 |
 
 O XP das conquistas entra como bônus geral (`pillar = null`) e conta no ranking semanal.
+
+`early_bird` conta sessões ao vivo cujo payload traz `hour` (hora local de início) menor que 7.
+`first_friend`, `challenge_first` e `challenge_won_5` estão no catálogo desde a 1a e só a 1b os
+libera (`award_achievement`).
 
 ### 5.6 Missões semanais
 
@@ -528,7 +539,7 @@ Telas novas nascem em shadcn. Herdadas migram uma por fase:
   conquistas, convites (expirado, usado, auto-convite), RLS (usuário A não lê peso nem estado de B,
   não insere em `xp_ledger`, não vê feed de quem não compartilha), desafios (team/solo, sucesso e
   falha).
-- **Casos de paridade**: um arquivo JSON de cenários de XP consumido pelos testes vitest do cliente e do banco (PGlite),
+- **Casos de paridade**: arquivos JSON de cenários de XP e de conquistas consumidos pelos testes vitest do cliente e do banco (PGlite),
   garantindo que prévia e servidor concordam.
 - **Smoke manual pós-deploy**: login Google, onboarding, treino concluído → XP, convite entre duas
   contas, ranking.
