@@ -25,6 +25,51 @@ export interface Database {
         Update: never
         Relationships: []
       }
+      nutrition_targets: {
+        Row: {
+          user_id: string; valid_from: string; kcal: number; protein_g: number; carbs_g: number
+          fat_g: number; mode: 'auto' | 'manual'; created_at: string
+        }
+        Insert: {
+          valid_from: string; kcal: number; protein_g: number; carbs_g: number; fat_g: number
+          mode: 'auto' | 'manual'; user_id?: string
+        }
+        Update: Partial<Omit<Database['public']['Tables']['nutrition_targets']['Row'], 'user_id' | 'created_at'>>
+        Relationships: []
+      }
+      food_logs: {
+        Row: {
+          id: string; user_id: string; day: string; meal: 'breakfast' | 'lunch' | 'dinner' | 'snack'
+          name: string; brand: string | null; source: 'taco' | 'off' | 'custom' | 'quick' | 'import'
+          source_id: string | null; grams: number | null; kcal: number; protein_g: number
+          carbs_g: number; fat_g: number; fiber_g: number | null; created_at: string; updated_at: string
+        }
+        Insert: {
+          id: string; day: string; meal: 'breakfast' | 'lunch' | 'dinner' | 'snack'; name: string
+          source: 'taco' | 'off' | 'custom' | 'quick'; kcal: number; user_id?: string
+          brand?: string | null; source_id?: string | null; grams?: number | null
+          protein_g?: number; carbs_g?: number; fat_g?: number; fiber_g?: number | null
+          created_at?: string; updated_at?: string
+        }
+        Update: Partial<Omit<Database['public']['Tables']['food_logs']['Insert'], 'id' | 'user_id' | 'day'>>
+        Relationships: []
+      }
+      user_foods: {
+        Row: {
+          id: string; user_id: string; source: 'taco' | 'off' | 'custom'; source_id: string | null
+          barcode: string | null; favorite: boolean; name: string; brand: string | null
+          kcal_100g: number; protein_100g: number; carbs_100g: number; fat_100g: number
+          serving_g: number | null; serving_label: string | null; created_at: string; updated_at: string
+        }
+        Insert: {
+          id: string; source: 'taco' | 'off' | 'custom'; name: string; kcal_100g: number
+          user_id?: string; source_id?: string | null; barcode?: string | null; favorite?: boolean
+          brand?: string | null; protein_100g?: number; carbs_100g?: number; fat_100g?: number
+          serving_g?: number | null; serving_label?: string | null; created_at?: string; updated_at?: string
+        }
+        Update: Partial<Omit<Database['public']['Tables']['user_foods']['Insert'], 'id' | 'user_id'>>
+        Relationships: []
+      }
       event_kinds: {
         Row: { pillar: Pillar; kind: string; server_only: boolean }
         Insert: never
