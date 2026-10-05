@@ -1669,4 +1669,9 @@ export default {
   'Opening Google…': 'Google खोला जा रहा है…',
   'Could not start sign-in. Try again.': 'साइन-इन शुरू नहीं हो सका। फिर से कोशिश करें।',
   'The server is not configured yet.': 'सर्वर अभी कॉन्फ़िगर नहीं हुआ है।',
+  'Enter a name up to 60 characters.': 'अधिकतम 60 अक्षरों का नाम दर्ज करें।',
+  'Height must be between 50 and 260 cm.': 'लंबाई 50 से 260 सेमी के बीच होनी चाहिए।',
+  'Weight must be between 20 and 400 kg.': 'वज़न 20 से 400 किग्रा के बीच होना चाहिए।',
+  'Choose between 1 and 7 days.': '1 से 7 दिन के बीच चुनें।',
+  'Enter a valid birth date.': 'सही जन्मतिथि दर्ज करें।',
 }

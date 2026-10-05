@@ -1669,4 +1669,9 @@ export default {
   'Opening Google…': 'Google 여는 중…',
   'Could not start sign-in. Try again.': '로그인을 시작할 수 없습니다. 다시 시도하세요.',
   'The server is not configured yet.': '서버가 아직 설정되지 않았습니다.',
+  'Enter a name up to 60 characters.': '60자 이내로 이름을 입력하세요.',
+  'Height must be between 50 and 260 cm.': '키는 50~260cm 사이여야 합니다.',
+  'Weight must be between 20 and 400 kg.': '체중은 20~400kg 사이여야 합니다.',
+  'Choose between 1 and 7 days.': '1~7일 중에서 선택하세요.',
+  'Enter a valid birth date.': '올바른 생년월일을 입력하세요.',
 }

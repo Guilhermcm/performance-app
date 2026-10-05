@@ -1666,4 +1666,9 @@ export default {
   'Opening Google…': 'Відкриваємо Google…',
   'Could not start sign-in. Try again.': 'Не вдалося почати вхід. Спробуй ще раз.',
   'The server is not configured yet.': 'Сервер ще не налаштовано.',
+  'Enter a name up to 60 characters.': 'Введи ім’я до 60 символів.',
+  'Height must be between 50 and 260 cm.': 'Зріст має бути від 50 до 260 см.',
+  'Weight must be between 20 and 400 kg.': 'Вага має бути від 20 до 400 кг.',
+  'Choose between 1 and 7 days.': 'Обери від 1 до 7 днів.',
+  'Enter a valid birth date.': 'Введи коректну дату народження.',
 }

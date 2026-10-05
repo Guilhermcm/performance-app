@@ -1680,4 +1680,9 @@ export default {
   'Opening Google…': 'กำลังเปิด Google…',
   'Could not start sign-in. Try again.': 'เริ่มการลงชื่อเข้าใช้ไม่ได้ ลองอีกครั้ง',
   'The server is not configured yet.': 'ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์',
+  'Enter a name up to 60 characters.': 'กรอกชื่อไม่เกิน 60 ตัวอักษร',
+  'Height must be between 50 and 260 cm.': 'ส่วนสูงต้องอยู่ระหว่าง 50 ถึง 260 ซม.',
+  'Weight must be between 20 and 400 kg.': 'น้ำหนักต้องอยู่ระหว่าง 20 ถึง 400 กก.',
+  'Choose between 1 and 7 days.': 'เลือกระหว่าง 1 ถึง 7 วัน',
+  'Enter a valid birth date.': 'กรอกวันเกิดที่ถูกต้อง',
 }

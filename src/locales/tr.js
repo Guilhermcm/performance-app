@@ -1669,4 +1669,9 @@ export default {
   'Opening Google…': 'Google açılıyor…',
   'Could not start sign-in. Try again.': 'Giriş başlatılamadı. Tekrar dene.',
   'The server is not configured yet.': 'Sunucu henüz yapılandırılmadı.',
+  'Enter a name up to 60 characters.': 'En fazla 60 karakterlik bir isim gir.',
+  'Height must be between 50 and 260 cm.': 'Boy 50 ile 260 cm arasında olmalı.',
+  'Weight must be between 20 and 400 kg.': 'Kilo 20 ile 400 kg arasında olmalı.',
+  'Choose between 1 and 7 days.': '1 ile 7 gün arasında seç.',
+  'Enter a valid birth date.': 'Geçerli bir doğum tarihi gir.',
 }

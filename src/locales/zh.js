@@ -1669,4 +1669,9 @@ export default {
   'Opening Google…': '正在打开 Google…',
   'Could not start sign-in. Try again.': '无法开始登录，请重试。',
   'The server is not configured yet.': '服务器尚未配置。',
+  'Enter a name up to 60 characters.': '请输入不超过 60 个字符的名字。',
+  'Height must be between 50 and 260 cm.': '身高必须在 50 到 260 厘米之间。',
+  'Weight must be between 20 and 400 kg.': '体重必须在 20 到 400 公斤之间。',
+  'Choose between 1 and 7 days.': '请选择 1 到 7 天。',
+  'Enter a valid birth date.': '请输入有效的出生日期。',
 }

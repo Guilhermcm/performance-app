@@ -1669,4 +1669,9 @@ export default {
   'Opening Google…': 'Ouverture de Google…',
   'Could not start sign-in. Try again.': 'Impossible de lancer la connexion. Réessaie.',
   'The server is not configured yet.': 'Le serveur n’est pas encore configuré.',
+  'Enter a name up to 60 characters.': 'Entre un nom de 60 caractères maximum.',
+  'Height must be between 50 and 260 cm.': 'La taille doit être comprise entre 50 et 260 cm.',
+  'Weight must be between 20 and 400 kg.': 'Le poids doit être compris entre 20 et 400 kg.',
+  'Choose between 1 and 7 days.': 'Choisis entre 1 et 7 jours.',
+  'Enter a valid birth date.': 'Entre une date de naissance valide.',
 }

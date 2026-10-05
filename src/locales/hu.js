@@ -1672,4 +1672,9 @@ export default {
   'Opening Google…': 'Google megnyitása…',
   'Could not start sign-in. Try again.': 'Nem sikerült elindítani a bejelentkezést. Próbáld újra.',
   'The server is not configured yet.': 'A szerver még nincs beállítva.',
+  'Enter a name up to 60 characters.': 'Adj meg egy legfeljebb 60 karakteres nevet.',
+  'Height must be between 50 and 260 cm.': 'A magasságnak 50 és 260 cm között kell lennie.',
+  'Weight must be between 20 and 400 kg.': 'A súlynak 20 és 400 kg között kell lennie.',
+  'Choose between 1 and 7 days.': 'Válassz 1 és 7 nap között.',
+  'Enter a valid birth date.': 'Adj meg érvényes születési dátumot.',
 }

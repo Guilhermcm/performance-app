@@ -1722,4 +1722,9 @@ export default {
   'Opening Google…': 'جارٍ فتح Google…',
   'Could not start sign-in. Try again.': 'تعذّر بدء تسجيل الدخول. حاول مرة أخرى.',
   'The server is not configured yet.': 'لم يتم إعداد الخادم بعد.',
+  'Enter a name up to 60 characters.': 'أدخل اسمًا لا يزيد على 60 حرفًا.',
+  'Height must be between 50 and 260 cm.': 'يجب أن يكون الطول بين 50 و260 سم.',
+  'Weight must be between 20 and 400 kg.': 'يجب أن يكون الوزن بين 20 و400 كغ.',
+  'Choose between 1 and 7 days.': 'اختر من 1 إلى 7 أيام.',
+  'Enter a valid birth date.': 'أدخل تاريخ ميلاد صحيحًا.',
 }
