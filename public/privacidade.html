@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Política de Privacidade · Performance</title>
+<meta name="description" content="Quais dados o app Performance coleta, para que usa, quem mais os trata e como pedir acesso ou exclusão. Privacy policy in English included.">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#101216">
+<link rel="icon" type="image/png" href="/icon-180.png">
+<style>
+  /* Colours from src/styles/tokens.css. Hex first for older browsers, oklch where supported. */
+  :root {
+    color-scheme: dark;
+    --bg: #101216; --bg: oklch(0.16 0.006 260);
+    --fg: #f4f5f7; --fg: oklch(0.97 0.004 260);
+    --card: #181a1f; --card: oklch(0.205 0.007 260);
+    --muted: #a5a9b1; --muted: oklch(0.72 0.01 260);
+    --primary: #c6ef4e; --primary: oklch(0.89 0.2 128);
+    --primary-fg: #1d2a0a; --primary-fg: oklch(0.2 0.03 128);
+    --link: #c6ef4e; --link: oklch(0.89 0.2 128);
+    --border: rgba(255, 255, 255, 0.09);
+    --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f8; --bg: oklch(0.975 0.003 260);
+      --fg: #1c1e23; --fg: oklch(0.2 0.01 260);
+      --card: #ffffff;
+      --muted: #5f636b; --muted: oklch(0.48 0.012 260);
+      --primary: #4e9a1f; --primary: oklch(0.62 0.17 132);
+      --primary-fg: #fbfef6; --primary-fg: oklch(0.99 0.01 128);
+      --link: #3a7316; --link: oklch(0.48 0.14 132);
+      --border: rgba(0, 0, 0, 0.09);
+    }
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; scroll-padding-top: 16px; }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font);
+    font-size: 17px;
+    line-height: 1.65;
+    overflow-wrap: break-word;
+  }
+  .skip {
+    position: absolute; left: 16px; top: -100px; z-index: 10;
+    padding: 10px 16px; border-radius: 12px;
+    background: var(--primary); color: var(--primary-fg); font-weight: 600; text-decoration: none;
+  }
+  .skip:focus { top: calc(12px + env(safe-area-inset-top)); }
+  .wrap {
+    max-width: 680px; margin: 0 auto;
+    padding: calc(24px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right))
+             calc(48px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+  }
+  @media (min-width: 600px) { .wrap { padding-left: 24px; padding-right: 24px; } }
+  header.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+  .brand { font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--link); }
+  nav.lang { display: flex; gap: 4px; }
+  nav.lang a, .actions a {
+    display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px;
+    border-radius: 12px; color: var(--muted); text-decoration: none; font-size: 15px;
+  }
+  nav.lang a:hover, nav.lang a:focus-visible { color: var(--fg); background: var(--card); }
+  h1 { font-size: 34px; line-height: 1.15; letter-spacing: -0.02em; margin: 28px 0 8px; text-wrap: balance; }
+  h2 { font-size: 21px; line-height: 1.3; letter-spacing: -0.01em; margin: 40px 0 8px; text-wrap: balance; }
+  p, ul { margin: 0 0 14px; }
+  ul { padding-left: 1.25em; }
+  li { margin-bottom: 6px; }
+  li::marker { color: var(--muted); }
+  a { color: var(--link); text-underline-offset: 3px; }
+  a:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+  .updated { color: var(--muted); font-size: 15px; margin-bottom: 20px; }
+  .lead { font-size: 18px; color: var(--fg); }
+  .actions { margin: 20px 0 8px; }
+  .actions a.cta {
+    background: var(--primary); color: var(--primary-fg); font-weight: 600; padding: 0 20px; border-radius: 14px;
+  }
+  .actions a.cta:hover { filter: brightness(1.05); }
+  .note { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px 16px; margin: 0 0 14px; }
+  .nw { white-space: nowrap; }
+  .note p:last-child { margin-bottom: 0; }
+  hr { border: 0; border-top: 1px solid var(--border); margin: 56px 0 0; }
+  footer { margin-top: 40px; color: var(--muted); font-size: 15px; }
+  @media (max-width: 380px) { body { font-size: 16px; } h1 { font-size: 29px; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#conteudo">Pular para o conteúdo</a>
+<div class="wrap">
+<header class="top">
+  <span class="brand">Performance</span>
+  <nav class="lang" aria-label="Idioma / Language">
+    <a href="#pt" hreflang="pt-BR" lang="pt-BR">Português</a>
+    <a href="#en" hreflang="en" lang="en">English</a>
+  </nav>
+</header>
+
+<main id="conteudo">
+<section id="pt" lang="pt-BR">
+  <h1>Política de Privacidade</h1>
+  <p class="updated">Última atualização: 5 de outubro de 2026</p>
+  <p class="lead">Esta página explica quais dados o Performance coleta, para que eles servem, quem mais tem acesso a eles e como pedir uma cópia ou a exclusão.</p>
+  <p class="actions"><a class="cta" href="/">Abrir o app</a></p>
+
+  <h2>Quem somos e contato</h2>
+  <p>O Performance é um app para registrar treinos, acompanhar o progresso e manter a constância junto com amigos. É um projeto pessoal de código aberto, distribuído sob a licença <span class="nw">AGPL-3.0</span>. O código está em <a href="https://github.com/Guilhermcm/performance-app">github.com/Guilhermcm/performance-app</a>.</p>
+  <p>O responsável pelo app é o controlador dos seus dados, nos termos da LGPD (Lei 13.709/2018). Para dúvidas, pedidos sobre seus dados ou exclusão da conta, escreva para <a href="mailto:guilhermemendonca.cm@gmail.com">guilhermemendonca.cm@gmail.com</a>.</p>
+
+  <h2>Quais dados coletamos</h2>
+  <p>Do Google, quando você entra: nome, endereço de e-mail, foto de perfil e o identificador da sua conta. O login pede só as permissões básicas (openid, email e profile). O app não vê sua senha e não tem acesso ao Gmail, ao Drive, aos seus contatos nem a outros serviços do Google.</p>
+  <p>Do perfil que você preenche: nome de exibição, data de nascimento, sexo, altura, peso, objetivo, nível de experiência, dias de treino por semana, equipamentos disponíveis, unidade de peso, idioma, fuso horário e a escolha de compartilhar ou não seus treinos com amigos.</p>
+  <p>Do uso do app: rotinas, treinos, exercícios, séries, repetições e cargas, pesagens, exercícios personalizados e configurações. Para a parte de pontos, o app registra eventos de atividade (treino concluído, recorde pessoal e pesagem) e calcula com eles seu XP, níveis, sequência de semanas e conquistas.</p>
+  <p>Da área social: convites de amizade, sua lista de amigos, os desafios que você cria ou dos quais participa, seu progresso neles e, se você ativar o compartilhamento, os itens que aparecem no feed dos seus amigos.</p>
+  <p>Dados técnicos: os serviços que hospedam o site e cuidam do login registram dados de acesso, como endereço IP, tipo de navegador e horário, como acontece em qualquer site.</p>
+  <p>No seu aparelho, o app guarda no armazenamento do navegador (localStorage e IndexedDB) a sessão de login, uma cópia dos seus dados para funcionar sem internet, cópias do perfil, do progresso e da área social, a fila de eventos que ainda não foram enviados e, quando você abre um link de convite antes de entrar, esse convite. O app não usa cookies de rastreamento.</p>
+  <div class="note"><p>Fotos e vídeos que você anexa a exercícios personalizados ou a treinos ficam só no aparelho. O app não envia esses arquivos para nenhum servidor.</p></div>
+
+  <h2>Para que usamos</h2>
+  <p>Só para fazer o app funcionar: identificar você no login, guardar seus dados e sincronizá-los entre seus aparelhos, calcular XP, níveis, sequências, ranking e desafios, e mostrar aos seus amigos o que você permitiu.</p>
+  <p>O app não tem anúncios. Seus dados não são vendidos nem passados a terceiros para marketing, e o app não usa ferramentas de analytics nem de rastreamento.</p>
+
+  <h2>O que seus amigos veem</h2>
+  <p>Amigos são as pessoas que aceitaram um convite seu ou cujo convite você aceitou. Eles veem seu nome e sua foto de perfil, seus níveis e XP, o XP da semana e sua posição no ranking, sua meta semanal, quantos treinos e recordes você fez na semana, sua sequência de semanas e suas conquistas.</p>
+  <p>O feed só mostra seus treinos se você ligar a opção "Compartilhar treinos e PRs com amigos" no Perfil. Com ela ligada, seus amigos veem cada treino concluído, com a data e o número de séries, e os exercícios em que você bateu recorde, sem os valores. Se você desligar a opção, seus treinos saem do feed na hora.</p>
+  <p>Nos desafios, quem participa do mesmo desafio vê seu nome, sua foto e seu progresso nele. Em desafios de volume, você só entra se aceitar mostrar seu volume, e os outros participantes veem apenas o total em toneladas no período.</p>
+  <p>Quem recebe um link de convite seu vê seu nome e sua foto, mesmo sem ter conta.</p>
+  <p>Ninguém vê seu e-mail, peso, altura, data de nascimento, sexo, pesagens, cargas ou o detalhe das suas séries.</p>
+
+  <h2>Onde os dados ficam</h2>
+  <p>Estes serviços tratam dados em nome do app:</p>
+  <ul>
+    <li>Supabase: banco de dados e login. O projeto está configurado na região de São Paulo.</li>
+    <li>Vercel: hospeda o site e entrega os arquivos do app.</li>
+    <li>Google: login com a sua conta Google.</li>
+    <li>jsDelivr: entrega as imagens e animações dos exercícios, que vêm da base aberta hasaneyldrm/exercises-dataset. Seu navegador baixa essas imagens direto de lá, então o jsDelivr vê seu endereço IP, como qualquer site que você visita.</li>
+  </ul>
+  <p>Se você usar a importação do Hevy, o navegador conversa direto com a API do Hevy usando a chave que você colar. A chave serve só para essa importação e não fica salva.</p>
+  <p>Vercel, Google e jsDelivr podem tratar dados fora do Brasil. Essa transferência internacional acontece porque é necessária para prestar o serviço que você pediu, como prevê o art. 33 da LGPD.</p>
+
+  <h2>Base legal</h2>
+  <p>Tratamos seus dados para prestar o serviço que você pediu ao criar a conta, com base na execução de contrato (art. 7º, V, da LGPD).</p>
+  <p>Peso, altura e pesagens podem dizer algo sobre a sua saúde. Você informa esses dados por vontade própria e eles servem só para os cálculos do app, com o seu consentimento (art. 11, I).</p>
+  <p>O compartilhamento opcional, ou seja, o feed e o volume nos desafios, depende do seu consentimento (art. 7º, I). Você pode retirá-lo quando quiser.</p>
+
+  <h2>Retenção e exclusão</h2>
+  <p>Seus dados ficam guardados enquanto a conta existir. Você pode apagar a conta pelo próprio app, em Perfil &gt; Excluir minha conta. Isso tira do banco de dados na hora o perfil, os treinos, eventos, XP, conquistas, amizades, convites e a participação em desafios, e apaga também a cópia que está no aparelho. Os desafios em grupo que você criou continuam para os outros participantes, sem o seu nome.</p>
+  <p>Se preferir, mande um e-mail para <a href="mailto:guilhermemendonca.cm@gmail.com">guilhermemendonca.cm@gmail.com</a> a partir do endereço da conta. A exclusão é feita em até 15 dias e você recebe uma confirmação.</p>
+  <p>O Supabase mantém cópias de segurança gerenciadas por um período limitado. Dados apagados podem continuar nessas cópias até que elas sejam substituídas.</p>
+  <p>Ao sair da conta, o app apaga deste aparelho a cópia dos seus dados, a sessão e as cópias do perfil, do progresso e da área social. Se ainda houver algo que não chegou ao servidor, como as fotos e vídeos que ficam só no aparelho, o app avisa antes. Se você sair mesmo assim, esses itens ficam guardados à parte no aparelho até você entrar de novo. Limpar os dados do site no navegador apaga tudo.</p>
+
+  <h2>Seus direitos</h2>
+  <p>A LGPD (art. 18) garante a você:</p>
+  <ul>
+    <li>confirmar se tratamos seus dados e ter acesso a eles;</li>
+    <li>corrigir dados incompletos ou errados (a maior parte você edita no Perfil);</li>
+    <li>pedir anonimização, bloqueio ou eliminação de dados desnecessários, e a eliminação dos dados tratados com consentimento;</li>
+    <li>portabilidade: em Configurações, "Exportar backup" gera um arquivo com seus treinos, rotinas e ajustes;</li>
+    <li>saber com quem seus dados são compartilhados, que é o que a seção "Onde os dados ficam" lista;</li>
+    <li>revogar o consentimento: desligue o compartilhamento no Perfil ou saia de um desafio.</li>
+  </ul>
+  <p>Para qualquer um desses pedidos, escreva para o e-mail de contato. Você também pode reclamar à Autoridade Nacional de Proteção de Dados (<a href="https://www.gov.br/anpd">ANPD</a>).</p>
+
+  <h2>Segurança</h2>
+  <p>Toda a comunicação usa HTTPS. No banco, regras de segurança por linha (row level security) fazem cada conta ler só os próprios dados, e o que seus amigos veem passa por funções que conferem a amizade antes de responder. O acesso é feito pelo login do Google e o app não guarda senha.</p>
+  <p>Nenhum sistema é totalmente seguro. Se um incidente puder trazer risco ou dano relevante a você, você e a ANPD serão avisados.</p>
+
+  <h2>Crianças e adolescentes</h2>
+  <p>O app não é destinado a menores de 18 anos.</p>
+
+  <h2>Alterações</h2>
+  <p>Quando esta política mudar, a data no topo da página será atualizada. Mudanças relevantes também serão avisadas no app.</p>
+</section>
+
+<hr>
+
+<section id="en" lang="en">
+  <h1>Privacy Policy</h1>
+  <p class="updated">Last updated: October 5, 2026</p>
+  <p class="lead">This page explains what data Performance collects, what it is used for, who else handles it and how to ask for a copy or for deletion.</p>
+  <p class="actions"><a class="cta" href="/">Open the app</a></p>
+
+  <h2>Who we are and how to reach us</h2>
+  <p>Performance is an app for logging workouts, tracking progress and staying consistent with friends. It is a personal open source project released under the <span class="nw">AGPL-3.0</span> license. The code is at <a href="https://github.com/Guilhermcm/performance-app">github.com/Guilhermcm/performance-app</a>.</p>
+  <p>The person who runs the app is the controller of your data under Brazil's data protection law (LGPD, Law 13.709/2018). For questions, requests about your data or account deletion, write to <a href="mailto:guilhermemendonca.cm@gmail.com">guilhermemendonca.cm@gmail.com</a>.</p>
+
+  <h2>What data we collect</h2>
+  <p>From Google, when you sign in: your name, email address, profile photo and account identifier. Sign-in asks only for the basic permissions (openid, email and profile). The app never sees your password and has no access to Gmail, Drive, your contacts or any other Google service.</p>
+  <p>From the profile you fill in: display name, date of birth, sex, height, weight, goal, experience level, training days per week, available equipment, weight unit, language, time zone and whether you share your workouts with friends.</p>
+  <p>From using the app: routines, workouts, exercises, sets, reps and loads, weigh-ins, custom exercises and settings. For the points system, the app records activity events (workout finished, personal record and weigh-in) and uses them to work out your XP, levels, weekly streak and achievements.</p>
+  <p>From the social area: friend invites, your friends list, the challenges you create or join, your progress in them and, if you turn sharing on, the items that show up in your friends' feed.</p>
+  <p>Technical data: the services that host the site and handle sign-in log access data such as IP address, browser type and time, as with any website.</p>
+  <p>On your device, the app keeps in browser storage (localStorage and IndexedDB) your sign-in session, a copy of your data so it works offline, copies of your profile, progress and social data, the queue of events not yet sent and, if you open an invite link before signing in, that invite. The app does not use tracking cookies.</p>
+  <div class="note"><p>Photos and videos you attach to custom exercises or workouts stay on your device. The app does not upload them to any server.</p></div>
+
+  <h2>What we use it for</h2>
+  <p>Only to make the app work: to identify you at sign-in, store your data and sync it across your devices, work out XP, levels, streaks, rankings and challenges, and show your friends what you have allowed.</p>
+  <p>The app has no ads. Your data is not sold or handed to third parties for marketing, and the app uses no analytics or tracking tools.</p>
+
+  <h2>What your friends see</h2>
+  <p>Friends are people who accepted an invite from you or whose invite you accepted. They see your name and profile photo, your levels and XP, your XP for the week and your place in the ranking, your weekly target, how many workouts and records you logged this week, your weekly streak and your achievements.</p>
+  <p>The feed shows your workouts only if you turn on "Share workouts and PRs with friends" in Profile. With it on, friends see each finished workout with its date and number of sets, plus the exercises where you set a record, without the numbers. If you turn it off, your workouts leave the feed right away.</p>
+  <p>In challenges, people in the same challenge see your name, photo and progress in it. You can only join a volume challenge if you agree to show your volume, and the other members see only your total in tonnes for the period.</p>
+  <p>Anyone who gets one of your invite links sees your name and photo, even without an account.</p>
+  <p>Nobody sees your email, weight, height, date of birth, sex, weigh-ins, loads or the details of your sets.</p>
+
+  <h2>Where the data is kept</h2>
+  <p>These services handle data on the app's behalf:</p>
+  <ul>
+    <li>Supabase: database and sign-in. The project is set up in the São Paulo region.</li>
+    <li>Vercel: hosts the site and serves the app's files.</li>
+    <li>Google: sign-in with your Google account.</li>
+    <li>jsDelivr: serves the exercise images and animations, which come from the open hasaneyldrm/exercises-dataset. Your browser downloads them straight from there, so jsDelivr sees your IP address, as any site you visit does.</li>
+  </ul>
+  <p>If you use the Hevy import, your browser talks directly to the Hevy API with the key you paste. The key is used only for that import and is not saved.</p>
+  <p>Vercel, Google and jsDelivr may process data outside Brazil. That international transfer happens because it is needed to provide the service you asked for, as allowed by article 33 of the LGPD.</p>
+
+  <h2>Legal basis</h2>
+  <p>We process your data to provide the service you asked for when you created the account, on the basis of performing a contract (LGPD art. 7, V).</p>
+  <p>Weight, height and weigh-ins can say something about your health. You enter them by choice, and they are used only for the app's calculations, with your consent (art. 11, I).</p>
+  <p>Optional sharing, meaning the feed and volume in challenges, depends on your consent (art. 7, I). You can withdraw it at any time.</p>
+
+  <h2>Retention and deletion</h2>
+  <p>Your data is kept for as long as your account exists. You can delete the account from the app itself, in Profile &gt; Delete my account. That removes your profile, workouts, events, XP, achievements, friendships, invites and challenge memberships from the database right away, along with the copy on your device. Group challenges you created carry on for the other members, without your name.</p>
+  <p>If you prefer, email <a href="mailto:guilhermemendonca.cm@gmail.com">guilhermemendonca.cm@gmail.com</a> from the account's address. Deletion is done within 15 days and you get a confirmation.</p>
+  <p>Supabase keeps managed backups for a limited period. Deleted data may remain in those backups until they are replaced.</p>
+  <p>When you sign out, the app deletes from this device the copy of your data, the session and the copies of your profile, progress and social data. If something has not reached the server yet, such as photos and videos that live only on the device, the app warns you first. If you sign out anyway, those items are kept aside on the device until you sign in again. Clearing the site's data in your browser removes everything.</p>
+
+  <h2>Your rights</h2>
+  <p>The LGPD (art. 18) gives you the right to:</p>
+  <ul>
+    <li>confirm whether we process your data and get access to it;</li>
+    <li>correct incomplete or wrong data (you can edit most of it in Profile);</li>
+    <li>ask for unnecessary data to be anonymised, blocked or deleted, and for data processed with your consent to be deleted;</li>
+    <li>portability: in Settings, "Export backup" creates a file with your workouts, routines and settings;</li>
+    <li>know who your data is shared with, which the section "Where the data is kept" lists;</li>
+    <li>withdraw consent: turn sharing off in Profile or leave a challenge.</li>
+  </ul>
+  <p>For any of these requests, write to the contact email. You can also complain to Brazil's National Data Protection Authority (<a href="https://www.gov.br/anpd">ANPD</a>).</p>
+
+  <h2>Security</h2>
+  <p>All traffic uses HTTPS. In the database, row level security rules let each account read only its own data, and what your friends see goes through functions that check the friendship before answering. Access is through Google sign-in, and the app stores no password.</p>
+  <p>No system is completely secure. If an incident could bring you relevant risk or harm, you and the ANPD will be told.</p>
+
+  <h2>Children and teenagers</h2>
+  <p>The app is not meant for anyone under 18.</p>
+
+  <h2>Changes</h2>
+  <p>When this policy changes, the date at the top of the page will be updated. Significant changes will also be announced in the app.</p>
+</section>
+</main>
+
+<footer>
+  <p>Performance · <a href="/">Abrir o app</a> · <a href="mailto:guilhermemendonca.cm@gmail.com">guilhermemendonca.cm@gmail.com</a></p>
+</footer>
+</div>
+</body>
+</html>

@@ -36,7 +36,7 @@ export type Challenge = {
   starts_on: string
   ends_on: string
   status: ChallengeStatus
-  created_by: string
+  created_by: string | null // null once the creator deleted their account
   invited_by: string | null // display name of who invited me (null for the creator)
   total: number
   me: { joined: boolean; won: boolean | null }

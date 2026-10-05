@@ -71,6 +71,27 @@ export interface Database {
         Update: never
         Relationships: []
       }
+      challenges: {
+        Row: {
+          id: string; template: 'workouts_count' | 'weeks_on_target' | 'volume_total'; title: string
+          mode: 'team' | 'solo'; target: number; starts_on: string; ends_on: string
+          // null once the creator deleted their account; timezone is theirs, kept from then on.
+          created_by: string | null; timezone: string | null
+          status: 'active' | 'won' | 'lost' | 'cancelled'; created_at: string; closed_at: string | null
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      challenge_members: {
+        Row: {
+          challenge_id: string; user_id: string; invited_by: string | null; joined_at: string | null
+          share_volume: boolean; final: number | null; won: boolean | null
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: {
@@ -81,6 +102,10 @@ export interface Database {
       get_my_progress: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      delete_my_account: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
     }
     Enums: { pillar: Pillar }

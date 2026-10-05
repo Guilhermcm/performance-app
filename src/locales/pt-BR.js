@@ -1290,6 +1290,19 @@ export const PT_BR_OVERRIDES = {
   'Yesterday': 'Ontem',
   'Load more': 'Carregar mais',
   'You are all caught up.': 'Você já viu tudo.',
+  'Privacy policy': 'Política de Privacidade',
+  "Danger zone": "Zona de perigo",
+  "Removes your account and everything in it for good.": "Apaga sua conta e tudo o que está nela de vez.",
+  "Delete my account": "Excluir minha conta",
+  "Delete your account?": "Excluir sua conta?",
+  "This erases your profile, workouts, XP, badges, friendships and your place in challenges. It can't be undone.": "Isso apaga seu perfil, treinos, XP, conquistas, amizades e sua participação em desafios. Não dá para desfazer.",
+  "Challenges you created stay open for the friends still in them. Anything on this device that hasn't synced is lost too.": "Os desafios que você criou continuam para os amigos que ainda participam. O que não sincronizou neste aparelho também se perde.",
+  "I understand this can't be undone": "Entendo que isso não pode ser desfeito",
+  "You're offline. Connect to the internet to delete your account.": "Você está sem conexão. Conecte-se à internet para excluir a conta.",
+  "Couldn't delete your account. Nothing was removed.": "Não deu para excluir sua conta. Nada foi apagado.",
+  "Deleting…": "Excluindo…",
+  "Delete for good": "Excluir para sempre",
+  "Account deleted": "Conta excluída",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

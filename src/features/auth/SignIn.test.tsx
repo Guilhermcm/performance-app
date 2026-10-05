@@ -25,6 +25,12 @@ describe('SignIn', () => {
     expect((screen.getByRole('button', { name: /google/i }) as HTMLButtonElement).disabled).toBe(false)
   })
 
+  it('links to the public privacy policy page', () => {
+    render(<SignIn />)
+    const link = screen.getByRole('link', { name: /privac/i })
+    expect(link.getAttribute('href')).toBe('/privacidade')
+  })
+
   it('says so and keeps the button off when the server is not configured', () => {
     cfg.configured = false
     render(<SignIn />)

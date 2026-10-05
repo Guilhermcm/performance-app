@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { fileURLToPath, URL } from 'node:url'
@@ -24,5 +25,8 @@ export default defineConfig({
   plugins: [react(), tailwindcss(), swStamp],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   base: './',
-  build: { chunkSizeWarningLimit: 1500 }
+  build: { chunkSizeWarningLimit: 1500 },
+  // The full suite runs ~300 files in parallel, including PGlite databases and the big exercise
+  // datasets; on a loaded machine the 5 s / 10 s defaults fail tests that pass on their own.
+  test: { testTimeout: 20_000, hookTimeout: 30_000 }
 })

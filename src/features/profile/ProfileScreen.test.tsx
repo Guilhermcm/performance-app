@@ -153,4 +153,16 @@ describe('ProfileScreen', () => {
     expect(screen.getByRole('link', { name: /source code/i }).getAttribute('href')).toBe('https://github.com/Guilhermcm/performance-app')
     expect(SOURCE_URL).toBe('https://github.com/Guilhermcm/performance-app')
   })
+
+  it('puts the account deletion after sign out and before the links', () => {
+    show()
+    const order = [
+      screen.getByRole('button', { name: /sign out/i }),
+      screen.getByRole('button', { name: 'Delete my account' }),
+      screen.getByRole('link', { name: /source code/i })
+    ]
+    for (let i = 1; i < order.length; i++) {
+      expect(order[i - 1].compareDocumentPosition(order[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    }
+  })
 })

@@ -1375,6 +1375,29 @@ export const useStore = create((set, get) => {
       return left.owed ? owedResult(left, { stashed: true }) : { owed: false }
     },
 
+    // The account was deleted on the server (features/profile/account.ts), so nothing of it may
+    // stay on this device. Unlike signOut nothing is pushed and nothing is kept aside: a change
+    // still owed has nowhere to go, and a stash for this account could never come back. Its
+    // stashes go first, so the media clean-up in clearLocalSession keeps none of its files; a
+    // stash another account left here is not this one's to remove.
+    async forgetAccount() {
+      const user = get().user
+      clearTimeout(pushTm)
+      pushTm = null
+      // A request already on its way must not write its answer over the wiped copy.
+      try { if (pulling) await pulling } catch { /* gone with the account */ }
+      try { while (pushing) await pushing } catch { /* same */ }
+      if (user) {
+        const all = await readStashes()
+        const mine = Object.keys(all).filter(k => all[k]?.uid === user.id)
+        if (mine.length) { for (const k of mine) delete all[k]; await writeStashes(all) }
+      }
+      // Only this device's session: the account's sessions elsewhere died with it on the server.
+      try { await api('/api/logout', { method: 'POST', body: '{}' }) } catch { /* the session is unusable anyway */ }
+      logoutOwed(false)
+      await clearLocalSession()
+    },
+
     // Demo build only: drop the seeded example profile back in (Settings → "Reset demo data").
     // Dynamic import so the generator never ships in a self-hosted bundle.
     async resetDemo() {

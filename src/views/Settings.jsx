@@ -404,6 +404,8 @@ export default function Settings() {
       openGym v{__APP_VERSION__} · {t('free & open source (AGPL v3)')}<br />
       <a href={SOURCE_URL} target="_blank" rel="noopener" style={{ display: 'inline-block', padding: '10px 6px' }}>{t('Source code (AGPL-3.0)')}</a> ·{' '}
       <a href="https://github.com/DuarteSantos8/openGym" target="_blank" rel="noopener" style={{ display: 'inline-block', padding: '10px 6px' }}>{t('Based on openGym')}</a><br />
+      {/* A plain link, not a route: the policy is a static page outside the hash router. */}
+      <a href="/privacidade" style={{ display: 'inline-block', padding: '10px 6px' }}>{t('Privacy policy')}</a><br />
       exercise data: hasaneyldrm/exercises-dataset (MIT)<br />
       exercise images and animations © <a href="https://gymvisual.com/" target="_blank" rel="noopener">Gym visual</a>
     </div>
