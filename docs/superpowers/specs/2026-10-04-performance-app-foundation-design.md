@@ -323,6 +323,10 @@ create table public.challenge_members (
 );
 ```
 
+Na 1b, `challenge_members.joined_at` ficou anulável (nulo = convidado, ainda sem resposta) e a
+tabela ganhou `invited_by`, `share_volume`, `final` e `won`; `challenges` ganhou `closed_at`. O
+período vale de 7 a 92 dias contando os dois extremos (`ends_on - starts_on between 6 and 91`).
+
 - Convite: cada usuário tem no máximo 5 convites ativos. `accept_invite(code)` valida
   expiração/uso/auto-convite, cria `friendships` com par ordenado e marca uso.
 - `friendships`: select onde o usuário é `user_a` ou `user_b`; delete idem (desfazer amizade);
@@ -347,7 +351,8 @@ create table public.challenge_members (
 | `get_feed(before timestamptz)` | eventos `workout_completed`/`pr` de amigos com `share_activity = true`, paginado (20) |
 
 Fechamento de semana e de desafios: avaliação **preguiçosa** (em `get_my_progress`,
-`get_challenges`, leaderboard) + job `pg_cron` diário 06:00 UTC como rede de segurança.
+`get_challenges`, leaderboard) + job `pg_cron` diário como rede de segurança: `close-weeks` às
+06:00 UTC e, na 1b, `close-challenges` às 06:15 UTC.
 
 ## 5. Gamificação
 
@@ -444,6 +449,18 @@ Fora do escopo da Fase 1 (Fase 5). O modelo de eventos já as suporta.
   Duração de 7 a 92 dias, 2 a 20 membros. Sucesso no `ends_on` → +300 XP por membro (team) ou
   para quem atingiu (solo), mais as conquistas. Modelos de sono, nutrição e hábitos entram com os
   respectivos pilares.
+
+O valor da carga de um PR não sai no feed nesta fase: o evento `pr` só carrega o exercício, e o
+feed mostra "Recorde: <exercício>". Se um dia o valor entrar, será com um opt-in próprio no perfil.
+O link de convite sobrevive ao login com Google guardado no aparelho (`perf_pending_invite_v1`,
+24 h) e é aceito sozinho quando o perfil fica pronto.
+
+Na 1b, "Convidar amigo" ficou na área Social (lista de amigos e estados vazios de ranking,
+desafios e feed), não no perfil. Como o app usa `HashRouter`, o link é
+`<origem>/#/convite/<code>`. A TabBar passou a ter Início, Plano, Treinar, Social e Stats;
+Exercícios saiu da barra e virou um botão no cabeçalho do Plano. A área Social tem as seções
+Ranking, Desafios, Feed e Amigos (`/social/:section`), e o detalhe do desafio fica em
+`/social/desafios/:id`.
 
 ## 7. UI/UX
 

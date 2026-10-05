@@ -27,7 +27,7 @@ recomendada (impacto em performance física primeiro).
 |---|---|---|---|---|
 | 0 | Fundação | G | — | especificada |
 | 1a | Gamificação individual | M | 0 | concluída |
-| 1b | Social | M | 1a | especificada |
+| 1b | Social | M | 1a | concluída |
 | 2 | Nutrição | G | 1a | a especificar |
 | 3 | Sono | P | 1a | a especificar |
 | 4 | Hábitos + trackers | M | 1a | a especificar |
@@ -88,7 +88,7 @@ certo na virada da semana no fuso do usuário e todas as regras têm teste.
 - Convites por link, amizade mútua, `get_friends` com visibilidade restrita.
 - Ranking semanal e geral.
 - Desafios por modelo (`workouts_count`, `weeks_on_target`, `volume_total`), team/solo.
-- Feed opt-in de treinos e PRs (ReUI Timeline).
+- Feed opt-in de treinos e PRs (linha do tempo própria, no estilo da Timeline do ReUI).
 - TabBar nova com a área social.
 
 **Pronto quando:** duas contas reais viram amigas por link, aparecem no ranking uma da outra, sem
