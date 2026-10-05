@@ -201,6 +201,7 @@ begin
       values (new.user_id, 'strength', 10, 'weight', new.id, v_week);
     end if;
   end if;
+  perform public.evaluate_achievements(new.user_id);
   return null;
 end $$;
 
@@ -260,3 +261,139 @@ begin
 end $$;
 
 revoke all on function public.close_weeks(uuid, boolean) from public, anon, authenticated;
+
+-- Achievements ----------------------------------------------------------------------------------
+
+-- Mirrored by src/features/gamification/achievements.ts (gamification-catalog.test.ts compares
+-- them). friends and challenges_won are never computed here: Phase 1b unlocks those badges with
+-- award_achievement.
+create table public.achievement_catalog (
+  code      text primary key,
+  metric    text not null check (metric in ('workouts', 'prs', 'week_targets', 'best_streak', 'weigh_in_run',
+                                            'level', 'early_workouts', 'friends', 'challenges_won')),
+  threshold integer not null check (threshold > 0),
+  xp        integer not null check (xp >= 0),
+  sort      smallint not null unique
+);
+
+insert into public.achievement_catalog (code, metric, threshold, xp, sort) values
+  ('first_workout',   'workouts',        1,   50,  10),
+  ('workouts_10',     'workouts',       10,  100,  20),
+  ('workouts_50',     'workouts',       50,  200,  30),
+  ('workouts_100',    'workouts',      100,  300,  40),
+  ('workouts_250',    'workouts',      250,  500,  50),
+  ('workouts_500',    'workouts',      500,  800,  60),
+  ('first_pr',        'prs',             1,   50,  70),
+  ('prs_10',          'prs',            10,  150,  80),
+  ('prs_50',          'prs',            50,  400,  90),
+  ('week_target_1',   'week_targets',    1,   75, 100),
+  ('streak_4',        'best_streak',     4,  150, 110),
+  ('streak_12',       'best_streak',    12,  400, 120),
+  ('streak_26',       'best_streak',    26,  800, 130),
+  ('streak_52',       'best_streak',    52, 1500, 140),
+  ('weigh_in_7',      'weigh_in_run',    7,  100, 150),
+  ('level_10',        'level',          10,    0, 160),
+  ('level_25',        'level',          25,    0, 170),
+  ('level_50',        'level',          50,    0, 180),
+  ('first_friend',    'friends',         1,   50, 190),
+  ('challenge_first', 'challenges_won',  1,  200, 200),
+  ('challenge_won_5', 'challenges_won',  5,  500, 210),
+  ('early_bird',      'early_workouts',  5,  100, 220);
+
+create table public.user_achievements (
+  user_id     uuid not null references auth.users on delete cascade,
+  code        text not null references public.achievement_catalog,
+  unlocked_at timestamptz not null default now(),
+  primary key (user_id, code)
+);
+
+alter table public.achievement_catalog enable row level security;
+alter table public.user_achievements enable row level security;
+create policy achievement_catalog_select on public.achievement_catalog for select to authenticated using (true);
+create policy user_achievements_select_own on public.user_achievements for select to authenticated using (user_id = auth.uid());
+revoke insert, update, delete, truncate on public.achievement_catalog, public.user_achievements from anon, authenticated;
+grant select on public.achievement_catalog, public.user_achievements to authenticated;
+
+create or replace function public.achievement_stats(p_user uuid) returns jsonb
+language sql stable security definer set search_path = public as $$
+  select jsonb_build_object(
+    'workouts', (select count(*) from public.activity_events where user_id = p_user and kind = 'workout_completed'),
+    'prs', (select count(*) from public.activity_events where user_id = p_user and kind = 'pr'),
+    'week_targets', (select count(*) from public.xp_ledger where user_id = p_user and reason = 'week_target'),
+    'best_streak', coalesce((select best from public.streaks where user_id = p_user and kind = 'training_week'), 0),
+    -- Longest run of consecutive weigh-in days (gaps and islands).
+    'weigh_in_run', coalesce((
+      select max(n) from (
+        select count(*) as n from (
+          select d - (row_number() over (order by d))::int as grp
+            from (select distinct occurred_on as d from public.activity_events
+                   where user_id = p_user and kind = 'weight_logged') days
+        ) runs group by grp
+      ) lengths), 0),
+    -- Live sessions only: the app sends the local start hour for those, never for backfills.
+    'early_workouts', (select count(*) from public.activity_events
+                        where user_id = p_user and kind = 'workout_completed'
+                          and jsonb_typeof(payload -> 'hour') = 'number' and (payload ->> 'hour')::numeric < 7)
+  )
+$$;
+
+-- Pure: which catalogue codes the stats reach that are not unlocked yet, in catalogue order.
+-- Mirrored by evaluateAchievements in src/features/gamification/achievements.ts.
+create or replace function public.achievements_for_stats(p_stats jsonb, p_unlocked text[]) returns text[]
+language sql stable set search_path = public as $$
+  select coalesce(array_agg(code order by sort), '{}')
+    from public.achievement_catalog
+   where not (code = any (coalesce(p_unlocked, '{}')))
+     and jsonb_typeof(p_stats -> metric) = 'number'
+     and (p_stats ->> metric)::numeric >= threshold
+$$;
+
+-- General bonus (pillar null), paid once per (user, reason). Week: the user's current one unless given.
+create or replace function public.award_bonus_xp(p_user uuid, p_amount integer, p_reason text, p_week date default null)
+returns boolean
+language plpgsql security definer set search_path = public as $$
+begin
+  if p_amount is null or p_amount <= 0 or p_amount > 5000 then
+    raise exception 'invalid_amount' using errcode = '22023';
+  end if;
+  insert into public.xp_ledger (user_id, pillar, amount, reason, event_id, week_start)
+  values (p_user, null, p_amount, p_reason, null, coalesce(p_week, public.local_week_start(p_user)))
+  on conflict (user_id, reason) where event_id is null do nothing;
+  return found;
+end $$;
+
+create or replace function public.award_achievement(p_user uuid, p_code text) returns boolean
+language plpgsql security definer set search_path = public as $$
+declare
+  v_xp integer;
+begin
+  select xp into v_xp from public.achievement_catalog where code = p_code;
+  if not found then raise exception 'unknown_achievement' using errcode = '22023'; end if;
+  insert into public.user_achievements (user_id, code) values (p_user, p_code) on conflict do nothing;
+  if not found then return false; end if;
+  if v_xp > 0 then perform public.award_bonus_xp(p_user, v_xp, 'achievement:' || p_code); end if;
+  return true;
+end $$;
+
+create or replace function public.evaluate_achievements(p_user uuid) returns text[]
+language plpgsql security definer set search_path = public as $$
+declare
+  v_new   text[];
+  v_more  text[];
+  v_code  text;
+  v_total bigint;
+begin
+  v_new := public.achievements_for_stats(public.achievement_stats(p_user),
+             array(select code from public.user_achievements where user_id = p_user));
+  foreach v_code in array v_new loop perform public.award_achievement(p_user, v_code); end loop;
+  -- Level badges last: the XP of the badges above may be what reaches the level.
+  select coalesce(sum(amount), 0) into v_total from public.xp_ledger where user_id = p_user;
+  v_more := public.achievements_for_stats(
+              jsonb_build_object('level', (select level from public.level_for(v_total))),
+              array(select code from public.user_achievements where user_id = p_user));
+  foreach v_code in array v_more loop perform public.award_achievement(p_user, v_code); end loop;
+  return v_new || v_more;
+end $$;
+
+revoke all on function public.achievement_stats(uuid), public.award_bonus_xp(uuid, integer, text, date),
+  public.award_achievement(uuid, text), public.evaluate_achievements(uuid) from public, anon, authenticated;
