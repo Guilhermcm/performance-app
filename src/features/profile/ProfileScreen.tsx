@@ -176,7 +176,7 @@ export default function ProfileScreen() {
                 <h2 id={'sec-' + section.key} className="text-[15px] font-semibold">{title}</h2>
                 {!open && (
                   <Button variant="ghost" className="-mr-3 h-11 gap-2 rounded-full px-3 text-muted-foreground hover:text-foreground"
-                    aria-label={t('Edit') + ' — ' + title} disabled={editing !== null && busy} onClick={() => startEdit(section.key)}>
+                    aria-label={t('Edit') + ': ' + title} disabled={editing !== null && busy} onClick={() => startEdit(section.key)}>
                     <Pencil className="size-4" />{t('Edit')}
                   </Button>
                 )}

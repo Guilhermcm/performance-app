@@ -59,7 +59,7 @@ export function derivePack(l, pack) {
 }
 
 let lang = 'en'                 // set only by _setLangState, called from i18n.js setLang
-let dict = {}                   // current locale pack (empty = English fallback)
+let dict = {}                   // current locale pack (for English: display overrides, or empty)
 let instr = null                // { exId: [steps] } for the current language, null = English
 let exerciseNames = null        // { exId: translated name }, null = original catalogue name
 let enParens = true               // whether translated names show the English original in parentheses
@@ -133,7 +133,8 @@ export const exerciseNameSearchText = ex => {
 // `dict`, `instr` and `exerciseNames` may be null to reset to their English fallbacks.
 export function _setLangState(newLang, newDict, newInstr, newExerciseNames, showEn = true, enOnlyFlag = false) {
   lang = LANGS[newLang] ? newLang : 'en'
-  dict = lang === 'en' ? {} : (newDict || {})
+  // For 'en' the dict is the display-override table (en-overrides.js), or {} for plain source text.
+  dict = newDict || {}
   instr = lang === 'en' || !INSTR_LANGS.includes(baseLang(lang)) ? null : (newInstr || null)
   exerciseNames = lang === 'en' || !EXERCISE_NAME_LANGS.includes(baseLang(lang))
     ? null

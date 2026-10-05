@@ -41,7 +41,8 @@ export async function setLang(l, showEn, enOnly) {
   lastEnOnly = only
   const base = baseLang(l)
   let dict = {}, instr = null, exerciseNames = null
-  try { dict = base === 'en' ? {} : (await localePacks['../locales/' + base + '.js']()).default } catch (e) { dict = {} }
+  // English has no translation pack, only the small display-override table in en-overrides.js.
+  try { dict = base === 'en' ? (await import('./en-overrides.js')).default : (await localePacks['../locales/' + base + '.js']()).default } catch (e) { dict = {} }
   try { instr = base === 'en' || !INSTR_LANGS.includes(base) ? null : (await instrPacks['../instr/' + base + '.js']()).default } catch (e) { instr = null }
   try {
     exerciseNames = base === 'en' || !EXERCISE_NAME_LANGS.includes(base)

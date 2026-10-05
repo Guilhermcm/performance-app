@@ -547,7 +547,7 @@ function HevyImportSheet({ close }) {
       />
       <div className="small" style={{ margin: '10px 0 16px', lineHeight: 1.45 }}>
         <a href={HEVY_DEV_SETTINGS} target="_blank" rel="noopener noreferrer">{t('Get your API key')}</a>
-        <span className="dim"> — {t('Hevy → Settings → Developer')}</span>
+        <span className="dim">: {t('Hevy → Settings → Developer')}</span>
       </div>
       {busy && <div className="small dim" style={{ marginBottom: 12 }}>{hevyProgressLabel(progress)}</div>}
       <Button variant="primary" onClick={fetchAccount} disabled={busy || !apiKey.trim()}>

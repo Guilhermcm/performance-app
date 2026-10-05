@@ -30,6 +30,9 @@ Vale para todo texto que uma pessoa usuária lê: strings de interface (`t('...'
    (português) ou `humanizer` (inglês). O objetivo é soar natural e direto, sem mudar o sentido.
 3. Toda string nova entra em todos os 16 packs de `src/locales/` (pt-BR como `PT_BR_OVERRIDES`),
    e os dois scripts de locale acima precisam passar.
+4. Para corrigir o texto em inglês de uma chave antiga sem renomeá-la, use `EN_OVERRIDES` em
+   `src/lib/en-overrides.js`. O teste `src/lib/public-copy.test.js` barra travessão como pausa no
+   texto efetivo de en e pt-BR.
 
 ## Código
 
