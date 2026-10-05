@@ -21,6 +21,8 @@ import Toast from './components/Toast.jsx'
 import RestTimer from './components/RestTimer.jsx'
 import TimerFlash from './components/TimerFlash.jsx'
 import SignIn from './features/auth/SignIn.tsx'
+import ProfileGate from './features/profile/ProfileGate.tsx'
+import { useProfile } from './features/profile/useProfile.ts'
 import Home from './views/Home.jsx'
 import CheckIn from './views/CheckIn.jsx'
 import Plan from './views/Plan.jsx'
@@ -131,6 +133,11 @@ function Shell() {
   // bound to the workout, not to the route — checking Stats mid-session keeps the screen on
   useWakeLock(!!S.active && !S.active.editingWorkoutId && S.keepAwake !== false)
 
+  // The profile in memory belongs to whoever is signed in; signing out drops it.
+  useEffect(() => { if (!user) useProfile.getState().reset() }, [user?.id])
+  // No tab bar while the profile loads or the onboarding is on screen (a guest has no profile).
+  const profileReady = useProfile(s => s.status === 'ready' && !s.onboarding) || !user
+
   const authed = user || isGuest
   if (!ready && !authed) return (
     <div id="app">
@@ -144,29 +151,35 @@ function Shell() {
 
   return (
     <>
-      {/* keyed on the route: a view that throws is contained, and switching tabs
-          re-mounts the boundary, so the tab bar is always a way out */}
-      <div id="app" className="vfade" key={loc.pathname}>
-        <ErrorBoundary>
-          <Routes>
-            <Route path="/home" element={<Home />} />
-            {/* Gym check-in — switched off in Settings, the route falls through to the
-                catch-all redirect below. */}
-            {S.checkIn !== false && <Route path="/checkin" element={<CheckIn />} />}
-            <Route path="/plan" element={<Plan />} />
-            <Route path="/plan/r/:id" element={<RoutineEdit />} />
-            <Route path="/workout" element={<Workout />} />
-            <Route path="/stats" element={<Stats />} />
-            <Route path="/history" element={<History />} />
-            <Route path="/library" element={<Library />} />
-            <Route path="/muscles" element={<Muscles />} />
-            <Route path="/structural-balance" element={<StructuralBalance />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="*" element={<Navigate to="/home" replace />} />
-          </Routes>
-        </ErrorBoundary>
-      </div>
-      <TabBar onStart={startFlow} />
+      {/* Loading, error and onboarding screens own the whole viewport, like SignIn: the gate
+          sits outside #app and its padding, and the tab bar waits for a ready profile. */}
+      <ErrorBoundary>
+        <ProfileGate>
+          {/* keyed on the route: a view that throws is contained, and switching tabs
+              re-mounts the boundary, so the tab bar is always a way out */}
+          <div id="app" className="vfade" key={loc.pathname}>
+            <ErrorBoundary>
+              <Routes>
+                <Route path="/home" element={<Home />} />
+                {/* Gym check-in — switched off in Settings, the route falls through to the
+                    catch-all redirect below. */}
+                {S.checkIn !== false && <Route path="/checkin" element={<CheckIn />} />}
+                <Route path="/plan" element={<Plan />} />
+                <Route path="/plan/r/:id" element={<RoutineEdit />} />
+                <Route path="/workout" element={<Workout />} />
+                <Route path="/stats" element={<Stats />} />
+                <Route path="/history" element={<History />} />
+                <Route path="/library" element={<Library />} />
+                <Route path="/muscles" element={<Muscles />} />
+                <Route path="/structural-balance" element={<StructuralBalance />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="*" element={<Navigate to="/home" replace />} />
+              </Routes>
+            </ErrorBoundary>
+          </div>
+        </ProfileGate>
+      </ErrorBoundary>
+      {profileReady && <TabBar onStart={startFlow} />}
       <RestTimer />
       <Modals />
       <Toast />

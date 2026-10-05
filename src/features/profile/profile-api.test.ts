@@ -69,4 +69,8 @@ describe('validateProfileInput', () => {
   ])('flags %j on %s', (input, field) => {
     expect(Object.keys(validateProfileInput(input))).toContain(field)
   })
+
+  it('refuses a number that did not parse', () => {
+    expect(Object.keys(validateProfileInput({ height_cm: NaN, weight_kg: NaN }))).toEqual(['height_cm', 'weight_kg'])
+  })
 })
