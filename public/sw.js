@@ -1,10 +1,10 @@
-/* openGym service worker — the app shell and its hashed assets are cached at install and kept
+/* Performance service worker: the app shell and its hashed assets are cached at install and kept
    fresh network-first, media (img/gif) cache-first in a cache of its own. A home-screen app
    reopened without a network comes back from here with the same bundle it last ran; the state
    itself lives in localStorage. `CACHE` carries the build hash (vite.config.js rewrites it), so
    every deploy is a new worker with its own cache and the previous build's files are dropped on
    activate; the media cache (`MEDIA`) is kept across builds. */
-const CACHE = 'opengym-rt-__BUILD__'
+const CACHE = 'performance-rt-__BUILD__'
 
 /* Exercise media (img/, gif/) lives in a cache of its own that outlives builds (#281). It used to
    share the build's cache, so every update swept every animation along with the old bundle, and
@@ -20,7 +20,7 @@ const CACHE = 'opengym-rt-__BUILD__'
    installed on the home screen only; a browser tab gets what it has shown and nothing more — and
    names it too, so a new name has to change there as well (sw-media.test.js pins the two
    together). */
-const MEDIA = 'opengym-media-v1'
+const MEDIA = 'performance-media-v1'
 const MEDIA_MAX_BYTES = 150 * 1024 * 1024
 const MEDIA_MAX_ITEMS = 3000
 // What an entry without a Content-Length is counted as: a little above the catalogue's average.
@@ -160,9 +160,9 @@ self.addEventListener('push', e => {
     // One alert per kind: a new rest-timer push replaces the last one instead of stacking
     // up in the tray (issue #172). `tag` alone should do that, but iOS keeps every one, so
     // the previous notification with the same tag is closed by hand first.
-    const tag = data.tag || 'opengym'
+    const tag = data.tag || 'performance'
     try { for (const n of await self.registration.getNotifications({ tag })) n.close() } catch {}
-    await self.registration.showNotification(data.title || 'openGym', {
+    await self.registration.showNotification(data.title || 'Performance', {
       body: data.body || '',
       icon: 'icon-512.png',
       badge: 'icon-180.png',
