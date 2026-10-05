@@ -26,6 +26,12 @@ export function setRemoteAuth(base, token) { remoteBase = base || ''; remoteToke
 
 export { appBase }
 
+// A transport answers api() calls in place of the HTTP server — the Supabase adapter
+// (lib/backend.ts) installs itself here at start-up. Tests that exercise the fetch path leave it
+// unset.
+let transport = null
+export function setTransport(fn) { transport = fn || null }
+
 // How long one request may take before it counts as no answer at all. A black-holed connection
 // (captive portal, half-open socket, a phone between two networks) never settles on its own, and
 // the store runs one push and one pull at a time: a single hung request used to hold every later
@@ -38,6 +44,10 @@ const TIMEOUT_MS = 60000
 const failure = (message, code, status) => Object.assign(new Error(message), { code, status })
 
 export async function api(path, opts) {
+  if (transport) {
+    const { timeout, ...init } = opts || {}
+    return transport(path, init)
+  }
   const { timeout, ...init } = opts || {}
   // A phone with no server to talk to: local mode, or a pairing that is gone. There is no
   // relative URL to fall back on here — the WebView's own origin is Capacitor's local asset
@@ -92,6 +102,7 @@ async function exchange(url, init) {
 // origin is Capacitor's asset server, which answers every path with index.html: the phones sent
 // every "left" to https://localhost/api/activity. The api() call beside it reaches the server.
 export function beacon(path, body) {
+  if (transport) return false
   if (MOBILE) return false
   try {
     if (typeof navigator === 'undefined' || typeof navigator.sendBeacon !== 'function') return false
