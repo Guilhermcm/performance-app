@@ -214,3 +214,72 @@ revoke all on function public.create_invite(), public.accept_invite(text) from p
 grant execute on function public.create_invite(), public.accept_invite(text) to authenticated;
 revoke all on function public.get_invite(text) from public;
 grant execute on function public.get_invite(text) to anon, authenticated;
+
+-- Friends ------------------------------------------------------------------------------------------
+
+-- Friend cards: who they are and the Phase 1a public card (levels, week XP, streak, badges).
+create or replace function public.get_friends() returns jsonb
+language plpgsql stable security definer set search_path = public as $$
+declare
+  v_me uuid := auth.uid();
+begin
+  if v_me is null then raise exception 'not_signed_in' using errcode = '28000'; end if;
+  return coalesce((
+    select jsonb_agg(jsonb_build_object(
+             'id', p.id, 'name', p.display_name, 'avatar_url', p.avatar_url,
+             'since', f.created_at, 'shares_activity', p.share_activity,
+             'card', public.progress_card(p.id))
+           order by lower(p.display_name), p.id)
+      from public.friendships f
+      join public.profiles p on p.id = case when f.user_a = v_me then f.user_b else f.user_a end
+     where v_me in (f.user_a, f.user_b)), '[]'::jsonb);
+end $$;
+
+-- Feed ---------------------------------------------------------------------------------------------
+
+-- Finished workouts of friends who share (checked now, not when the workout happened), newest
+-- first, 20 at a time. The PRs of a session ride along by source_ref (<session>:<exercise>):
+-- only the exercise ids. The set count is the one number shown; volume, start hour and weights
+-- never leave the server.
+create or replace function public.get_feed(p_before timestamptz default null, p_before_id bigint default null)
+returns jsonb
+language plpgsql stable security definer set search_path = public as $$
+declare
+  v_me    uuid := auth.uid();
+  v_items jsonb;
+  v_n     integer;
+begin
+  if v_me is null then raise exception 'not_signed_in' using errcode = '28000'; end if;
+  select coalesce(jsonb_agg(x.item order by x.created_at desc, x.id desc), '[]'::jsonb), count(*)
+    into v_items, v_n
+    from (
+      select e.id, e.created_at, jsonb_build_object(
+               'id', e.id, 'at', e.created_at, 'day', e.occurred_on,
+               'user', jsonb_build_object('id', p.id, 'name', p.display_name, 'avatar_url', p.avatar_url),
+               'sets', case when jsonb_typeof(e.payload -> 'sets') = 'number'
+                            then least(greatest((e.payload ->> 'sets')::numeric, 0), 999)::int end,
+               'prs', coalesce((
+                 select jsonb_agg(left(pr.payload ->> 'ex', 40) order by pr.id)
+                   from public.activity_events pr
+                  where pr.user_id = e.user_id and pr.kind = 'pr'
+                    and jsonb_typeof(pr.payload -> 'ex') = 'string'
+                    and left(pr.source_ref, char_length(e.source_ref) + 1) = e.source_ref || ':'), '[]'::jsonb)
+             ) as item
+        from public.activity_events e
+        join public.profiles p on p.id = e.user_id
+       where e.kind = 'workout_completed'
+         and p.share_activity
+         and e.user_id in (select public.friend_ids(v_me))
+         and (p_before is null
+              or (e.created_at, e.id) < (p_before, coalesce(p_before_id, 9223372036854775807)))
+       order by e.created_at desc, e.id desc
+       limit 20
+    ) x;
+  return jsonb_build_object(
+    'items', v_items,
+    'next', case when v_n = 20 then
+      jsonb_build_object('before', v_items -> 19 -> 'at', 'before_id', v_items -> 19 -> 'id') end);
+end $$;
+
+revoke all on function public.get_friends(), public.get_feed(timestamptz, bigint) from public, anon;
+grant execute on function public.get_friends(), public.get_feed(timestamptz, bigint) to authenticated;
