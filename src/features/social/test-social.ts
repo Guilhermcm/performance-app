@@ -10,7 +10,7 @@ export function friendOf(id: string, name: string, over: Partial<Friend> = {}): 
   const w = p.week
   const card: FriendCard = {
     total_xp: p.total_xp, level: p.level, pillars: p.pillars, streak: p.streak, achievements: p.achievements,
-    week: { start: w.start, xp: w.xp, max: w.max, target: w.target, workouts: w.workouts, extras: w.extras, prs: w.prs, target_hit: w.target_hit }
+    week: { start: w.start, xp: w.xp, max: w.max, target: w.target, workouts: w.workouts, extras: w.extras, prs: w.prs, target_hit: w.target_hit, pillars: w.pillars }
   }
   return { id, name, avatar_url: null, since: '2026-10-01T12:00:00Z', shares_activity: true, card, ...over }
 }

@@ -18,6 +18,9 @@ import { PersonAvatar } from './components/PersonAvatar'
 import { EmptyState, ErrorState, ListSkeleton, StaleNote } from './components/states'
 import type { Friend, MyInvite } from './types'
 
+// Friends never receive private badges, so the count leaves them out of the total too.
+const PUBLIC_BADGES = ACHIEVEMENTS.filter(a => !a.private).length
+
 type AppStore = { user: { id: string } | null }
 
 // Friends: invite button, open invites (share again, cancel), the list and each friend's card.
@@ -159,7 +162,7 @@ function FriendSheet({ friend, onClose }: { friend: Friend | null; onClose: () =
               <div>
                 <p className="flex items-baseline justify-between gap-3 text-sm">
                   <span className="font-medium">{t('Achievements')}</span>
-                  <span className="text-muted-foreground">{t('{0} of {1} unlocked', c.achievements.length, ACHIEVEMENTS.length)}</span>
+                  <span className="text-muted-foreground">{t('{0} of {1} unlocked', c.achievements.length, PUBLIC_BADGES)}</span>
                 </p>
                 {recent.length > 0 && (
                   <ul className="mt-2 flex list-none flex-wrap gap-2 p-0">

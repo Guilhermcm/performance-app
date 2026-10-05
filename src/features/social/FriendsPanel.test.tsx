@@ -19,6 +19,7 @@ import { useSocial } from './useSocial'
 import { SocialError } from './social-api'
 import { useStore } from '../../store/useStore.js'
 import { BIA, ME, friendOf } from './test-social'
+import { ACHIEVEMENTS } from '../gamification/achievements'
 
 const realLoad = useSocial.getState().load
 const load = vi.fn(async () => null)
@@ -102,6 +103,17 @@ describe('FriendsPanel', () => {
     fireEvent.click(within(sheet).getByRole('button', { name: 'Remove' }))
     await waitFor(() => expect(h.removeFriend).toHaveBeenCalledWith(ME, BIA))
     expect(h.toast).toHaveBeenCalledWith('Bia removed from your friends')
+  })
+
+  it('counts only the badges a friend can see', () => {
+    const friend = friendOf(BIA, 'Bia')
+    friend.card.achievements = [{ code: 'first_workout', unlocked_at: '2026-10-01T12:00:00Z' }]
+    useSocial.setState({ friends: ready([friend]) })
+    render(<FriendsPanel />)
+    fireEvent.click(screen.getByRole('button', { name: /Bia/ }))
+    const visible = ACHIEVEMENTS.filter(a => !a.private).length
+    expect(visible).toBeLessThan(ACHIEVEMENTS.length)
+    expect(within(screen.getByRole('dialog')).getByText(`1 of ${visible} unlocked`)).toBeTruthy()
   })
 
   it('cancels an open invite', async () => {

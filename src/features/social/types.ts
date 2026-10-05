@@ -2,8 +2,9 @@ import type { Progress, WeekProgress } from '../gamification/types'
 
 export type Person = { id: string; name: string; avatar_url: string | null }
 
-// progress_card (supabase/migrations/0002_gamification.sql): what friends may see of a Progress.
-export type FriendCard = Omit<Progress, 'today' | 'stats' | 'week'> & { week: Omit<WeekProgress, 'weighed_today'> }
+// progress_card (supabase/migrations/0012_nutrition_progress.sql): what friends may see of a
+// Progress. No private badges, no nutrition block, no radar.
+export type FriendCard = Omit<Progress, 'today' | 'stats' | 'week' | 'nutrition' | 'radar'> & { week: Omit<WeekProgress, 'weighed_today'> }
 
 export type Friend = Person & { since: string; shares_activity: boolean; card: FriendCard }
 
