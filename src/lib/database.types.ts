@@ -59,6 +59,18 @@ export interface Database {
         Update: never
         Relationships: []
       }
+      friend_invites: {
+        Row: { code: string; inviter_id: string; created_at: string; expires_at: string; used_by: string | null; used_at: string | null }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      friendships: {
+        Row: { user_a: string; user_b: string; created_at: string }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: {
