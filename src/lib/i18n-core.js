@@ -9,6 +9,9 @@ export const LANGS = {
   tr: 'Türkçe', ru: 'Русский', uk: 'Українська', zh: '中文',
   ko: '한국어', hi: 'हिन्दी', th: 'ไทย', hu: 'Magyar', ar: 'العربية'
 }
+// Languages the app offers in its pickers. The other packs stay on disk (lazy-loaded) until the
+// Phase 5 clean-up; pt-BR inherits from pt.js, so that file stays regardless.
+export const SELECTABLE_LANGS = ['en', 'pt-BR']
 export const INSTR_LANGS = ['en', 'es', 'fr', 'it', 'tr', 'ru', 'zh', 'hi', 'pl', 'ko', 'pt-BR', 'hu', 'ar']
 export const EXERCISE_NAME_LANGS = ['pt-BR', 'hu', 'de', 'es', 'ru', 'it', 'fr']
 // Languages rendered right-to-left; i18n.js setLang applies the direction from this.

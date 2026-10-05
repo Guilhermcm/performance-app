@@ -213,3 +213,11 @@ describe('English-name switches with every exercise-name pack', () => {
     _setLangState('en', {}, null, null)
   })
 })
+
+import { SELECTABLE_LANGS } from './i18n-core.js'
+
+describe('SELECTABLE_LANGS', () => {
+  it('offers only English and Brazilian Portuguese', () => {
+    expect(SELECTABLE_LANGS).toEqual(['en', 'pt-BR'])
+  })
+})

@@ -4,7 +4,6 @@ import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import Settings from './Settings.jsx'
 import { createMediaStore, memoryBackend, _setMediaStore } from '../lib/media-store.js'
-import { _resetMediaOwed } from '../lib/media-owed.js'
 import { readZip, zipStore } from '../lib/zip.js'
 import { sha256Hex } from '../lib/sha256.js'
 import { jpeg } from '../lib/media-samples.test-util.js'
@@ -12,8 +11,8 @@ import { jpeg } from '../lib/media-samples.test-util.js'
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 /* Settings → Data with photos and videos: the JSON export says it leaves them out, the zip export
-   carries them, Import takes either, and "Reset everything" takes the files too — on the server
-   once the empty state is there, and on this device except what a stash still refers to. */
+   carries them, Import takes either, and "Reset everything" takes the files on this device too,
+   except what a stash still refers to. */
 const mocks = vi.hoisted(() => {
   const state = { S: null, user: null, config: null, sync: { status: 'ok' }, stashed: new Set() }
   state.replaceState = vi.fn()
@@ -57,8 +56,6 @@ vi.mock('../lib/api.js', () => ({
 vi.mock('../lib/push.js', () => ({ pushSupported: () => false, enablePush: vi.fn(), disablePush: vi.fn(), sendTestPush: vi.fn() }))
 vi.mock('../lib/wakelock.js', () => ({ wakeLockSupported: () => false }))
 vi.mock('../lib/mobile.js', () => ({ MOBILE: false, isAndroid: () => Promise.resolve(false), shareExport: vi.fn(), shareExportBlob: vi.fn(), syncReminder: vi.fn() }))
-vi.mock('../lib/coach-api.js', () => ({ forgetCoach: vi.fn(() => Promise.resolve()) }))
-vi.mock('./MobileOnboarding.jsx', () => ({ ConnectSheet: () => null }))
 vi.mock('../sheets.jsx', () => ({
   starterPlanSheet: vi.fn(), confirmSheet: (...a) => mocks.confirmSheet(...a), importFromApp: vi.fn(),
   importFromHevy: vi.fn(), equipmentProfileSheet: vi.fn(), menuSheet: (...a) => mocks.menuSheet(...a), askAddDeviceData: vi.fn(),
@@ -104,33 +101,11 @@ afterEach(() => {
 const mount = async () => { act(() => root.render(<Settings />)); await settle() }
 
 describe('Settings — photos and videos', () => {
-  it('the JSON export says it leaves them out, the zip row and the Photos & videos row appear', async () => {
+  it('the JSON export says it leaves them out and the zip row appears', async () => {
     await mount()
     expect(row('Export backup (JSON)').textContent).toContain('Without photos and videos')
     expect(row('Export with photos & videos (.zip)')).toBeTruthy()
-    expect(row('Photos & videos').textContent).toContain('Kept on this device only')
     expect(host.querySelector('input[type="file"][accept=".json,.zip,application/json,application/zip"]')).toBeTruthy()
-  })
-
-  // QA, v1.3.9: a paired phone started in airplane mode has no config yet (it is never cached),
-  // and the row called its photos "Kept on this device only" — the guest's sentence — with no
-  // count of what was waiting, while they went up by themselves once it was back online.
-  it('signed in with the server\'s config not known yet (an offline start): waiting to upload, not kept here only', async () => {
-    _resetMediaOwed()
-    await media.put(HASH, new Blob([PHOTO]), { mime: 'image/jpeg', pending: true })
-    mocks.user = { id: 'u1', name: 'Ana' }
-    mocks.config = null
-    mocks.sync = { status: 'offline', offline: true }
-    await mount()
-    expect(row('Photos & videos').textContent).not.toContain('Kept on this device only')
-    expect(row('Photos & videos').textContent).toContain('1 waiting to upload')
-  })
-
-  it('signed in to a server that stores no photos or videos: kept on this device only', async () => {
-    mocks.user = { id: 'u1', name: 'Ana' }
-    mocks.config = { invite_only: false }
-    await mount()
-    expect(row('Photos & videos').textContent).toContain('Kept on this device only')
   })
 
   it('without any, none of that shows', async () => {
@@ -205,9 +180,7 @@ describe('Settings — photos and videos', () => {
     expect(mocks.importBackup.mock.calls[1][1]).toEqual({ mergeWith: null })
   })
 
-  it('Reset, signed in: pushes, asks the server to sweep, and keeps only what a stash refers to', async () => {
-    mocks.user = { id: 'u1', name: 'Ana' }
-    mocks.config = { media: { imageMB: 2 } }
+  it('Reset keeps only what a stash refers to', async () => {
     const other = 'c'.repeat(64)
     await media.put(HASH, new Blob([PHOTO]), { mime: 'image/jpeg', pending: false })
     await media.put(other, new Blob(['x']), { mime: 'image/png', pending: true })
@@ -216,33 +189,8 @@ describe('Settings — photos and videos', () => {
     act(() => { row('Reset everything').click() })
     act(() => { mocks.confirmSheet.mock.calls[0][0].onConfirm() })
     await until(async () => !(await media.has(HASH)))
-    expect(mocks.pushState).toHaveBeenCalled()
-    expect(mocks.api.mock.calls.map(c => c[0])).toContain('/api/media/sweep')
-    expect(await media.has(HASH)).toBe(false)
-    expect(await media.has(other)).toBe(true)
-  })
-
-  it('Reset: no sweep before the empty state is on the server, nor for a guest', async () => {
-    mocks.user = { id: 'u1', name: 'Ana' }
-    mocks.config = { media: { imageMB: 2 } }
-    mocks.sync = { status: 'offline' }
-    await mount()
-    act(() => { row('Reset everything').click() })
-    act(() => { mocks.confirmSheet.mock.calls[0][0].onConfirm() })
-    await until(() => mocks.pushState.mock.calls.length > 0)
-    await settle()
-    expect(mocks.api.mock.calls.map(c => c[0])).not.toContain('/api/media/sweep')
-    act(() => root.unmount())
-    root = createRoot(host)
-    mocks.user = null
-    mocks.sync = { status: 'ok' }
-    mocks.confirmSheet.mockClear(); mocks.api.mockClear()
-    await media.put(HASH, new Blob([PHOTO]), { mime: 'image/jpeg', pending: true })
-    await mount()
-    act(() => { row('Reset everything').click() })
-    act(() => { mocks.confirmSheet.mock.calls[0][0].onConfirm() })
-    await until(async () => !(await media.has(HASH)))
     expect(mocks.api).not.toHaveBeenCalled()
     expect(await media.has(HASH)).toBe(false)
+    expect(await media.has(other)).toBe(true)
   })
 })
