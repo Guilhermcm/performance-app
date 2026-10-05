@@ -1,6 +1,6 @@
 # performance-app: Design da Fase 2, Nutrição
 
-- **Data:** 2026-10-05 (revisão 2, depois do brainstorming com a skill superpowers)
+- **Data:** 2026-10-05 (revisão 3, depois do brainstorming com a skill superpowers e de duas revisões)
 - **Status:** aguardando revisão
 - **Roadmap:** [docs/ROADMAP.md](../../ROADMAP.md), Fase 2
 - **Base:** [spec da Fundação + Gamificação](2026-10-04-performance-app-foundation-design.md)
@@ -44,7 +44,7 @@ histórico do app antigo e tem receitas, medidas caseiras, calendário e desafio
 
 Perfil > Nutrição (e a tela de convite da aba Nutrição) → interruptor → sheet:
 
-1. Dados que faltarem no perfil (nascimento, sexo, altura, peso).
+1. Dados que faltarem no perfil (nascimento, sexo, altura, peso, objetivo).
 2. Nível de atividade, com as descrições de §3.2, e ritmo quando o objetivo tiver.
 3. Meta calculada, com a conta em uma linha ("gasto estimado 2.740 kcal, +10% para hipertrofia"),
    "Ajustar manualmente" e dias no alvo por semana (3 a 7).
@@ -98,7 +98,8 @@ Exemplo: homem, 30 anos, 80 kg, 178 cm, `moderate`, hipertrofia `standard`. TMB 
 - **Manual**: kcal e os três macros editáveis; aviso sem bloqueio quando `4·P + 4·C + 9·G` difere
   mais de 5% das kcal, com "ajustar carboidrato".
 - **Vigência**: meta nova vale **a partir de amanhã**; a primeira, criada na ativação, vale hoje.
-  O dia é avaliado contra a meta em vigor nele.
+  O dia é avaliado contra a meta em vigor nele. Um dia de período sem meta em vigor (a gravação da
+  primeira meta falhou) não é avaliado.
 
 ### 3.4 Períodos ativos e semana neutra
 
@@ -109,6 +110,8 @@ Exemplo: homem, 30 anos, 80 kg, 178 cm, `moderate`, hipertrofia `standard`. TMB 
 - Uma **semana com algum dia fora de período é neutra**: se a meta semanal for batida nela, soma
   ao streak e paga o bônus; se não for, o streak não quebra e nenhum escudo é gasto. A semana da
   ativação cai nessa regra.
+- Consequência aceita: desligar e religar o pilar torna a semana neutra e protege o streak sem
+  gastar escudo. Para o grupo, isso é aceitável; reavaliar ao abrir ao público.
 
 ## 4. Diário e fechamento do dia
 
@@ -164,11 +167,11 @@ create table public.nutrition_periods (
 );
 ```
 
-- `nutrition_periods` é mantida por trigger em `profiles` (mudança de `nutrition_enabled`); o
-  cliente só lê. Um período com `ended_on = started_on − 1` (ligou e desligou no mesmo dia) não
+- `nutrition_periods` é mantida pelo trigger `after insert or update of nutrition_enabled` em
+  `profiles` (cobre perfil criado já com o pilar ligado); o cliente só lê. Um período com `ended_on = started_on − 1` (ligou e desligou no mesmo dia) não
   cobre dia nenhum.
-- O congelamento de T (`freeze_week_target`) passa a disparar também em
-  `nutrition_days_per_week`.
+- O congelamento de T (`freeze_week_target`) passa a ser
+  `before update of days_per_week, nutrition_days_per_week`.
 
 ### 5.2 Tabelas do pilar
 
@@ -228,10 +231,10 @@ create index user_foods_barcode on public.user_foods (user_id, barcode) where ba
 create table public.nutrition_days (
   user_id    uuid not null references auth.users on delete cascade,
   day        date not null,
-  kcal       numeric(7,1) not null,
-  protein_g  numeric(6,1) not null,
-  carbs_g    numeric(6,1) not null,
-  fat_g      numeric(6,1) not null,
+  kcal       numeric(9,1) not null,          -- 200 itens × 5000 kcal cabem
+  protein_g  numeric(9,1) not null,
+  carbs_g    numeric(9,1) not null,
+  fat_g      numeric(9,1) not null,
   meals      smallint not null,              -- refeições com ao menos um item
   target     jsonb,                          -- retrato da meta; nulo em dia importado sem meta
   logged     boolean not null,
@@ -253,21 +256,33 @@ alimentos da TACO ou do OFF salvos como favoritos. Limite de 500 por pessoa.
   a primeira linha da pessoa (`valid_from = local_today`); update só de linhas com
   `valid_from > local_today` (checado no `using` e no `with check`); sem delete.
 - `food_logs`: CRUD do próprio. Trigger `before insert or update or delete`, ignorado sob a marca
-  de escrita do servidor:
+  de escrita do servidor e, no delete, quando `pg_trigger_depth() > 1` (cascata vinda de
+  `auth.users`, inclusive exclusão pelo painel do Supabase):
   - recusa `day` fora de `{local_today − 1, local_today}` (`day_closed`) e `source = 'import'`;
   - recusa mudar `user_id` ou `day` num update;
-  - limite de 200 itens por dia (`too_many_items`);
+  - limite de 200 itens por dia (`too_many_items`), contando só ids diferentes do que chega (o
+    `before insert` de um upsert roda antes do conflito, e editar um item existente não pode
+    esbarrar no limite);
   - **última escrita vence**: `updated_at` vem do cliente, limitado a `now()`; um update com
-    `updated_at` menor que o gravado é descartado em silêncio (o trigger devolve a linha antiga).
+    `updated_at` menor que o gravado é descartado em silêncio (o trigger devolve `null`).
+  - Sem tombstone: um upsert atrasado de outro aparelho pode recriar um item apagado. Aceito para
+    uma pessoa com poucos itens por dia; o item aparece e pode ser apagado de novo.
 - `user_foods`: CRUD do próprio, até 500.
 - `profiles`: o cliente continua escrevendo as colunas do perfil; `nutrition_periods` é derivado
   por trigger.
+- Todos os triggers novos (`food_logs`, períodos em `profiles`, limite de `user_foods`, última
+  escrita vence) são `security definer set search_path = public`, como `validate_activity_event`,
+  porque leem tabelas e a marca do servidor que o cliente não pode ler.
 
 ### 5.4 Marca de escrita do servidor
 
 - `public.begin_server_write()` faz `set_config('perf.server_write', 'on', true)` (vale só na
-  transação). `public.is_server_write()` lê a marca. As duas têm `execute` revogado de `public`,
-  `anon` e `authenticated`, então não ficam expostas pela API.
+  transação). `public.is_server_write()` lê a marca e trata ausente ou `''` como desligada (depois
+  da primeira transação, o GUC fica como string vazia na sessão). As duas têm `execute` revogado
+  de `public`, `anon` e `authenticated`, então não ficam expostas pela API; só funções e triggers
+  `security definer` as chamam. Um teste PGlite confirma que, como `authenticated`, não há caminho
+  para ligar a marca (nem `set_config` direto vale, porque o PostgREST só expõe `public` e cada
+  requisição é uma transação).
 - Chamam `begin_server_write()`: as funções de fechamento de dia, `delete_my_account` e, na 2b, a
   RPC de importação.
 - `event_kinds` ganha `server_only boolean not null default false`. Entram
@@ -310,13 +325,27 @@ contam `reason = 'week_target'`):
 | `close_all_nutrition_days()` | chamada pelo cron para quem tem período aberto ou dia pendente |
 | `get_nutrition_days(p_from, p_to)` | resumos fechados (máx. 62 dias) + meta em vigor; fecha pendentes antes |
 | `award_xp` | ramo `pillar = 'nutrition'` com §6.3 |
-| `close_weeks` | streak `nutrition_week` com escudos e semana neutra |
+| `close_nutrition_weeks(p_user)` | streak `nutrition_week` com escudos e semana neutra; função própria, `close_weeks` da Força não muda |
 | `achievement_stats` | parte da versão de `0004_social.sql`; métricas de §6.4 (sem dias importados) |
-| `progress_card(p_user, p_for_friend boolean default false)` | ver §6.5; com `p_for_friend` omite conquistas `private`. `get_friends` passa `true` |
-| `get_my_progress` | fecha dias pendentes e devolve os blocos novos de §6.5 |
+| `progress_card(p_user)` | mesma assinatura; vira o cartão público (§6.5): sem conquistas `private`, com `week.max` e `week.pillars` |
+| `my_progress_extras(p_user)` | interna, `stable`: bloco `nutrition`, `radar` e a lista completa de conquistas, só para o próprio |
+| `get_my_progress` | congela o T dos dois pilares, fecha dias pendentes e semanas, e junta `progress_card` + `my_progress_extras` |
 | `delete_my_account` | chama `begin_server_write()` antes de apagar |
 
 Itens de hoje e ontem são lidos direto de `food_logs` pelo cliente.
+
+**Regra geral de assinaturas e privilégios.** Toda função nova ou com assinatura nova segue o
+padrão do projeto: se a assinatura muda, `drop function` da antiga (senão `create or replace` cria
+uma segunda versão, as chamadas antigas ficam ambíguas e a nova nasce com `execute` para
+`public`); funções internas e de trigger com `revoke all ... from public, anon, authenticated`;
+RPCs de cliente (`get_nutrition_days`) com `revoke ... from public, anon` e `grant ... to
+authenticated`. `progress_card(uuid)` **não muda de assinatura** (ver §6.5).
+
+**Volatilidade.** `progress_card` e `get_friends` são `stable` e não podem escrever: os blocos
+novos só leem (o T de Nutrição vem de `weekly_targets` ou, sem linha, de
+`nutrition_days_per_week`). O congelamento de T da Nutrição acontece em `get_my_progress` e
+`close_all_weeks`, chamando `week_target_for(..., 'nutrition')` ao lado do de Força.
+`get_nutrition_days` fecha dias, então é `volatile`.
 
 ## 6. Gamificação
 
@@ -370,23 +399,42 @@ propriedade da Força.
 
 ### 6.5 O que o cliente recebe
 
-`progress_card` (e portanto `get_my_progress`) passa a devolver:
+**`progress_card(p_user)`** (cartão público, usado por `get_friends` e como base do próprio):
 
+- conquistas **sem** as `private`;
 - `week.max = 960 × pilares ativos na semana` (Força sempre; Nutrição se a semana tocou um
-  período) e `week.pillars`: XP da semana por pilar, para a barra segmentada;
-- `nutrition` (só no próprio): T da semana, dias no alvo e dias registrados na semana, streak
-  `nutrition_week`, e `last_closed`: `{day, logged, on_target, balanced, xp}` do último dia
-  fechado;
-- `radar` (§8.4): para cada pilar, `current` e `previous` (0 a 1, ou nulo sem semana ativa).
+  período);
+- `week.pillars`: XP da semana por pilar (`strength`, `nutrition`) e `bonus` (XP geral com
+  `pillar = null`, como conquistas e desafios), para a barra segmentada. O segmento de bônus usa
+  a cor neutra; a barra continua limitada a 100%.
 
-Para amigos (`p_for_friend = true`): níveis por pilar, XP da semana e segmentos continuam; somem
-as conquistas `private` e o bloco `nutrition`. O radar de amigos fica para a Fase 5.
+**`my_progress_extras(p_user)`**, juntado por `get_my_progress` e nunca enviado a amigos:
 
-### 6.6 Celebrações
+- `achievements`: a lista completa, inclusive as `private` (substitui a do cartão);
+- `nutrition`: T da semana corrente, dias no alvo e dias registrados nela, streak
+  `nutrition_week`, `confirms_on` (data em que o dia de hoje fecha, hoje + 2), `last_closed`
+  (`{day, logged, on_target, balanced, xp}` do último dia fechado) e `last_week`
+  (`{start, target_hit}` da última semana com os sete dias fechados);
+- `radar` (§8.4).
 
-`Celebration` (hoje `level | achievement`) ganha `pillar_level` e `week_target` (com pilar). O
-resultado do dia vira toast: "Ontem no alvo, +120 XP" ou "Ontem registrado, +10 XP". O cliente
-guarda o último `last_closed.day` mostrado por conta (`perf_nutrition_seen_v1`) e não repete.
+Para amigos não saem: conquistas `private`, o bloco `nutrition` e o `radar` (derivado de dado de
+saúde). `FriendsPanel` passa a contar no denominador de conquistas só as não privadas.
+
+### 6.6 Celebrações e avisos
+
+- `Celebration` (hoje `level | achievement`) ganha `pillar_level` (`{pillar, level}`) e
+  `week_target` (`{pillar: 'nutrition', week_start}`). A meta semanal da Força continua no resumo
+  pós-treino e não vira celebração.
+- `SeenMarker` (`celebrations.ts`) ganha `pillarLevels` (nível por pilar) e `weekTargets` (último
+  `week_start` celebrado por pilar). Marcador antigo sem esses campos é completado com o progresso
+  atual **sem celebrar nada**, o mesmo critério do primeiro carregamento no aparelho.
+- `week_target` é celebrado quando `nutrition.last_week.target_hit` e `last_week.start` é maior
+  que o guardado.
+- **Resultado do dia** vira toast com o dia da semana de `last_closed.day`, porque ele fecha em
+  D+2: "Sábado no alvo, +120 XP", "Sábado registrado, +10 XP". O cliente guarda o último
+  `last_closed.day` mostrado por conta (`perf_nutrition_seen_v1`) e não repete. Primeiro
+  carregamento no aparelho só grava, sem toast.
+- **Prévia**: o cartão da Home mostra "No alvo até agora, confirma na <dia de `confirms_on`>".
 
 ## 7. Busca, código de barras, favoritos e cópia
 
@@ -410,8 +458,11 @@ Um campo, seções nesta ordem:
 
 ### 7.2 Código de barras
 
-- Leitura: `BarcodeDetector` quando existe; fallback ZXing (pacote decidido no plano, licença
-  compatível com AGPL), carregado sob demanda. Também "Digitar código".
+- Leitura: reaproveita o esqueleto de câmera do check-in (`components/CameraScan.jsx`,
+  `lib/scan-web.js`, `lib/scan.js`). No navegador, `BarcodeDetector` pedindo formatos EAN-13,
+  EAN-8, UPC-A e UPC-E quando existe, com fallback ZXing (o jsQR atual só lê QR; pacote e versão
+  fixados no plano, licença compatível com AGPL), carregado sob demanda. No app nativo, o ML Kit
+  que já está no projeto. Também "Digitar código".
 - Ordem: `user_foods` por `barcode` → OFF `GET /api/v2/product/{code}`. Não achou → "Criar
   alimento" com o código preenchido, salvo em `user_foods`.
 
@@ -466,7 +517,8 @@ scripts/build-taco.mjs                 # planilha TACO → src/features/nutritio
 ### 8.3 Telas
 
 - **TabBar**: Início, Plano, Treinar, Nutrição, Social. Stats vira botão no cabeçalho do Plano e da
-  Home (como Exercícios na 1b). Com o pilar desligado, a aba mostra `NutritionInvite`.
+  Home (como Exercícios na 1b); `/stats`, `/history` e `/structural-balance` passam a acender a
+  aba Plano. Com o pilar desligado, a aba mostra `NutritionInvite`.
 - **`/nutricao`**: Hoje/Ontem, anel de kcal (consumido, meta, restante), três barras de macros
   com rótulo e valor em Geist Mono tabular, as quatro refeições com total, itens, "+" e "Copiar
   de…". Tocar no item edita; deslizar ou menu apaga com desfazer. Dias anteriores: resumo.
@@ -483,23 +535,31 @@ próxima ação, offline sem bloqueio, `prefers-reduced-motion`.
 ### 8.4 Radar de pilares
 
 - **Componente**: shadcn/ui Charts (`chart.tsx`, Recharts, MIT), variante de radar com grade
-  circular e pontos. `PillarRadar` é carregado sob demanda, com skeleton do mesmo tamanho. O mesmo
+  circular e pontos. O plano fixa versões compatíveis com React 19 (Recharts 3, ou 2.x com
+  override de `react-is`). Cores pelo `ChartConfig` a partir de `--pillar-*` e do acento, sem
+  criar `--chart-N`. `PillarRadar` é carregado sob demanda, com skeleton do mesmo tamanho. O mesmo
   `chart.tsx` serve depois para o Stats e a Fase 5.
 - **Eixos**: um por pilar do roadmap: Força, Nutrição, Sono, Hábitos (Foco entra na Fase 6).
   Estados: **ativo** (vértice na cor do pilar, rótulo com ícone, nome e percentual), **desligado**
   (eixo tracejado, cadeado, toque abre a ativação), **em breve** (pilar ainda não lançado,
   tracejado). Rótulos por `tick` customizado.
 - **Valor**: consistência de 0 a 100% = XP do pilar nas últimas 4 semanas fechadas ÷ (960 ×
-  semanas em que o pilar esteve ativo nessa janela). Só pilares com ao menos uma semana ativa têm
-  valor; os outros ficam no centro. Bônus gerais (`pillar = null`) não entram. Semana fechada:
-  Força até a semana anterior; Nutrição até a última semana com os sete dias fechados.
+  semanas ativas do pilar nessa janela), limitado a 1. Bônus gerais (`pillar = null`) não entram.
+  - **Semana fechada**: Força, toda semana antes da corrente; Nutrição, toda semana com
+    `week_start + 6 ≤ local_today − 2` (derivado da data, não de linhas em `nutrition_days`).
+  - **Semana ativa**: Força, a partir da semana de criação do perfil (o mesmo início de
+    `close_weeks`); Nutrição, semana que toca algum período, contando inteira (960) mesmo se o
+    período cobriu só parte dela.
+  - Sem semana ativa na janela, o valor é nulo e o vértice fica no centro com o rótulo do estado.
+  - `previous` é a mesma conta nas 4 semanas fechadas anteriores.
 - **Comparação**: segunda série com o contorno apagado das 4 semanas anteriores.
 - **Visual**: forma em linha de 2 px com preenchimento translúcido na cor de acento; anéis de grade
   discretos em 25/50/75/100%; texto nas cores de texto do tema, nunca na cor do pilar; animação
   da forma ao mudar, só fade com `prefers-reduced-motion`; descrição acessível em texto ("Força
   82%, Nutrição 64%, Sono em breve, Hábitos em breve").
 - **Detalhe**: toque abre sheet com os números por pilar nas duas janelas.
-- O cálculo é do servidor (`radar` em §6.5), coberto pelos cenários de paridade.
+- O cálculo é só do servidor (`radar` em §6.5) e tem testes SQL; o cliente apenas exibe, sem
+  espelho nem paridade.
 
 ## 9. Internacionalização
 
@@ -520,20 +580,25 @@ não são traduzidos; refeições, níveis de atividade e estados do radar são.
   `classify.ts`, `search.ts`, `off-api.ts` (kJ, descarte, 429, cache), `barcode.ts` (ordem de
   busca, fallback), `outbox.ts` (idempotência, ordem, `day_closed`), store, telas (busca, porção,
   leitor com câmera simulada, cópia, ativação, convite, TabBar, cartão da Home, radar com estados
-  de eixo e descrição acessível), celebrações novas.
+  de eixo e descrição acessível), celebrações novas (marcador antigo sem celebrar tudo, toast com
+  o dia da semana, sem repetir).
 - **Vitest + PGlite** (`supabase/tests/nutrition-*.test.ts`): janela hoje/ontem, última escrita
   vence, limite de itens, vigência e update de metas, períodos (ligar, desligar, religar no mesmo
   dia), fechamento (classes, retrato, idempotência, fora de período), XP por T de 3 a 7, limites,
-  bônus, domingo fechando na terça, `nutrition_week` com escudo e semana neutra, reasons próprios
+  bônus, domingo fechando na terça, `nutrition_week` com escudo e semana neutra, soma de 200 itens
+  máximos sem estouro, limite de itens sem barrar edição, cascata pelo painel,
+  `progress_card(uuid)` sem segunda versão e sem `execute` para `public`, reasons próprios
   sem tocar `training_week`/`week_target_1`/`weeks_on_target`, conquistas e métricas,
   `server_only` (cliente não insere; servidor insere fora da janela de 14 dias), `weekly_targets`
   por pilar com `progress_card` e `get_friends` funcionando, `week.max` e segmentos, radar (janela,
   semanas ativas, nulo), RLS (A não lê nada de nutrição de B; `get_friends`, ranking e feed sem
   dado de nutrição nem conquista `private`), exclusão de conta com itens antigos.
-- **Paridade**: cenários JSON de classificação, XP do pilar e radar, nos dois lados.
+- **Paridade**: cenários JSON de classificação e de XP do pilar, nos dois lados (o radar não tem
+  espelho no cliente).
 - **Script da TACO**: valida o JSON gerado (contagem, campos, kcal coerente com macros).
 - **Smoke manual**: ligar o pilar, registrar por busca e por código de barras no iPhone e no
-  Android, copiar refeição, ver o XP e o radar no dia seguinte, outro aparelho.
+  Android, copiar refeição, ver o XP do dia dois dias depois, o radar depois da semana fechar,
+  outro aparelho.
 
 ## 12. Fase 2b: trazer o passado e refinar
 
@@ -589,7 +654,7 @@ apps de saúde, compartilhar refeições, radar de amigos e comparação no rada
 | Busca do OFF fraca em português ou limitada por IP | locais primeiro, comparação de endpoints no plano, cache, mensagem no 429 |
 | Leitor de código de barras ruim no iPhone | fallback ZXing obrigatório, "Digitar código", smoke em aparelho real |
 | Recharts pesar na abertura da Home | radar sob demanda com skeleton |
-| XP chegando dois dias depois ("cadê meu XP?") | prévia "a confirmar amanhã" e toast no fechamento |
+| XP chegando dois dias depois ("cadê meu XP?") | prévia "confirma na <dia>" e toast com o dia da semana no fechamento |
 | Ranking da semana passada mudar até terça | aceito; o ranking padrão é a semana corrente |
 | Cliente forjar eventos do pilar | `server_only` + marca de servidor não exposta, com teste |
 | Dado de saúde vazar para amigos | conquistas `private`, bloco `nutrition` só no próprio, testes de payload |
