@@ -8,9 +8,14 @@ import { startNativeKeyboard } from './lib/native-keyboard.js'
 import './styles/app.css'
 import { setTransport } from './lib/api.js'
 import { backend } from './lib/backend.ts'
+import { supabase } from './lib/supabase.ts'
+import { cleanAuthParams } from './features/auth/auth.ts'
 
 // The store's /api/* calls are answered from Supabase, not an HTTP server of our own.
 setTransport(backend)
+
+// Back from Google: once supabase-js has traded ?code= for a session, drop it from the address bar.
+supabase.auth.getSession().finally(() => cleanAuthParams())
 
 // App.jsx restores per-route scroll itself; the browser's own attempt races it.
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual'

@@ -1663,4 +1663,10 @@ export default {
   'Teal': 'Бирюзовый',
   'Yellow': 'Жёлтый',
   'Enter how long it took — at least 1 minute.': 'Укажите, сколько это длилось — не меньше 1 минуты.',
+  'Train, track, keep the streak.': 'Тренируйся, записывай, держи серию.',
+  'Your workouts, your progress and your consistency — with your friends.': 'Твои тренировки, прогресс и постоянство — вместе с друзьями.',
+  'Continue with Google': 'Продолжить с Google',
+  'Opening Google…': 'Открываем Google…',
+  'Could not start sign-in. Try again.': 'Не удалось начать вход. Попробуй ещё раз.',
+  'The server is not configured yet.': 'Сервер ещё не настроен.',
 }

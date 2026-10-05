@@ -1716,4 +1716,10 @@ export default {
   'Teal': 'أزرق مخضر',
   'Yellow': 'أصفر',
   'Enter how long it took — at least 1 minute.': 'أدخل المدة التي استغرقها — دقيقة واحدة على الأقل.',
+  'Train, track, keep the streak.': 'تمرّن، سجّل، حافظ على السلسلة.',
+  'Your workouts, your progress and your consistency — with your friends.': 'تمارينك وتقدّمك والتزامك — مع أصدقائك.',
+  'Continue with Google': 'المتابعة باستخدام Google',
+  'Opening Google…': 'جارٍ فتح Google…',
+  'Could not start sign-in. Try again.': 'تعذّر بدء تسجيل الدخول. حاول مرة أخرى.',
+  'The server is not configured yet.': 'لم يتم إعداد الخادم بعد.',
 }

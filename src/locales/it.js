@@ -1663,4 +1663,10 @@ export default {
   'Teal': 'Turchese',
   'Yellow': 'Giallo',
   'Enter how long it took — at least 1 minute.': 'Inserisci quanto è durato — almeno 1 minuto.',
+  'Train, track, keep the streak.': 'Allenati, registra, mantieni la serie.',
+  'Your workouts, your progress and your consistency — with your friends.': 'I tuoi allenamenti, i tuoi progressi e la tua costanza — con i tuoi amici.',
+  'Continue with Google': 'Continua con Google',
+  'Opening Google…': 'Apertura di Google…',
+  'Could not start sign-in. Try again.': 'Impossibile avviare l’accesso. Riprova.',
+  'The server is not configured yet.': 'Il server non è ancora configurato.',
 }

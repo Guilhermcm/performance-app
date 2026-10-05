@@ -1663,4 +1663,10 @@ export default {
   'Teal': 'Turkuaz',
   'Yellow': 'Sarı',
   'Enter how long it took — at least 1 minute.': 'Ne kadar sürdüğünü gir — en az 1 dakika.',
+  'Train, track, keep the streak.': 'Antrenman yap, kaydet, seriyi koru.',
+  'Your workouts, your progress and your consistency — with your friends.': 'Antrenmanların, ilerlemen ve istikrarın — arkadaşlarınla.',
+  'Continue with Google': 'Google ile devam et',
+  'Opening Google…': 'Google açılıyor…',
+  'Could not start sign-in. Try again.': 'Giriş başlatılamadı. Tekrar dene.',
+  'The server is not configured yet.': 'Sunucu henüz yapılandırılmadı.',
 }

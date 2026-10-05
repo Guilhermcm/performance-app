@@ -20,7 +20,7 @@ import Modals from './components/Modals.jsx'
 import Toast from './components/Toast.jsx'
 import RestTimer from './components/RestTimer.jsx'
 import TimerFlash from './components/TimerFlash.jsx'
-import Login from './views/Login.jsx'
+import SignIn from './features/auth/SignIn.tsx'
 import Home from './views/Home.jsx'
 import CheckIn from './views/CheckIn.jsx'
 import Plan from './views/Plan.jsx'
@@ -139,6 +139,8 @@ function Shell() {
       </div>
     </div>
   )
+  // Signed out: the sign-in screen owns the whole viewport (no #app padding, no tab bar).
+  if (!authed) return <ErrorBoundary><SignIn /></ErrorBoundary>
 
   return (
     <>
@@ -146,24 +148,22 @@ function Shell() {
           re-mounts the boundary, so the tab bar is always a way out */}
       <div id="app" className="vfade" key={loc.pathname}>
         <ErrorBoundary>
-          {!authed ? <Login /> : (
-            <Routes>
-              <Route path="/home" element={<Home />} />
-              {/* Gym check-in — switched off in Settings, the route falls through to the
-                  catch-all redirect below. */}
-              {S.checkIn !== false && <Route path="/checkin" element={<CheckIn />} />}
-              <Route path="/plan" element={<Plan />} />
-              <Route path="/plan/r/:id" element={<RoutineEdit />} />
-              <Route path="/workout" element={<Workout />} />
-              <Route path="/stats" element={<Stats />} />
-              <Route path="/history" element={<History />} />
-              <Route path="/library" element={<Library />} />
-              <Route path="/muscles" element={<Muscles />} />
-              <Route path="/structural-balance" element={<StructuralBalance />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="*" element={<Navigate to="/home" replace />} />
-            </Routes>
-          )}
+          <Routes>
+            <Route path="/home" element={<Home />} />
+            {/* Gym check-in — switched off in Settings, the route falls through to the
+                catch-all redirect below. */}
+            {S.checkIn !== false && <Route path="/checkin" element={<CheckIn />} />}
+            <Route path="/plan" element={<Plan />} />
+            <Route path="/plan/r/:id" element={<RoutineEdit />} />
+            <Route path="/workout" element={<Workout />} />
+            <Route path="/stats" element={<Stats />} />
+            <Route path="/history" element={<History />} />
+            <Route path="/library" element={<Library />} />
+            <Route path="/muscles" element={<Muscles />} />
+            <Route path="/structural-balance" element={<StructuralBalance />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="*" element={<Navigate to="/home" replace />} />
+          </Routes>
         </ErrorBoundary>
       </div>
       <TabBar onStart={startFlow} />

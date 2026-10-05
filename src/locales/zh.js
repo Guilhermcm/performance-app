@@ -1663,4 +1663,10 @@ export default {
   'Teal': '青色',
   'Yellow': '黄色',
   'Enter how long it took — at least 1 minute.': '请输入用时 — 至少 1 分钟。',
+  'Train, track, keep the streak.': '训练、记录、保持连续。',
+  'Your workouts, your progress and your consistency — with your friends.': '你的训练、你的进步和你的坚持——与朋友一起。',
+  'Continue with Google': '使用 Google 继续',
+  'Opening Google…': '正在打开 Google…',
+  'Could not start sign-in. Try again.': '无法开始登录，请重试。',
+  'The server is not configured yet.': '服务器尚未配置。',
 }

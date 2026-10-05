@@ -1663,4 +1663,10 @@ export default {
   'Teal': 'फ़िरोज़ी',
   'Yellow': 'पीला',
   'Enter how long it took — at least 1 minute.': 'बताएँ कि इसमें कितना समय लगा — कम से कम 1 मिनट।',
+  'Train, track, keep the streak.': 'ट्रेन करें, दर्ज करें, सिलसिला जारी रखें।',
+  'Your workouts, your progress and your consistency — with your friends.': 'आपके वर्कआउट, आपकी प्रगति और आपकी निरंतरता — आपके दोस्तों के साथ।',
+  'Continue with Google': 'Google के साथ जारी रखें',
+  'Opening Google…': 'Google खोला जा रहा है…',
+  'Could not start sign-in. Try again.': 'साइन-इन शुरू नहीं हो सका। फिर से कोशिश करें।',
+  'The server is not configured yet.': 'सर्वर अभी कॉन्फ़िगर नहीं हुआ है।',
 }

@@ -1663,4 +1663,10 @@ export default {
   'Teal': '청록',
   'Yellow': '노랑',
   'Enter how long it took — at least 1 minute.': '걸린 시간을 입력하세요 — 최소 1분.',
+  'Train, track, keep the streak.': '운동하고, 기록하고, 연속 기록을 이어가세요.',
+  'Your workouts, your progress and your consistency — with your friends.': '내 운동, 내 성장, 내 꾸준함 — 친구들과 함께.',
+  'Continue with Google': 'Google로 계속하기',
+  'Opening Google…': 'Google 여는 중…',
+  'Could not start sign-in. Try again.': '로그인을 시작할 수 없습니다. 다시 시도하세요.',
+  'The server is not configured yet.': '서버가 아직 설정되지 않았습니다.',
 }

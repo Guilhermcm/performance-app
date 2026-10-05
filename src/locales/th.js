@@ -1674,4 +1674,10 @@ export default {
   'Teal': 'เขียวน้ำทะเล',
   'Yellow': 'เหลือง',
   'Enter how long it took — at least 1 minute.': 'ใส่ระยะเวลาที่ใช้ — อย่างน้อย 1 นาที',
+  'Train, track, keep the streak.': 'ฝึก บันทึก รักษาสถิติต่อเนื่อง',
+  'Your workouts, your progress and your consistency — with your friends.': 'การออกกำลังกาย ความก้าวหน้า และความสม่ำเสมอของคุณ — ไปพร้อมกับเพื่อน',
+  'Continue with Google': 'ดำเนินการต่อด้วย Google',
+  'Opening Google…': 'กำลังเปิด Google…',
+  'Could not start sign-in. Try again.': 'เริ่มการลงชื่อเข้าใช้ไม่ได้ ลองอีกครั้ง',
+  'The server is not configured yet.': 'ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์',
 }

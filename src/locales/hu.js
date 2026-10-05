@@ -1666,4 +1666,10 @@ export default {
   'Teal': 'Türkiz',
   'Yellow': 'Sárga',
   'Enter how long it took — at least 1 minute.': 'Add meg, meddig tartott — legalább 1 perc.',
+  'Train, track, keep the streak.': 'Edzés, rögzítés, a sorozat megy tovább.',
+  'Your workouts, your progress and your consistency — with your friends.': 'Az edzéseid, a fejlődésed és a kitartásod — a barátaiddal.',
+  'Continue with Google': 'Folytatás Google-fiókkal',
+  'Opening Google…': 'Google megnyitása…',
+  'Could not start sign-in. Try again.': 'Nem sikerült elindítani a bejelentkezést. Próbáld újra.',
+  'The server is not configured yet.': 'A szerver még nincs beállítva.',
 }

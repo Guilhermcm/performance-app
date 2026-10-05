@@ -1660,4 +1660,10 @@ export default {
   'Teal': 'Бірюзовий',
   'Yellow': 'Жовтий',
   'Enter how long it took — at least 1 minute.': 'Вкажи, скільки це тривало — щонайменше 1 хвилину.',
+  'Train, track, keep the streak.': 'Тренуйся, записуй, тримай серію.',
+  'Your workouts, your progress and your consistency — with your friends.': 'Твої тренування, прогрес і сталість — разом із друзями.',
+  'Continue with Google': 'Продовжити з Google',
+  'Opening Google…': 'Відкриваємо Google…',
+  'Could not start sign-in. Try again.': 'Не вдалося почати вхід. Спробуй ще раз.',
+  'The server is not configured yet.': 'Сервер ще не налаштовано.',
 }
