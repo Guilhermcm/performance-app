@@ -46,7 +46,7 @@ Copiar o openGym (último `main`) sem `.git`. Mover `frontend/*` para a raiz.
 
 **Remover:**
 
-- `api/`, `mcp/`, `web/`, `website/`, `kubernetes/`, `scripts/` (raiz), `docker-compose.yml`,
+- `api/`, `mcp/`, `web/`, `website/`, `kubernetes/`, `scripts/` (raiz, exceto as fontes de tradução usadas por testes), `docker-compose.yml`,
   `.dockerignore`, `.env.example` original
 - `frontend/android/`, `frontend/ios/`, `capacitor.config.json`. Os módulos `lib/mobile.js`,
   `lib/demo.js`, `lib/coach*.js`, `lib/remote.js`, `src/vendor/coach-core/` (vendored from openGym
@@ -93,7 +93,7 @@ apontando para o jsDelivr (mesmo commit fixado no `build:mobile` original). Imag
 │  └─ locales/          pt-BR.js (+ en embutido)
 ├─ supabase/
 │  ├─ migrations/       SQL versionado
-│  └─ tests/            pgTAP
+│  └─ tests/            Vitest + PGlite
 ├─ docs/
 ├─ vercel.json
 ├─ components.json      config shadcn
@@ -528,7 +528,7 @@ Telas novas nascem em shadcn. Herdadas migram uma por fase:
   conquistas, convites (expirado, usado, auto-convite), RLS (usuário A não lê peso nem estado de B,
   não insere em `xp_ledger`, não vê feed de quem não compartilha), desafios (team/solo, sucesso e
   falha).
-- **Casos de paridade**: um arquivo JSON de cenários de XP consumido pelos testes vitest e pgTAP,
+- **Casos de paridade**: um arquivo JSON de cenários de XP consumido pelos testes vitest do cliente e do banco (PGlite),
   garantindo que prévia e servidor concordam.
 - **Smoke manual pós-deploy**: login Google, onboarding, treino concluído → XP, convite entre duas
   contas, ranking.
