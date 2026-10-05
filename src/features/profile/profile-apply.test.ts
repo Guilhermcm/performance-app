@@ -8,7 +8,8 @@ const base = { unit: 'kg', lang: 'en', weekStart: 0, bodyweight: [], equipProfil
 const profile: Profile = {
   id: 'u1', display_name: 'Ana', avatar_url: null, birth_date: '1990-05-01', sex: 'female', height_cm: 165,
   weight_kg: 62.5, goal: 'hypertrophy', level: 'beginner', days_per_week: 3, equipment: ['barbell', 'dumbbell'],
-  unit: 'kg', locale: 'pt-BR', timezone: 'America/Sao_Paulo', share_activity: false, created_at: '', updated_at: ''
+  unit: 'kg', locale: 'pt-BR', timezone: 'America/Sao_Paulo', share_activity: false, created_at: '', updated_at: '',
+  activity_level: null, nutrition_pace: 'standard', nutrition_enabled: false, nutrition_days_per_week: 5
 }
 
 describe('applyProfileToState', () => {
