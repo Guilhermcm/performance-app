@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { CloudOff, LoaderCircle, LogIn, RefreshCw, type LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { useOnline } from '@/lib/use-online'
 import { useStore } from '../../store/useStore.js'
 import { t } from '../../lib/i18n.js'
 
@@ -27,18 +28,6 @@ export function syncView(sync: Sync, online: boolean): SyncView {
   if (sync.offline || !online) return sync.pending ? 'offline' : null
   if (sync.lastError) return 'error'
   return null
-}
-
-const isOnline = () => typeof navigator === 'undefined' || navigator.onLine !== false
-function useOnline() {
-  const [online, setOnline] = useState(isOnline)
-  useEffect(() => {
-    const on = () => setOnline(isOnline())
-    window.addEventListener('online', on)
-    window.addEventListener('offline', on)
-    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', on) }
-  }, [])
-  return online
 }
 
 const LOOK: Record<Exclude<SyncView, null>, { icon: LucideIcon; tone: string }> = {
