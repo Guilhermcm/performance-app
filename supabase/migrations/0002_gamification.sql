@@ -170,6 +170,12 @@ begin
       if v_count + 1 = v_target then
         insert into public.xp_ledger (user_id, pillar, amount, reason, event_id, week_start)
         values (new.user_id, 'strength', 150, 'week_target', new.id, v_week);
+        -- A goal met in a week already judged (a session logged into the past) changes that
+        -- week's verdict: replay the streak from the start.
+        if exists (select 1 from public.streaks
+                    where user_id = new.user_id and kind = 'training_week' and last_period >= v_week) then
+          perform public.close_weeks(new.user_id, true);
+        end if;
       end if;
     else
       select count(*) into v_count from public.xp_ledger
@@ -202,3 +208,55 @@ create trigger activity_events_award after insert on public.activity_events
   for each row execute function public.award_xp();
 
 revoke all on function public.award_xp() from public, anon, authenticated;
+
+-- Weekly streak --------------------------------------------------------------------------------
+
+-- Judges every closed week not judged yet: goal met → +1 (and a shield every 4, at most 2);
+-- missed with a streak and a shield → the shield goes, the streak stays; otherwise → 0.
+-- The week in progress is never judged. p_rebuild replays from the first week (best is kept).
+create or replace function public.close_weeks(p_user uuid, p_rebuild boolean default false) returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  v_now  date := public.local_week_start(p_user);
+  v_s    public.streaks%rowtype;
+  v_week date;
+begin
+  if not exists (select 1 from public.profiles where id = p_user) then return; end if;
+  insert into public.streaks (user_id, kind) values (p_user, 'training_week') on conflict do nothing;
+  select * into v_s from public.streaks where user_id = p_user and kind = 'training_week' for update;
+  if p_rebuild then
+    v_s.current := 0;
+    v_s.shields := 0;
+    v_s.last_period := null;
+  end if;
+
+  if v_s.last_period is null then
+    select least(
+      (select public.week_start_of(min(occurred_on)) from public.activity_events where user_id = p_user),
+      (select public.week_start_of((created_at at time zone timezone)::date) from public.profiles where id = p_user)
+    ) into v_week;
+  else
+    v_week := v_s.last_period + 7;
+  end if;
+
+  while v_week is not null and v_week < v_now loop
+    if exists (select 1 from public.xp_ledger
+                where user_id = p_user and reason = 'week_target' and week_start = v_week) then
+      v_s.current := v_s.current + 1;
+      v_s.best := greatest(v_s.best, v_s.current);
+      if v_s.current % 4 = 0 then v_s.shields := least(2, v_s.shields + 1); end if;
+    elsif v_s.current > 0 and v_s.shields > 0 then
+      v_s.shields := v_s.shields - 1;
+    else
+      v_s.current := 0;
+    end if;
+    v_s.last_period := v_week;
+    v_week := v_week + 7;
+  end loop;
+
+  update public.streaks
+     set current = v_s.current, best = v_s.best, shields = v_s.shields, last_period = v_s.last_period
+   where user_id = p_user and kind = 'training_week';
+end $$;
+
+revoke all on function public.close_weeks(uuid, boolean) from public, anon, authenticated;
