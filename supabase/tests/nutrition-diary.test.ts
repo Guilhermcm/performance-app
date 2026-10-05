@@ -41,14 +41,15 @@ describe('food diary window', () => {
 
   it('refuses moving an item to another day or person', async () => {
     const id = await logItem(db, A, '2026-10-07', 'lunch', 500)
-    await expect(asA(`update public.food_logs set day = '2026-10-06' where id = $1`, [id])).rejects.toThrow()
-    await expect(asA(`update public.food_logs set user_id = $2 where id = $1`, [id, B])).rejects.toThrow()
+    await expect(asA(`update public.food_logs set day = '2026-10-06' where id = $1`, [id])).rejects.toThrow(/item_immutable/)
+    // The BEFORE trigger runs ahead of the RLS with check, so this reaches the trigger.
+    await expect(asA(`update public.food_logs set user_id = $2 where id = $1`, [id, B])).rejects.toThrow(/item_immutable/)
   })
 
   it('refuses import items from clients', async () => {
     await expect(asA(
       `insert into public.food_logs (id, day, meal, name, source, kcal)
-       values ($1, '2026-10-07', 'lunch', 'x', 'import', 10)`, [randomUUID()])).rejects.toThrow()
+       values ($1, '2026-10-07', 'lunch', 'x', 'import', 10)`, [randomUUID()])).rejects.toThrow(/import_forbidden/)
   })
 
   it('caps a day at 200 items without blocking edits', async () => {
@@ -80,6 +81,24 @@ describe('food diary window', () => {
     expect(await kcal()).toBe(333)
     const [r2] = await sql(db, `select updated_at <= now() as ok from public.food_logs where id = $1`, [id])
     expect(r2.ok).toBe(true)
+  })
+
+  it('does not let clients ask for the server path', async () => {
+    await expect(asUser(db, A, async () => {
+      await db.exec('begin')
+      try {
+        await db.query(`select set_config('perf.server_write', 'on', true)`)
+        await db.query(
+          `insert into public.food_logs (id, day, meal, name, source, kcal)
+           values ($1, '2026-10-05', 'lunch', 'x', 'quick', 10)`, [randomUUID()])
+      } finally {
+        await db.exec('rollback')
+      }
+    })).rejects.toThrow(/day_closed/)
+  })
+
+  it('keeps other people time zones private', async () => {
+    await expect(rows(db, A, 'select public.local_today($1)', [B])).rejects.toThrow(/permission denied/)
   })
 
   it('lets account deletion remove old items', async () => {
@@ -137,6 +156,11 @@ describe('privacy and targets', () => {
     expect(fut).toHaveLength(1)
     await expect(asA(`update public.nutrition_targets set valid_from = '2026-10-07' where valid_from = '2026-10-08'`)).rejects.toThrow()
     await expect(rows(db, A, `delete from public.nutrition_targets`)).rejects.toThrow(/permission denied/)
+  })
+
+  it('refuses a target for today once the person has one', async () => {
+    await setTarget(db, A, '2026-10-01', T)
+    await expect(insTarget('2026-10-07')).rejects.toThrow(/row-level security/)
   })
 
   it('does not let a first target start in the past', async () => {

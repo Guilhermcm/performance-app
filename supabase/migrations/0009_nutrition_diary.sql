@@ -54,6 +54,15 @@ create table public.user_foods (
 );
 create index user_foods_barcode on public.user_foods (user_id, barcode) where barcode is not null;
 
+-- Today in the signed-in person's time zone. RLS policies and the invoker triggers run as the
+-- client and need it; local_today(uuid) itself stays closed so nobody can probe another person.
+create function public.my_local_today() returns date
+language sql stable security definer set search_path = public as $$
+  select public.local_today(auth.uid())
+$$;
+revoke all on function public.my_local_today() from public, anon;
+grant execute on function public.my_local_today() to authenticated;
+
 -- Access ----------------------------------------------------------------------------------------
 
 alter table public.nutrition_targets enable row level security;
@@ -69,13 +78,13 @@ create policy nutrition_targets_select_own on public.nutrition_targets
 create policy nutrition_targets_insert_own on public.nutrition_targets
   for insert to authenticated with check (
     user_id = auth.uid()
-    and (valid_from > public.local_today(auth.uid())
-         or (valid_from = public.local_today(auth.uid())
+    and (valid_from > public.my_local_today()
+         or (valid_from = public.my_local_today()
              and not exists (select 1 from public.nutrition_targets t where t.user_id = auth.uid()))));
 create policy nutrition_targets_update_own on public.nutrition_targets
   for update to authenticated
-  using (user_id = auth.uid() and valid_from > public.local_today(auth.uid()))
-  with check (user_id = auth.uid() and valid_from > public.local_today(auth.uid()));
+  using (user_id = auth.uid() and valid_from > public.my_local_today())
+  with check (user_id = auth.uid() and valid_from > public.my_local_today());
 
 create policy food_logs_select_own on public.food_logs
   for select to authenticated using (user_id = auth.uid());
@@ -102,14 +111,13 @@ create policy user_foods_delete_own on public.user_foods
 create function public.food_logs_guard() returns trigger
 language plpgsql security invoker set search_path = public as $$
 declare
-  v_uid   uuid := coalesce(new.user_id, old.user_id);
   v_today date;
 begin
   if current_user not in ('authenticated', 'anon') then
     return coalesce(new, old);
   end if;
 
-  v_today := public.local_today(v_uid);
+  v_today := public.my_local_today();
   if (tg_op <> 'DELETE' and new.day not in (v_today - 1, v_today))
      or (tg_op <> 'INSERT' and old.day not in (v_today - 1, v_today)) then
     raise exception 'day_closed' using errcode = 'P0001';
@@ -167,7 +175,3 @@ $$;
 
 revoke all on function public.food_logs_guard(), public.user_foods_guard(),
   public.target_on(uuid, date) from public, anon, authenticated;
-
--- RLS policies and the invoker triggers run as the client and need today in the person's time
--- zone. local_today is security definer and reveals only a date, so clients may call it.
-grant execute on function public.local_today(uuid) to authenticated;

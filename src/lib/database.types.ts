@@ -89,7 +89,7 @@ export interface Database {
         Relationships: []
       }
       weekly_targets: {
-        Row: { user_id: string; week_start: string; target: number }
+        Row: { user_id: string; week_start: string; pillar: Pillar; target: number }
         Insert: never
         Update: never
         Relationships: []
