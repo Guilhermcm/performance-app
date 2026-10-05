@@ -1909,4 +1909,5 @@ export default {
   'Yesterday': 'Учора',
   'Load more': 'Завантажити ще',
   'You are all caught up.': 'Ви все переглянули.',
+  'Privacy policy': 'Політика конфіденційності',
 }

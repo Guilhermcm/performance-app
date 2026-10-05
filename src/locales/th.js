@@ -1923,4 +1923,5 @@ export default {
   'Yesterday': 'เมื่อวาน',
   'Load more': 'โหลดเพิ่ม',
   'You are all caught up.': 'คุณดูครบหมดแล้ว',
+  'Privacy policy': 'นโยบายความเป็นส่วนตัว',
 }

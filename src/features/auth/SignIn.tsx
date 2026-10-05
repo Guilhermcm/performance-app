@@ -76,6 +76,11 @@ export default function SignIn() {
             {busy ? <LoaderCircle aria-hidden className="size-5 animate-spin motion-reduce:animate-none" /> : <GoogleMark />}
             {busy ? t('Opening Google…') : t('Continue with Google')}
           </Button>
+          {/* A plain link, not a route: the policy is a static page outside the hash router. */}
+          <a href="/privacidade"
+            className="mx-auto mt-2 inline-flex min-h-11 items-center px-3 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-ring">
+            {t('Privacy policy')}
+          </a>
         </motion.div>
       </div>
     </main>

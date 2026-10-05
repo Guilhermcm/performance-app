@@ -1912,4 +1912,5 @@ export default {
   'Yesterday': '昨天',
   'Load more': '加载更多',
   'You are all caught up.': '已经全部看完了。',
+  'Privacy policy': '隐私政策',
 }

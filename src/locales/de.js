@@ -1932,4 +1932,5 @@ export default {
   'Yesterday': 'Gestern',
   'Load more': 'Mehr laden',
   'You are all caught up.': 'Du bist auf dem neuesten Stand.',
+  'Privacy policy': 'Datenschutzerklärung',
 }

@@ -1290,6 +1290,7 @@ export const PT_BR_OVERRIDES = {
   'Yesterday': 'Ontem',
   'Load more': 'Carregar mais',
   'You are all caught up.': 'Você já viu tudo.',
+  'Privacy policy': 'Política de Privacidade',
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

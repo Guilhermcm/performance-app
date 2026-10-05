@@ -1912,4 +1912,5 @@ export default {
   'Yesterday': '어제',
   'Load more': '더 보기',
   'You are all caught up.': '모두 확인했습니다.',
+  'Privacy policy': '개인정보 처리방침',
 }

@@ -1965,4 +1965,5 @@ export default {
   'Yesterday': 'أمس',
   'Load more': 'تحميل المزيد',
   'You are all caught up.': 'لقد شاهدت كل شيء.',
+  'Privacy policy': 'سياسة الخصوصية',
 }

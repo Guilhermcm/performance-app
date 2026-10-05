@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, CodeXml, LogOut, Pencil } from 'lucide-react'
+import { ArrowLeft, CodeXml, LogOut, Pencil, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -223,6 +223,11 @@ export default function ProfileScreen() {
         <a className="mx-auto inline-flex min-h-11 items-center gap-2 px-3 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
           href={SOURCE_URL} target="_blank" rel="noreferrer">
           <CodeXml aria-hidden className="size-4" />{t('Source code (AGPL-3.0)')}
+        </a>
+        {/* A plain link, not a route: the policy is a static page outside the hash router. */}
+        <a className="mx-auto -mt-3 inline-flex min-h-11 items-center gap-2 px-3 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          href="/privacidade">
+          <ShieldCheck aria-hidden className="size-4" />{t('Privacy policy')}
         </a>
       </div>
     </div>

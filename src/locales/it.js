@@ -1912,4 +1912,5 @@ export default {
   'Yesterday': 'Ieri',
   'Load more': 'Carica altro',
   'You are all caught up.': 'Hai visto tutto.',
+  'Privacy policy': 'Informativa sulla privacy',
 }

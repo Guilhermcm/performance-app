@@ -1915,4 +1915,5 @@ export default {
   'Yesterday': 'Tegnap',
   'Load more': 'Továbbiak betöltése',
   'You are all caught up.': 'Mindent láttál.',
+  'Privacy policy': 'Adatkezelési tájékoztató',
 }

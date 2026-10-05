@@ -1912,4 +1912,5 @@ export default {
   'Yesterday': 'Вчера',
   'Load more': 'Загрузить ещё',
   'You are all caught up.': 'Вы всё посмотрели.',
+  'Privacy policy': 'Политика конфиденциальности',
 }

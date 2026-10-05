@@ -1912,4 +1912,5 @@ export default {
   'Yesterday': 'Dün',
   'Load more': 'Daha fazla yükle',
   'You are all caught up.': 'Hepsini gördün.',
+  'Privacy policy': 'Gizlilik politikası',
 }

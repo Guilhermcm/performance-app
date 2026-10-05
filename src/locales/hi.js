@@ -1912,4 +1912,5 @@ export default {
   'Yesterday': 'बीता कल',
   'Load more': 'और लोड करें',
   'You are all caught up.': 'आपने सब देख लिया।',
+  'Privacy policy': 'गोपनीयता नीति',
 }
