@@ -33,7 +33,7 @@ describe('get_my_progress', () => {
       pillars: { strength: { level: 2, into: 140, need: 150, xp: 240 } },
       week: { start: '2026-09-14', xp: 340, max: 960, target: 3, workouts: 1, extras: 0, prs: 1, target_hit: false, weighed_today: true },
       streak: { current: 0, best: 0, shields: 0 },
-      stats: { workouts: 1, prs: 1, week_targets: 0, best_streak: 0, weigh_in_run: 1, early_workouts: 0, level: 3 }
+      stats: { workouts: 1, prs: 1, week_targets: 0, best_streak: 0, weigh_in_run: 1, early_workouts: 0, friends: 0, level: 3 }
     })
     expect(achievements.map((a: { code: string }) => a.code).sort()).toEqual(['first_pr', 'first_workout'])
     expect(achievements.every((a: { unlocked_at: unknown }) => typeof a.unlocked_at === 'string')).toBe(true)
