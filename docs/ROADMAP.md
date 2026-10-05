@@ -166,6 +166,8 @@ nativos).
   extração, para consultas e gráficos rápidos.
 - Migração das telas herdadas restantes (Stats, History, Plan, Settings, RoutineEdit, Library;
   Workout por último).
+- Limpeza da base: remover `lib/mobile.js`, `lib/demo.js`, `lib/coach*.js`, `lib/remote.js`,
+  dependências `@capacitor/*`, packs de idioma fora de en/pt-BR e os ramos mortos que dependem deles.
 
 ---
 

@@ -48,16 +48,18 @@ Copiar o openGym (último `main`) sem `.git`. Mover `frontend/*` para a raiz.
 
 - `api/`, `mcp/`, `web/`, `website/`, `kubernetes/`, `scripts/` (raiz), `docker-compose.yml`,
   `.dockerignore`, `.env.example` original
-- `frontend/android/`, `frontend/ios/`, `capacitor.config.json`, dependências `@capacitor*`,
-  `@aparajita/*`, `@capacitor-mlkit/*`, `lib/mobile.js` (o flag `MOBILE` vira constante `false` e
-  os ramos mortos são removidos)
+- `frontend/android/`, `frontend/ios/`, `capacitor.config.json`. Os módulos `lib/mobile.js`,
+  `lib/demo.js`, `lib/coach*.js`, `lib/remote.js`, `src/vendor/coach-core/` (vendored from openGym
+  api/coach/core) e as dependências `@capacitor/*` ficam dormentes (`MOBILE`/`DEMO` são `false` no
+  build web) e saem na limpeza da Fase 5.
 - `.gitlab/`, `.gitlab-ci.yml`, `.gitea/`, `.github/` original, `renovate.json`
 - Views e componentes que dependem do backend próprio: `Admin*`, `AdminCoach*`, `Coach*`,
   `CheckIn` (se só servir ao coach), `Passkeys`, `ServerSync`, fluxos de senha, device-link, QR
   (`jsqr`, `lean-qr`), push (rest-timer remoto, lembretes), upload de mídia própria para o servidor
   (mídia própria passa a ficar só no IndexedDB do dispositivo, como já acontece para guests)
 - Modo demo (`lib/demo.js`, `VITE_DEMO`)
-- Locales exceto `pt-BR.js` e `en` (en é o embutido); idem para `instr/` e `exercise-names/`
+- Locales: o seletor oferece só `en` e `pt-BR`; os demais packs ficam no disco (lazy-loaded) e
+  saem na limpeza da Fase 5. `pt.js` é base do `pt-BR.js` e fica.
 - Testes das peças removidas
 
 **Manter:** `LICENSE`, `NOTICE.md` (créditos de mídia de exercícios), toda a lógica em `lib/`
@@ -521,7 +523,7 @@ Telas novas nascem em shadcn. Herdadas migram uma por fase:
 - **Vitest** (novos): `starter-suggest`, aplicação do perfil ao store, cliente de sync (Supabase
   mockado: pull, push, conflito, offline), fila de eventos (idempotência, retry), `lib/xp.ts`
   (mesmos casos que o SQL), componentes de onboarding e perfil (validação, navegação entre passos).
-- **pgTAP** (`supabase/tests`, rodando no Postgres local do `supabase` CLI): regras de XP por T,
+- **Vitest + PGlite** (`supabase/tests`, Postgres em WASM, sem Docker): regras de XP por T,
   limites semanais/diários, bônus de meta, streak com e sem escudo, fechamento de semana no fuso,
   conquistas, convites (expirado, usado, auto-convite), RLS (usuário A não lê peso nem estado de B,
   não insere em `xp_ledger`, não vê feed de quem não compartilha), desafios (team/solo, sucesso e
