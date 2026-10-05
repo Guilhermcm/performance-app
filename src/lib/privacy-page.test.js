@@ -24,6 +24,11 @@ describe('privacy policy page', () => {
     expect(visible).toContain('Última atualização: 5 de outubro de 2026')
   })
 
+  it('points to the self-service account deletion in both languages', () => {
+    expect(visible).toContain('Perfil &gt; Excluir minha conta')
+    expect(visible).toContain('Profile &gt; Delete my account')
+  })
+
   it('uses no dash as a pause in its visible text', () => {
     const hits = visible.match(/.{0,30}(?:[—–]|\s-\s).{0,30}/g) || []
     expect(hits).toEqual([])

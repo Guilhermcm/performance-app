@@ -11,6 +11,7 @@ import { t, dateLocale } from '../../lib/i18n.js'
 import { todayISO } from '../../lib/format.js'
 import { menuSheet } from '../../sheets.jsx'
 import ProfileProgress from '../gamification/ProfileProgress'
+import DeleteAccount from './DeleteAccount'
 import { useProfile } from './useProfile'
 import { validateProfileInput } from './profile-api'
 import { applyProfileToState } from './profile-apply'
@@ -220,6 +221,7 @@ export default function ProfileScreen() {
         <Button variant="outline" className="mt-3 h-12 gap-2 rounded-xl text-base" disabled={leaving} onClick={() => leave()}>
           <LogOut className="size-4" />{t('Sign out')}
         </Button>
+        <DeleteAccount />
         <a className="mx-auto inline-flex min-h-11 items-center gap-2 px-3 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
           href={SOURCE_URL} target="_blank" rel="noreferrer">
           <CodeXml aria-hidden className="size-4" />{t('Source code (AGPL-3.0)')}

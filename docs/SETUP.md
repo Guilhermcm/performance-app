@@ -5,7 +5,10 @@
 1. Crie um projeto em https://supabase.com/dashboard (região: São Paulo, South America).
 2. SQL Editor → cole e rode, em ordem, cada arquivo de `supabase/migrations/` (`0001_init.sql`,
    `0002_gamification.sql`, `0003_gamification_cron.sql`, `0004_social.sql`,
-   `0005_social_cron.sql`). Em um projeto que já tem as anteriores, rode só as que faltam.
+   `0005_social_cron.sql`, `0006_delete_account.sql`). Em um projeto que já tem as anteriores,
+   rode só as que faltam. A `0006` cria a exclusão de conta pelo próprio app (Perfil > Excluir
+   minha conta) e precisa rodar como `postgres`, o usuário padrão do SQL Editor, porque apaga a
+   linha da conta em `auth.users`.
 3. Project Settings → API: copie `Project URL` e a chave `anon public`.
 
 ## 2. Google OAuth
