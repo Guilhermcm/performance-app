@@ -26,6 +26,7 @@ import ProfileScreen from './features/profile/ProfileScreen.tsx'
 import SyncIndicator from './features/sync/SyncIndicator.tsx'
 import { Toaster } from './components/ui/sonner.tsx'
 import { useProfile } from './features/profile/useProfile.ts'
+import { useProgress, startProgressSync } from './features/gamification/useProgress.ts'
 import Home from './views/Home.jsx'
 import CheckIn from './views/CheckIn.jsx'
 import Plan from './views/Plan.jsx'
@@ -137,9 +138,16 @@ function Shell() {
   useWakeLock(!!S.active && !S.active.editingWorkoutId && S.keepAwake !== false)
 
   // The profile in memory belongs to whoever is signed in; signing out drops it.
-  useEffect(() => { if (!user) useProfile.getState().reset() }, [user?.id])
+  useEffect(() => { if (!user) { useProfile.getState().reset(); useProgress.getState().reset() } }, [user?.id])
   // No tab bar while the profile loads or the onboarding is on screen (a guest has no profile).
   const profileReady = useProfile(s => s.status === 'ready' && !s.onboarding) || !user
+  // Gamification numbers for a signed-in account with a profile (get_my_progress needs one): the
+  // cached copy at once, the server's right after, and again whenever the app comes back.
+  useEffect(() => {
+    if (!user || !profileReady) return
+    void useProgress.getState().load(user.id)
+    return startProgressSync()
+  }, [user?.id, profileReady])
 
   const authed = user || isGuest
   if (!ready && !authed) return (
