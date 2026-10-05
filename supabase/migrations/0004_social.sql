@@ -182,32 +182,6 @@ begin
       from public.profiles where id = v_inv.inviter_id));
 end $$;
 
--- Achievement metrics: Phase 1a's, plus the social ones it left for this phase -------------------
-
-create or replace function public.achievement_stats(p_user uuid) returns jsonb
-language sql stable security definer set search_path = public as $$
-  select jsonb_build_object(
-    'workouts', (select count(*) from public.activity_events where user_id = p_user and kind = 'workout_completed'),
-    'prs', (select count(*) from public.activity_events where user_id = p_user and kind = 'pr'),
-    'week_targets', (select count(*) from public.xp_ledger where user_id = p_user and reason = 'week_target'),
-    'best_streak', coalesce((select best from public.streaks where user_id = p_user and kind = 'training_week'), 0),
-    -- Longest run of consecutive weigh-in days (gaps and islands).
-    'weigh_in_run', coalesce((
-      select max(n) from (
-        select count(*) as n from (
-          select d - (row_number() over (order by d))::int as grp
-            from (select distinct occurred_on as d from public.activity_events
-                   where user_id = p_user and kind = 'weight_logged') days
-        ) runs group by grp
-      ) lengths), 0),
-    -- Live sessions only: the app sends the local start hour for those, never for backfills.
-    'early_workouts', (select count(*) from public.activity_events
-                        where user_id = p_user and kind = 'workout_completed'
-                          and jsonb_typeof(payload -> 'hour') = 'number' and (payload ->> 'hour')::numeric < 7),
-    'friends', (select count(*) from public.friendships where p_user in (user_a, user_b))
-  )
-$$;
-
 revoke all on function public.are_friends(uuid, uuid), public.friend_ids(uuid), public.lock_users(uuid[]),
   public.new_invite_code(), public.achievement_stats(uuid) from public, anon, authenticated;
 revoke all on function public.create_invite(), public.accept_invite(text) from public, anon;
@@ -502,6 +476,7 @@ begin
   if not exists (select 1 from public.profiles where id = v_me) then
     raise exception 'no_profile' using errcode = 'P0002';
   end if;
+  perform public.close_due_challenges(v_me);
   return coalesce((
     select jsonb_agg(public.challenge_json(c.id, v_me)
              order by (c.status = 'active') desc, (m.joined_at is null) desc,
@@ -521,3 +496,175 @@ grant execute on function public.is_challenge_member(uuid),
   public.create_challenge(text, text, text, numeric, date, date, uuid[], boolean),
   public.join_challenge(uuid, boolean), public.leave_challenge(uuid), public.get_challenges()
   to authenticated;
+
+-- Closing ------------------------------------------------------------------------------------------
+
+-- Closes one challenge once the creator's local day is past ends_on (Decision 12). Unanswered
+-- invitations go; fewer than two participants cancel it; otherwise progress is frozen, team wins
+-- together and solo wins one by one, and each winner gets +300 once ('challenge:<id>') plus the
+-- badges that unlocks. The global closing lock comes before any per-user lock (Decision 6).
+create or replace function public.close_challenge(p_challenge uuid) returns boolean
+language plpgsql security definer set search_path = public as $$
+declare
+  c         public.challenges%rowtype;
+  v_members uuid[];
+  v_won     boolean;
+  r         record;
+begin
+  perform pg_advisory_xact_lock(hashtextextended('challenge-close', 0));
+  select * into c from public.challenges where id = p_challenge for update;
+  if not found or c.status <> 'active' or public.local_today(c.created_by) <= c.ends_on then
+    return false;
+  end if;
+  delete from public.challenge_members where challenge_id = p_challenge and joined_at is null;
+  select coalesce(array_agg(user_id order by user_id), '{}') into v_members
+    from public.challenge_members where challenge_id = p_challenge;
+  if cardinality(v_members) < 2 then
+    update public.challenges set status = 'cancelled', closed_at = public.app_now() where id = p_challenge;
+    return true;
+  end if;
+  perform public.lock_users(v_members);
+  update public.challenge_members
+     set final = coalesce(public.challenge_progress(p_challenge, user_id), 0)
+   where challenge_id = p_challenge;
+  if c.mode = 'team' then
+    select sum(final) >= c.target into v_won from public.challenge_members where challenge_id = p_challenge;
+    update public.challenge_members set won = v_won where challenge_id = p_challenge;
+  else
+    update public.challenge_members set won = (final >= c.target) where challenge_id = p_challenge;
+    select bool_or(won) into v_won from public.challenge_members where challenge_id = p_challenge;
+  end if;
+  update public.challenges
+     set status = case when v_won then 'won' else 'lost' end, closed_at = public.app_now()
+   where id = p_challenge;
+  for r in select user_id from public.challenge_members
+            where challenge_id = p_challenge and won order by user_id loop
+    perform public.award_bonus_xp(r.user_id, 300, 'challenge:' || p_challenge::text);
+    perform public.evaluate_achievements(r.user_id);
+  end loop;
+  return true;
+end $$;
+
+-- The lazy path: what one person is in. Takes no lock when nothing is due.
+create or replace function public.close_due_challenges(p_user uuid) returns integer
+language plpgsql security definer set search_path = public as $$
+declare
+  r record;
+  n integer := 0;
+begin
+  for r in
+    select c.id from public.challenges c
+      join public.challenge_members m on m.challenge_id = c.id and m.user_id = p_user
+     where c.status = 'active' and c.ends_on < public.local_today(c.created_by)
+     order by c.id
+  loop
+    if public.close_challenge(r.id) then n := n + 1; end if;
+  end loop;
+  return n;
+end $$;
+
+-- The daily safety net (0005 schedules it).
+create or replace function public.close_all_challenges() returns integer
+language plpgsql security definer set search_path = public as $$
+declare
+  r record;
+  n integer := 0;
+begin
+  for r in select id from public.challenges
+            where status = 'active' and ends_on < public.local_today(created_by) order by id loop
+    if public.close_challenge(r.id) then n := n + 1; end if;
+  end loop;
+  return n;
+end $$;
+
+-- Leaderboards -------------------------------------------------------------------------------------
+
+-- Me and my friends. 'week': XP of each person's own current local week, compared with their
+-- previous week. 'all': total XP, compared with the total before the current week. Ties share a
+-- position; gap is what is missing to reach the next score above (null for the leader).
+create or replace function public.leaderboard_json(p_me uuid, p_kind text) returns jsonb
+language sql stable security definer set search_path = public as $$
+  with people as (
+    select p.id, p.display_name, p.avatar_url,
+           public.local_week_start(p.id) as wk, public.total_xp(p.id) as total
+      from public.profiles p
+     where p.id = p_me or p.id in (select public.friend_ids(p_me))),
+  scored as (
+    select x.*,
+           case when p_kind = 'week' then public.week_xp(x.id, x.wk)::bigint else x.total end as score,
+           case when p_kind = 'week' then public.week_xp(x.id, x.wk - 7)::bigint
+                else x.total - public.week_xp(x.id, x.wk) end as before
+      from people x),
+  ranked as (
+    select s.*, rank() over (order by s.score desc) as pos, rank() over (order by s.before desc) as prev_pos
+      from scored s)
+  select jsonb_build_object(
+    'week_start', public.local_week_start(p_me),
+    'rows', coalesce(jsonb_agg(jsonb_build_object(
+              'id', r.id, 'name', r.display_name, 'avatar_url', r.avatar_url, 'me', r.id = p_me,
+              'xp', r.score, 'level', (public.level_for(r.total)).level,
+              'pos', r.pos, 'prev_pos', r.prev_pos,
+              'gap', (select min(o.score) from ranked o where o.score > r.score) - r.score)
+            order by r.pos, lower(r.display_name), r.id), '[]'::jsonb))
+  from ranked r
+$$;
+
+create or replace function public.get_weekly_leaderboard() returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  v_me uuid := auth.uid();
+begin
+  if v_me is null then raise exception 'not_signed_in' using errcode = '28000'; end if;
+  if not exists (select 1 from public.profiles where id = v_me) then
+    raise exception 'no_profile' using errcode = 'P0002';
+  end if;
+  perform public.close_due_challenges(v_me);
+  return public.leaderboard_json(v_me, 'week');
+end $$;
+
+create or replace function public.get_alltime_leaderboard() returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  v_me uuid := auth.uid();
+begin
+  if v_me is null then raise exception 'not_signed_in' using errcode = '28000'; end if;
+  if not exists (select 1 from public.profiles where id = v_me) then
+    raise exception 'no_profile' using errcode = 'P0002';
+  end if;
+  perform public.close_due_challenges(v_me);
+  return public.leaderboard_json(v_me, 'all');
+end $$;
+
+revoke all on function public.close_challenge(uuid), public.close_due_challenges(uuid),
+  public.close_all_challenges(), public.leaderboard_json(uuid, text) from public, anon, authenticated;
+revoke all on function public.get_weekly_leaderboard(), public.get_alltime_leaderboard() from public, anon;
+grant execute on function public.get_weekly_leaderboard(), public.get_alltime_leaderboard() to authenticated;
+
+-- Achievement metrics: Phase 1a's, plus the social ones it left for this phase -------------------
+
+create or replace function public.achievement_stats(p_user uuid) returns jsonb
+language sql stable security definer set search_path = public as $$
+  select jsonb_build_object(
+    'workouts', (select count(*) from public.activity_events where user_id = p_user and kind = 'workout_completed'),
+    'prs', (select count(*) from public.activity_events where user_id = p_user and kind = 'pr'),
+    'week_targets', (select count(*) from public.xp_ledger where user_id = p_user and reason = 'week_target'),
+    'best_streak', coalesce((select best from public.streaks where user_id = p_user and kind = 'training_week'), 0),
+    -- Longest run of consecutive weigh-in days (gaps and islands).
+    'weigh_in_run', coalesce((
+      select max(n) from (
+        select count(*) as n from (
+          select d - (row_number() over (order by d))::int as grp
+            from (select distinct occurred_on as d from public.activity_events
+                   where user_id = p_user and kind = 'weight_logged') days
+        ) runs group by grp
+      ) lengths), 0),
+    -- Live sessions only: the app sends the local start hour for those, never for backfills.
+    'early_workouts', (select count(*) from public.activity_events
+                        where user_id = p_user and kind = 'workout_completed'
+                          and jsonb_typeof(payload -> 'hour') = 'number' and (payload ->> 'hour')::numeric < 7),
+    'friends', (select count(*) from public.friendships where p_user in (user_a, user_b)),
+    'challenges_won', (select count(*) from public.challenge_members where user_id = p_user and won)
+  )
+$$;
+
+revoke all on function public.achievement_stats(uuid) from public, anon, authenticated;
