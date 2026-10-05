@@ -25,7 +25,7 @@ describe('AchievementsScreen', () => {
       })
     })
     render(<AchievementsScreen />)
-    expect(screen.getByText('2 of 22 unlocked')).toBeTruthy()
+    expect(screen.getByText('2 of 32 unlocked')).toBeTruthy()
     expect(screen.getAllByRole('listitem')).toHaveLength(22)
     expect(card('first_workout').getAttribute('data-unlocked')).toBe('true')
     expect(within(card('first_workout')).getByText(/^Unlocked on /)).toBeTruthy()

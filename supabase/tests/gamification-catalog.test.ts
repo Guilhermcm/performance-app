@@ -10,8 +10,9 @@ beforeEach(async () => { db = await freshDb() })
 
 describe('achievement catalogue (server)', () => {
   it('is the same as the client catalogue', async () => {
-    const rows = await sql(db, 'select code, metric, threshold, xp, sort from public.achievement_catalog order by sort')
-    expect(rows).toEqual(ACHIEVEMENTS.map(({ code, metric, threshold, xp, sort }) => ({ code, metric, threshold, xp, sort })))
+    const rows = await sql(db, 'select code, metric, threshold, xp, sort, private from public.achievement_catalog order by sort')
+    expect(rows).toEqual(ACHIEVEMENTS.map(({ code, metric, threshold, xp, sort, private: p }) =>
+      ({ code, metric, threshold, xp, sort, private: p ?? false })))
   })
 
   it.each(cases)('$name', async c => {

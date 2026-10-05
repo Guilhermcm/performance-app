@@ -3,9 +3,13 @@ import type { AchievementCode } from './achievements'
 
 type Text = { title: () => string; detail: () => string }
 
+// The private nutrition badges get their text with the nutrition screens (phase 2a, Task 12).
+// Until then they have none and the screens skip them or fall back to the code.
+type NutritionCode = Extract<AchievementCode, `nutrition_${string}` | 'protein_7'>
+
 // Functions, so each t() call stays a literal that scripts/check-source-strings.mjs can see and the
 // text follows the language chosen at render time.
-export const ACHIEVEMENT_TEXT: Record<AchievementCode, Text> = {
+export const ACHIEVEMENT_TEXT: Record<Exclude<AchievementCode, NutritionCode>, Text> & Partial<Record<NutritionCode, Text>> = {
   first_workout: { title: () => t('First workout'), detail: () => t('Finish your first workout.') },
   workouts_10: { title: () => t('{0} workouts', 10), detail: () => t('Finish {0} workouts.', 10) },
   workouts_50: { title: () => t('{0} workouts', 50), detail: () => t('Finish {0} workouts.', 50) },
