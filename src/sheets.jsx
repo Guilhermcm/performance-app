@@ -15,6 +15,7 @@ import { emit } from './features/gamification/events.ts'
 import { useProgress } from './features/gamification/useProgress.ts'
 import { previewWorkout } from './features/gamification/preview.ts'
 import { syncProgress, weighInXp } from './features/gamification/after-event.ts'
+import { onWeighIn } from './features/nutrition/weigh-in.ts'
 import WorkoutXpSummary from './features/gamification/WorkoutXpSummary.tsx'
 import { buildStarterPlan, starterPlanDays, starterPlanOptions } from './lib/starter.js'
 import Media, { Thumb } from './components/Media.jsx'
@@ -248,6 +249,7 @@ function BwSheet({ required, onDone, close }) {
     // One event per day: the date is the reference, so weighing in twice gives XP once.
     const xp = weighInXp(iso)
     emit('weight_logged', { w: n }, iso, iso)
+    void onWeighIn(n, unit)
     void syncProgress()
     close()
     if (onDone) onDone(n); else toast(xp ? t('Weight saved. +{0} XP', xp) : t('Weight saved'))

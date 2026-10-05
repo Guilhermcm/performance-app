@@ -11,6 +11,7 @@ import { backend } from './lib/backend.ts'
 import { supabase } from './lib/supabase.ts'
 import { cleanAuthParams } from './features/auth/auth.ts'
 import { startEventSync, clearEventQueue } from './features/gamification/events.ts'
+import { clearOutbox } from './features/nutrition/outbox.ts'
 import { clearPendingInvite } from './features/social/pending-invite.ts'
 
 // The store's /api/* calls are answered from Supabase, not an HTTP server of our own.
@@ -22,7 +23,7 @@ supabase.auth.getSession().finally(() => cleanAuthParams())
 // Gamification events wait in a local queue and go out whenever there is a session and a network.
 // A sign-out clears them: the next person on this phone must not inherit someone else's XP.
 startEventSync()
-supabase.auth.onAuthStateChange(event => { if (event === 'SIGNED_OUT') { clearEventQueue(); clearPendingInvite() } })
+supabase.auth.onAuthStateChange(event => { if (event === 'SIGNED_OUT') { clearEventQueue(); clearOutbox(); clearPendingInvite() } })
 
 // App.jsx restores per-route scroll itself; the browser's own attempt races it.
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
