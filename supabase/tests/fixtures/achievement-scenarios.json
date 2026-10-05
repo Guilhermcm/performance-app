@@ -1,0 +1,10 @@
+[
+  { "name": "first workout", "stats": { "workouts": 1 }, "unlocked": [], "expect": ["first_workout"] },
+  { "name": "ten workouts and a first PR", "stats": { "workouts": 10, "prs": 1 }, "unlocked": ["first_workout"], "expect": ["workouts_10", "first_pr"] },
+  { "name": "a long streak unlocks every step up to it", "stats": { "week_targets": 12, "best_streak": 12 }, "unlocked": [], "expect": ["week_target_1", "streak_4", "streak_12"] },
+  { "name": "six weigh-ins in a row are not seven", "stats": { "weigh_in_run": 6 }, "unlocked": [], "expect": [] },
+  { "name": "level badges skip the ones already held", "stats": { "level": 25 }, "unlocked": ["level_10"], "expect": ["level_25"] },
+  { "name": "early bird", "stats": { "early_workouts": 5 }, "unlocked": [], "expect": ["early_bird"] },
+  { "name": "nothing reached", "stats": { "workouts": 0 }, "unlocked": [], "expect": [] },
+  { "name": "social badges for the friends phase", "stats": { "friends": 1, "challenges_won": 5 }, "unlocked": [], "expect": ["first_friend", "challenge_first", "challenge_won_5"] }
+]
