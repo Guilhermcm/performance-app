@@ -70,6 +70,17 @@ export interface Database {
         Update: Partial<Omit<Database['public']['Tables']['user_foods']['Insert'], 'id' | 'user_id'>>
         Relationships: []
       }
+      nutrition_days: {
+        Row: {
+          user_id: string; day: string; kcal: number; protein_g: number; carbs_g: number; fat_g: number
+          meals: number
+          target: { kcal: number; protein_g: number; carbs_g: number; fat_g: number } | null
+          logged: boolean; on_target: boolean; balanced: boolean; imported: boolean; closed_at: string
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
       event_kinds: {
         Row: { pillar: Pillar; kind: string; server_only: boolean }
         Insert: never

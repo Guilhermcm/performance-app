@@ -107,7 +107,10 @@ describe('server-only event kinds', () => {
     await insertKind('day_on_target', '2026-09-01')
     const r = await sql(db, `select kind, to_char(occurred_on, 'YYYY-MM-DD') as d from public.activity_events where user_id = $1`, [A])
     expect(r).toEqual([{ kind: 'day_on_target', d: '2026-09-01' }])
-    expect(await ledger(db, A)).toEqual([])   // award_xp ran and, for now, pays nothing for nutrition
+    // award_xp ran: the first day on target of the week (default T = 5) pays 600 / 5.
+    expect((await ledger(db, A)).filter(r => !r.reason.startsWith('achievement:'))).toEqual([
+      { reason: 'nutrition_day', amount: 120, week_start: '2026-08-31', pillar: 'nutrition' },
+    ])
   })
 
   it('still accepts strength events from clients', async () => {

@@ -33,3 +33,10 @@ export async function setTarget(
      values ($1, $2, $3, $4, $5, $6, $7)`,
     [uid, validFrom, t.kcal, t.protein_g, t.carbs_g, t.fat_g, mode])
 }
+
+// Closes the pending days of a person the way the server does (as the database owner) and returns
+// how many days it closed.
+export async function closeAs(db: PGlite, uid: string): Promise<number> {
+  const { rows } = await db.query<{ n: number }>('select public.close_nutrition_days($1) as n', [uid])
+  return rows[0].n
+}
