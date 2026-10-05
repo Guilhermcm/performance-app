@@ -98,29 +98,31 @@ nenhum dado sensível exposto (testado por RLS), e completam um desafio.
 
 ## Fase 2 — Nutrição
 
-**Objetivo:** meta calórica e de macros derivada do perfil, diário alimentar rápido, pilar Nutrição
-na gamificação.
-
-**Escopo previsto**
-- Perfil ganha nível de atividade (PAL); meta calórica por Mifflin-St Jeor × PAL ajustada pelo
-  objetivo (déficit/superávit), divisão de macros configurável.
-- Diário por refeição (café, almoço, jantar, lanches), copiar refeição de outro dia, favoritos,
-  receitas simples.
-- Busca de alimentos: **Open Food Facts** (código de barras e texto, inclui produtos brasileiros) e
-  **USDA FoodData Central**; **TACO** (tabela brasileira) como base local de alimentos in natura;
-  API do **wger** como fonte complementar de ingredientes.
-- Tabelas normalizadas (`foods`, `food_logs`, `nutrition_targets`), cache dos alimentos usados.
-- Eventos: `meal_logged`, `day_on_target` (calorias ±10% e proteína ≥ meta).
-- XP: 600 de consistência (dias no alvo) + 150 meta semanal + extras.
-- Desafio: `nutrition_days_on_target`.
-- UI: Dice UI Combobox na busca, ReUI Data Grid/Calendar no histórico, leitor de código de barras
-  pela câmera (BarcodeDetector com fallback em JS).
-
-**Origem:** OpenNutriTracker (fórmulas, diário, integração OFF/FDC), wger (API e modelo de plano).
+**Objetivo:** trocar o app de dieta que o grupo já usa: meta de calorias e macros derivada do
+perfil, diário rápido, pilar Nutrição na gamificação.
 
 **Spec:** [2026-10-05-fase-2-nutricao-design.md](superpowers/specs/2026-10-05-fase-2-nutricao-design.md).
-Dividida em 2a (meta, diário, busca TACO + Open Food Facts, XP) e 2b (código de barras, receitas,
-favoritos, USDA, histórico, desafio).
+
+**2a, trocar de app**
+- Meta por Mifflin-St Jeor × nível de atividade, ajustada pelo objetivo; modo automático ou manual.
+- Pilar opt-in com períodos ativos; semana com dia desligado é neutra para o streak.
+- Diário por refeição (café, almoço, jantar, lanches), registro rápido, hoje e ontem editáveis.
+- Busca: recentes, favoritos, alimentos próprios, **TACO** local e **Open Food Facts**; código de
+  barras pela câmera (BarcodeDetector com fallback ZXing); copiar refeição ou dia.
+- Tabelas `food_logs`, `user_foods`, `nutrition_targets`, `nutrition_days`, `nutrition_periods`.
+- Dia fechado pelo servidor em D+2; eventos `day_logged`, `day_on_target`, `macros_balanced`;
+  960 XP/semana no molde da Força; streak `nutrition_week`; conquistas privadas.
+- Aba Nutrição na TabBar; **radar de pilares** na Home (shadcn/ui Charts) e barra de XP por pilar.
+
+**2b, trazer o passado e refinar**
+- Importação de histórico: mapeador genérico de CSV + perfis MyFitnessPal, Cronometer e FatSecret,
+  sem XP.
+- Receitas, medidas caseiras (POF/IBGE), histórico em calendário, desafio
+  `nutrition_days_on_target`.
+
+**Fora:** USDA (reavaliar ao abrir ao público), wger.
+
+**Origem:** OpenNutriTracker (fórmulas, diário, integração OFF), como referência.
 
 ---
 
@@ -135,6 +137,7 @@ favoritos, USDA, histórico, desafio).
 - Meta de sono no perfil (horas e horário-alvo).
 - Import CSV (formato Plees e genérico).
 - Eventos: `sleep_logged`, `night_on_target`. XP no molde padrão. Desafio: `sleep_nights_on_target`.
+- Acende o eixo Sono no radar de pilares da Home.
 - Fora: rastreio por sensores/sonar (exige app nativo).
 
 **Origem:** Plees Tracker (modelo e estatísticas). Somn descartado (imaturo e dependente de sensores
@@ -153,6 +156,7 @@ nativos).
   desde o último" e médias móveis.
 - Tabelas `habits`, `habit_checks`, `trackers`, `tracker_entries`.
 - Eventos: `habit_checked`, `habit_week_on_target`, `tracker_logged`. XP no molde padrão.
+- Acende o eixo Hábitos no radar de pilares da Home.
 
 **Origem:** Habitica (hábitos/dailies), Track & Graph (modelo de tracker e gráficos).
 
@@ -166,6 +170,7 @@ nativos).
 - **Performance Score** diário (0–100) combinando os pilares ativos.
 - Correlações: sono × carga/volume, déficit calórico × força, hábitos × consistência.
 - **Missões semanais** geradas pelo perfil e pelos pontos fracos da semana anterior.
+- Radar de pilares detalhado e comparação com amigos no radar.
 - Tabelas analíticas derivadas do JSONB de treino (sessões, séries, 1RM por exercício) via função de
   extração, para consultas e gráficos rápidos.
 - Migração das telas herdadas restantes (Stats, History, Plan, Settings, RoutineEdit, Library;
@@ -185,6 +190,7 @@ nativos).
 - Tabela `focus_days`; eventos `focus_day_logged`, `focus_day_on_target`; pilar `focus` adicionado
   ao enum.
 - Correlação foco × sono no painel.
+- Quinto eixo (Foco) no radar de pilares.
 
 **Origem:** ActivityWatch (via API, sem portar código).
 
