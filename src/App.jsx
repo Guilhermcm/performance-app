@@ -23,6 +23,7 @@ import TimerFlash from './components/TimerFlash.jsx'
 import SignIn from './features/auth/SignIn.tsx'
 import ProfileGate from './features/profile/ProfileGate.tsx'
 import ProfileScreen from './features/profile/ProfileScreen.tsx'
+import AchievementsScreen from './features/gamification/AchievementsScreen.tsx'
 import SyncIndicator from './features/sync/SyncIndicator.tsx'
 import CelebrationHost from './features/gamification/CelebrationHost.tsx'
 import { Toaster } from './components/ui/sonner.tsx'
@@ -186,6 +187,7 @@ function Shell() {
                 <Route path="/structural-balance" element={<StructuralBalance />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/perfil" element={<ProfileScreen />} />
+                <Route path="/conquistas" element={<AchievementsScreen />} />
                 <Route path="*" element={<Navigate to="/home" replace />} />
               </Routes>
             </ErrorBoundary>

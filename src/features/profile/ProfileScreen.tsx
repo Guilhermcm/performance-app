@@ -10,6 +10,7 @@ import { useStore } from '../../store/useStore.js'
 import { t, dateLocale } from '../../lib/i18n.js'
 import { todayISO } from '../../lib/format.js'
 import { menuSheet } from '../../sheets.jsx'
+import ProfileProgress from '../gamification/ProfileProgress'
 import { useProfile } from './useProfile'
 import { validateProfileInput } from './profile-api'
 import { applyProfileToState } from './profile-apply'
@@ -166,6 +167,7 @@ export default function ProfileScreen() {
       </section>
 
       <div className="mt-8 flex flex-col gap-3">
+        <ProfileProgress />
         {SECTIONS.map(section => {
           const open = editing === section.key
           const title = section.title()
