@@ -11,7 +11,7 @@ type AppState = Record<string, any>
 
 // Pure: returns a new state with what the profile decides — language, Monday week start, unit
 // label (a fresh account has no numbers to convert; a later unit change goes through Settings'
-// switchUnit, which offers to convert), the equipment filter, and optionally today's weigh-in.
+// switchUnit and the store's setUnit, which convert the numbers), the equipment filter, and optionally today's weigh-in.
 //
 // `langAuto: false` marks the language as chosen (as picking one in Settings does): a fresh copy
 // carries `langAuto: true`, and while it does, lib/default-lang.js effectiveLang ignores `lang`
