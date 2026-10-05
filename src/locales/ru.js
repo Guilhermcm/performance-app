@@ -1903,6 +1903,7 @@ export default {
   'Cancelled: fewer than 2 people joined.': 'Отменён: присоединилось меньше 2 человек.',
   'Your workouts are hidden from friends.': 'Ваши тренировки скрыты от друзей.',
   'Turn on sharing': 'Включить показ',
+  'Check your sharing': 'Проверить настройку показа',
   'Nothing here yet': 'Здесь пока пусто',
   'Friends who turn on sharing in their profile show up here after each workout.': 'Друзья, которые включили показ в профиле, появляются здесь после каждой тренировки.',
   '{0} finished a workout': '{0}: тренировка завершена',

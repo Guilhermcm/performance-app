@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState, type ReactNode } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { ArrowLeft, CodeXml, LogOut, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -49,6 +49,15 @@ export default function ProfileScreen() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState(false)
   const [leaving, setLeaving] = useState(false)
+  // The feed sends people here to check their sharing: bring the switch into view and focus it.
+  const focus = (useLocation().state as { focus?: string } | null)?.focus
+  const ready = !!profile
+  useEffect(() => {
+    if (!ready || focus !== 'share_activity') return
+    const el = document.getElementById('share_activity')
+    el?.scrollIntoView({ block: 'center' })
+    el?.focus({ preventScroll: true })
+  }, [ready, focus])
 
   if (!profile) return null
 

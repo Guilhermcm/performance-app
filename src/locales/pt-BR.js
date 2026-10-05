@@ -1281,6 +1281,7 @@ export const PT_BR_OVERRIDES = {
   'Cancelled: fewer than 2 people joined.': 'Cancelado: menos de 2 pessoas entraram.',
   'Your workouts are hidden from friends.': 'Seus treinos não aparecem para os amigos.',
   'Turn on sharing': 'Ligar compartilhamento',
+  'Check your sharing': 'Ver seu compartilhamento',
   'Nothing here yet': 'Nada por aqui ainda',
   'Friends who turn on sharing in their profile show up here after each workout.': 'Amigos que ligam o compartilhamento no perfil aparecem aqui depois de cada treino.',
   '{0} finished a workout': '{0} concluiu um treino',

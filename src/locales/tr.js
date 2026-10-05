@@ -1903,6 +1903,7 @@ export default {
   'Cancelled: fewer than 2 people joined.': 'İptal edildi: 2\'den az kişi katıldı.',
   'Your workouts are hidden from friends.': 'Antrenmanların arkadaşlarından gizli.',
   'Turn on sharing': 'Paylaşımı aç',
+  'Check your sharing': 'Paylaşım ayarına bak',
   'Nothing here yet': 'Burada henüz bir şey yok',
   'Friends who turn on sharing in their profile show up here after each workout.': 'Profilinde paylaşımı açan arkadaşlar her antrenmandan sonra burada görünür.',
   '{0} finished a workout': '{0} bir antrenmanı bitirdi',

@@ -1956,6 +1956,7 @@ export default {
   'Cancelled: fewer than 2 people joined.': 'أُلغي: انضم أقل من 2 أشخاص.',
   'Your workouts are hidden from friends.': 'تمارينك مخفية عن أصدقائك.',
   'Turn on sharing': 'تفعيل المشاركة',
+  'Check your sharing': 'راجع إعداد المشاركة',
   'Nothing here yet': 'لا شيء هنا بعد',
   'Friends who turn on sharing in their profile show up here after each workout.': 'يظهر هنا الأصدقاء الذين يفعّلون المشاركة في ملفهم الشخصي بعد كل تمرين.',
   '{0} finished a workout': 'أنهى {0} تمرينًا',

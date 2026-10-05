@@ -1903,6 +1903,7 @@ export default {
   'Cancelled: fewer than 2 people joined.': '已取消：加入人数少于 2 人。',
   'Your workouts are hidden from friends.': '你的训练对好友隐藏。',
   'Turn on sharing': '开启分享',
+  'Check your sharing': '查看分享设置',
   'Nothing here yet': '这里还没有内容',
   'Friends who turn on sharing in their profile show up here after each workout.': '在个人资料中开启分享的好友，每次训练后都会出现在这里。',
   '{0} finished a workout': '{0} 完成了一次训练',

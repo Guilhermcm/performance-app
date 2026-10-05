@@ -1914,6 +1914,7 @@ export default {
   'Cancelled: fewer than 2 people joined.': 'ยกเลิกแล้ว: มีคนเข้าร่วมน้อยกว่า 2 คน',
   'Your workouts are hidden from friends.': 'เพื่อนมองไม่เห็นการฝึกของคุณ',
   'Turn on sharing': 'เปิดการแชร์',
+  'Check your sharing': 'ดูการตั้งค่าการแชร์',
   'Nothing here yet': 'ยังไม่มีอะไรที่นี่',
   'Friends who turn on sharing in their profile show up here after each workout.': 'เพื่อนที่เปิดการแชร์ในโปรไฟล์จะขึ้นที่นี่หลังฝึกเสร็จแต่ละครั้ง',
   '{0} finished a workout': '{0} ฝึกเสร็จแล้ว',

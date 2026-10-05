@@ -1906,6 +1906,7 @@ export default {
   'Cancelled: fewer than 2 people joined.': 'Törölve: 2-nél kevesebben csatlakoztak.',
   'Your workouts are hidden from friends.': 'Az edzéseid rejtve vannak a barátaid elől.',
   'Turn on sharing': 'Megosztás bekapcsolása',
+  'Check your sharing': 'Megosztás ellenőrzése',
   'Nothing here yet': 'Még nincs itt semmi',
   'Friends who turn on sharing in their profile show up here after each workout.': 'Azok a barátok, akik a profiljukban bekapcsolják a megosztást, minden edzés után itt jelennek meg.',
   '{0} finished a workout': '{0} befejezett egy edzést',

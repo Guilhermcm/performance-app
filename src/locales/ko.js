@@ -1903,6 +1903,7 @@ export default {
   'Cancelled: fewer than 2 people joined.': '취소됨: 참여 인원이 2명 미만입니다.',
   'Your workouts are hidden from friends.': '내 운동이 친구에게 보이지 않습니다.',
   'Turn on sharing': '공유 켜기',
+  'Check your sharing': '내 공유 설정 보기',
   'Nothing here yet': '아직 아무것도 없습니다',
   'Friends who turn on sharing in their profile show up here after each workout.': '프로필에서 공유를 켠 친구는 운동을 마칠 때마다 여기에 표시됩니다.',
   '{0} finished a workout': '{0} 님이 운동을 마쳤습니다',

@@ -1903,6 +1903,7 @@ export default {
   'Cancelled: fewer than 2 people joined.': 'रद्द: 2 से कम लोग जुड़े।',
   'Your workouts are hidden from friends.': 'आपके वर्कआउट दोस्तों से छिपे हैं।',
   'Turn on sharing': 'शेयरिंग चालू करें',
+  'Check your sharing': 'अपनी शेयरिंग देखें',
   'Nothing here yet': 'अभी यहां कुछ नहीं है',
   'Friends who turn on sharing in their profile show up here after each workout.': 'जो दोस्त प्रोफ़ाइल में शेयरिंग चालू करते हैं, वे हर वर्कआउट के बाद यहां दिखते हैं।',
   '{0} finished a workout': '{0} ने वर्कआउट पूरा किया',

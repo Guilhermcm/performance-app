@@ -1903,6 +1903,7 @@ export default {
   'Cancelled: fewer than 2 people joined.': 'Cancelado: entraram menos de 2 pessoas.',
   'Your workouts are hidden from friends.': 'Os teus treinos não aparecem aos amigos.',
   'Turn on sharing': 'Ativar partilha',
+  'Check your sharing': 'Ver a tua partilha',
   'Nothing here yet': 'Ainda não há nada aqui',
   'Friends who turn on sharing in their profile show up here after each workout.': 'Os amigos que ativam a partilha no perfil aparecem aqui depois de cada treino.',
   '{0} finished a workout': '{0} concluiu um treino',
