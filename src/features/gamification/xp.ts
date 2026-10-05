@@ -1,3 +1,5 @@
+import type { DayClass } from '@/features/nutrition/types'
+
 // The XP rules of the strength pillar, mirrored from supabase/migrations/0002_gamification.sql
 // (session_xp, level_for, award_xp, close_weeks). The server is the authority; this file drives the
 // preview shown before it answers. supabase/tests/fixtures/xp-scenarios.json runs against both
@@ -106,4 +108,52 @@ export function streakAfter(hits: boolean[], start: StreakState = { current: 0, 
     }
   }
   return { current, best, shields }
+}
+
+// Nutrition pillar (spec 6.3), mirrored from the nutrition branch of award_xp in
+// 0010_nutrition_close.sql. Reuses sessionXp and weekStartOf: on-target days up to the T-th pay
+// sessionXp(T, i), the T-th also pays the weekly bonus, extras and balanced days have weekly caps.
+export const NUTRITION_EXTRA_XP = 25
+export const NUTRITION_EXTRA_LIMIT = 2
+export const NUTRITION_BALANCED_XP = 30
+export const NUTRITION_BALANCED_LIMIT = 3
+export const NUTRITION_LOGGED_XP = 10
+
+export type NutritionReason =
+  | 'nutrition_day'
+  | 'nutrition_day_extra'
+  | 'nutrition_week_target'
+  | 'nutrition_balanced'
+  | 'nutrition_logged'
+
+// Days in closing order (the server closes them oldest first). Per day the order is logged,
+// on target (with the weekly bonus on the T-th), balanced, as the cron emits the events.
+export function nutritionWeekAwards(
+  days: { on: string; classes: DayClass }[],
+  target: number,
+): { reason: NutritionReason; amount: number; week: string }[] {
+  const weeks = new Map<string, { days: number; extras: number; balanced: number }>()
+  const out: { reason: NutritionReason; amount: number; week: string }[] = []
+  for (const d of days) {
+    const week = weekStartOf(d.on)
+    const c = weeks.get(week) ?? { days: 0, extras: 0, balanced: 0 }
+    weeks.set(week, c)
+    const pay = (reason: NutritionReason, amount: number) => out.push({ reason, amount, week })
+    if (d.classes.logged) pay('nutrition_logged', NUTRITION_LOGGED_XP)
+    if (d.classes.on_target) {
+      if (c.days < target) {
+        c.days++
+        pay('nutrition_day', sessionXp(target, c.days))
+        if (c.days === target) pay('nutrition_week_target', WEEK_TARGET_BONUS)
+      } else if (c.extras < NUTRITION_EXTRA_LIMIT) {
+        c.extras++
+        pay('nutrition_day_extra', NUTRITION_EXTRA_XP)
+      }
+    }
+    if (d.classes.balanced && c.balanced < NUTRITION_BALANCED_LIMIT) {
+      c.balanced++
+      pay('nutrition_balanced', NUTRITION_BALANCED_XP)
+    }
+  }
+  return out
 }
