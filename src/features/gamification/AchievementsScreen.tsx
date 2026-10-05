@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { t } from '../../lib/i18n.js'
 import { useProgress } from './useProgress'
-import { ACHIEVEMENTS, SOCIAL_METRICS, type Achievement } from './achievements'
+import { ACHIEVEMENTS, type Achievement } from './achievements'
 import { ACHIEVEMENT_TEXT } from './achievement-labels'
 import { AchievementIcon } from './components/AchievementIcon'
 import { ACCENT_TEXT } from './components/accent'
@@ -52,7 +52,6 @@ export default function AchievementsScreen() {
 function Tile({ a, at, value }: { a: Achievement; at: string | null; value: number | undefined }) {
   const text = ACHIEVEMENT_TEXT[a.code]
   const on = at !== null
-  const social = SOCIAL_METRICS.includes(a.metric)
   const reached = Math.min(value ?? 0, a.threshold)
   return (
     <li data-testid={'achievement-' + a.code} data-unlocked={on ? 'true' : 'false'}
@@ -70,8 +69,6 @@ function Tile({ a, at, value }: { a: Achievement; at: string | null; value: numb
       <div className="mt-auto text-xs text-muted-foreground">
         {at !== null ? (
           <span className={cn('font-medium', ACCENT_TEXT)}>{t('Unlocked on {0}', fmtDay(at))}</span>
-        ) : social ? (
-          <span>{t('Unlocks once friends arrive in the app.')}</span>
         ) : typeof value === 'number' ? (
           <span className="flex flex-col gap-1.5">
             <span aria-hidden className="block h-1.5 overflow-hidden rounded-full bg-muted">

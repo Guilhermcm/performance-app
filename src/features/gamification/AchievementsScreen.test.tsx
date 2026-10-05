@@ -31,7 +31,7 @@ describe('AchievementsScreen', () => {
     expect(within(card('first_workout')).getByText(/^Unlocked on /)).toBeTruthy()
     expect(card('workouts_10').getAttribute('data-unlocked')).toBe('false')
     expect(within(card('workouts_10')).getByText('7 of 10')).toBeTruthy()
-    expect(within(card('first_friend')).getByText('Unlocks once friends arrive in the app.')).toBeTruthy()
+    expect(within(card('first_friend')).getByText('Locked')).toBeTruthy()
     expect(within(card('level_10')).getByText('Badge only')).toBeTruthy()
     expect(within(card('streak_52')).getByText('+1,500 XP')).toBeTruthy()
   })
@@ -53,5 +53,12 @@ describe('AchievementsScreen', () => {
     render(<AchievementsScreen />)
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
     expect(refresh).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows how far along the social badges are once the server counts them', () => {
+    useProgress.setState({ status: 'ready', progress: progressOf(0, {}, { stats: { friends: 0, challenges_won: 3 } }) })
+    render(<AchievementsScreen />)
+    expect(within(card('first_friend')).getByText('0 of 1')).toBeTruthy()
+    expect(within(card('challenge_won_5')).getByText('3 of 5')).toBeTruthy()
   })
 })
