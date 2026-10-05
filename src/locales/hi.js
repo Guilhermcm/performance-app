@@ -1880,6 +1880,7 @@ export default {
   'Challenge name': 'चैलेंज का नाम',
   'Pick at least one friend.': 'कम से कम एक दोस्त चुनें।',
   'Agree to share your volume to create this challenge.': 'यह चैलेंज बनाने के लिए अपना वॉल्यूम शेयर करने की सहमति दें।',
+  'Give the challenge a name.': 'चैलेंज को एक नाम दें।',
   'Create challenge': 'चैलेंज शुरू करें',
   'Challenge created. Your friends got the invite.': 'चैलेंज बन गया। आपके दोस्तों को न्योता मिल गया।',
   'Team total': 'टीम का कुल',

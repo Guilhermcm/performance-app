@@ -1877,6 +1877,7 @@ export default {
   'Challenge name': 'Назва челенджу',
   'Pick at least one friend.': 'Виберіть хоча б одного друга.',
   'Agree to share your volume to create this challenge.': 'Дозвольте показувати ваш обсяг, щоб створити цей челендж.',
+  'Give the challenge a name.': 'Придумайте назву челенджу.',
   'Create challenge': 'Запустити челендж',
   'Challenge created. Your friends got the invite.': 'Челендж створено. Друзі отримали запрошення.',
   'Team total': 'Разом у команди',

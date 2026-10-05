@@ -1883,6 +1883,7 @@ export default {
   'Challenge name': 'A kihívás neve',
   'Pick at least one friend.': 'Válassz legalább egy barátot.',
   'Agree to share your volume to create this challenge.': 'A kihívás létrehozásához járulj hozzá a volumened megosztásához.',
+  'Give the challenge a name.': 'Adj nevet a kihívásnak.',
   'Create challenge': 'Kihívás indítása',
   'Challenge created. Your friends got the invite.': 'A kihívás elkészült. A barátaid megkapták a meghívót.',
   'Team total': 'Csapat összesen',

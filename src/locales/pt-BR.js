@@ -1258,6 +1258,7 @@ export const PT_BR_OVERRIDES = {
   'Challenge name': 'Nome do desafio',
   'Pick at least one friend.': 'Escolha pelo menos um amigo.',
   'Agree to share your volume to create this challenge.': 'Aceite compartilhar seu volume para criar este desafio.',
+  'Give the challenge a name.': 'Dê um nome ao desafio.',
   'Create challenge': 'Criar desafio',
   'Challenge created. Your friends got the invite.': 'Desafio criado. Seus amigos já receberam o convite.',
   'Team total': 'Total da equipe',

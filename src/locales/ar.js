@@ -1933,6 +1933,7 @@ export default {
   'Challenge name': 'اسم التحدي',
   'Pick at least one friend.': 'اختر صديقًا واحدًا على الأقل.',
   'Agree to share your volume to create this challenge.': 'وافق على مشاركة حجم تدريبك لإنشاء هذا التحدي.',
+  'Give the challenge a name.': 'اختر اسمًا للتحدي.',
   'Create challenge': 'ابدأ التحدي',
   'Challenge created. Your friends got the invite.': 'تم إنشاء التحدي. وصلت الدعوة إلى أصدقائك.',
   'Team total': 'إجمالي الفريق',

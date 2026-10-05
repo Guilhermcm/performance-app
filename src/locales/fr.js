@@ -1880,6 +1880,7 @@ export default {
   'Challenge name': 'Nom du défi',
   'Pick at least one friend.': 'Choisis au moins un ami.',
   'Agree to share your volume to create this challenge.': 'Accepte de partager ton volume pour créer ce défi.',
+  'Give the challenge a name.': 'Donne un nom au défi.',
   'Create challenge': 'Créer le défi',
   'Challenge created. Your friends got the invite.': 'Défi créé. Tes amis ont reçu l\'invitation.',
   'Team total': 'Total de l\'équipe',

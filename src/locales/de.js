@@ -1900,6 +1900,7 @@ export default {
   'Challenge name': 'Name der Challenge',
   'Pick at least one friend.': 'Wähl mindestens einen Freund.',
   'Agree to share your volume to create this challenge.': 'Stimm zu, dein Volumen zu teilen, um diese Challenge zu erstellen.',
+  'Give the challenge a name.': 'Gib der Challenge einen Namen.',
   'Create challenge': 'Challenge starten',
   'Challenge created. Your friends got the invite.': 'Challenge erstellt. Deine Freunde haben die Einladung bekommen.',
   'Team total': 'Team gesamt',

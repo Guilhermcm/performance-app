@@ -1880,6 +1880,7 @@ export default {
   'Challenge name': 'Meydan okumanın adı',
   'Pick at least one friend.': 'En az bir arkadaş seç.',
   'Agree to share your volume to create this challenge.': 'Bu meydan okumayı oluşturmak için hacmini paylaşmayı kabul et.',
+  'Give the challenge a name.': 'Meydan okumaya bir ad ver.',
   'Create challenge': 'Meydan okumayı başlat',
   'Challenge created. Your friends got the invite.': 'Meydan okuma oluşturuldu. Arkadaşların daveti aldı.',
   'Team total': 'Takım toplamı',

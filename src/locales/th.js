@@ -1891,6 +1891,7 @@ export default {
   'Challenge name': 'ชื่อชาเลนจ์',
   'Pick at least one friend.': 'เลือกเพื่อนอย่างน้อยหนึ่งคน',
   'Agree to share your volume to create this challenge.': 'ยอมรับการแชร์ปริมาณงานเพื่อสร้างชาเลนจ์นี้',
+  'Give the challenge a name.': 'ตั้งชื่อชาเลนจ์',
   'Create challenge': 'เริ่มชาเลนจ์',
   'Challenge created. Your friends got the invite.': 'สร้างชาเลนจ์แล้ว เพื่อนของคุณได้รับคำเชิญแล้ว',
   'Team total': 'ยอดรวมของทีม',

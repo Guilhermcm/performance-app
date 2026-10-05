@@ -1880,6 +1880,7 @@ export default {
   'Challenge name': '챌린지 이름',
   'Pick at least one friend.': '친구를 한 명 이상 선택하세요.',
   'Agree to share your volume to create this challenge.': '이 챌린지를 만들려면 볼륨 공유에 동의하세요.',
+  'Give the challenge a name.': '챌린지 이름을 정하세요.',
   'Create challenge': '챌린지 시작',
   'Challenge created. Your friends got the invite.': '챌린지를 만들었습니다. 친구들에게 초대를 보냈습니다.',
   'Team total': '팀 합계',

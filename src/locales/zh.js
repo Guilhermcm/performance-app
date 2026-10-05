@@ -1880,6 +1880,7 @@ export default {
   'Challenge name': '挑战名称',
   'Pick at least one friend.': '至少选择一位好友。',
   'Agree to share your volume to create this challenge.': '请同意分享训练量以创建此挑战。',
+  'Give the challenge a name.': '请为挑战起个名字。',
   'Create challenge': '发起挑战',
   'Challenge created. Your friends got the invite.': '挑战已创建。好友已收到邀请。',
   'Team total': '团队总计',

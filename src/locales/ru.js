@@ -1880,6 +1880,7 @@ export default {
   'Challenge name': 'Название челленджа',
   'Pick at least one friend.': 'Выберите хотя бы одного друга.',
   'Agree to share your volume to create this challenge.': 'Разрешите показывать ваш объём, чтобы создать этот челлендж.',
+  'Give the challenge a name.': 'Придумайте название челленджа.',
   'Create challenge': 'Запустить челлендж',
   'Challenge created. Your friends got the invite.': 'Челлендж создан. Друзья получили приглашение.',
   'Team total': 'Итог команды',
