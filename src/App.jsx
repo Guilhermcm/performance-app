@@ -29,6 +29,7 @@ import CelebrationHost from './features/gamification/CelebrationHost.tsx'
 import { Toaster } from './components/ui/sonner.tsx'
 import { useProfile } from './features/profile/useProfile.ts'
 import { useProgress, startProgressSync } from './features/gamification/useProgress.ts'
+import { useSocial } from './features/social/useSocial.ts'
 import Home from './views/Home.jsx'
 import CheckIn from './views/CheckIn.jsx'
 import Plan from './views/Plan.jsx'
@@ -140,7 +141,9 @@ function Shell() {
   useWakeLock(!!S.active && !S.active.editingWorkoutId && S.keepAwake !== false)
 
   // The profile in memory belongs to whoever is signed in; signing out drops it.
-  useEffect(() => { if (!user) { useProfile.getState().reset(); useProgress.getState().reset() } }, [user?.id])
+  useEffect(() => {
+    if (!user) { useProfile.getState().reset(); useProgress.getState().reset(); useSocial.getState().reset() }
+  }, [user?.id])
   // No tab bar while the profile loads or the onboarding is on screen (a guest has no profile).
   const profileReady = useProfile(s => s.status === 'ready' && !s.onboarding) || !user
   // Gamification numbers for a signed-in account with a profile (get_my_progress needs one): the
@@ -149,6 +152,11 @@ function Shell() {
     if (!user || !profileReady) return
     void useProgress.getState().load(user.id)
     return startProgressSync()
+  }, [user?.id, profileReady])
+  // Friends, rankings, challenges and feed for this account: the saved copy at once; the
+  // challenges right away (tab badge, and due ones close on the server).
+  useEffect(() => {
+    if (user && profileReady) useSocial.getState().bind(user.id)
   }, [user?.id, profileReady])
 
   const authed = user || isGuest
