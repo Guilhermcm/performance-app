@@ -30,6 +30,11 @@ import { Toaster } from './components/ui/sonner.tsx'
 import { useProfile } from './features/profile/useProfile.ts'
 import { useProgress, startProgressSync } from './features/gamification/useProgress.ts'
 import { useSocial } from './features/social/useSocial.ts'
+import SocialScreen from './features/social/SocialScreen.tsx'
+import ChallengeDetail from './features/social/ChallengeDetail.tsx'
+import InviteScreen, { InviteRoute } from './features/social/InviteScreen.tsx'
+import PendingInviteHost from './features/social/PendingInviteHost.tsx'
+import { inviteCodeFromPath } from './features/social/pending-invite.ts'
 import Home from './views/Home.jsx'
 import CheckIn from './views/CheckIn.jsx'
 import Plan from './views/Plan.jsx'
@@ -168,7 +173,11 @@ function Shell() {
     </div>
   )
   // Signed out: the sign-in screen owns the whole viewport (no #app padding, no tab bar).
-  if (!authed) return <ErrorBoundary><SignIn /></ErrorBoundary>
+  // An invite link opened without a session shows who invited before asking to sign in.
+  if (!authed) {
+    const invite = inviteCodeFromPath(loc.pathname)
+    return <ErrorBoundary>{invite ? <InviteScreen code={invite} signedIn={false} /> : <SignIn />}</ErrorBoundary>
+  }
 
   return (
     <>
@@ -196,6 +205,10 @@ function Shell() {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/perfil" element={<ProfileScreen />} />
                 <Route path="/conquistas" element={<AchievementsScreen />} />
+                <Route path="/social" element={<Navigate to="/social/ranking" replace />} />
+                <Route path="/social/desafios/:id" element={<ChallengeDetail />} />
+                <Route path="/social/:section" element={<SocialScreen />} />
+                <Route path="/convite/:code" element={<InviteRoute />} />
                 <Route path="*" element={<Navigate to="/home" replace />} />
               </Routes>
             </ErrorBoundary>
@@ -206,6 +219,7 @@ function Shell() {
           error or onboarding screens. */}
       {user && profileReady && <SyncIndicator />}
       {user && profileReady && <CelebrationHost />}
+      {user && profileReady && <PendingInviteHost />}
       {profileReady && <TabBar onStart={startFlow} />}
       <RestTimer />
       <Modals />
