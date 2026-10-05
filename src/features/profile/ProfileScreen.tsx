@@ -205,7 +205,7 @@ export default function ProfileScreen() {
             <span className="text-[15px] font-semibold leading-snug">{t('Share workouts and PRs with friends')}</span>
             <span className="text-sm leading-snug text-muted-foreground">{t('Weight, diet and loads stay private.')}</span>
           </label>
-          <Switch id="share_activity" className="relative after:absolute after:-inset-3 data-[state=unchecked]:bg-foreground/20 dark:data-[state=unchecked]:bg-input/80" checked={profile.share_activity} onCheckedChange={toggleShare} />
+          <Switch id="share_activity" className="relative after:absolute after:-inset-3" checked={profile.share_activity} onCheckedChange={toggleShare} />
         </section>
 
         <Button variant="outline" className="mt-3 h-12 gap-2 rounded-xl text-base" disabled={leaving} onClick={() => leave()}>
