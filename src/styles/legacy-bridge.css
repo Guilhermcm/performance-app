@@ -1,0 +1,37 @@
+/* The inherited openGym stylesheet reads these names. They now come from tokens.css, so the
+   legacy screens take the new identity without touching their components. Loaded after
+   index.css inside the legacy layer, so these win over index.css's own definitions.
+
+   Covered: every surface, text, line and accent colour index.css defines. Not covered on
+   purpose: the system palette (--blue, --green, --orange…) except --red, which is the
+   destructive status colour; those hues carry status meaning (PRs, warnings, muscle maps), not
+   identity. Layout and motion variables (--sab, --sat, --conn, --r*, --pad, --hair, --ease,
+   --fast, --med) are untouched. --acc-soft and --acc-line are color-mix()es of --acc in
+   index.css and follow it. */
+:root, :root[data-theme="light"] {
+  /* surfaces, darkest to lightest in the dark theme */
+  --bg: var(--background);
+  --bg-el: var(--card);
+  --surface: var(--popover);
+  --surface-2: var(--secondary);
+  --surface-3: var(--accent);
+
+  /* text */
+  --label: var(--foreground);
+  --label-2: var(--muted-foreground);
+  --label-3: color-mix(in oklab, var(--foreground) 34%, transparent);
+  --label-4: color-mix(in oklab, var(--foreground) 18%, transparent);
+
+  /* lines */
+  --sep: var(--input);
+  --sep-op: var(--border);
+
+  /* accent */
+  --acc: var(--primary);
+  --acc-2: color-mix(in oklab, var(--primary) 78%, black);
+  --on-acc: var(--primary-foreground);
+
+  /* status */
+  --red: var(--destructive);
+}
+body { font-family: var(--font-sans); }

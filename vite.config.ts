@@ -1,9 +1,11 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { createHash } from 'node:crypto'
-import { defineConfig } from 'vite'
+import { fileURLToPath, URL } from 'node:url'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 
-const swStamp = {
+const swStamp: Plugin = {
   name: 'perf-sw-stamp',
   apply: 'build',
   closeBundle() {
@@ -19,7 +21,8 @@ const appVersion = JSON.parse(readFileSync(new URL('./package.json', import.meta
 
 export default defineConfig({
   define: { __APP_VERSION__: JSON.stringify(appVersion) },
-  plugins: [react(), swStamp],
+  plugins: [react(), tailwindcss(), swStamp],
+  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   base: './',
   build: { chunkSizeWarningLimit: 1500 }
 })
