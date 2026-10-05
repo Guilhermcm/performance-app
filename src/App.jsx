@@ -24,6 +24,7 @@ import SignIn from './features/auth/SignIn.tsx'
 import ProfileGate from './features/profile/ProfileGate.tsx'
 import ProfileScreen from './features/profile/ProfileScreen.tsx'
 import SyncIndicator from './features/sync/SyncIndicator.tsx'
+import CelebrationHost from './features/gamification/CelebrationHost.tsx'
 import { Toaster } from './components/ui/sonner.tsx'
 import { useProfile } from './features/profile/useProfile.ts'
 import { useProgress, startProgressSync } from './features/gamification/useProgress.ts'
@@ -194,6 +195,7 @@ function Shell() {
       {/* The connection, for a signed-in account past the profile gate: never over the loading,
           error or onboarding screens. */}
       {user && profileReady && <SyncIndicator />}
+      {user && profileReady && <CelebrationHost />}
       {profileReady && <TabBar onStart={startFlow} />}
       <RestTimer />
       <Modals />
