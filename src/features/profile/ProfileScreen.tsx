@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState, type ReactNode } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { ArrowLeft, CodeXml, LogOut, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -10,6 +10,7 @@ import { useStore } from '../../store/useStore.js'
 import { t, dateLocale } from '../../lib/i18n.js'
 import { todayISO } from '../../lib/format.js'
 import { menuSheet } from '../../sheets.jsx'
+import ProfileProgress from '../gamification/ProfileProgress'
 import { useProfile } from './useProfile'
 import { validateProfileInput } from './profile-api'
 import { applyProfileToState } from './profile-apply'
@@ -48,6 +49,15 @@ export default function ProfileScreen() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState(false)
   const [leaving, setLeaving] = useState(false)
+  // The feed sends people here to check their sharing: bring the switch into view and focus it.
+  const focus = (useLocation().state as { focus?: string } | null)?.focus
+  const ready = !!profile
+  useEffect(() => {
+    if (!ready || focus !== 'share_activity') return
+    const el = document.getElementById('share_activity')
+    el?.scrollIntoView({ block: 'center' })
+    el?.focus({ preventScroll: true })
+  }, [ready, focus])
 
   if (!profile) return null
 
@@ -166,6 +176,7 @@ export default function ProfileScreen() {
       </section>
 
       <div className="mt-8 flex flex-col gap-3">
+        <ProfileProgress />
         {SECTIONS.map(section => {
           const open = editing === section.key
           const title = section.title()
@@ -203,7 +214,7 @@ export default function ProfileScreen() {
             <span className="text-[15px] font-semibold leading-snug">{t('Share workouts and PRs with friends')}</span>
             <span className="text-sm leading-snug text-muted-foreground">{t('Weight, diet and loads stay private.')}</span>
           </label>
-          <Switch id="share_activity" className="relative after:absolute after:-inset-3 data-[state=unchecked]:bg-foreground/20 dark:data-[state=unchecked]:bg-input/80" checked={profile.share_activity} onCheckedChange={toggleShare} />
+          <Switch id="share_activity" className="relative after:absolute after:-inset-3" checked={profile.share_activity} onCheckedChange={toggleShare} />
         </section>
 
         <Button variant="outline" className="mt-3 h-12 gap-2 rounded-xl text-base" disabled={leaving} onClick={() => leave()}>

@@ -206,6 +206,7 @@ export const EN_OVERRIDES = {
   'Nothing selected — every exercise is shown.': 'Nothing selected, so every exercise is shown.',
   'Session ended — sign in again.': 'Session ended. Sign in again.',
   'Replaces your current Mon–Sun assignments.': 'Replaces your current Monday to Sunday assignments.',
+  'People in this challenge see how many tonnes you lift. Never the load of each exercise.': 'People in this challenge see how many tonnes you lift, but not the load of each exercise.',
 }
 
 export default EN_OVERRIDES

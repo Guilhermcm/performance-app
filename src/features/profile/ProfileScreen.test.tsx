@@ -121,6 +121,15 @@ describe('ProfileScreen', () => {
     await waitFor(() => expect(h.save).toHaveBeenCalledWith({ share_activity: true }))
   })
 
+  it('focuses the sharing switch when sent there from the feed', async () => {
+    const scroll = vi.fn()
+    Element.prototype.scrollIntoView = scroll
+    render(<MemoryRouter initialEntries={[{ pathname: '/perfil', state: { focus: 'share_activity' } }]}><ProfileScreen /></MemoryRouter>)
+    const sw = screen.getByRole('switch', { name: /share/i })
+    await waitFor(() => expect(document.activeElement).toBe(sw))
+    expect(scroll).toHaveBeenCalled()
+  })
+
   it('signs out', async () => {
     show()
     fireEvent.click(screen.getByRole('button', { name: /sign out/i }))

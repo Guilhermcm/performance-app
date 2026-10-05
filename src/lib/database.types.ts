@@ -29,11 +29,57 @@ export interface Database {
         Update: never
         Relationships: []
       }
+      weekly_targets: {
+        Row: { user_id: string; week_start: string; target: number }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      xp_ledger: {
+        Row: { id: number; user_id: string; pillar: Pillar | null; amount: number; reason: string; event_id: number | null; week_start: string; created_at: string }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      streaks: {
+        Row: { user_id: string; kind: string; current: number; best: number; shields: number; last_period: string | null }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      achievement_catalog: {
+        Row: { code: string; metric: string; threshold: number; xp: number; sort: number }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      user_achievements: {
+        Row: { user_id: string; code: string; unlocked_at: string }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      friend_invites: {
+        Row: { code: string; inviter_id: string; created_at: string; expires_at: string; used_by: string | null; used_at: string | null }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      friendships: {
+        Row: { user_a: string; user_b: string; created_at: string }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: {
       push_state: {
         Args: { p_data: Json; p_base_rev: number | null }
+        Returns: Json
+      }
+      get_my_progress: {
+        Args: Record<PropertyKey, never>
         Returns: Json
       }
     }

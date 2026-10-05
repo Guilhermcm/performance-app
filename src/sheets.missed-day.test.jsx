@@ -12,7 +12,7 @@ import { markAllSetsDone } from './lib/backfill.js'
 import { EXDB } from './lib/exercises-data.js'
 import { emit } from './features/gamification/events.ts'
 
-vi.mock('./features/gamification/events.ts', () => ({ emit: vi.fn() }))
+vi.mock('./features/gamification/events.ts', () => ({ emit: vi.fn(), flush: vi.fn(async () => ({ sent: 0, left: 0 })) }))
 
 const BENCH = '0025'
 const ROW = EXDB.find(e => e.id !== BENCH && e.bp === 'back' && e.eq === 'barbell').id

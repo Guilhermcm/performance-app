@@ -3,7 +3,9 @@
 ## 1. Supabase
 
 1. Crie um projeto em https://supabase.com/dashboard (região: São Paulo, South America).
-2. SQL Editor → cole o conteúdo de `supabase/migrations/0001_init.sql` → Run.
+2. SQL Editor → cole e rode, em ordem, cada arquivo de `supabase/migrations/` (`0001_init.sql`,
+   `0002_gamification.sql`, `0003_gamification_cron.sql`, `0004_social.sql`,
+   `0005_social_cron.sql`). Em um projeto que já tem as anteriores, rode só as que faltam.
 3. Project Settings → API: copie `Project URL` e a chave `anon public`.
 
 ## 2. Google OAuth
@@ -45,3 +47,21 @@ select count(*) from activity_events;  -- só os de A
 
 Projetos gratuitos pausam depois de 7 dias sem requisições. Para reativar, vá em Dashboard → projeto →
 Restore. O uso diário do app evita a pausa.
+
+## 7. Fechamento diário das semanas (pg_cron)
+
+O app fecha as semanas sempre que abre (`get_my_progress`). Um job diário mantém streaks e
+conquistas em dia para quem passa dias sem abrir.
+
+1. Supabase → Database → Extensions → procure `pg_cron` → Enable.
+2. SQL Editor → rode de novo `supabase/migrations/0003_gamification_cron.sql` e
+   `supabase/migrations/0005_social_cron.sql`.
+3. Confira com `select jobname, schedule, command from cron.job order by jobname;`. O resultado
+   esperado tem duas linhas: `close-challenges | 15 6 * * * | select public.close_all_challenges()`
+   e `close-weeks | 0 6 * * * | select public.close_all_weeks()` (06:15 e 06:00 UTC).
+
+Sem o `pg_cron` nada quebra. O streak de quem sumiu só é atualizado quando a pessoa abre o app de
+novo.
+
+Os desafios também fecham sozinhos quando alguém abre o app, a aba de desafios ou o ranking. O job
+só garante os +300 XP de quem passa dias sem abrir.

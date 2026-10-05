@@ -279,6 +279,9 @@ create table public.streaks (
   `payload` ≤ 4 KB.
 - `xp_ledger`, `user_achievements`, `streaks`: só select do próprio; escrita apenas por funções
   security definer.
+- Fase 1a acrescentou `weekly_targets(user_id, week_start, target)` (meta T congelada por semana,
+  §5.2) e `achievement_catalog(code, metric, threshold, xp, sort)` (catálogo de §5.5 em tabela,
+  espelhado em `features/gamification/achievements.ts`), com as mesmas regras de RLS.
 
 ### 4.3 Social
 
@@ -320,6 +323,10 @@ create table public.challenge_members (
 );
 ```
 
+Na 1b, `challenge_members.joined_at` ficou anulável (nulo = convidado, ainda sem resposta) e a
+tabela ganhou `invited_by`, `share_volume`, `final` e `won`; `challenges` ganhou `closed_at`. O
+período vale de 7 a 92 dias contando os dois extremos (`ends_on - starts_on between 6 and 91`).
+
 - Convite: cada usuário tem no máximo 5 convites ativos. `accept_invite(code)` valida
   expiração/uso/auto-convite, cria `friendships` com par ordenado e marca uso.
 - `friendships`: select onde o usuário é `user_a` ou `user_b`; delete idem (desfazer amizade);
@@ -344,7 +351,8 @@ create table public.challenge_members (
 | `get_feed(before timestamptz)` | eventos `workout_completed`/`pr` de amigos com `share_activity = true`, paginado (20) |
 
 Fechamento de semana e de desafios: avaliação **preguiçosa** (em `get_my_progress`,
-`get_challenges`, leaderboard) + job `pg_cron` diário 06:00 UTC como rede de segurança.
+`get_challenges`, leaderboard) + job `pg_cron` diário como rede de segurança: `close-weeks` às
+06:00 UTC e, na 1b, `close-challenges` às 06:15 UTC.
 
 ## 5. Gamificação
 
@@ -353,7 +361,7 @@ Fechamento de semana e de desafios: avaliação **preguiçosa** (em `get_my_prog
 - **Consistência acima de força bruta**: cumprir o próprio plano vale o mesmo para todos.
 - **Recompensa sem punição**: não há perda de XP nem de nível.
 - **Servidor é a autoridade**: o cliente só emite eventos; XP é calculado no Postgres. O cliente
-  mostra uma prévia otimista (`lib/xp.ts`, espelho das regras) que é substituída pela resposta do
+  mostra uma prévia otimista (`features/gamification/xp.ts`, espelho das regras) que é substituída pela resposta do
   servidor.
 
 ### 5.2 Regras de XP — pilar Força (Fases 0/1)
@@ -369,8 +377,12 @@ Seja `T = profiles.days_per_week`.
 | `weight_logged` | 10 | 1 por dia |
 
 Máximo semanal do pilar = 600 + 150 + 50 + 90 + 70 = **960 XP para qualquer T**. Esse é o
-mecanismo de justiça do ranking. Mudar `days_per_week` vale a partir da semana seguinte (o valor é
-congelado no início da semana em `streaks`/ledger).
+mecanismo de justiça do ranking. Mudar `days_per_week` vale a partir da semana seguinte.
+
+A T-ésima sessão planejada paga o resto, `600 − round(600/T)·(T−1)`, para que a soma seja sempre
+600 (T = 7: seis de 86 e uma de 84). A meta de cada semana fica em `weekly_targets`, congelada pelo
+primeiro evento ou leitura da semana, pelo job diário ou, se o perfil mudar antes, com o valor
+antigo.
 
 Pilares futuros seguem o mesmo molde: **600 de consistência + 150 de meta semanal + até ~210 de
 extras**, para que cada pilar ativo pese igual no ranking.
@@ -407,6 +419,10 @@ extras**, para que cada pilar ativo pese igual no ranking.
 
 O XP das conquistas entra como bônus geral (`pillar = null`) e conta no ranking semanal.
 
+`early_bird` conta sessões ao vivo cujo payload traz `hour` (hora local de início) menor que 7.
+`first_friend`, `challenge_first` e `challenge_won_5` estão no catálogo desde a 1a e só a 1b os
+libera (`award_achievement`).
+
 ### 5.6 Missões semanais
 
 Fora do escopo da Fase 1 (Fase 5). O modelo de eventos já as suporta.
@@ -433,6 +449,18 @@ Fora do escopo da Fase 1 (Fase 5). O modelo de eventos já as suporta.
   Duração de 7 a 92 dias, 2 a 20 membros. Sucesso no `ends_on` → +300 XP por membro (team) ou
   para quem atingiu (solo), mais as conquistas. Modelos de sono, nutrição e hábitos entram com os
   respectivos pilares.
+
+O valor da carga de um PR não sai no feed nesta fase: o evento `pr` só carrega o exercício, e o
+feed mostra "Recorde: <exercício>". Se um dia o valor entrar, será com um opt-in próprio no perfil.
+O link de convite sobrevive ao login com Google guardado no aparelho (`perf_pending_invite_v1`,
+24 h) e é aceito sozinho quando o perfil fica pronto.
+
+Na 1b, "Convidar amigo" ficou na área Social (lista de amigos e estados vazios de ranking,
+desafios e feed), não no perfil. Como o app usa `HashRouter`, o link é
+`<origem>/#/convite/<code>`. A TabBar passou a ter Início, Plano, Treinar, Social e Stats;
+Exercícios saiu da barra e virou um botão no cabeçalho do Plano. A área Social tem as seções
+Ranking, Desafios, Feed e Amigos (`/social/:section`), e o detalhe do desafio fica em
+`/social/desafios/:id`.
 
 ## 7. UI/UX
 
@@ -528,7 +556,7 @@ Telas novas nascem em shadcn. Herdadas migram uma por fase:
   conquistas, convites (expirado, usado, auto-convite), RLS (usuário A não lê peso nem estado de B,
   não insere em `xp_ledger`, não vê feed de quem não compartilha), desafios (team/solo, sucesso e
   falha).
-- **Casos de paridade**: um arquivo JSON de cenários de XP consumido pelos testes vitest do cliente e do banco (PGlite),
+- **Casos de paridade**: arquivos JSON de cenários de XP e de conquistas consumidos pelos testes vitest do cliente e do banco (PGlite),
   garantindo que prévia e servidor concordam.
 - **Smoke manual pós-deploy**: login Google, onboarding, treino concluído → XP, convite entre duas
   contas, ranking.

@@ -1,4 +1,5 @@
 import { PGlite } from '@electric-sql/pglite'
+import { vi } from 'vitest'
 import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -25,13 +26,30 @@ alter default privileges in schema public grant all on sequences to anon, authen
 alter default privileges in schema public grant all on functions to anon, authenticated;
 `
 
-export async function freshDb(): Promise<PGlite> {
+// Every SQL test file loads this helper. Booting PGlite and running the migrations takes about
+// 2 s alone and far longer when the whole suite runs in parallel, which broke the default 10 s
+// hook timeout on the first test of a file. The generous limit applies to the hooks and tests
+// these files register (vitest reads the default when a hook is declared, after this import).
+vi.setConfig({ hookTimeout: 120_000, testTimeout: 120_000 })
+
+// The migrated cluster is built once per test file and dumped; each fresh database boots from that
+// dump (about 4x faster than replaying the migrations), so tests stay fully isolated.
+let template: Promise<Blob> | undefined
+
+async function migratedDump(): Promise<Blob> {
   const db = new PGlite()
   await db.exec(SHIM)
   for (const file of readdirSync(MIGRATIONS).filter(f => f.endsWith('.sql')).sort()) {
     await db.exec(readFileSync(join(MIGRATIONS, file), 'utf8'))
   }
-  return db
+  const dump = await db.dumpDataDir('none')
+  await db.close()
+  return dump
+}
+
+export async function freshDb(): Promise<PGlite> {
+  template ??= migratedDump()
+  return PGlite.create({ loadDataDir: await template })
 }
 
 export async function addUser(db: PGlite, uid: string, email = `${uid.slice(0, 8)}@test.dev`) {

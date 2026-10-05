@@ -12,6 +12,10 @@ import { beep, vibrate } from './lib/sound.js'
 import { t, dateLocale, instrFor, exerciseNameFor, exerciseNameClass, getLang, INSTR_LANGS } from './lib/i18n.js'
 import { nav } from './lib/nav.js'
 import { emit } from './features/gamification/events.ts'
+import { useProgress } from './features/gamification/useProgress.ts'
+import { previewWorkout } from './features/gamification/preview.ts'
+import { syncProgress, weighInXp } from './features/gamification/after-event.ts'
+import WorkoutXpSummary from './features/gamification/WorkoutXpSummary.tsx'
 import { buildStarterPlan, starterPlanDays, starterPlanOptions } from './lib/starter.js'
 import Media, { Thumb } from './components/Media.jsx'
 import CustomMediaField from './components/CustomMediaField.jsx'
@@ -242,9 +246,11 @@ function BwSheet({ required, onDone, close }) {
       s.bodyweight.sort((a, b) => (a.d < b.d ? -1 : 1))
     })
     // One event per day: the date is the reference, so weighing in twice gives XP once.
+    const xp = weighInXp(iso)
     emit('weight_logged', { w: n }, iso, iso)
+    void syncProgress()
     close()
-    if (onDone) onDone(n); else toast(t('Weight saved'))
+    if (onDone) onDone(n); else toast(xp ? t('Weight saved. +{0} XP', xp) : t('Weight saved'))
   }
   const recent = [...st.bodyweight].reverse().slice(0, 3)
   return <>
@@ -2604,11 +2610,12 @@ export function exitWorkoutEdit(onExit = () => nav('/history')) {
   </>, { kind: 'center' })
 }
 
-function FinishSummary({ w, prs, e1prs = [], close }) {
+function FinishSummary({ w, prs, e1prs = [], xp = null, close }) {
   const st = useStore(s => s.S)
   return <div style={{ textAlign: 'center', padding: '8px 0' }}>
     <div style={{ fontSize: 44, display: 'flex', justifyContent: 'center', color: 'var(--acc)' }}><Icon name="trophy" /></div>
     <h3 style={{ margin: '8px 0' }}>{t('Workout complete!')}</h3>
+    {xp && <WorkoutXpSummary before={xp.before} preview={xp.preview} settled={xp.settled} />}
     <div className="tiles" style={{ textAlign: 'start' }}>
       <div className="tile"><div className="l">{t('Duration')}</div><div className="v" style={{ fontSize: '1.1rem' }}>{fmtDur(w.end - w.start)}</div></div>
       <div className="tile"><div className="l">{t('Volume')}</div><div className="v" style={{ fontSize: '1.1rem' }}>{fmtVol(w.vol, st.unit)}</div></div>
@@ -2691,12 +2698,22 @@ function doFinishWorkout() {
   // the server sees the same event, not a second one.
   const ref = String(A.backfill?.replaceId ?? shown.id ?? '')
   const day = String(shown.d || '')
+  let xp = null
   if (ref && /^\d{4}-\d{2}-\d{2}$/.test(day)) {
-    emit('workout_completed', { sets: shown.entries.reduce((n, e) => n + (e.sets?.length || 0), 0), vol: shown.vol || 0, past }, ref, day)
-    ;[...new Set(prs)].forEach(exId => emit('pr', { ex: exId }, `${ref}:${exId}`, day))
+    const unique = [...new Set(prs)]
+    // The preview reads the progress from before these events; the summary swaps it for the
+    // server's figures once the queue is through (features/gamification/WorkoutXpSummary.tsx).
+    const before = useProgress.getState().progress
+    const preview = previewWorkout(before, { occurredOn: day, prs: unique.length })
+    // The local start hour feeds early_bird; a session logged into the past has no real one.
+    const hour = !past && Number.isFinite(A.start) ? new Date(A.start).getHours() : null
+    emit('workout_completed', { sets: shown.entries.reduce((n, e) => n + (e.sets?.length || 0), 0), vol: shown.vol || 0, past, ...(hour === null ? {} : { hour }) }, ref, day)
+    unique.forEach(exId => emit('pr', { ex: exId }, `${ref}:${exId}`, day))
+    // Only a signed-in account has server progress (App.jsx loads it).
+    if (useProgress.getState().userId) xp = { before, preview, settled: syncProgress() }
   }
   useStore.getState().autoBackupNow()
   useUI.getState().stopRest()
   beep(snd(), 880, 0.15); beep(snd(), 1100, 0.15, 0.18); beep(snd(), 1320, 0.3, 0.36)
-  ui().openSheet(close => <FinishSummary w={shown} prs={prs} e1prs={e1prs} close={close} />, { kind: 'center', locked: true })
+  ui().openSheet(close => <FinishSummary w={shown} prs={prs} e1prs={e1prs} xp={xp} close={close} />, { kind: 'center', locked: true })
 }

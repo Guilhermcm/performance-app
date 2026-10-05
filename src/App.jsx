@@ -23,9 +23,18 @@ import TimerFlash from './components/TimerFlash.jsx'
 import SignIn from './features/auth/SignIn.tsx'
 import ProfileGate from './features/profile/ProfileGate.tsx'
 import ProfileScreen from './features/profile/ProfileScreen.tsx'
+import AchievementsScreen from './features/gamification/AchievementsScreen.tsx'
 import SyncIndicator from './features/sync/SyncIndicator.tsx'
+import CelebrationHost from './features/gamification/CelebrationHost.tsx'
 import { Toaster } from './components/ui/sonner.tsx'
 import { useProfile } from './features/profile/useProfile.ts'
+import { useProgress, startProgressSync } from './features/gamification/useProgress.ts'
+import { useSocial } from './features/social/useSocial.ts'
+import SocialScreen from './features/social/SocialScreen.tsx'
+import ChallengeDetail from './features/social/ChallengeDetail.tsx'
+import InviteScreen, { InviteRoute } from './features/social/InviteScreen.tsx'
+import PendingInviteHost from './features/social/PendingInviteHost.tsx'
+import { inviteCodeFromPath } from './features/social/pending-invite.ts'
 import Home from './views/Home.jsx'
 import CheckIn from './views/CheckIn.jsx'
 import Plan from './views/Plan.jsx'
@@ -137,9 +146,23 @@ function Shell() {
   useWakeLock(!!S.active && !S.active.editingWorkoutId && S.keepAwake !== false)
 
   // The profile in memory belongs to whoever is signed in; signing out drops it.
-  useEffect(() => { if (!user) useProfile.getState().reset() }, [user?.id])
+  useEffect(() => {
+    if (!user) { useProfile.getState().reset(); useProgress.getState().reset(); useSocial.getState().reset() }
+  }, [user?.id])
   // No tab bar while the profile loads or the onboarding is on screen (a guest has no profile).
   const profileReady = useProfile(s => s.status === 'ready' && !s.onboarding) || !user
+  // Gamification numbers for a signed-in account with a profile (get_my_progress needs one): the
+  // cached copy at once, the server's right after, and again whenever the app comes back.
+  useEffect(() => {
+    if (!user || !profileReady) return
+    void useProgress.getState().load(user.id)
+    return startProgressSync()
+  }, [user?.id, profileReady])
+  // Friends, rankings, challenges and feed for this account: the saved copy at once; the
+  // challenges right away (tab badge, and due ones close on the server).
+  useEffect(() => {
+    if (user && profileReady) useSocial.getState().bind(user.id)
+  }, [user?.id, profileReady])
 
   const authed = user || isGuest
   if (!ready && !authed) return (
@@ -150,7 +173,11 @@ function Shell() {
     </div>
   )
   // Signed out: the sign-in screen owns the whole viewport (no #app padding, no tab bar).
-  if (!authed) return <ErrorBoundary><SignIn /></ErrorBoundary>
+  // An invite link opened without a session shows who invited before asking to sign in.
+  if (!authed) {
+    const invite = inviteCodeFromPath(loc.pathname)
+    return <ErrorBoundary>{invite ? <InviteScreen code={invite} signedIn={false} /> : <SignIn />}</ErrorBoundary>
+  }
 
   return (
     <>
@@ -177,6 +204,11 @@ function Shell() {
                 <Route path="/structural-balance" element={<StructuralBalance />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/perfil" element={<ProfileScreen />} />
+                <Route path="/conquistas" element={<AchievementsScreen />} />
+                <Route path="/social" element={<Navigate to="/social/ranking" replace />} />
+                <Route path="/social/desafios/:id" element={<ChallengeDetail />} />
+                <Route path="/social/:section" element={<SocialScreen />} />
+                <Route path="/convite/:code" element={<InviteRoute />} />
                 <Route path="*" element={<Navigate to="/home" replace />} />
               </Routes>
             </ErrorBoundary>
@@ -186,6 +218,8 @@ function Shell() {
       {/* The connection, for a signed-in account past the profile gate: never over the loading,
           error or onboarding screens. */}
       {user && profileReady && <SyncIndicator />}
+      {user && profileReady && <CelebrationHost />}
+      {user && profileReady && <PendingInviteHost />}
       {profileReady && <TabBar onStart={startFlow} />}
       <RestTimer />
       <Modals />

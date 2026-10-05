@@ -11,7 +11,7 @@ import { useUI } from './store/useUI.js'
 import { isWarmupRow } from './lib/workout-model.js'
 import { emit } from './features/gamification/events.ts'
 
-vi.mock('./features/gamification/events.ts', () => ({ emit: vi.fn() }))
+vi.mock('./features/gamification/events.ts', () => ({ emit: vi.fn(), flush: vi.fn(async () => ({ sent: 0, left: 0 })) }))
 
 const BENCH = '0025'
 const clone = v => JSON.parse(JSON.stringify(v))
