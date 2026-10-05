@@ -25,10 +25,10 @@ recomendada (impacto em performance física primeiro).
 
 | Fase | Nome | Tamanho | Depende de | Status |
 |---|---|---|---|---|
-| 0 | Fundação | G | — | especificada |
+| 0 | Fundação | G | — | concluída |
 | 1a | Gamificação individual | M | 0 | concluída |
 | 1b | Social | M | 1a | concluída |
-| 2 | Nutrição | G | 1a | a especificar |
+| 2 | Nutrição | G | 1a | spec em revisão (2a + 2b) |
 | 3 | Sono | P | 1a | a especificar |
 | 4 | Hábitos + trackers | M | 1a | a especificar |
 | 5 | Painel de performance | M | 2, 3, 4 | a especificar |
@@ -117,6 +117,10 @@ na gamificação.
   pela câmera (BarcodeDetector com fallback em JS).
 
 **Origem:** OpenNutriTracker (fórmulas, diário, integração OFF/FDC), wger (API e modelo de plano).
+
+**Spec:** [2026-10-05-fase-2-nutricao-design.md](superpowers/specs/2026-10-05-fase-2-nutricao-design.md).
+Dividida em 2a (meta, diário, busca TACO + Open Food Facts, XP) e 2b (código de barras, receitas,
+favoritos, USDA, histórico, desafio).
 
 ---
 
