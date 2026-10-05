@@ -397,3 +397,102 @@ end $$;
 
 revoke all on function public.achievement_stats(uuid), public.award_bonus_xp(uuid, integer, text, date),
   public.award_achievement(uuid, text), public.evaluate_achievements(uuid) from public, anon, authenticated;
+
+-- Progress ------------------------------------------------------------------------------------------
+
+create or replace function public.total_xp(p_user uuid) returns bigint
+language sql stable security definer set search_path = public as $$
+  select coalesce(sum(amount), 0)::bigint from public.xp_ledger where user_id = p_user
+$$;
+
+create or replace function public.week_xp(p_user uuid, p_week date) returns integer
+language sql stable security definer set search_path = public as $$
+  select coalesce(sum(amount), 0)::int from public.xp_ledger where user_id = p_user and week_start = p_week
+$$;
+
+-- What anyone allowed to see this user may see: levels, XP, streak, badges. No weights, no stats.
+-- Phase 1b shows it to friends; the caller checks the friendship.
+create or replace function public.progress_card(p_user uuid) returns jsonb
+language plpgsql stable security definer set search_path = public as $$
+declare
+  v_week   date := public.local_week_start(p_user);
+  v_total  bigint := public.total_xp(p_user);
+  v_target smallint;
+  v_streak public.streaks%rowtype;
+  v_count  jsonb;
+begin
+  v_target := coalesce(
+    (select target from public.weekly_targets where user_id = p_user and week_start = v_week),
+    (select days_per_week from public.profiles where id = p_user), 3);
+  select * into v_streak from public.streaks where user_id = p_user and kind = 'training_week';
+  select jsonb_build_object(
+           'workouts', count(*) filter (where reason = 'workout'),
+           'extras', count(*) filter (where reason = 'workout_extra'),
+           'prs', count(*) filter (where reason = 'pr'),
+           'target_hit', count(*) filter (where reason = 'week_target') > 0)
+    into v_count
+    from public.xp_ledger where user_id = p_user and week_start = v_week;
+  return jsonb_build_object(
+    'total_xp', v_total,
+    'level', public.level_json(v_total),
+    'pillars', (
+      select coalesce(jsonb_object_agg(p.name, public.level_json(p.xp) || jsonb_build_object('xp', p.xp)), '{}'::jsonb)
+        from (select e::text as name,
+                     coalesce((select sum(amount) from public.xp_ledger where user_id = p_user and pillar = e), 0)::bigint as xp
+                from unnest(enum_range(null::public.pillar)) e) p
+       where p.name = 'strength' or p.xp > 0),
+    'week', jsonb_build_object('start', v_week, 'xp', public.week_xp(p_user, v_week), 'max', 960, 'target', v_target) || v_count,
+    'streak', jsonb_build_object('current', coalesce(v_streak.current, 0), 'best', coalesce(v_streak.best, 0),
+                                 'shields', coalesce(v_streak.shields, 0)),
+    'achievements', coalesce((
+      select jsonb_agg(jsonb_build_object('code', code, 'unlocked_at', unlocked_at) order by unlocked_at, code)
+        from public.user_achievements where user_id = p_user), '[]'::jsonb)
+  );
+end $$;
+
+create or replace function public.get_my_progress() returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  v_uid   uuid := auth.uid();
+  v_today date;
+  v_card  jsonb;
+begin
+  if v_uid is null then raise exception 'not_signed_in' using errcode = '28000'; end if;
+  if not exists (select 1 from public.profiles where id = v_uid) then
+    raise exception 'no_profile' using errcode = 'P0002';
+  end if;
+  perform pg_advisory_xact_lock(hashtextextended('xp:' || v_uid::text, 0));
+  v_today := public.local_today(v_uid);
+  perform public.week_target_for(v_uid, public.week_start_of(v_today));
+  perform public.close_weeks(v_uid);
+  perform public.evaluate_achievements(v_uid);
+  v_card := public.progress_card(v_uid);
+  return v_card || jsonb_build_object(
+    'today', v_today,
+    'stats', public.achievement_stats(v_uid) || jsonb_build_object('level', (v_card -> 'level' ->> 'level')::int),
+    'week', (v_card -> 'week') || jsonb_build_object('weighed_today', exists (
+      select 1 from public.xp_ledger l join public.activity_events e on e.id = l.event_id
+       where l.user_id = v_uid and l.reason = 'weight' and e.occurred_on = v_today)));
+end $$;
+
+-- Daily safety net (0003 schedules it): freezes the new week's target, closes weeks and hands out
+-- streak badges for people who did not open the app.
+create or replace function public.close_all_weeks() returns integer
+language plpgsql security definer set search_path = public as $$
+declare
+  r record;
+  n integer := 0;
+begin
+  for r in select id from public.profiles loop
+    perform public.week_target_for(r.id, public.local_week_start(r.id));
+    perform public.close_weeks(r.id);
+    perform public.evaluate_achievements(r.id);
+    n := n + 1;
+  end loop;
+  return n;
+end $$;
+
+revoke all on function public.total_xp(uuid), public.week_xp(uuid, date), public.progress_card(uuid),
+  public.close_all_weeks() from public, anon, authenticated;
+revoke all on function public.get_my_progress() from public, anon;
+grant execute on function public.get_my_progress() to authenticated;
