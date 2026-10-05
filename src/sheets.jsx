@@ -11,6 +11,7 @@ import { toScale, rirOf, EFFORT_PRESETS, effortColor } from './lib/effort.js'
 import { beep, vibrate } from './lib/sound.js'
 import { t, dateLocale, instrFor, exerciseNameFor, exerciseNameClass, getLang, INSTR_LANGS } from './lib/i18n.js'
 import { nav } from './lib/nav.js'
+import { emit } from './features/gamification/events.ts'
 import { buildStarterPlan, starterPlanDays, starterPlanOptions } from './lib/starter.js'
 import Media, { Thumb } from './components/Media.jsx'
 import CustomMediaField from './components/CustomMediaField.jsx'
@@ -234,12 +235,14 @@ function BwSheet({ required, onDone, close }) {
   const save = () => {
     const n = Math.round((v || 0) * 10) / 10
     if (!n || n <= 0) { toast(t('Enter a valid weight')); return }
+    const iso = todayISO()
     update(s => {
-      const iso = todayISO()
       const ex = s.bodyweight.find(b => b.d === iso)
       if (ex) { ex.w = n; ex.t = Date.now() } else s.bodyweight.push({ d: iso, w: n, t: Date.now() })
       s.bodyweight.sort((a, b) => (a.d < b.d ? -1 : 1))
     })
+    // One event per day: the date is the reference, so weighing in twice gives XP once.
+    emit('weight_logged', { w: n }, iso, iso)
     close()
     if (onDone) onDone(n); else toast(t('Weight saved'))
   }
@@ -2681,6 +2684,17 @@ function doFinishWorkout() {
     }
     s.active = null
   })
+  // Gamification reads these (features/gamification/events.ts). The day is the session's own
+  // local date (A.d, a YYYY-MM-DD from todayISO or the backfill picker), so a past workout counts
+  // on the day it happened; the server refuses days older than 14 and the queue drops those.
+  // Logging a day again replaces that workout, so it keeps the replaced id as its reference and
+  // the server sees the same event, not a second one.
+  const ref = String(A.backfill?.replaceId ?? shown.id ?? '')
+  const day = String(shown.d || '')
+  if (ref && /^\d{4}-\d{2}-\d{2}$/.test(day)) {
+    emit('workout_completed', { sets: shown.entries.reduce((n, e) => n + (e.sets?.length || 0), 0), vol: shown.vol || 0, past }, ref, day)
+    ;[...new Set(prs)].forEach(exId => emit('pr', { ex: exId }, `${ref}:${exId}`, day))
+  }
   useStore.getState().autoBackupNow()
   useUI.getState().stopRest()
   beep(snd(), 880, 0.15); beep(snd(), 1100, 0.15, 0.18); beep(snd(), 1320, 0.3, 0.36)

@@ -9,6 +9,9 @@ import { beginWorkout, finishWorkout } from './sheets.jsx'
 import { DEF, useStore } from './store/useStore.js'
 import { useUI } from './store/useUI.js'
 import { isWarmupRow } from './lib/workout-model.js'
+import { emit } from './features/gamification/events.ts'
+
+vi.mock('./features/gamification/events.ts', () => ({ emit: vi.fn() }))
 
 const BENCH = '0025'
 const clone = v => JSON.parse(JSON.stringify(v))
@@ -43,6 +46,7 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
   localStorage.clear()
   useUI.setState({ sheets: [] })
+  vi.mocked(emit).mockClear()
 })
 afterEach(() => { vi.useRealTimers() })
 
@@ -53,6 +57,9 @@ describe('what you plan is what you train', () => {
     expect(rowsOf('A')).toEqual(['50x15', '50x15'])
     trainActive('2026-09-07')
     expect(S().workouts[0].entries[0].target.reps).toBe(15)
+    // One gamification event for the finished session, on its local day.
+    expect(vi.mocked(emit).mock.calls.filter(c => c[0] === 'workout_completed'))
+      .toEqual([['workout_completed', expect.objectContaining({ sets: expect.any(Number), past: false }), String(S().workouts[0].id), '2026-09-07']])
 
     upd(s => { s.routines[0].ex[0] = { ...s.routines[0].ex[0], reps: 10 } })
     startOn('2026-09-14', ['A'])

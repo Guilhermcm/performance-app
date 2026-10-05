@@ -10,6 +10,9 @@ import { useUI } from './store/useUI.js'
 import { dayOverrideSheet, logPastWorkoutSheet, finishWorkout } from './sheets.jsx'
 import { markAllSetsDone } from './lib/backfill.js'
 import { EXDB } from './lib/exercises-data.js'
+import { emit } from './features/gamification/events.ts'
+
+vi.mock('./features/gamification/events.ts', () => ({ emit: vi.fn() }))
 
 const BENCH = '0025'
 const ROW = EXDB.find(e => e.id !== BENCH && e.bp === 'back' && e.eq === 'barbell').id
@@ -51,6 +54,7 @@ beforeEach(() => {
   // Wednesday 16 September 2026, midday.
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(new Date('2026-09-16T12:00:00'))
+  vi.mocked(emit).mockClear()
   globalThis.IS_REACT_ACT_ENVIRONMENT = true
   localStorage.clear()
   useUI.setState({ sheets: [], toasts: [] })
@@ -118,6 +122,10 @@ describe('logging a missed planned day', () => {
     expect(new Date(w.start).getHours()).toBe(18)
     expect(w.entries.map(e => [e.rid, e.sets.every(s => s.done)])).toEqual([['A', true], ['B', true]])
     expect(w.entries[0].planned).toMatchObject({ sets: 2, reps: 10 })
+    // The events carry the day it happened, not the day it was logged, and one PR per lift.
+    expect(emit).toHaveBeenCalledWith('workout_completed', expect.objectContaining({ past: true }), String(w.id), '2026-09-14')
+    expect(vi.mocked(emit).mock.calls.filter(c => c[0] === 'pr').map(c => [c[2], c[3]]))
+      .toEqual(w.prs.map(id => [`${w.id}:${id}`, '2026-09-14']))
   })
 
   // Review of #284: Monday missed, the routine trained again on Tuesday, Monday logged on
