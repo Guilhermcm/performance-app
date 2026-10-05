@@ -1,0 +1,209 @@
+{
+  "levels": [
+    { "xp": 0, "level": 1, "into": 0, "need": 100 },
+    { "xp": 99, "level": 1, "into": 99, "need": 100 },
+    { "xp": 100, "level": 2, "into": 0, "need": 150 },
+    { "xp": 249, "level": 2, "into": 149, "need": 150 },
+    { "xp": 250, "level": 3, "into": 0, "need": 200 },
+    { "xp": 2699, "level": 9, "into": 499, "need": 500 },
+    { "xp": 2700, "level": 10, "into": 0, "need": 550 },
+    { "xp": 16200, "level": 25, "into": 0, "need": 1300 },
+    { "xp": 63700, "level": 50, "into": 0, "need": 2550 }
+  ],
+  "weeks": [
+    {
+      "name": "T=3: three sessions meet the goal",
+      "targets": { "2026-09-07": 3 },
+      "events": [
+        { "kind": "workout_completed", "on": "2026-09-07", "ref": "w1" },
+        { "kind": "workout_completed", "on": "2026-09-09", "ref": "w2" },
+        { "kind": "workout_completed", "on": "2026-09-11", "ref": "w3" }
+      ],
+      "awards": [
+        { "reason": "workout", "amount": 200, "week": "2026-09-07" },
+        { "reason": "workout", "amount": 200, "week": "2026-09-07" },
+        { "reason": "workout", "amount": 200, "week": "2026-09-07" },
+        { "reason": "week_target", "amount": 150, "week": "2026-09-07" }
+      ],
+      "total": 750
+    },
+    {
+      "name": "T=3: extras pay 25, two a week",
+      "targets": { "2026-09-07": 3 },
+      "events": [
+        { "kind": "workout_completed", "on": "2026-09-07", "ref": "w1" },
+        { "kind": "workout_completed", "on": "2026-09-08", "ref": "w2" },
+        { "kind": "workout_completed", "on": "2026-09-09", "ref": "w3" },
+        { "kind": "workout_completed", "on": "2026-09-10", "ref": "w4" },
+        { "kind": "workout_completed", "on": "2026-09-11", "ref": "w5" },
+        { "kind": "workout_completed", "on": "2026-09-12", "ref": "w6" }
+      ],
+      "awards": [
+        { "reason": "workout", "amount": 200, "week": "2026-09-07" },
+        { "reason": "workout", "amount": 200, "week": "2026-09-07" },
+        { "reason": "workout", "amount": 200, "week": "2026-09-07" },
+        { "reason": "week_target", "amount": 150, "week": "2026-09-07" },
+        { "reason": "workout_extra", "amount": 25, "week": "2026-09-07" },
+        { "reason": "workout_extra", "amount": 25, "week": "2026-09-07" }
+      ],
+      "total": 800
+    },
+    {
+      "name": "T=7: the last planned session takes the remainder",
+      "targets": { "2026-09-07": 7 },
+      "events": [
+        { "kind": "workout_completed", "on": "2026-09-07", "ref": "w1" },
+        { "kind": "workout_completed", "on": "2026-09-08", "ref": "w2" },
+        { "kind": "workout_completed", "on": "2026-09-09", "ref": "w3" },
+        { "kind": "workout_completed", "on": "2026-09-10", "ref": "w4" },
+        { "kind": "workout_completed", "on": "2026-09-11", "ref": "w5" },
+        { "kind": "workout_completed", "on": "2026-09-12", "ref": "w6" },
+        { "kind": "workout_completed", "on": "2026-09-13", "ref": "w7" }
+      ],
+      "awards": [
+        { "reason": "workout", "amount": 86, "week": "2026-09-07" },
+        { "reason": "workout", "amount": 86, "week": "2026-09-07" },
+        { "reason": "workout", "amount": 86, "week": "2026-09-07" },
+        { "reason": "workout", "amount": 86, "week": "2026-09-07" },
+        { "reason": "workout", "amount": 86, "week": "2026-09-07" },
+        { "reason": "workout", "amount": 86, "week": "2026-09-07" },
+        { "reason": "workout", "amount": 84, "week": "2026-09-07" },
+        { "reason": "week_target", "amount": 150, "week": "2026-09-07" }
+      ],
+      "total": 750
+    },
+    {
+      "name": "T=5: three PRs a week are paid",
+      "targets": { "2026-09-07": 5 },
+      "events": [
+        { "kind": "workout_completed", "on": "2026-09-07", "ref": "w1" },
+        { "kind": "pr", "on": "2026-09-07", "ref": "w1:a" },
+        { "kind": "pr", "on": "2026-09-08", "ref": "p2" },
+        { "kind": "pr", "on": "2026-09-09", "ref": "p3" },
+        { "kind": "pr", "on": "2026-09-10", "ref": "p4" },
+        { "kind": "pr", "on": "2026-09-14", "ref": "p5" }
+      ],
+      "awards": [
+        { "reason": "workout", "amount": 120, "week": "2026-09-07" },
+        { "reason": "pr", "amount": 30, "week": "2026-09-07" },
+        { "reason": "pr", "amount": 30, "week": "2026-09-07" },
+        { "reason": "pr", "amount": 30, "week": "2026-09-07" },
+        { "reason": "pr", "amount": 30, "week": "2026-09-14" }
+      ],
+      "total": 240
+    },
+    {
+      "name": "Weigh-ins pay once a day",
+      "targets": { "2026-09-07": 3 },
+      "events": [
+        { "kind": "weight_logged", "on": "2026-09-07", "ref": "2026-09-07" },
+        { "kind": "weight_logged", "on": "2026-09-07", "ref": "2026-09-07b" },
+        { "kind": "weight_logged", "on": "2026-09-08", "ref": "2026-09-08" }
+      ],
+      "awards": [
+        { "reason": "weight", "amount": 10, "week": "2026-09-07" },
+        { "reason": "weight", "amount": 10, "week": "2026-09-07" }
+      ],
+      "total": 20
+    },
+    {
+      "name": "T=2: a full week reaches exactly 960",
+      "targets": { "2026-09-07": 2 },
+      "events": [
+        { "kind": "workout_completed", "on": "2026-09-07", "ref": "w1" },
+        { "kind": "workout_completed", "on": "2026-09-08", "ref": "w2" },
+        { "kind": "workout_completed", "on": "2026-09-09", "ref": "w3" },
+        { "kind": "workout_completed", "on": "2026-09-10", "ref": "w4" },
+        { "kind": "workout_completed", "on": "2026-09-11", "ref": "w5" },
+        { "kind": "pr", "on": "2026-09-07", "ref": "p1" },
+        { "kind": "pr", "on": "2026-09-08", "ref": "p2" },
+        { "kind": "pr", "on": "2026-09-09", "ref": "p3" },
+        { "kind": "pr", "on": "2026-09-10", "ref": "p4" },
+        { "kind": "weight_logged", "on": "2026-09-07", "ref": "2026-09-07" },
+        { "kind": "weight_logged", "on": "2026-09-08", "ref": "2026-09-08" },
+        { "kind": "weight_logged", "on": "2026-09-09", "ref": "2026-09-09" },
+        { "kind": "weight_logged", "on": "2026-09-10", "ref": "2026-09-10" },
+        { "kind": "weight_logged", "on": "2026-09-11", "ref": "2026-09-11" },
+        { "kind": "weight_logged", "on": "2026-09-12", "ref": "2026-09-12" },
+        { "kind": "weight_logged", "on": "2026-09-13", "ref": "2026-09-13" }
+      ],
+      "awards": [
+        { "reason": "workout", "amount": 300, "week": "2026-09-07" },
+        { "reason": "workout", "amount": 300, "week": "2026-09-07" },
+        { "reason": "week_target", "amount": 150, "week": "2026-09-07" },
+        { "reason": "workout_extra", "amount": 25, "week": "2026-09-07" },
+        { "reason": "workout_extra", "amount": 25, "week": "2026-09-07" },
+        { "reason": "pr", "amount": 30, "week": "2026-09-07" },
+        { "reason": "pr", "amount": 30, "week": "2026-09-07" },
+        { "reason": "pr", "amount": 30, "week": "2026-09-07" },
+        { "reason": "weight", "amount": 10, "week": "2026-09-07" },
+        { "reason": "weight", "amount": 10, "week": "2026-09-07" },
+        { "reason": "weight", "amount": 10, "week": "2026-09-07" },
+        { "reason": "weight", "amount": 10, "week": "2026-09-07" },
+        { "reason": "weight", "amount": 10, "week": "2026-09-07" },
+        { "reason": "weight", "amount": 10, "week": "2026-09-07" },
+        { "reason": "weight", "amount": 10, "week": "2026-09-07" }
+      ],
+      "total": 960
+    },
+    {
+      "name": "Each week keeps the target frozen for it",
+      "targets": { "2026-09-07": 3, "2026-09-14": 5 },
+      "events": [
+        { "kind": "workout_completed", "on": "2026-09-07", "ref": "a1" },
+        { "kind": "workout_completed", "on": "2026-09-08", "ref": "a2" },
+        { "kind": "workout_completed", "on": "2026-09-09", "ref": "a3" },
+        { "kind": "workout_completed", "on": "2026-09-14", "ref": "b1" },
+        { "kind": "workout_completed", "on": "2026-09-15", "ref": "b2" },
+        { "kind": "workout_completed", "on": "2026-09-16", "ref": "b3" }
+      ],
+      "awards": [
+        { "reason": "workout", "amount": 200, "week": "2026-09-07" },
+        { "reason": "workout", "amount": 200, "week": "2026-09-07" },
+        { "reason": "workout", "amount": 200, "week": "2026-09-07" },
+        { "reason": "week_target", "amount": 150, "week": "2026-09-07" },
+        { "reason": "workout", "amount": 120, "week": "2026-09-14" },
+        { "reason": "workout", "amount": 120, "week": "2026-09-14" },
+        { "reason": "workout", "amount": 120, "week": "2026-09-14" }
+      ],
+      "total": 1110
+    },
+    {
+      "name": "A session logged into the past counts in its own week",
+      "targets": { "2026-09-07": 2, "2026-09-14": 2 },
+      "events": [
+        { "kind": "workout_completed", "on": "2026-09-15", "ref": "b1" },
+        { "kind": "workout_completed", "on": "2026-09-08", "ref": "a1" },
+        { "kind": "workout_completed", "on": "2026-09-16", "ref": "b2" }
+      ],
+      "awards": [
+        { "reason": "workout", "amount": 300, "week": "2026-09-14" },
+        { "reason": "workout", "amount": 300, "week": "2026-09-07" },
+        { "reason": "workout", "amount": 300, "week": "2026-09-14" },
+        { "reason": "week_target", "amount": 150, "week": "2026-09-14" }
+      ],
+      "total": 1050
+    },
+    {
+      "name": "A repeated event pays once",
+      "targets": { "2026-09-07": 3 },
+      "events": [
+        { "kind": "workout_completed", "on": "2026-09-07", "ref": "w1" },
+        { "kind": "workout_completed", "on": "2026-09-07", "ref": "w1" },
+        { "kind": "workout_completed", "on": "2026-09-08", "ref": "w2" }
+      ],
+      "awards": [
+        { "reason": "workout", "amount": 200, "week": "2026-09-07" },
+        { "reason": "workout", "amount": 200, "week": "2026-09-07" }
+      ],
+      "total": 400
+    }
+  ],
+  "streaks": [
+    { "name": "a missed week without a shield resets", "hits": [true, true, false, true], "current": 1, "best": 2, "shields": 0 },
+    { "name": "a shield every four weeks, two at most", "hits": [true, true, true, true, true, true, true, true, true, true, true, true], "current": 12, "best": 12, "shields": 2 },
+    { "name": "a shield carries the streak through one miss", "hits": [true, true, true, true, false, true], "current": 5, "best": 5, "shields": 0 },
+    { "name": "two misses with one shield end it", "hits": [true, true, true, true, false, false, true], "current": 1, "best": 4, "shields": 0 },
+    { "name": "misses before any streak change nothing", "hits": [false, false, true], "current": 1, "best": 1, "shields": 0 }
+  ]
+}
