@@ -1705,4 +1705,13 @@ export default {
   'The basics, so your loads and progress make sense.': 'Ağırlıkların ve ilerlemenin anlamlı olması için temel bilgiler.',
   'This shapes the plan we suggest at the end.': 'Sonda önereceğimiz plan buna göre belirlenir.',
   'Exercises are filtered to what you can use. You can change it later.': 'Egzersizler kullanabildiklerine göre filtrelenir. Daha sonra değiştirebilirsin.',
+  'Profile': 'Profil',
+  'Profile saved': 'Profil kaydedildi',
+  'Could not save. Your previous values were kept.': 'Kaydedilemedi. Önceki değerler korundu.',
+  'Share workouts and PRs with friends': 'Antrenmanları ve rekorları arkadaşlarla paylaş',
+  'Weight, diet and loads stay private.': 'Kilo, beslenme ve yükler gizli kalır.',
+  'Source code (AGPL-3.0)': 'Kaynak kodu (AGPL-3.0)',
+  'Based on openGym': 'openGym tabanlı',
+  'Nothing selected — every exercise is shown.': 'Hiçbir şey seçilmedi — tüm egzersizler gösteriliyor.',
+  'Session ended — sign in again.': 'Oturum sona erdi — yeniden giriş yap.',
 }

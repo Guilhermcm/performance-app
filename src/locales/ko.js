@@ -1705,4 +1705,13 @@ export default {
   'The basics, so your loads and progress make sense.': '무게와 진행 상황을 제대로 보기 위한 기본 정보입니다.',
   'This shapes the plan we suggest at the end.': '마지막에 추천할 계획이 여기에 따라 정해집니다.',
   'Exercises are filtered to what you can use. You can change it later.': '사용할 수 있는 장비에 맞춰 운동이 걸러집니다. 나중에 바꿀 수 있습니다.',
+  'Profile': '프로필',
+  'Profile saved': '프로필 저장됨',
+  'Could not save. Your previous values were kept.': '저장하지 못했습니다. 이전 값이 유지됩니다.',
+  'Share workouts and PRs with friends': '운동과 PR을 친구와 공유',
+  'Weight, diet and loads stay private.': '체중, 식단, 중량은 비공개로 유지됩니다.',
+  'Source code (AGPL-3.0)': '소스 코드 (AGPL-3.0)',
+  'Based on openGym': 'openGym 기반',
+  'Nothing selected — every exercise is shown.': '선택 없음 — 모든 운동이 표시됩니다.',
+  'Session ended — sign in again.': '세션이 만료됨 — 다시 로그인하세요.',
 }

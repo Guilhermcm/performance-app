@@ -1716,4 +1716,13 @@ export default {
   'The basics, so your loads and progress make sense.': 'ข้อมูลพื้นฐาน เพื่อให้น้ำหนักและความก้าวหน้าของคุณมีความหมาย',
   'This shapes the plan we suggest at the end.': 'ข้อมูลนี้กำหนดแผนที่เราจะแนะนำตอนท้าย',
   'Exercises are filtered to what you can use. You can change it later.': 'ท่าออกกำลังกายจะถูกกรองตามอุปกรณ์ที่คุณใช้ได้ เปลี่ยนภายหลังได้',
+  'Profile': 'โปรไฟล์',
+  'Profile saved': 'บันทึกโปรไฟล์แล้ว',
+  'Could not save. Your previous values were kept.': 'บันทึกไม่สำเร็จ ค่าก่อนหน้ายังคงอยู่',
+  'Share workouts and PRs with friends': 'แชร์การออกกำลังกายและสถิติส่วนตัวกับเพื่อน',
+  'Weight, diet and loads stay private.': 'น้ำหนักตัว อาหาร และน้ำหนักที่ยกจะเป็นส่วนตัว',
+  'Source code (AGPL-3.0)': 'ซอร์สโค้ด (AGPL-3.0)',
+  'Based on openGym': 'พัฒนาต่อจาก openGym',
+  'Nothing selected — every exercise is shown.': 'ไม่ได้เลือกอะไร — แสดงท่าออกกำลังกายทั้งหมด',
+  'Session ended — sign in again.': 'เซสชันหมดอายุ — ลงชื่อเข้าใช้อีกครั้ง',
 }

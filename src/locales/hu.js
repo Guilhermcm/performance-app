@@ -1708,4 +1708,13 @@ export default {
   'The basics, so your loads and progress make sense.': 'Az alapok, hogy a súlyaid és a fejlődésed értelmet nyerjenek.',
   'This shapes the plan we suggest at the end.': 'Ez alapján javaslunk tervet a végén.',
   'Exercises are filtered to what you can use. You can change it later.': 'A gyakorlatokat az elérhető eszközeid szerint szűrjük. Később módosíthatod.',
+  'Profile': 'Profil',
+  'Profile saved': 'Profil mentve',
+  'Could not save. Your previous values were kept.': 'Nem sikerült menteni. A korábbi értékek megmaradtak.',
+  'Share workouts and PRs with friends': 'Edzések és csúcsok megosztása a barátokkal',
+  'Weight, diet and loads stay private.': 'A testsúly, az étrend és a terhelések privátak maradnak.',
+  'Source code (AGPL-3.0)': 'Forráskód (AGPL-3.0)',
+  'Based on openGym': 'Az openGym alapján',
+  'Nothing selected — every exercise is shown.': 'Nincs kiválasztva semmi — minden gyakorlat megjelenik.',
+  'Session ended — sign in again.': 'A munkamenet lejárt — jelentkezz be újra.',
 }

@@ -30,7 +30,7 @@ export const LEVEL_LABEL: Record<Level, () => string> = {
   intermediate: () => t('Intermediate'),
   advanced: () => t('Advanced')
 }
-const SEX_LABEL: Record<Sex, () => string> = { male: () => t('Male'), female: () => t('Female'), other: () => t('Other') }
+export const SEX_LABEL: Record<Sex, () => string> = { male: () => t('Male'), female: () => t('Female'), other: () => t('Other') }
 
 // One look for every "selected" state: volt fill, so a choice reads at a glance in the gym.
 const ON = 'data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary'

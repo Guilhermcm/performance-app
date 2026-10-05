@@ -1725,4 +1725,13 @@ export default {
   'The basics, so your loads and progress make sense.': 'Das Wichtigste, damit deine Gewichte und Fortschritte Sinn ergeben.',
   'This shapes the plan we suggest at the end.': 'Danach richtet sich der Plan, den wir dir am Ende vorschlagen.',
   'Exercises are filtered to what you can use. You can change it later.': 'Übungen werden nach deinen Geräten gefiltert. Das kannst du später ändern.',
+  'Profile': 'Profil',
+  'Profile saved': 'Profil gespeichert',
+  'Could not save. Your previous values were kept.': 'Speichern fehlgeschlagen. Deine bisherigen Werte wurden behalten.',
+  'Share workouts and PRs with friends': 'Trainings und Bestleistungen mit Freunden teilen',
+  'Weight, diet and loads stay private.': 'Gewicht, Ernährung und Lasten bleiben privat.',
+  'Source code (AGPL-3.0)': 'Quellcode (AGPL-3.0)',
+  'Based on openGym': 'Basiert auf openGym',
+  'Nothing selected — every exercise is shown.': 'Nichts ausgewählt — alle Übungen werden angezeigt.',
+  'Session ended — sign in again.': 'Sitzung beendet — melde dich wieder an.',
 }

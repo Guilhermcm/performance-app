@@ -22,6 +22,9 @@ import RestTimer from './components/RestTimer.jsx'
 import TimerFlash from './components/TimerFlash.jsx'
 import SignIn from './features/auth/SignIn.tsx'
 import ProfileGate from './features/profile/ProfileGate.tsx'
+import ProfileScreen from './features/profile/ProfileScreen.tsx'
+import SyncIndicator from './features/sync/SyncIndicator.tsx'
+import { Toaster } from './components/ui/sonner.tsx'
 import { useProfile } from './features/profile/useProfile.ts'
 import Home from './views/Home.jsx'
 import CheckIn from './views/CheckIn.jsx'
@@ -173,12 +176,16 @@ function Shell() {
                 <Route path="/muscles" element={<Muscles />} />
                 <Route path="/structural-balance" element={<StructuralBalance />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/perfil" element={<ProfileScreen />} />
                 <Route path="*" element={<Navigate to="/home" replace />} />
               </Routes>
             </ErrorBoundary>
           </div>
         </ProfileGate>
       </ErrorBoundary>
+      {/* The connection, for a signed-in account past the profile gate: never over the loading,
+          error or onboarding screens. */}
+      {user && profileReady && <SyncIndicator />}
       {profileReady && <TabBar onStart={startFlow} />}
       <RestTimer />
       <Modals />
@@ -197,5 +204,7 @@ export default function App() {
     initBackButton().then(fn => { if (gone) fn(); else stop = fn })
     return () => { gone = true; stop?.() }
   }, [])
-  return <HashRouter><Shell /></HashRouter>
+  // Toasts from the new screens (sonner), mounted once and outside the shell so the sign-in screen
+  // has them too. The legacy toast (components/Toast.jsx) stays at the bottom; these come from the top.
+  return <><HashRouter><Shell /></HashRouter><Toaster /></>
 }

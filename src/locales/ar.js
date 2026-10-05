@@ -1758,4 +1758,13 @@ export default {
   'The basics, so your loads and progress make sense.': 'الأساسيات، لتكون أوزانك وتقدّمك منطقية.',
   'This shapes the plan we suggest at the end.': 'على هذا تُبنى الخطة التي سنقترحها في النهاية.',
   'Exercises are filtered to what you can use. You can change it later.': 'تُصفّى التمارين حسب ما يمكنك استخدامه. يمكنك تغيير ذلك لاحقًا.',
+  'Profile': 'الملف الشخصي',
+  'Profile saved': 'تم حفظ الملف الشخصي',
+  'Could not save. Your previous values were kept.': 'تعذّر الحفظ. تم الإبقاء على القيم السابقة.',
+  'Share workouts and PRs with friends': 'مشاركة التمارين والأرقام القياسية مع الأصدقاء',
+  'Weight, diet and loads stay private.': 'الوزن والنظام الغذائي والأوزان المرفوعة تبقى خاصة.',
+  'Source code (AGPL-3.0)': 'الشيفرة المصدرية (AGPL-3.0)',
+  'Based on openGym': 'مبني على openGym',
+  'Nothing selected — every exercise is shown.': 'لم يتم اختيار شيء — تظهر كل التمارين.',
+  'Session ended — sign in again.': 'انتهت الجلسة — سجّل الدخول مجددًا.',
 }

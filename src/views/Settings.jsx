@@ -22,11 +22,14 @@ import { limitsFrom } from '../lib/media-limits.js'
 import { starterPlanSheet, confirmSheet, importFromApp, importFromHevy, equipmentProfileSheet, plateInventorySheet, menuSheet } from '../sheets.jsx'
 import Icon from '../components/Icon.jsx'
 import { Section, Row, SelectRow, Switch, Segmented } from '../components/ui.jsx'
+import { useProfile } from '../features/profile/useProfile.ts'
+import { SOURCE_URL } from '../features/profile/ProfileScreen.tsx'
 
 export default function Settings() {
   const nav = useNavigate()
   const S = useStore(s => s.S)
   const user = useStore(s => s.user)
+  const profile = useProfile(s => s.profile)
   const config = useStore(s => s.config)
   // What the app is showing, which for a profile that never picked a language is worked out on
   // this device rather than stored (#303).
@@ -46,10 +49,17 @@ export default function Settings() {
       title: t('Convert to {0}?', v),
       subtitle: t('Every stored weight — logged sets, working weights, routine targets, body weight, bar weights — is in {0}. Convert the numbers, or keep them and only change the label?', S.unit),
       items: [
-        { icon: 'shuffle', label: t('Convert the numbers'), onClick: () => setUnit(v) },
-        { icon: 'pencil', label: t('Keep the numbers, change the label'), onClick: () => setUnit(v, { convert: false }) },
+        { icon: 'shuffle', label: t('Convert the numbers'), onClick: () => { setUnit(v); profileUnit(v) } },
+        { icon: 'pencil', label: t('Keep the numbers, change the label'), onClick: () => { setUnit(v, { convert: false }); profileUnit(v) } },
       ],
     })
+  }
+
+  // The profile keeps the unit too (Profile screen, onboarding): it follows, quietly — the app's
+  // own copy has already switched, and a profile that could not be saved catches up next time.
+  const profileUnit = v => {
+    const p = useProfile.getState()
+    if (p.profile && p.profile.unit !== v) p.save({ unit: v }).catch(() => {})
   }
 
   // Reads the store at the moment of the tap: the sheet that asks before a sign-out offers it too,
@@ -151,6 +161,11 @@ export default function Settings() {
       <button className="iconbtn" onClick={() => nav('/home')} aria-label={t('Home')}><Icon name="chevronLeft" /></button>
       <div style={{ flex: 1, marginInlineStart: 10 }}><h1>{t('Settings')}</h1></div>
     </div>
+
+    {/* ---------- profile: name, body, goal, equipment, sharing, sign-out ---------- */}
+    {user && profile && <Section>
+      <Row icon="personCircle" iconTint="var(--acc)" title={t('Profile')} subtitle={profile.display_name} accessory="chevron" onClick={() => nav('/perfil')} />
+    </Section>}
 
     {/* ---------- general ---------- */}
     <Section title={t('General')} footer={t('Switching the unit offers to convert every stored weight.')}>
@@ -387,7 +402,9 @@ export default function Settings() {
         are running, or whether an update actually installed. */}
     <div className="dim small" style={{ textAlign: 'center', marginTop: 4, lineHeight: 1.6 }}>
       openGym v{__APP_VERSION__} · {t('free & open source (AGPL v3)')}<br />
-      <a href="https://github.com/DuarteSantos8/openGym" target="_blank" rel="noopener">source code</a> · exercise data: hasaneyldrm/exercises-dataset (MIT)<br />
+      <a href={SOURCE_URL} target="_blank" rel="noopener" style={{ display: 'inline-block', padding: '10px 6px' }}>{t('Source code (AGPL-3.0)')}</a> ·{' '}
+      <a href="https://github.com/DuarteSantos8/openGym" target="_blank" rel="noopener" style={{ display: 'inline-block', padding: '10px 6px' }}>{t('Based on openGym')}</a><br />
+      exercise data: hasaneyldrm/exercises-dataset (MIT)<br />
       exercise images and animations © <a href="https://gymvisual.com/" target="_blank" rel="noopener">Gym visual</a>
     </div>
   </div>

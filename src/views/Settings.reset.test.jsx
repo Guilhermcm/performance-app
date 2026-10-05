@@ -109,9 +109,11 @@ describe('Settings — reset everything', () => {
 })
 
 describe('Settings — footer', () => {
+  // This app's own source (AGPL), with the openGym it is based on still credited next to it.
   it('links the source code to its home on GitHub', () => {
     mount()
-    const link = [...host.querySelectorAll('a')].find(a => a.textContent === 'source code')
-    expect(link.getAttribute('href')).toBe('https://github.com/DuarteSantos8/openGym')
+    const links = [...host.querySelectorAll('a')]
+    expect(links.find(a => a.textContent === 'Source code (AGPL-3.0)').getAttribute('href')).toBe('https://github.com/Guilhermcm/performance-app')
+    expect(links.find(a => a.textContent === 'Based on openGym').getAttribute('href')).toBe('https://github.com/DuarteSantos8/openGym')
   })
 })

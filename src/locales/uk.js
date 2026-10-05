@@ -1702,4 +1702,13 @@ export default {
   'The basics, so your loads and progress make sense.': 'Найголовніше, щоб ваги й прогрес мали сенс.',
   'This shapes the plan we suggest at the end.': 'Від цього залежить план, який ми запропонуємо наприкінці.',
   'Exercises are filtered to what you can use. You can change it later.': 'Вправи добираються під доступне обладнання. Це можна змінити пізніше.',
+  'Profile': 'Профіль',
+  'Profile saved': 'Профіль збережено',
+  'Could not save. Your previous values were kept.': 'Не вдалося зберегти. Попередні значення збережено.',
+  'Share workouts and PRs with friends': 'Ділитися тренуваннями та рекордами з друзями',
+  'Weight, diet and loads stay private.': 'Вага, харчування й навантаження залишаються приватними.',
+  'Source code (AGPL-3.0)': 'Вихідний код (AGPL-3.0)',
+  'Based on openGym': 'На основі openGym',
+  'Nothing selected — every exercise is shown.': 'Нічого не вибрано — показано всі вправи.',
+  'Session ended — sign in again.': 'Сеанс завершено — увійдіть знову.',
 }

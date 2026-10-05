@@ -1705,4 +1705,13 @@ export default {
   'The basics, so your loads and progress make sense.': '基本信息，让你的负重和进步更有参考意义。',
   'This shapes the plan we suggest at the end.': '这将决定最后为你推荐的计划。',
   'Exercises are filtered to what you can use. You can change it later.': '动作会按你可用的器械筛选，之后可以更改。',
+  'Profile': '个人资料',
+  'Profile saved': '个人资料已保存',
+  'Could not save. Your previous values were kept.': '无法保存。已保留之前的数值。',
+  'Share workouts and PRs with friends': '与好友分享训练和个人纪录',
+  'Weight, diet and loads stay private.': '体重、饮食和负重保持私密。',
+  'Source code (AGPL-3.0)': '源代码 (AGPL-3.0)',
+  'Based on openGym': '基于 openGym',
+  'Nothing selected — every exercise is shown.': '未选择任何器械 — 显示全部动作。',
+  'Session ended — sign in again.': '会话已结束 — 请重新登录。',
 }

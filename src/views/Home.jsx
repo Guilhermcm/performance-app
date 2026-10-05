@@ -10,12 +10,15 @@ import Icon from '../components/Icon.jsx'
 import { Button } from '../components/ui.jsx'
 import { tappable } from '../lib/use-sheet-keyboard.js'
 import { glyphOf } from '../lib/glyphs.js'
+import { useProfile } from '../features/profile/useProfile.ts'
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar.tsx'
 
 // Home = what to do now + a quick glance. Deep charts & history live in Stats.
 export default function Home() {
   const nav = useNavigate()
   const S = useStore(s => s.S)
   const user = useStore(s => s.user)
+  const profile = useProfile(s => s.profile)
   const [weekOffset, setWeekOffset] = useState(0)
 
   const today = new Date()
@@ -65,8 +68,20 @@ export default function Home() {
 
   return <div className="narrow">
     <div className="hdr">
-      <div><h1>{user ? t('Hi {0}', user.name) : 'openGym'}</h1><div className="sub">{today.toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}</div></div>
-      <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
+      <div><h1>{user ? t('Hi {0}', profile?.display_name || user.name) : 'openGym'}</h1><div className="sub">{today.toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}</div></div>
+      {/* Settings, then the profile at the far edge — where an account usually is. The avatar
+          button takes .iconbtn's size and its widened hit area, so the two read as a pair. */}
+      <div className="flex flex-none items-center gap-2.5">
+        <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
+        {user && <button type="button" className="iconbtn" data-testid="avatar-button" aria-label={t('Profile')} onClick={() => nav('/perfil')}>
+          <Avatar className="size-9 ring-1 ring-border">
+            {profile?.avatar_url && <AvatarImage src={profile.avatar_url} alt="" referrerPolicy="no-referrer" />}
+            <AvatarFallback className="bg-secondary text-[15px] font-semibold text-secondary-foreground">
+              {(profile?.display_name || user.name || '?').trim().slice(0, 1).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+        </button>}
+      </div>
     </div>
 
     <div className="card">

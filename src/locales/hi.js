@@ -1705,4 +1705,13 @@ export default {
   'The basics, so your loads and progress make sense.': 'बुनियादी जानकारी, ताकि आपके वज़न और प्रगति का मतलब बने।',
   'This shapes the plan we suggest at the end.': 'इसी से तय होगी वह योजना जो हम आख़िर में सुझाएँगे।',
   'Exercises are filtered to what you can use. You can change it later.': 'एक्सरसाइज़ आपके उपलब्ध उपकरणों के हिसाब से छाँटी जाती हैं। आप इसे बाद में बदल सकते हैं।',
+  'Profile': 'प्रोफ़ाइल',
+  'Profile saved': 'प्रोफ़ाइल सहेजी गई',
+  'Could not save. Your previous values were kept.': 'सहेजा नहीं जा सका। आपके पिछले मान रखे गए हैं।',
+  'Share workouts and PRs with friends': 'वर्कआउट और PR दोस्तों के साथ साझा करें',
+  'Weight, diet and loads stay private.': 'वज़न, डाइट और लोड निजी रहते हैं।',
+  'Source code (AGPL-3.0)': 'सोर्स कोड (AGPL-3.0)',
+  'Based on openGym': 'openGym पर आधारित',
+  'Nothing selected — every exercise is shown.': 'कुछ नहीं चुना — सभी एक्सरसाइज़ दिखाई जाती हैं।',
+  'Session ended — sign in again.': 'सेशन समाप्त — फिर से साइन इन करें।',
 }

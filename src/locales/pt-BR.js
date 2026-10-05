@@ -1050,6 +1050,15 @@ export const PT_BR_OVERRIDES = {
   'Teal': 'Turquesa',
   'Yellow': 'Amarelo',
   'Enter how long it took — at least 1 minute.': 'Informe quanto tempo levou — pelo menos 1 minuto.',
+  'Profile': 'Perfil',
+  'Profile saved': 'Perfil salvo',
+  'Could not save. Your previous values were kept.': 'Não foi possível salvar. Os valores anteriores foram mantidos.',
+  'Share workouts and PRs with friends': 'Compartilhar treinos e PRs com amigos',
+  'Weight, diet and loads stay private.': 'Peso, dieta e cargas continuam privados.',
+  'Source code (AGPL-3.0)': 'Código-fonte (AGPL-3.0)',
+  'Based on openGym': 'Baseado no openGym',
+  'Nothing selected — every exercise is shown.': 'Nada selecionado — todos os exercícios aparecem.',
+  'Session ended — sign in again.': 'Sessão encerrada — entre novamente.',
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }
