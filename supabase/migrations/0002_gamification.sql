@@ -146,3 +146,59 @@ create trigger profiles_freeze_target before update of days_per_week on public.p
 
 revoke all on function public.local_today(uuid), public.local_week_start(uuid),
   public.week_target_for(uuid, date), public.freeze_week_target() from public, anon, authenticated;
+
+-- XP per event (strength pillar) ------------------------------------------------------------------
+
+create or replace function public.award_xp() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare
+  v_week   date := public.week_start_of(new.occurred_on);
+  v_target smallint;
+  v_count  integer;
+begin
+  -- One award at a time per user: the counts below decide the amount.
+  perform pg_advisory_xact_lock(hashtextextended('xp:' || new.user_id::text, 0));
+  if new.pillar <> 'strength' then return null; end if;
+
+  if new.kind = 'workout_completed' then
+    v_target := public.week_target_for(new.user_id, v_week);
+    select count(*) into v_count from public.xp_ledger
+     where user_id = new.user_id and week_start = v_week and reason = 'workout';
+    if v_count < v_target then
+      insert into public.xp_ledger (user_id, pillar, amount, reason, event_id, week_start)
+      values (new.user_id, 'strength', public.session_xp(v_target, v_count + 1), 'workout', new.id, v_week);
+      if v_count + 1 = v_target then
+        insert into public.xp_ledger (user_id, pillar, amount, reason, event_id, week_start)
+        values (new.user_id, 'strength', 150, 'week_target', new.id, v_week);
+      end if;
+    else
+      select count(*) into v_count from public.xp_ledger
+       where user_id = new.user_id and week_start = v_week and reason = 'workout_extra';
+      if v_count < 2 then
+        insert into public.xp_ledger (user_id, pillar, amount, reason, event_id, week_start)
+        values (new.user_id, 'strength', 25, 'workout_extra', new.id, v_week);
+      end if;
+    end if;
+  elsif new.kind = 'pr' then
+    select count(*) into v_count from public.xp_ledger
+     where user_id = new.user_id and week_start = v_week and reason = 'pr';
+    if v_count < 3 then
+      insert into public.xp_ledger (user_id, pillar, amount, reason, event_id, week_start)
+      values (new.user_id, 'strength', 30, 'pr', new.id, v_week);
+    end if;
+  elsif new.kind = 'weight_logged' then
+    if not exists (
+      select 1 from public.xp_ledger l join public.activity_events e on e.id = l.event_id
+       where l.user_id = new.user_id and l.reason = 'weight' and e.occurred_on = new.occurred_on
+    ) then
+      insert into public.xp_ledger (user_id, pillar, amount, reason, event_id, week_start)
+      values (new.user_id, 'strength', 10, 'weight', new.id, v_week);
+    end if;
+  end if;
+  return null;
+end $$;
+
+create trigger activity_events_award after insert on public.activity_events
+  for each row execute function public.award_xp();
+
+revoke all on function public.award_xp() from public, anon, authenticated;
