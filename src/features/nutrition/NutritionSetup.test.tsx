@@ -160,4 +160,27 @@ describe('NutritionSetup', () => {
     await waitFor(() => expect(setTarget).toHaveBeenCalledTimes(2))
     expect(setTarget.mock.calls[1][1]).toBe('2026-10-06')
   })
+
+  it('writes the target for tomorrow when the pillar is turned back on', async () => {
+    withProfile({ nutrition_enabled: false, activity_level: 'moderate' })
+    // An old row from before the pillar was turned off: not today's, but the person has had a target.
+    useNutrition.setState({ targets: [targetOf({ valid_from: '2026-09-01', kcal: 2000 })] })
+    show()
+    next()
+    fireEvent.click(button('Turn on Nutrition'))
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false))
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({ nutrition_enabled: true }))
+    expect(setTarget).toHaveBeenCalledTimes(1)
+    expect(setTarget.mock.calls[0][1]).toBe('2026-10-07')
+  })
+
+  it('writes nothing when turned back on with the same target already in force', async () => {
+    withProfile({ nutrition_enabled: false, activity_level: 'moderate' })
+    useNutrition.setState({ targets: [targetOf({ valid_from: '2026-09-01', kcal: 3010, protein_g: 160, carbs_g: 404, fat_g: 84, mode: 'auto' })] })
+    show()
+    next()
+    fireEvent.click(button('Turn on Nutrition'))
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false))
+    expect(setTarget).not.toHaveBeenCalled()
+  })
 })

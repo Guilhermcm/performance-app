@@ -34,6 +34,15 @@ describe('privacy policy page', () => {
     expect(en).toContain('Open Food Facts')
   })
 
+  it('tells friends can see balanced days and whether the pillar was on in a week', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('refeições equilibradas')
+    expect(pt).toContain('se o pilar estava ligado')
+    expect(en).toContain('balanced-meals day')
+    expect(en).toContain('whether the pillar was on')
+  })
+
   it('points to the self-service account deletion in both languages', () => {
     expect(visible).toContain('Perfil &gt; Excluir minha conta')
     expect(visible).toContain('Profile &gt; Delete my account')

@@ -117,7 +117,6 @@ begin
   return null;
 end $$;
 
-
 create or replace function public.progress_card(p_user uuid) returns jsonb
 language plpgsql stable security definer set search_path = public as $$
 declare
@@ -183,7 +182,7 @@ begin
 end $$;
 
 -- Daily safety net (0003 schedules it): freezes the new week's target, closes weeks and hands out
-
+-- streak badges for people who did not open the app.
 create or replace function public.close_all_weeks() returns integer
 language plpgsql security definer set search_path = public as $$
 declare

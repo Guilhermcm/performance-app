@@ -98,13 +98,28 @@ describe('HomeScreen', () => {
     }
   })
 
-  it('keeps the skeleton for a cached progress from before the radar', () => {
+  it('shows the radar empty, not a skeleton, for a cached progress from before the radar', async () => {
     setS({}, { id: 'u1', name: 'Ana' })
     useProfile.setState({ profile: { timezone: 'America/Sao_Paulo', nutrition_enabled: true } as never })
     useProgress.setState({ status: 'ready', progress: { ...progressOf(400), radar: undefined } as never, userId: 'u1' })
     try {
       const { container } = render(<HomeScreen />)
-      expect(container.querySelector('[data-slot="pillar-radar"][aria-busy="true"]')).toBeTruthy()
+      await waitFor(() => expect(container.querySelector('[data-slot="pillar-radar"]:not([aria-busy])')).toBeTruthy())
+      expect(container.querySelector('[data-slot="pillar-radar"][aria-busy="true"]')).toBeNull()
+    } finally {
+      useProfile.setState({ profile: null })
+      useProgress.getState().reset()
+    }
+  })
+
+  it('shows the radar empty when the progress failed to load', async () => {
+    setS({}, { id: 'u1', name: 'Ana' })
+    useProfile.setState({ profile: { timezone: 'America/Sao_Paulo', nutrition_enabled: true } as never })
+    useProgress.setState({ status: 'error', progress: null, userId: 'u1' })
+    try {
+      const { container } = render(<HomeScreen />)
+      await waitFor(() => expect(container.querySelector('[data-slot="pillar-radar"]:not([aria-busy])')).toBeTruthy())
+      expect(container.querySelector('[data-slot="pillar-radar"][aria-busy="true"]')).toBeNull()
     } finally {
       useProfile.setState({ profile: null })
       useProgress.getState().reset()

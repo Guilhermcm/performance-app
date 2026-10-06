@@ -3,10 +3,11 @@ import { toast } from 'sonner'
 import { useProgress } from './useProgress'
 import { CelebrationOverlay } from './components/CelebrationOverlay'
 import { dayResultToast } from './celebrations'
+import { DAY_SEEN_KEY } from '../nutrition/storage-keys'
 import type { Celebration } from './types'
 
 // The last closed nutrition day already told, for the account signed in on this device.
-const DAY_SEEN = 'perf_nutrition_seen_v1'
+const DAY_SEEN = DAY_SEEN_KEY
 
 const readDaySeen = (userId: string): string | null | undefined => {
   try {

@@ -74,14 +74,16 @@ export default function HomeScreen() {
   )
 }
 
-// The radar under the level card. Until the progress and the profile are in (or while the cached
-// progress is from a build without the radar), and while the chunk loads, a skeleton of the same size.
+// The radar under the level card. Until the progress and the profile are in, and while the chunk
+// loads, a skeleton of the same size. A failed load, or a cached progress from a build without the
+// radar, shows the radar's own empty state instead of a skeleton that never ends.
 function HomeRadar() {
   const radar = useProgress(s => s.progress?.radar)
+  const loading = useProgress(s => !s.progress && (s.status === 'idle' || s.status === 'loading'))
   const profile = useProfile(s => s.profile)
   const nutrition = profile?.nutrition_enabled ?? false
   const enabled = useMemo(() => ({ strength: true, nutrition }), [nutrition])
-  if (!radar || !profile) return <PillarRadarSkeleton />
+  if (!profile || loading) return <PillarRadarSkeleton />
   return (
     <Suspense fallback={<PillarRadarSkeleton />}>
       <PillarRadar radar={radar} enabled={enabled} released={RELEASED} />

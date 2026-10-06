@@ -11,9 +11,10 @@ import { shiftDay, todayIn } from './days'
 import { fmtNumber } from './labels'
 import { useNutrition } from './useNutrition'
 import NutritionSetup from './NutritionSetup'
+import { INVITE_DISMISSED_KEY } from './storage-keys'
 import type { FoodLog } from './types'
 
-const DISMISSED = 'perf_nutrition_invite_dismissed_v1'
+const DISMISSED = INVITE_DISMISSED_KEY
 const NO_LOGS: FoodLog[] = []
 
 // "confirms on Thursday": a whole sentence per weekday, since languages place the day differently

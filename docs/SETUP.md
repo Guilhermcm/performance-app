@@ -12,6 +12,8 @@
    próprio app (Perfil > Excluir minha conta) e precisa rodar como `postgres`, o usuário padrão do
    SQL Editor, porque apaga a linha da conta em `auth.users`. Rode a `0007` a `0013` também como
    `postgres`: as funções que fecham os dias e pagam o XP escrevem como dono das tabelas.
+   Rode a `0007` a `0013` no Supabase antes de publicar o cliente novo. Sem elas, a aba Nutrição
+   mostra "Não foi possível carregar seu diário alimentar" (em inglês, "Could not load your food diary").
 3. Project Settings → API: copie `Project URL` e a chave `anon public`.
 
 ## 2. Google OAuth

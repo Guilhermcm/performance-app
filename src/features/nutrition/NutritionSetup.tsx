@@ -81,7 +81,8 @@ function SetupBody({ profile, onDone }: { profile: Profile; onDone: () => void }
   const [step, setStep] = useState<Step>(steps[0])
   const today = todayIn(profile.timezone)
   const tomorrow = shiftDay(today, 1)
-  const current = useNutrition(s => s.targetOn(today))
+  // Any target row at all, in force or not: only the very first one may start today (RLS, 0009).
+  const hasTarget = useNutrition(s => s.targets.length > 0)
   const ahead = useNutrition(s => s.targetOn(tomorrow))
 
   const [patch, setPatch] = useState<Partial<ProfileInput>>({})
@@ -136,12 +137,13 @@ function SetupBody({ profile, onDone }: { profile: Profile; onDone: () => void }
       setBusy(false)
       return
     }
-    // The first target (or one that never got saved) starts today; any later change tomorrow.
-    const from = activating || !current ? today : tomorrow
+    // The first target ever (or one that never got saved) starts today; every later one tomorrow,
+    // also when the pillar is turned back on. A target that is already the one in force writes nothing.
+    const from = hasTarget ? tomorrow : today
     const changed = from === today || !sameTarget(ahead, target)
     try {
       if (changed) await useNutrition.getState().setTarget(target, from)
-      toast(activating ? t('Nutrition is on. Your target starts today.') : changed && from === tomorrow ? t('New target saved. It starts tomorrow.') : t('Saved'))
+      toast(activating && from === today ? t('Nutrition is on. Your target starts today.') : changed && from === tomorrow ? t('New target saved. It starts tomorrow.') : t('Saved'))
       onDone()
     } catch {
       toast(t('Could not save the target. Check your connection and try again.'))
