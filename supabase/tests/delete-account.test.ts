@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import type { PGlite } from '@electric-sql/pglite'
 import { freshDb } from './helpers/db'
-import { A, B, makeUser, setClock, withoutEventWindow, event, ledger, sql } from './helpers/game'
+import { A, B, makeUser, setClock, withoutEventWindow, event, ledger, sql, legacyTraining } from './helpers/game'
 import { C, befriend, createChallenge, one, rows } from './helpers/social'
 
 let db: PGlite
@@ -27,6 +27,7 @@ async function rowsPointingAt(uid: string) {
 
 beforeEach(async () => {
   db = await freshDb()
+  await legacyTraining(db)   // the workout rules from before check-ins
   await withoutEventWindow(db)
   await setClock(db, '2026-10-05T10:00:00Z')   // the 5th both in Tokyo and in São Paulo
   await makeUser(db, A, { display_name: 'Ana', timezone: 'Asia/Tokyo', share_activity: true })

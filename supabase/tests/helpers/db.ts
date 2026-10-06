@@ -24,6 +24,39 @@ grant usage on schema public to anon, authenticated;
 alter default privileges in schema public grant all on tables to anon, authenticated;
 alter default privileges in schema public grant all on sequences to anon, authenticated;
 alter default privileges in schema public grant all on functions to anon, authenticated;
+
+-- A skeleton of Supabase Storage: just enough for a migration to create a bucket and policies on
+-- storage.objects, and for the tests to run those policies. As in Supabase, both tables have RLS on
+-- and the client roles hold every privilege, so the policies alone decide. foldername() is
+-- Supabase's: the path split on '/', without the file name.
+create schema storage;
+create table storage.buckets (
+  id text primary key,
+  name text not null,
+  public boolean default false,
+  file_size_limit bigint,
+  allowed_mime_types text[]
+);
+create table storage.objects (
+  id uuid primary key default gen_random_uuid(),
+  bucket_id text references storage.buckets,
+  name text,
+  owner uuid default auth.uid(),
+  created_at timestamptz default now(),
+  unique (bucket_id, name)
+);
+alter table storage.buckets enable row level security;
+alter table storage.objects enable row level security;
+create function storage.foldername(name text) returns text[] language plpgsql as $$
+declare
+  _parts text[];
+begin
+  select string_to_array(name, '/') into _parts;
+  return _parts[1:array_length(_parts, 1) - 1];
+end $$;
+grant usage on schema storage to anon, authenticated;
+grant all on storage.buckets, storage.objects to anon, authenticated;
+grant execute on function storage.foldername(text) to anon, authenticated;
 `
 
 // Every SQL test file loads this helper. Booting PGlite and running the migrations takes about

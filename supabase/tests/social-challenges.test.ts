@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import type { PGlite } from '@electric-sql/pglite'
 import { freshDb } from './helpers/db'
-import { A, B, makeUser, setClock, withoutEventWindow, event, sql } from './helpers/game'
+import { A, B, makeUser, setClock, withoutEventWindow, event, sql, legacyTraining } from './helpers/game'
 import { C, D, befriend, createChallenge, one, rows } from './helpers/social'
 
 let db: PGlite
@@ -13,6 +13,7 @@ const progressByName = (c: { members: { name: string; progress: number | null }[
 
 beforeEach(async () => {
   db = await freshDb()
+  await legacyTraining(db)   // the workout rules from before check-ins
   await withoutEventWindow(db)
   await setClock(db, '2026-10-05T15:00:00Z')   // Monday
   await makeUser(db, A, { display_name: 'Ana' })

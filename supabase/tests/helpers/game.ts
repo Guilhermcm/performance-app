@@ -45,3 +45,10 @@ export async function ledger(db: PGlite, uid: string): Promise<LedgerRow[]> {
     `select reason, amount, to_char(week_start, 'YYYY-MM-DD') as week_start, pillar::text as pillar
        from public.xp_ledger where user_id = $1 order by id`, [uid])
 }
+
+// The phase 1c cutover (app_settings.training_checkin_since) is the day the migrations ran, so a
+// fixed test date may fall on either side of it depending on when the suite runs. Tests about the
+// workout rules from before check-ins move it far ahead: every workout_completed pays as it used to.
+export async function legacyTraining(db: PGlite) {
+  await db.query(`update public.app_settings set value = '"2999-12-31"' where key = 'training_checkin_since'`)
+}

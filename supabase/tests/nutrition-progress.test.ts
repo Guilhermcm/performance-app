@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import type { PGlite } from '@electric-sql/pglite'
 import { randomUUID } from 'node:crypto'
 import { freshDb, asUser } from './helpers/db'
-import { A, B, event, makeUser, setClock, sql, withoutEventWindow } from './helpers/game'
+import { A, B, event, makeUser, setClock, sql, withoutEventWindow, legacyTraining } from './helpers/game'
 import { befriend } from './helpers/social'
 import { enableNutrition, setTarget } from './helpers/nutrition'
 
@@ -44,6 +44,7 @@ const period = (uid: string, from: string, to: string | null) =>
 
 beforeEach(async () => {
   db = await freshDb()
+  await legacyTraining(db)   // the workout rules from before check-ins
   await withoutEventWindow(db)
   await at('2026-10-05')                       // Monday
   await makeUser(db, A, { nutrition_days_per_week: 3 })
