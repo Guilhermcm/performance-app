@@ -1,4 +1,5 @@
 taco_id,pof_codigo_alimento,pof_codigo_preparacao,nota
+1,6300201,99,A POF registra o arroz integral como é comido (cozido) no preparo 99
 3,6300101,99,A POF registra o arroz como é comido (cozido) no preparo 99
 7,6500401,99,
 8,8002301,99,A POF não separa o maisena dos outros biscoitos doces
