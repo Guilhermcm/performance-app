@@ -43,24 +43,27 @@ async function send(op: OutboxOp): Promise<void> {
   return op.op === 'upsert' ? api.upsertFood(op.row as UserFood) : api.deleteFood(op.id)
 }
 
-export type FlushResult = { sent: number; left: number; dropped: number }
+export type FlushResult = { sent: number; left: number; dropped: number; reasons: api.RefusedReason[] }
 
 async function run(userId: string): Promise<FlushResult> {
   let sent = 0
   let dropped = 0
+  const reasons = new Set<api.RefusedReason>()
   for (const op of pending(userId)) {
     try {
       await send(op)
       sent++
     } catch (e) {
-      // Closed day, over the cap: no retry will ever work, so drop it and keep going.
-      // Anything else (no network, expired session) stops here and keeps the rest, in order.
-      if (!api.isRefused(e)) break
+      // Closed day, over a cap, a check violation: no retry will ever work, so drop it and keep going.
+      // Anything else (no network, 5xx, expired session) stops here and keeps the rest, in order.
+      const err = api.classify(e)
+      if (!err.refused) break
       dropped++
+      reasons.add(err.reason ?? 'refused')
     }
     remove(userId, op)
   }
-  return { sent, left: pending(userId).length, dropped }
+  return { sent, left: pending(userId).length, dropped, reasons: [...reasons] }
 }
 
 const running = new Map<string, Promise<FlushResult>>()

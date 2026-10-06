@@ -10,9 +10,10 @@ vi.mock('./nutrition-api', async orig => ({ ...(await orig<typeof import('./nutr
 const progress = vi.hoisted(() => ({ refresh: vi.fn() }))
 vi.mock('../gamification/useProgress', () => ({ useProgress: { getState: () => progress } }))
 
-import { useNutrition } from './useNutrition'
+import { useNutrition, startNutritionSync } from './useNutrition'
+import { useProfile } from '../profile/useProfile'
 import { clearOutbox } from './outbox'
-import { ME, foodOf, itemOf, logOf, targetOf } from './test-nutrition'
+import { ME, OTHER, foodOf, itemOf, logOf, targetOf } from './test-nutrition'
 
 const TODAY = '2026-10-05', YESTERDAY = '2026-10-04'
 const cache = () => JSON.parse(localStorage.getItem('perf_nutrition_v1') || 'null')
@@ -160,6 +161,49 @@ describe('useNutrition', () => {
     expect(useNutrition.getState().droppedNotice).toBe(false)
   })
 
+  it('says why items were dropped: day_closed only when every drop was a closed day', async () => {
+    await bound()
+    const add = () => { const { id, updated_at, ...rest } = logOf({ day: TODAY }); useNutrition.getState().addLog(rest) }
+    api.upsertLog.mockRejectedValueOnce(Object.assign(new Error('day_closed'), { code: 'P0001' }))
+    add(); await settle(); await settle()
+    expect(useNutrition.getState()).toMatchObject({ droppedNotice: true, droppedReason: 'day_closed' })
+    useNutrition.getState().dismissDropped()
+    expect(useNutrition.getState().droppedReason).toBeNull()
+    api.upsertLog.mockRejectedValueOnce(Object.assign(new Error('too_many_items'), { code: 'P0001' }))
+    add(); await settle(); await settle()
+    expect(useNutrition.getState()).toMatchObject({ droppedNotice: true, droppedReason: 'refused' })
+    api.upsertLog.mockRejectedValueOnce(Object.assign(new Error('day_closed'), { code: 'P0001' }))
+    add(); await settle(); await settle()
+    expect(useNutrition.getState().droppedReason).toBe('refused')
+  })
+
+  it("pulls the window of the profile's day, not the device's", async () => {
+    vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-10-05T16:30:00Z'))
+    useProfile.setState({ profile: { timezone: 'Asia/Tokyo' } as never })
+    await useNutrition.getState().bind(ME)
+    expect(api.fetchLogs).toHaveBeenLastCalledWith('2026-09-22', '2026-10-06')
+    useNutrition.getState().reset()
+    useProfile.setState({ profile: { timezone: 'America/Sao_Paulo' } as never })
+    await useNutrition.getState().bind(ME)
+    expect(api.fetchLogs).toHaveBeenLastCalledWith('2026-09-21', '2026-10-05')
+    useProfile.setState({ profile: null })
+  })
+
+  it("does not write the previous account's pull under the next one", async () => {
+    const mineA = logOf({ id: 'of-a', day: TODAY }), mineB = logOf({ id: 'of-b', day: TODAY })
+    let releaseA!: (v: unknown[]) => void
+    api.fetchLogs.mockReturnValueOnce(new Promise(r => { releaseA = r })).mockResolvedValueOnce([mineB])
+    const a = useNutrition.getState().bind(ME)
+    await settle()
+    const b = useNutrition.getState().bind(OTHER)
+    releaseA([mineA])
+    await Promise.all([a, b])
+    const s = useNutrition.getState()
+    expect(s.userId).toBe(OTHER)
+    expect(Object.values(s.logs).flat().map(l => l.id)).toEqual(['of-b'])
+    expect(s.status).toBe('ready')
+  })
+
   it('keeps unsent changes over what the server returns', async () => {
     await bound()
     api.upsertLog.mockRejectedValue(new TypeError('Failed to fetch'))
@@ -188,5 +232,24 @@ describe('useNutrition', () => {
     expect(s.userId).toBeNull(); expect(s.logs).toEqual({}); expect(s.foods).toEqual([]); expect(s.targets).toEqual([])
     expect(s.status).toBe('idle')
     expect(cache()).toBeNull()
+  })
+})
+
+describe('startNutritionSync', () => {
+  it('retries every 60 s and stops when cleaned up', async () => {
+    await bound()
+    vi.useFakeTimers()
+    api.fetchFoods.mockClear()
+    const stop = startNutritionSync()
+    await vi.advanceTimersByTimeAsync(59_000)
+    expect(api.fetchFoods).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(1_000)
+    expect(api.fetchFoods).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(api.fetchFoods).toHaveBeenCalledTimes(2)
+    stop()
+    await vi.advanceTimersByTimeAsync(180_000)
+    expect(api.fetchFoods).toHaveBeenCalledTimes(2)
+    vi.useRealTimers()
   })
 })

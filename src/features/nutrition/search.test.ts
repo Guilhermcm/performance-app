@@ -41,6 +41,16 @@ describe('searchLocal', () => {
     expect(r[3].items.map((i) => i.name)).toEqual(['Arroz, integral, cru'])
     expect(r[1].items[0].name).toBe('Arroz da casa')
   })
+  it('Meus alimentos holds only custom foods; a starred one shows once, under Favoritos', () => {
+    const snapshot: UserFood = { ...item('Arroz branco', 'taco', 'taco-9'), id: 'snap', favorite: false, updated_at: '2026-10-05T00:00:00Z' }
+    const starredCustom = mine('Arroz da casa', true)
+    const own = mine('Arroz caseiro')
+    const r = searchLocal('arroz', { recents: [], foods: [snapshot, starredCustom, own], taco: [] })
+    expect(r.map((x) => x.key)).toEqual(['favorite', 'mine'])
+    expect(r[0].items.map((i) => i.name)).toEqual(['Arroz da casa'])
+    expect(r[1].items.map((i) => i.name)).toEqual(['Arroz caseiro'])
+    expect(r.flatMap((x) => x.items).some((i) => i.name === 'Arroz branco')).toBe(false)
+  })
   it('respects the limit and omits empty sections', () => {
     const many = Array.from({ length: 50 }, (_, i) => item(`Arroz ${i}`, 'taco', `a${i}`))
     const r = searchLocal('arroz', { recents: [], foods: [], taco: many }, 10)

@@ -3,38 +3,60 @@ import type { FoodLog, NutritionDay, NutritionTarget, UserFood } from './types'
 
 export type NutritionErrorCode = 'day_closed' | 'too_many_items' | 'network'
 
+export type RefusedReason = 'day_closed' | 'refused'
+
 export class NutritionError extends Error {
   readonly code: NutritionErrorCode
-  constructor(code: NutritionErrorCode) {
+  // True when the server refused the write for good: retrying the same op can never work.
+  readonly refused: boolean
+  readonly reason: RefusedReason | null
+  // The server's raw SQLSTATE and message, kept so callers can tell a refusal from a bad network.
+  readonly sqlstate: string | null
+  readonly detail: string
+  constructor(code: NutritionErrorCode, extra: { refused?: boolean; reason?: RefusedReason | null; sqlstate?: string | null; detail?: string } = {}) {
     super(code)
     this.name = 'NutritionError'
     this.code = code
+    this.refused = extra.refused ?? (code !== 'network')
+    this.reason = extra.reason ?? (code === 'day_closed' ? 'day_closed' : this.refused ? 'refused' : null)
+    this.sqlstate = extra.sqlstate ?? null
+    this.detail = extra.detail ?? ''
   }
 }
 
-// The triggers of 0009_nutrition_diary.sql raise their typed errors with the code as the message.
-// Anything else (no network, an expired session) is "try again".
+// The triggers of 0009_nutrition_diary.sql raise their typed errors (P0001) with the code as the message.
 const KNOWN: readonly NutritionErrorCode[] = ['day_closed', 'too_many_items']
-// Refusals no retry can fix: the queue drops these instead of blocking everything behind them.
-const REFUSED = ['day_closed', 'too_many_items', 'item_immutable', 'import_forbidden']
+const P0001_REFUSALS = ['day_closed', 'too_many_items', 'too_many_foods', 'item_immutable', 'import_forbidden']
 
 const messageOf = (e: unknown) => {
   const m = (e as { message?: unknown } | null)?.message
   return typeof m === 'string' ? m : ''
 }
-
-export function toNutritionError(e: unknown): NutritionErrorCode {
-  if (e instanceof NutritionError) return e.code
-  const m = messageOf(e)
-  return (KNOWN as readonly string[]).includes(m) ? (m as NutritionErrorCode) : 'network'
+const sqlstateOf = (e: unknown): string | null => {
+  const c = (e as { code?: unknown } | null)?.code
+  return typeof c === 'string' && /^[0-9A-Z]{5}$/.test(c) ? c : null
 }
 
-export const isRefused = (e: unknown): boolean => {
-  if (e instanceof NutritionError) return e.code !== 'network'
-  return REFUSED.includes(messageOf(e))
+// Refused for good: a P0001 with one of our messages, a check/unique/FK violation (23xxx), a data
+// exception (22xxx) or an RLS/privilege denial (42501). Everything else (fetch failures, timeouts,
+// 5xx, expired sessions, unknown codes) is "try again".
+export function classify(e: unknown): NutritionError {
+  if (e instanceof NutritionError) return e
+  const detail = messageOf(e)
+  const sqlstate = sqlstateOf(e)
+  const known = (KNOWN as readonly string[]).includes(detail) ? (detail as NutritionErrorCode) : null
+  const refused = P0001_REFUSALS.includes(detail) || (sqlstate != null && (/^2[23]/.test(sqlstate) || sqlstate === '42501'))
+  const code: NutritionErrorCode = known ?? 'network'
+  return new NutritionError(code, {
+    refused, sqlstate, detail,
+    reason: !refused ? null : detail === 'day_closed' ? 'day_closed' : 'refused'
+  })
 }
 
-const fail = (e: unknown): never => { throw new NutritionError(toNutritionError(e)) }
+export const toNutritionError = (e: unknown): NutritionErrorCode => classify(e).code
+export const isRefused = (e: unknown): boolean => classify(e).refused
+
+const fail = (e: unknown): never => { throw classify(e) }
 
 type Answer<T> = PromiseLike<{ data: T | null; error: unknown }>
 async function run<T>(q: Answer<T>): Promise<T | null> {

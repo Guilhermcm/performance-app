@@ -4,7 +4,9 @@ import type { FoodItem } from './types'
 const FIELDS = 'code,product_name,product_name_pt,brands,nutriments,serving_quantity,serving_size'
 const BASE = 'https://world.openfoodfacts.org'
 
-export type OffResult = { items: FoodItem[] } | { error: 'rate_limited' | 'offline' | 'failed' }
+// 'aborted': the caller's AbortSignal fired (a newer search replaced this one). Not a failure to show.
+export type OffResult = { items: FoodItem[] } | { error: 'rate_limited' | 'offline' | 'failed' | 'aborted' }
+export type OffProduct = FoodItem | null | { error: 'offline' | 'failed' | 'aborted' }
 
 const num = (v: unknown): number | null => {
   if (typeof v === 'number') return Number.isFinite(v) ? v : null
@@ -15,6 +17,9 @@ const num = (v: unknown): number | null => {
   return null
 }
 const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '')
+const cut = (v: string, n: number) => v.slice(0, n).trim()
+const isAbort = (e: unknown, signal?: AbortSignal) => !!signal?.aborted || (e as { name?: unknown } | null)?.name === 'AbortError'
+const inRange = (v: number, lo: number, hi: number) => v >= lo && v <= hi
 
 export function offToItem(p: unknown): FoodItem | null {
   if (!p || typeof p !== 'object') return null
@@ -26,22 +31,25 @@ export function offToItem(p: unknown): FoodItem | null {
   const kj = num(n.energy_100g) ?? num(n['energy-kj_100g'])
   const kcal = num(n['energy-kcal_100g']) ?? (kj != null ? kj / 4.184 : null)
   if (kcal == null) return null
+  // Open Food Facts is crowdsourced: anything the database would refuse, or that cannot be a
+  // real food, is discarded here instead of reaching the diary.
+  const protein = num(n.proteins_100g) ?? 0
+  const carbs = num(n.carbohydrates_100g) ?? 0
+  const fat = num(n.fat_100g) ?? 0
+  const fiber = num(n.fiber_100g)
+  if (!inRange(kcal, 0, 900)) return null
+  if (![protein, carbs, fat].every(m => inRange(m, 0, 100)) || protein + carbs + fat > 100) return null
   const serving = num(o.serving_quantity)
+  const barcode = /^\d{8,14}$/.test(code) ? code : null
   return {
     source: 'off',
     source_id: code,
-    name,
-    brand: str(o.brands).split(',')[0].trim() || null,
-    per100: {
-      kcal,
-      protein: num(n.proteins_100g) ?? 0,
-      carbs: num(n.carbohydrates_100g) ?? 0,
-      fat: num(n.fat_100g) ?? 0,
-      fiber: num(n.fiber_100g)
-    },
-    serving_g: serving != null && serving > 0 ? serving : null,
-    serving_label: str(o.serving_size) || null,
-    barcode: code
+    name: cut(name, 120),
+    brand: cut(str(o.brands).split(',')[0], 80) || null,
+    per100: { kcal, protein, carbs, fat, fiber: fiber != null && inRange(fiber, 0, 100) ? fiber : null },
+    serving_g: serving != null && serving > 0 && serving <= 2000 ? serving : null,
+    serving_label: cut(str(o.serving_size), 40) || null,
+    barcode
   }
 }
 
@@ -66,12 +74,12 @@ export async function searchOff(q: string, signal?: AbortSignal): Promise<OffRes
     const r = { items }
     cache.set(term, r)
     return r
-  } catch {
-    return { error: 'failed' }
+  } catch (e) {
+    return { error: isAbort(e, signal) ? 'aborted' : 'failed' }
   }
 }
 
-export async function productByCode(code: string, signal?: AbortSignal): Promise<FoodItem | null | { error: 'offline' | 'failed' }> {
+export async function productByCode(code: string, signal?: AbortSignal): Promise<OffProduct> {
   if (isOffline()) return { error: 'offline' }
   try {
     const res = await fetch(`${BASE}/api/v2/product/${encodeURIComponent(code.trim())}.json?fields=${FIELDS}`, { signal })
@@ -80,7 +88,7 @@ export async function productByCode(code: string, signal?: AbortSignal): Promise
     const body = (await res.json()) as { status?: number; product?: unknown }
     if (body.status === 0 || !body.product) return null
     return offToItem({ code, ...(body.product as object) })
-  } catch {
-    return { error: 'failed' }
+  } catch (e) {
+    return { error: isAbort(e, signal) ? 'aborted' : 'failed' }
   }
 }

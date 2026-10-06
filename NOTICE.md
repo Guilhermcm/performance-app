@@ -186,7 +186,8 @@ The decoded string is what openGym keeps; the photo itself is never stored.
 
 Packaged-food search and barcode lookup query [**Open Food Facts**](https://world.openfoodfacts.org/),
 whose database is available under the **Open Database License (ODbL) 1.0**. Products are fetched on
-demand; a product the person saves keeps its nutrition values and the credit "Dados: Open Food Facts".
+demand; a product the person saves keeps only its nutrition values (name, brand and per 100 g amounts);
+no credit is stored with it.
 
 ### TACO (pending confirmation of terms)
 

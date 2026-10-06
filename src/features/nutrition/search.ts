@@ -30,7 +30,7 @@ export function searchLocal(
   const groups: SearchSection[] = [
     { key: 'recent', items: src.recents },
     { key: 'favorite', items: src.foods.filter((f) => f.favorite) },
-    { key: 'mine', items: src.foods.filter((f) => !f.favorite) },
+    { key: 'mine', items: src.foods.filter((f) => f.source === 'custom') },
     { key: 'taco', items: src.taco }
   ]
   const seen = new Set<string>()

@@ -20,7 +20,7 @@ describe('food outbox', () => {
     const [a, b, c] = ['a', 'b', 'c'].map(id => logOf({ id }))
     for (const l of [a, b, c]) enqueue(ME, { kind: 'log', op: 'upsert', id: l.id, row: l })
     api.upsertLog.mockImplementation(async (l: { id: string }) => { if (l.id === 'b') throw refused('day_closed') })
-    await expect(flushOutbox(ME)).resolves.toEqual({ sent: 2, left: 0, dropped: 1 })
+    await expect(flushOutbox(ME)).resolves.toEqual({ sent: 2, left: 0, dropped: 1, reasons: ['day_closed'] })
     expect(api.upsertLog.mock.calls.map(x => x[0].id)).toEqual(['a', 'b', 'c'])
   })
 
@@ -29,9 +29,9 @@ describe('food outbox', () => {
     enqueue(ME, { kind: 'log', op: 'upsert', id: 'a', row: a })
     enqueue(ME, { kind: 'log', op: 'delete', id: 'b' })
     api.upsertLog.mockRejectedValueOnce(new TypeError('Failed to fetch'))
-    await expect(flushOutbox(ME)).resolves.toEqual({ sent: 0, left: 2, dropped: 0 })
+    await expect(flushOutbox(ME)).resolves.toEqual({ sent: 0, left: 2, dropped: 0, reasons: [] })
     expect(api.deleteLog).not.toHaveBeenCalled()
-    await expect(flushOutbox(ME)).resolves.toEqual({ sent: 2, left: 0, dropped: 0 })
+    await expect(flushOutbox(ME)).resolves.toEqual({ sent: 2, left: 0, dropped: 0, reasons: [] })
     expect(b.id).toBe('b')
   })
 

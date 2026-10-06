@@ -1,7 +1,6 @@
 import { useProfile } from '@/features/profile/useProfile'
-import { todayISO } from '../../lib/format.js'
 import { computeTarget, missingTargetInput } from './targets'
-import { shiftDay } from './days'
+import { shiftDay, todayIn } from './days'
 import { useNutrition } from './useNutrition'
 
 const LB_TO_KG = 0.45359237
@@ -14,7 +13,7 @@ export async function onWeighIn(weight: number, unit: 'kg' | 'lb'): Promise<void
   try {
     const profile = await useProfile.getState().save({ weight_kg: kg })
     if (!profile.nutrition_enabled) return
-    const today = todayISO()
+    const today = todayIn(profile.timezone)
     const tomorrow = shiftDay(today, 1)
     const nutrition = useNutrition.getState()
     // What will apply tomorrow: a manual target set ahead of time counts as in force.

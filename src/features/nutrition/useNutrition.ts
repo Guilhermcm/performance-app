@@ -2,8 +2,8 @@ import { create } from 'zustand'
 import * as api from './nutrition-api'
 import { enqueue, flushOutbox, pending, type OutboxOp } from './outbox'
 import { useProgress } from '../gamification/useProgress'
-import { todayISO } from '../../lib/format.js'
-import { shiftDay } from './days'
+import { useProfile } from '../profile/useProfile'
+import { shiftDay, todayIn } from './days'
 import type { FoodItem, FoodLog, Meal, NutritionDay, NutritionTarget, UserFood } from './types'
 
 const CACHE = 'perf_nutrition_v1'
@@ -61,6 +61,8 @@ export type NutritionStore = {
   targets: NutritionTarget[]
   closed: NutritionDay[]
   droppedNotice: boolean
+  // Why items were dropped, so the screen picks the text: 'day_closed' only when every drop was a closed day.
+  droppedReason: 'day_closed' | 'refused' | null
   bind(userId: string): Promise<void>
   refresh(): Promise<void>
   reset(): void
@@ -97,7 +99,10 @@ export const useNutrition = create<NutritionStore>((set, get) => {
     const gen = generation
     const r = await flushOutbox(userId)
     if (gen !== generation) return
-    if (r.dropped > 0) set({ droppedNotice: true })
+    if (r.dropped > 0) {
+      const onlyClosed = r.reasons.every(x => x === 'day_closed') && get().droppedReason !== 'refused'
+      set({ droppedNotice: true, droppedReason: onlyClosed ? 'day_closed' : 'refused' })
+    }
   }
   const queue = (op: OutboxOp) => {
     const userId = get().userId
@@ -133,14 +138,18 @@ export const useNutrition = create<NutritionStore>((set, get) => {
     stale: false,
     ...empty(),
     droppedNotice: false,
+    droppedReason: null,
 
     // Called once a signed-in account has a ready profile (App.jsx): the saved copy at once, then
     // what is waiting in the queue goes out and the diary is pulled.
     bind(userId) {
       if (get().userId === userId) return Promise.resolve()
       const saved = readSaved(userId)
+      // An answer still in flight for the previous account must not land under this one.
+      generation++
+      refreshing = null
       set({
-        userId, droppedNotice: false,
+        userId, droppedNotice: false, droppedReason: null,
         status: saved ? 'ready' : 'loading', stale: !!saved,
         logs: saved?.logs ?? {}, foods: saved?.foods ?? [], targets: saved?.targets ?? [], closed: saved?.closed ?? []
       })
@@ -155,7 +164,7 @@ export const useNutrition = create<NutritionStore>((set, get) => {
       const job = (async () => {
         await flush()
         if (gen !== generation) return
-        const today = todayISO()
+        const today = todayIn(useProfile.getState().profile?.timezone)
         const from = shiftDay(today, -WINDOW_DAYS)
         const before = new Set(get().closed.map(d => d.day))
         try {
@@ -181,10 +190,10 @@ export const useNutrition = create<NutritionStore>((set, get) => {
       generation++
       refreshing = null
       drop()
-      set({ userId: null, status: 'idle', stale: false, ...empty(), droppedNotice: false })
+      set({ userId: null, status: 'idle', stale: false, ...empty(), droppedNotice: false, droppedReason: null })
     },
 
-    dismissDropped() { set({ droppedNotice: false }) },
+    dismissDropped() { set({ droppedNotice: false, droppedReason: null }) },
 
     addLog(l) {
       const log: FoodLog = { ...l, id: uuid(), updated_at: stamp() }
@@ -286,7 +295,10 @@ export function startNutritionSync(): () => void {
   const onVisible = () => { if (document.visibilityState === 'visible') run() }
   window.addEventListener('online', run)
   document.addEventListener('visibilitychange', onVisible)
+  // A write that failed with the network up and no event after it still gets another try.
+  const timer = window.setInterval(run, 60_000)
   return () => {
+    window.clearInterval(timer)
     window.removeEventListener('online', run)
     document.removeEventListener('visibilitychange', onVisible)
   }

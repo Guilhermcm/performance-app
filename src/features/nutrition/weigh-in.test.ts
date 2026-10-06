@@ -40,6 +40,17 @@ describe('onWeighIn', () => {
     expect(setTarget).toHaveBeenCalledWith({ kcal: want.kcal, protein_g: want.protein_g, carbs_g: want.carbs_g, fat_g: want.fat_g, mode: 'auto' }, '2026-10-06')
   })
 
+  it("uses the profile's day, not the device's, around midnight", async () => {
+    // 2026-10-05T16:30Z: already the 6th in Tokyo, still the 5th in Sao Paulo.
+    vi.setSystemTime(new Date('2026-10-05T16:30:00Z'))
+    profile.state = { profile: { ...base, timezone: 'Asia/Tokyo' }, save }
+    await onWeighIn(85, 'kg')
+    expect(setTarget).toHaveBeenLastCalledWith(expect.anything(), '2026-10-07')
+    profile.state = { profile: { ...base, timezone: 'America/Sao_Paulo' }, save }
+    await onWeighIn(85, 'kg')
+    expect(setTarget).toHaveBeenLastCalledWith(expect.anything(), '2026-10-06')
+  })
+
   it('leaves a manual target alone', async () => {
     nut.state = { setTarget, targets: [targetOf({ mode: 'manual' })], targetOn: () => targetOf({ mode: 'manual' }) }
     await onWeighIn(85, 'kg')

@@ -69,8 +69,8 @@ export function bmr(i: TargetInput, today: string): number {
 
 const clamp = (v: number, [lo, hi]: readonly [number, number]) => Math.min(hi, Math.max(lo, v))
 
-// `adjust` is the kcal change the goal applies to the daily expenditure (after the floor, before
-// the clamp), so tdee + adjust is the target the person sees before limits.
+// `adjust` is the final kcal (after the floor, the rounding and the clamp) minus the rounded tdee,
+// so tdee + adjust is exactly the kcal returned.
 export function computeTarget(i: TargetInput, today: string): Macros & { bmr: number; tdee: number; adjust: number } {
   const b = bmr(i, today)
   const tdee = b * PAL[i.activity_level]
