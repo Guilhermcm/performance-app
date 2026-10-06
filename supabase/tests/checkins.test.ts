@@ -189,7 +189,8 @@ describe('hidden check-ins and app settings', () => {
 
   it('app_settings is read only for clients', async () => {
     await sql(db, `insert into public.app_settings (key, value) values ('k', '"v"')`)
-    expect(await rows(db, A, 'select key, value from public.app_settings')).toEqual([{ key: 'k', value: 'v' }])
+    expect(await rows(db, A, `select key, value from public.app_settings where key <> 'training_checkin_since'`))
+      .toEqual([{ key: 'k', value: 'v' }])
     await expect(as(A, `insert into public.app_settings (key, value) values ('x', '1')`)).rejects.toThrow(/permission denied/)
     await expect(as(A, `update public.app_settings set value = '2'`)).rejects.toThrow(/permission denied/)
     await expect(as(A, 'delete from public.app_settings')).rejects.toThrow(/permission denied/)

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import type { PGlite } from '@electric-sql/pglite'
 import { freshDb, asUser } from './helpers/db'
-import { A, makeUser, setClock, withoutEventWindow, event, ledger, sql } from './helpers/game'
+import { A, makeUser, setClock, withoutEventWindow, event, ledger, sql, legacyTraining } from './helpers/game'
 
 let db: PGlite
 const pinned = async () => {
@@ -15,6 +15,7 @@ const week = (i: number) => `2026-09-${String(7 + i).padStart(2, '0')}`   // 0 =
 
 beforeEach(async () => {
   db = await freshDb()
+  await legacyTraining(db)   // the workout rules from before check-ins
   await makeUser(db, A)
 })
 
