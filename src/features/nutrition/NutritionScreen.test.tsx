@@ -107,13 +107,36 @@ describe('NutritionScreen', () => {
     expect(screen.getByRole('button', { name: 'Delete Arroz' })).toBeTruthy()
   })
 
-  it('offers to add on an empty meal and the + opens quick add for that meal', () => {
+  it('offers to add on an empty meal and the + opens the food search for that meal', () => {
     render(<NutritionScreen />)
     const dinner = screen.getByRole('region', { name: 'Dinner' })
     expect(within(dinner).getByText('Nothing logged yet.')).toBeTruthy()
     fireEvent.click(within(dinner).getByRole('button', { name: 'Add' }))
-    expect(screen.getByRole('dialog')).toBeTruthy()
-    expect(screen.getByRole('heading', { name: 'Quick add' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Add to Dinner' })).toBeTruthy()
+    expect(screen.getByRole('searchbox', { name: 'Search foods' })).toBeTruthy()
+  })
+
+  it('opens "Copy from" for a meal and the whole day copy', () => {
+    render(<NutritionScreen />)
+    fireEvent.click(within(screen.getByRole('region', { name: 'Dinner' })).getByRole('button', { name: 'Copy from…' }))
+    expect(screen.getByRole('heading', { name: 'Copy to Dinner' })).toBeTruthy()
+    cleanup()
+    render(<NutritionScreen />)
+    fireEvent.click(screen.getByRole('button', { name: 'Copy a whole day' }))
+    expect(screen.getByRole('heading', { name: 'Copy a whole day' })).toBeTruthy()
+  })
+
+  it('repeats an item from yesterday today', () => {
+    render(<NutritionScreen />)
+    expect(screen.queryByRole('button', { name: /^Repeat .* today$/ })).toBeNull()
+    fireEvent.click(screen.getByRole('radio', { name: 'Yesterday' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Repeat Pão today' }))
+    expect(h.toast).toHaveBeenCalledWith('Added to today: Pão')
+    const copy = useNutrition.getState().logs[TODAY].find(l => l.name === 'Pão')!
+    expect(copy).toMatchObject({ day: TODAY, meal: 'dinner', kcal: 250, grams: 80, source: 'taco' })
+    expect(copy.id).not.toBe('c')
+    fireEvent.click(screen.getByRole('radio', { name: 'Today' }))
+    expect(within(screen.getByRole('region', { name: 'Dinner' })).getByText('Pão')).toBeTruthy()
   })
 
   it('opens the portion to edit an item', () => {

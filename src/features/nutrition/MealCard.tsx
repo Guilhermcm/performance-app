@@ -1,5 +1,5 @@
 import { useId } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Copy, Plus, Repeat, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { t } from '../../lib/i18n.js'
 import { MEAL_LABEL, fmtGrams, fmtKcal } from './labels'
@@ -12,10 +12,15 @@ type Props = {
   onAdd: (meal: Meal) => void
   onEdit: (log: FoodLog) => void
   onDelete: (log: FoodLog) => void
+  // "Copy from…": pick a day whose items in this meal come here.
+  onCopy?: (meal: Meal) => void
+  // "Repeat today", offered on the items of a day that is not today.
+  onRepeat?: (log: FoodLog) => void
 }
 
-// One meal of the day: its total, its items (tap to edit, the bin to delete) and "+".
-export default function MealCard({ meal, logs, editable, onAdd, onEdit, onDelete }: Props) {
+// One meal of the day: its total, "Copy from…", "+" and its items (tap to edit, the bin to
+// delete, and on yesterday "Repeat today").
+export default function MealCard({ meal, logs, editable, onAdd, onEdit, onDelete, onCopy, onRepeat }: Props) {
   const id = useId()
   const total = logs.reduce((n, l) => n + l.kcal, 0)
   const name = MEAL_LABEL[meal]()
@@ -25,6 +30,12 @@ export default function MealCard({ meal, logs, editable, onAdd, onEdit, onDelete
       <header className="flex min-h-14 items-center gap-2 py-1 pl-4 pr-1.5">
         <h2 id={id} className="flex-1 text-[15px] font-semibold">{name}</h2>
         <span data-testid="meal-total" className="font-mono text-sm tabular-nums text-muted-foreground">{fmtKcal(total)}</span>
+        {editable && onCopy && (
+          <Button variant="ghost" size="icon" className="size-11 rounded-full text-muted-foreground" aria-label={t('Copy from…')}
+            title={t('Copy from…')} onClick={() => onCopy(meal)}>
+            <Copy aria-hidden className="size-4" />
+          </Button>
+        )}
         {editable && (
           <Button variant="ghost" size="icon" className="size-11 rounded-full" aria-label={t('Add to {0}', name)} onClick={() => onAdd(meal)}>
             <Plus aria-hidden className="size-5" />
@@ -46,6 +57,12 @@ export default function MealCard({ meal, logs, editable, onAdd, onEdit, onDelete
                   </span>
                   <span className="font-mono text-sm tabular-nums">{fmtKcal(l.kcal)}</span>
                 </button>
+                {onRepeat && (
+                  <Button variant="ghost" size="icon" className="size-11 shrink-0 rounded-full text-muted-foreground"
+                    aria-label={t('Repeat {0} today', l.name)} onClick={() => onRepeat(l)}>
+                    <Repeat aria-hidden className="size-4" />
+                  </Button>
+                )}
                 {editable && (
                   <Button variant="ghost" size="icon" className="size-11 shrink-0 rounded-full text-muted-foreground"
                     aria-label={t('Delete {0}', l.name)} onClick={() => onDelete(l)}>

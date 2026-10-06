@@ -1,7 +1,7 @@
 import { useEffect, useId, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { CircleCheck, CircleDashed, CloudOff, RefreshCw, Scale, Target } from 'lucide-react'
+import { CircleCheck, CircleDashed, CloudOff, Copy, RefreshCw, Scale, Target } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -19,6 +19,8 @@ import NutritionInvite from './NutritionInvite'
 import MealCard from './MealCard'
 import PortionSheet from './PortionSheet'
 import QuickAddSheet from './QuickAddSheet'
+import FoodSearchSheet from './FoodSearchSheet'
+import CopyFromSheet from './CopyFromSheet'
 import type { DayTotals, FoodItem, FoodLog, Macros, Meal, NutritionDay } from './types'
 
 type Which = 'today' | 'yesterday'
@@ -57,6 +59,10 @@ export default function NutritionScreen() {
   const [quickOpen, setQuickOpen] = useState(false)
   const [edit, setEdit] = useState<{ item: FoodItem; log: FoodLog } | null>(null)
   const [editOpen, setEditOpen] = useState(false)
+  const [searchMeal, setSearchMeal] = useState<Meal>('breakfast')
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [copyInto, setCopyInto] = useState<Meal | 'all'>('all')
+  const [copyOpen, setCopyOpen] = useState(false)
 
   // Items the server refused while offline: said once, then forgotten.
   useEffect(() => {
@@ -74,8 +80,15 @@ export default function NutritionScreen() {
     )
   }
 
-  // The "+" of a meal. Food search arrives with the search sheet; until then it is a quick add.
-  const onAdd = (meal: Meal) => { setQuick({ meal }); setQuickOpen(true) }
+  // The "+" of a meal opens the food search for it.
+  const onAdd = (meal: Meal) => { setSearchMeal(meal); setSearchOpen(true) }
+  const onCopy = (into: Meal | 'all') => { setCopyInto(into); setCopyOpen(true) }
+  // Yesterday's item again today, same meal, same food and numbers.
+  const onRepeat = (log: FoodLog) => {
+    const { id: _id, updated_at: _at, day: _day, ...rest } = log
+    useNutrition.getState().addLog({ ...rest, day: today })
+    toast(t('Added to today: {0}', log.name))
+  }
   const onEdit = (log: FoodLog) => {
     const item = itemOfLog(log)
     if (item) { setEdit({ item, log }); setEditOpen(true) } else { setQuick({ meal: log.meal, log }); setQuickOpen(true) }
@@ -121,12 +134,18 @@ export default function NutritionScreen() {
         <>
           <DaySummary totals={dayTotals(logs)} target={target} />
           {MEALS.map(m => (
-            <MealCard key={m} meal={m} logs={logs.filter(l => l.meal === m)} editable onAdd={onAdd} onEdit={onEdit} onDelete={onDelete} />
+            <MealCard key={m} meal={m} logs={logs.filter(l => l.meal === m)} editable onAdd={onAdd} onEdit={onEdit} onDelete={onDelete}
+              onCopy={onCopy} onRepeat={day === today ? undefined : onRepeat} />
           ))}
+          <Button variant="outline" className="h-11 gap-2 self-start rounded-xl" onClick={() => onCopy('all')}>
+            <Copy aria-hidden className="size-4" />{t('Copy a whole day')}
+          </Button>
           {earlier.length > 0 && <EarlierDays days={earlier} />}
         </>
       )}
 
+      <FoodSearchSheet day={day} meal={searchMeal} open={searchOpen} onOpenChange={setSearchOpen} />
+      <CopyFromSheet day={day} meal={copyInto} open={copyOpen} onOpenChange={setCopyOpen} />
       <QuickAddSheet meal={quick.meal} log={quick.log} day={day} open={quickOpen} onOpenChange={setQuickOpen} />
       {edit && <PortionSheet item={edit.item} log={edit.log} meal={edit.log.meal} day={edit.log.day} open={editOpen} onOpenChange={setEditOpen} />}
     </Page>
