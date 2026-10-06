@@ -356,6 +356,23 @@ describe('measures', () => {
     expect(useNutrition.getState().measures).toEqual([m])
   })
 
+  it('keeps the cached measures and still loads the rest when the measures request fails', async () => {
+    const cached = measureOf({ id: 'cached' })
+    const log = logOf({ id: 'l1', day: TODAY })
+    const food = foodOf({ id: 'f1' })
+    localStorage.setItem('perf_nutrition_v1', JSON.stringify({ userId: ME, logs: {}, foods: [], targets: [], closed: [], measures: [cached] }))
+    api.fetchLogs.mockResolvedValue([log]); api.fetchFoods.mockResolvedValue([food])
+    api.fetchMeasures.mockRejectedValue(new Error('relation "food_measures" does not exist'))
+    await bound()
+    const s = useNutrition.getState()
+    expect(s.status).toBe('ready')
+    expect(s.stale).toBe(false)
+    expect(s.logs[TODAY]).toEqual([log])
+    expect(s.foods).toEqual([food])
+    expect(s.measures).toEqual([cached])
+    expect(cache().measures).toEqual([cached])
+  })
+
   it('reads a saved copy from before measures existed', async () => {
     localStorage.setItem('perf_nutrition_v1', JSON.stringify({ userId: ME, logs: {}, foods: [], targets: [], closed: [] }))
     api.fetchMeasures.mockReturnValue(new Promise(() => {}))

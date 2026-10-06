@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
-import { baseLang, getLang, t } from '../../lib/i18n.js'
+import { t } from '../../lib/i18n.js'
 import { portion } from './portion'
 import { keyOf, useNutrition } from './useNutrition'
 import { MacroLine } from './MacroLine'
@@ -216,11 +216,12 @@ export default function PortionSheet({ item, meal, day, log, open, onOpenChange,
   )
 }
 
-// "2 colheres de servir", "2 × pote". Suggested names are Brazilian data and always Portuguese; a
-// personal name is read as Portuguese when the app is; a label serving is multiplied as written.
+// "2 colheres de servir", "2 × pote". Only the suggested names (a closed set of Brazilian data, always
+// Portuguese) are inflected. A personal name is the user's own words, in any language ("mão",
+// "1/2 xícara"), and a label serving is text from the package: both are multiplied as written.
 function measureAmount(o: MeasureOption, qty: number): string {
   if (o.kind === 'serving') return o.label ? countedMeasure(qty, o.label, false) : t('{0} × label serving', fmtDecimal(qty))
-  return countedMeasure(qty, o.label, o.kind === 'suggested' || baseLang(getLang()) === 'pt')
+  return countedMeasure(qty, o.label, o.kind === 'suggested')
 }
 
 const chipTone = (on: boolean) => (on ? 'border-primary bg-primary/10 text-foreground' : 'border-border bg-card text-muted-foreground')

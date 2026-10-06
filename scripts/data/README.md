@@ -54,7 +54,7 @@ preparo, medida, gramas e fonte coincidem em todas.
 
 ## Mapa TACO x POF
 
-`taco-pof-map.csv` (`taco_id,pof_codigo_alimento,pof_codigo_preparacao,nota`) cobre 112 alimentos
+`taco-pof-map.csv` (`taco_id,pof_codigo_alimento,pof_codigo_preparacao,nota`) cobre 113 alimentos
 comuns. `node scripts/suggest-taco-pof-map.mjs` propõe candidatos pelo nome; cada linha foi
 conferida à mão, e a coluna `nota` explica os casamentos que não são óbvios (a POF agrupa os
 feijões comuns, por exemplo). As regras que escolhem as medidas de cada alimento (rótulos, pesos

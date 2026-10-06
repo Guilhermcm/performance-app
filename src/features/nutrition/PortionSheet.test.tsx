@@ -7,6 +7,7 @@ vi.mock('@/components/ui/drawer', () => import('../social/test-drawer'))
 import PortionSheet from './PortionSheet'
 import { useNutrition } from './useNutrition'
 import { ME, foodOf, itemOf, logOf, measureOf } from './test-nutrition'
+import { setLang } from '../../lib/i18n.js'
 
 const real = useNutrition.getState()
 const addLog = vi.fn(), updateLog = vi.fn(), toggleFavorite = vi.fn()
@@ -192,6 +193,42 @@ describe('PortionSheet household measures', () => {
     fireEvent.click(screen.getByRole('button', { name: '1 porção (30 g)' }))
     fireEvent.click(screen.getByRole('button', { name: 'Half a measure more' }))
     expect(measureLine()).toBe('1.5 × 1 porção · 45 g')
+  })
+
+  // pt-BR is the main locale; pt (Portugal) is where the app used to inflect personal labels.
+  describe.each(['pt-BR', 'pt'])('in %s', lang => {
+    beforeEach(async () => { await setLang(lang) })
+    afterEach(async () => { await setLang('en') })
+    const twice = () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Meia medida a mais' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Meia medida a mais' }))
+    }
+    const personal = (label: string, grams: number) => {
+      useNutrition.setState({ measures: [measureOf({ food_key: 'off:789', label, grams })] })
+      render(<PortionSheet item={itemOf({ source: 'off', source_id: '789' })} meal="lunch" day="2026-10-06" open onOpenChange={onOpenChange} />)
+      fireEvent.click(screen.getByRole('button', { name: `${label} (${grams} g)` }))
+    }
+
+    it('never inflects a personal label: "mão" stays "mão"', () => {
+      personal('mão', 40)
+      expect(measureLine()).toBe('1 × mão · 40 g')
+      twice()
+      expect(measureLine()).toBe('2 × mão · 80 g')
+    })
+
+    it('keeps the number in a personal label as typed: "1/2 xícara"', () => {
+      personal('1/2 xícara', 120)
+      twice()
+      expect(measureLine()).toBe('2 × 1/2 xícara · 240 g')
+    })
+
+    it('still inflects a suggested label', async () => {
+      render(<PortionSheet item={itemOf(RICE)} meal="lunch" day="2026-10-06" open onOpenChange={onOpenChange} />)
+      fireEvent.click(await screen.findByRole('button', { name: 'colher de servir (45 g)' }))
+      expect(measureLine()).toBe('1 colher de servir · 45 g')
+      twice()
+      expect(measureLine()).toBe('2 colheres de servir · 90 g')
+    })
   })
 
   it('creates a measure with the current grams and the food key', async () => {

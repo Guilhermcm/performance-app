@@ -9,8 +9,11 @@ export function loadTaco(): Promise<FoodItem[]> {
   return cache
 }
 
-/** Loads the suggested household measures (POF) by TACO id, on demand like the table; memoized. */
+/** Loads the suggested household measures (POF) by TACO id, on demand like the table; memoized.
+ * A failed load is not kept: the next call tries again. */
 export function loadTacoMeasures(): Promise<Record<string, { label: string; grams: number }[]>> {
-  measures ??= import('./data/taco-measures.json').then((m) => m.default as Record<string, { label: string; grams: number }[]>)
+  measures ??= import('./data/taco-measures.json')
+    .then((m) => m.default as Record<string, { label: string; grams: number }[]>)
+    .catch((e) => { measures = null; throw e })
   return measures
 }

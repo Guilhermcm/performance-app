@@ -189,7 +189,9 @@ export const useNutrition = create<NutritionStore>((set, get) => {
         const before = new Set(get().closed.map(d => d.day))
         try {
           const [logs, foods, targets, days, measures] = await Promise.all([
-            api.fetchLogs(from, today), api.fetchFoods(), api.fetchTargets(), api.fetchDays(from, today), api.fetchMeasures()
+            api.fetchLogs(from, today), api.fetchFoods(), api.fetchTargets(), api.fetchDays(from, today),
+            // Measures are a side feature: if they cannot load, the diary still does and keeps its copy.
+            api.fetchMeasures().catch(() => get().measures)
           ])
           if (gen !== generation) return
           const merged = applyPending(userId, groupByDay(logs), foods, measures)

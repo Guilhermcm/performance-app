@@ -229,5 +229,5 @@ The suggested household measures (`src/features/nutrition/data/taco-measures.jso
 "colher de servir" or "concha" with their weight in grams, come from the *Tabela de Medidas
 Referidas para os Alimentos Consumidos no Brasil* of the *Pesquisa de Orçamentos Familiares
 2008-2009*, published by IBGE. The table is copied without changes to `scripts/data/pof-medidas.csv`,
-and `scripts/data/taco-pof-map.csv` pairs 112 TACO foods with their POF food and preparation.
+and `scripts/data/taco-pof-map.csv` pairs 113 TACO foods with their POF food and preparation.
 Source: Medidas: POF 2008-2009, IBGE. Provenance and checks are in `scripts/data/README.md`.

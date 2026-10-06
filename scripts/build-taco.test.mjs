@@ -252,9 +252,18 @@ const RANGES = [
   [/^fatia$/, [5, 200]]
 ]
 const FRUIT = (id) => Number(id) >= 163 && Number(id) <= 258 // TACO "Frutas e derivados"
+// Independent of the build's PLAUSIBLE_G: a fruit "unidade" under 20 g, or a melon under 250 g, means the
+// map points at the wrong POF pair. Small fruits that really weigh less go here by TACO id. Empty today:
+// morango, acerola and uva (8 to 12 g) would be added if they are ever mapped.
+const SMALL_FRUIT_IDS = new Set([])
+const FRUIT_UNIT_MIN_G = 20
+const LARGE_FRUIT = /^\s*(melancia|melão|abacaxi|mamão)\b.*\bcru[a]?\b/i // by TACO name, never by id
+const LARGE_FRUIT_UNIT_MIN_G = 250
+const UNIT_LABELS = ['unidade', 'unidade pequena'] // both are held to the 20 g floor
 
 describe.skipIf(!existsSync(REAL_CSV))('taco-measures.json from the curated map', () => {
   const tacoById = new Map(JSON.parse(read(OUT)).map((i) => [i.source_id, i]))
+  const tacoNames = new Map(parseCsv(read(REAL_CSV)).map((r) => [r.id, r.nome]))
   const map = existsSync(MAP) ? parseCsv(read(MAP)) : []
   const measures = existsSync(MEASURES_OUT) ? JSON.parse(read(MEASURES_OUT)) : {}
 
@@ -296,7 +305,8 @@ describe.skipIf(!existsSync(REAL_CSV))('taco-measures.json from the curated map'
         const name = `${id} ${tacoById.get(id)?.name}: ${label} ${grams} g`
         if (!(grams > 0 && grams <= 2000)) bad.push(name)
         for (const [re, range] of RANGES) if (re.test(label) && !between(grams, range)) bad.push(name)
-        if (label === 'unidade' && FRUIT(id) && !between(grams, [5, 2000])) bad.push(name)
+        if (UNIT_LABELS.includes(label) && FRUIT(id) && !SMALL_FRUIT_IDS.has(id) && grams < FRUIT_UNIT_MIN_G) bad.push(name)
+        if (label === 'unidade' && LARGE_FRUIT.test(tacoNames.get(id) ?? '') && grams < LARGE_FRUIT_UNIT_MIN_G) bad.push(name)
       }
     }
     expect(bad).toEqual([])
