@@ -8,12 +8,14 @@ const api = vi.hoisted(() => ({
   fetchMeasures: vi.fn(), upsertMeasure: vi.fn(), deleteMeasure: vi.fn()
 }))
 vi.mock('./nutrition-api', async orig => ({ ...(await orig<typeof import('./nutrition-api')>()), ...api }))
+// The real queue, wrapped so a test can make one send throw.
+vi.mock('./outbox', async orig => { const m = await orig<typeof import('./outbox')>(); return { ...m, flushOutbox: vi.fn(m.flushOutbox) } })
 const progress = vi.hoisted(() => ({ refresh: vi.fn() }))
 vi.mock('../gamification/useProgress', () => ({ useProgress: { getState: () => progress } }))
 
 import { useNutrition, startNutritionSync } from './useNutrition'
 import { useProfile } from '../profile/useProfile'
-import { clearOutbox, pending } from './outbox'
+import { clearOutbox, flushOutbox, pending } from './outbox'
 import { clearNutritionLocal } from './sign-out'
 import { ME, OTHER, foodOf, itemOf, logOf, measureOf, targetOf } from './test-nutrition'
 
@@ -234,6 +236,18 @@ describe('useNutrition', () => {
     await settle()
     await useNutrition.getState().refresh()
     expect(useNutrition.getState().logs[TODAY].map(l => l.id)).toEqual([a.id])
+  })
+
+  // A queue that throws while being sent used to leave the store in "loading" for good, and the
+  // activation button waiting with it. The pull still runs and the store gets ready.
+  it('still loads the diary when sending the queue throws', async () => {
+    await bound()
+    vi.mocked(flushOutbox).mockRejectedValueOnce(new Error('QuotaExceededError'))
+    api.fetchTargets.mockResolvedValue([targetOf({ valid_from: '2026-09-01' })])
+    useNutrition.setState({ status: 'loading' })
+    await useNutrition.getState().refresh().catch(() => {})
+    expect(useNutrition.getState().status).toBe('ready')
+    expect(useNutrition.getState().targets).toHaveLength(1)
   })
 
   it('marks the copy stale when the server cannot be reached', async () => {

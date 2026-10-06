@@ -2,8 +2,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup, waitFor, act } from '@testing-library/react'
 
-const h = vi.hoisted(() => ({ toast: vi.fn() }))
+const h = vi.hoisted(() => ({ toast: vi.fn(), fetchTargets: vi.fn() }))
 vi.mock('sonner', () => ({ toast: h.toast }))
+vi.mock('./nutrition-api', async orig => ({ ...(await orig<typeof import('./nutrition-api')>()), fetchTargets: h.fetchTargets }))
 vi.mock('@/components/ui/drawer', () => import('../social/test-drawer'))
 
 import NutritionSetup from './NutritionSetup'
@@ -35,7 +36,7 @@ const button = (name: string | RegExp) => screen.getByRole('button', { name }) a
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(new Date('2026-10-06T15:00:00Z'))
-  ;[save, setTarget, onOpenChange, h.toast].forEach(f => f.mockReset())
+  ;[save, setTarget, onOpenChange, h.toast, h.fetchTargets].forEach(f => f.mockReset())
   save.mockImplementation(async (patch: object) => ({ ...useProfile.getState().profile, ...patch }))
   setTarget.mockResolvedValue(undefined)
   useNutrition.setState({ setTarget, targets: [], status: 'ready' })
@@ -174,37 +175,60 @@ describe('NutritionSetup', () => {
     expect(setTarget.mock.calls[0][1]).toBe('2026-10-07')
   })
 
-  // The first target may start today only when the person has no target at all. Until the store
-  // has loaded the targets, "none yet" can just mean "not here yet", so the last step waits.
-  it('waits for the targets to load before the final button works', async () => {
+  // The first target may start today only when the person has no target at all. The button never
+  // waits for the diary to load (it used to hang on "Loading your targets"): when the store is not
+  // ready, finishing asks the server for the targets.
+  it('works while the diary is still loading, asking the server for the targets', async () => {
     withProfile({ activity_level: 'moderate' })
     useNutrition.setState({ status: 'loading', targets: [] })
+    h.fetchTargets.mockResolvedValue([targetOf({ valid_from: '2026-09-01', kcal: 2000 })])
     show()
     next()
-    const wait = button('Loading your targets')
-    expect(wait.disabled).toBe(true)
-    expect(screen.queryByRole('button', { name: 'Turn on Nutrition' })).toBeNull()
-    fireEvent.click(wait)
-    fireEvent.submit(document.getElementById('nutrition-setup')!)
-    expect(save).not.toHaveBeenCalled()
-    expect(setTarget).not.toHaveBeenCalled()
-    act(() => { useNutrition.setState({ status: 'ready', targets: [targetOf({ valid_from: '2026-09-01', kcal: 2000 })] }) })
+    expect(screen.queryByRole('button', { name: 'Loading your targets' })).toBeNull()
     expect(button('Turn on Nutrition').disabled).toBe(false)
     fireEvent.click(button('Turn on Nutrition'))
     await waitFor(() => expect(setTarget).toHaveBeenCalledTimes(1))
-    // The targets that arrived say this is not the first one: it starts tomorrow.
+    expect(h.fetchTargets).toHaveBeenCalledTimes(1)
+    // The server says this is not the first target: it starts tomorrow.
     expect(setTarget.mock.calls[0][1]).toBe('2026-10-07')
   })
 
-  it('also waits while the store is idle or failed, and an edit waits the same way', () => {
-    withProfile({ nutrition_enabled: true, activity_level: 'moderate' })
-    for (const status of ['idle', 'error'] as const) {
-      useNutrition.setState({ status })
+  it('starts the first target today when the server has none, whatever the store status', async () => {
+    for (const status of ['idle', 'loading', 'error'] as const) {
+      withProfile({ activity_level: 'moderate' })
+      useNutrition.setState({ status, targets: [] })
+      h.fetchTargets.mockResolvedValue([])
       show()
       next()
-      expect(button('Loading your targets').disabled).toBe(true)
+      fireEvent.click(button('Turn on Nutrition'))
+      await waitFor(() => expect(setTarget).toHaveBeenCalledTimes(1))
+      expect(setTarget.mock.calls[0][1]).toBe('2026-10-06')
+      setTarget.mockClear(); save.mockClear()
       cleanup()
     }
+  })
+
+  it('writes nothing and says so when the targets cannot be read', async () => {
+    withProfile({ activity_level: 'moderate' })
+    useNutrition.setState({ status: 'error', targets: [] })
+    h.fetchTargets.mockRejectedValue(new Error('offline'))
+    show()
+    next()
+    fireEvent.click(button('Turn on Nutrition'))
+    await waitFor(() => expect(h.toast).toHaveBeenCalledWith('Could not save the target. Check your connection and try again.'))
+    expect(save).not.toHaveBeenCalled()
+    expect(setTarget).not.toHaveBeenCalled()
+    expect(button('Turn on Nutrition').disabled).toBe(false)
+  })
+
+  it('uses the loaded targets without asking the server again', async () => {
+    withProfile({ activity_level: 'moderate' })
+    useNutrition.setState({ status: 'ready', targets: [] })
+    show()
+    next()
+    fireEvent.click(button('Turn on Nutrition'))
+    await waitFor(() => expect(setTarget).toHaveBeenCalledTimes(1))
+    expect(h.fetchTargets).not.toHaveBeenCalled()
   })
 
   it('does not hold back the earlier steps while the targets load', () => {
