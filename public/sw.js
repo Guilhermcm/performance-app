@@ -30,6 +30,12 @@ const MEDIA_GUESS_BYTES = 64 * 1024
 const MEDIA_TRIM_EVERY = 20
 const isMediaPath = p => p.includes('/img/') || p.includes('/gif/')
 
+// Chunks the app imports on demand that must work offline from the first launch, not only after
+// the screen that loads them has been opened once with a network: the TACO table, ZXing and the
+// pillar radar. index.html does not reference them, so the build writes the list here
+// (scripts/sw-on-demand.mjs, called from vite.config.ts); unbuilt, it is empty.
+const ON_DEMAND = /*__ON_DEMAND__*/[]
+
 // What the shell needs to boot without a network: index.html plus every script/style/icon it
 // references. Read from the served index.html so the list follows the build, not a hand-kept
 // manifest that would go stale the first time a chunk is renamed.
@@ -63,6 +69,14 @@ async function precache() {
     await c.put(u, r)
   }))
   await Promise.all(refs.filter(u => !code.includes(u)).map(u => c.add(u).catch(() => {})))
+  // Best-effort, like the icons: without one of these the app still boots, and the screen that
+  // needs it fetches it network-first later. Checked by hand for the same login-page reason.
+  await Promise.all(ON_DEMAND.filter(u => !refs.includes(u)).map(async u => {
+    try {
+      const r = await fetch(u, { cache: 'no-cache' })
+      if (r.ok && !r.redirected) await c.put(u, r)
+    } catch { /* offline mid-install: left to the runtime cache */ }
+  }))
   // The shell goes in last, so activate's guard — an index.html in THIS build's cache — means the
   // whole shell is there rather than just its first file.
   await c.put('index.html', new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8' } }))
@@ -222,7 +236,11 @@ self.addEventListener('fetch', e => {
   // abort used, does not exist before iOS 16: the handler threw before it answered at all, the
   // cache fallback with it). A request the cache cannot answer keeps waiting for the network, as
   // it always did; and the network's answer, whenever it comes, still refreshes the cache.
-  const fromCache = () => caches.match(e.request, { ignoreSearch: true }).then(hit =>
+  // ignoreVary: a server that sends `Vary: Origin` (vite preview does) files the precached copy
+  // under a request without an Origin, and the module import asking for it later has one; the
+  // match then missed and the chunk failed offline although it was in the cache. Everything
+  // answered from here is content-hashed or the shell, so Vary has nothing to say about it.
+  const fromCache = () => caches.match(e.request, { ignoreSearch: true, ignoreVary: true }).then(hit =>
     hit || (e.request.mode === 'navigate' ? caches.match('index.html') : undefined))
   e.respondWith(new Promise(resolve => {
     const slow = setTimeout(() => fromCache().then(hit => { if (hit) resolve(hit) }, () => {}), NET_WAIT_MS)

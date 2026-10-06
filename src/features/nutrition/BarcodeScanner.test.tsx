@@ -71,4 +71,23 @@ describe('BarcodeScanner', () => {
     if (ready) Object.defineProperty(HTMLMediaElement.prototype, 'readyState', ready)
     else delete (HTMLMediaElement.prototype as { readyState?: number }).readyState
   })
+  it('falls back to typing after the decoder fails to load, instead of retrying every frame', async () => {
+    const stop = vi.fn()
+    const stream = Object.assign(new MediaStream(), { getTracks: () => [{ stop }], getVideoTracks: () => [{ stop, getCapabilities: () => ({}) }] })
+    setCamera(async () => stream)
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
+    const ready = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'readyState')
+    Object.defineProperty(HTMLMediaElement.prototype, 'readyState', { get: () => 4, configurable: true })
+    // Offline with ZXing not cached: the dynamic import rejects.
+    h.decode.mockRejectedValue(new TypeError('Failed to fetch dynamically imported module'))
+    render(<BarcodeScanner open onOpenChange={onOpenChange} onCode={onCode} />)
+    await settle()
+    await act(async () => { await new Promise(r => setTimeout(r, 400)) })
+    expect(h.decode).toHaveBeenCalledTimes(1)
+    expect(stop).toHaveBeenCalled()
+    expect(screen.getByText(/Camera is not available here/)).toBeTruthy()
+    expect(screen.getByLabelText('Barcode')).toBeTruthy()
+    if (ready) Object.defineProperty(HTMLMediaElement.prototype, 'readyState', ready)
+    else delete (HTMLMediaElement.prototype as { readyState?: number }).readyState
+  })
 })

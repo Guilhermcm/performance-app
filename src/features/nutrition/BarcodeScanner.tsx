@@ -17,7 +17,8 @@ const TICK_MS = 150
 // Reads a food's barcode. In a browser: the rear camera in a <video>, a frame decoded every
 // 150 ms (BarcodeDetector, or ZXing where there is none) until a code shows up, the flashlight
 // when the camera has one. In the app: ML Kit's own scanner (lib/scan.js). Always: "Type code".
-// A denied or missing camera leaves a message and the typed path, never a dead end.
+// A denied or missing camera, or a decoder that will not load, leaves a message and the typed
+// path, never a dead end.
 export default function BarcodeScanner({ open, onOpenChange, onCode }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [camera, setCamera] = useState<Camera>('starting')
@@ -89,7 +90,15 @@ export default function BarcodeScanner({ open, onOpenChange, onCode }: Props) {
         if (stopped) return
         if (v.readyState >= 2) {
           let c: string | null = null
-          try { c = await decodeBarcode(v) } catch { /* keep trying */ }
+          // decodeBarcode answers null for a frame with no code; it throws only when no decoder
+          // could run, which in practice is the ZXing chunk failing to load (offline, never
+          // cached). Retrying every frame would spin quietly forever, so the camera goes and the
+          // typed path takes over.
+          try { c = await decodeBarcode(v) } catch {
+            if (stopped) return
+            stop(); setTorch(null); setCamera('unavailable'); setTyping(true)
+            return
+          }
           if (c && !stopped) { found(c); return }
         }
         if (!stopped) timer = setTimeout(tick, TICK_MS)
