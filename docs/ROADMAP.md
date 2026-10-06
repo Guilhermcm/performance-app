@@ -114,13 +114,11 @@ perfil, diário rápido, pilar Nutrição na gamificação.
   960 XP/semana no molde da Força; streak `nutrition_week`; conquistas privadas.
 - Aba Nutrição na TabBar; **radar de pilares** na Home (shadcn/ui Charts) e barra de XP por pilar.
 
-**2b, trazer o passado e refinar**
-- Importação de histórico: mapeador genérico de CSV + perfis MyFitnessPal, Cronometer e FatSecret,
-  sem XP.
-- Receitas, medidas caseiras (POF/IBGE), histórico em calendário, desafio
-  `nutrition_days_on_target`.
+**2b, medidas, histórico e desafio** ([spec](superpowers/specs/2026-10-06-fase-2b-nutricao-design.md))
+- Medidas caseiras pessoais e sugeridas (POF/IBGE), histórico em calendário, desafio
+  `nutrition_days_on_target`, pendências da 2a.
 
-**Fora:** USDA (reavaliar ao abrir ao público), wger.
+**Fora:** USDA, importação de histórico e receitas (reavaliar ao abrir ao público), wger.
 
 **Origem:** OpenNutriTracker (fórmulas, diário, integração OFF), como referência.
 
