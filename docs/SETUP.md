@@ -23,9 +23,8 @@ têm valor padrão.
 1. Ative o `pg_cron` antes de tudo, se ainda não estiver ativo: Supabase → Database → Extensions →
    `pg_cron` → Enable. A `0013` agenda um job e depende dele.
 2. No SQL Editor, rode cada arquivo inteiro, em ordem, da `0007` à `0016`, um por consulta (uma
-   consulta nova para cada arquivo). Cada arquivo roda como uma única transação: se der erro, o
-   arquivo inteiro é desfeito. Pare no primeiro erro, corrija a causa e rode de novo só aquele
-   arquivo antes de seguir. A ordem é `0007_nutrition_base.sql`, `0008_weekly_targets_pillar.sql`,
+   consulta nova para cada arquivo). Pare no primeiro erro e não siga para o próximo arquivo:
+   anote a mensagem e resolva a causa antes de continuar. A ordem é `0007_nutrition_base.sql`, `0008_weekly_targets_pillar.sql`,
    `0009_nutrition_diary.sql`, `0010_nutrition_close.sql`, `0011_nutrition_week.sql`,
    `0012_nutrition_progress.sql`, `0013_nutrition_cron.sql`, `0014_food_measures.sql`,
    `0015_nutrition_challenge.sql` e `0016_nutrition_history.sql`. A `0015` apaga as versões antigas
@@ -44,7 +43,8 @@ têm valor padrão.
 
 Atalho: o arquivo único `supabase/release/0007-0016_nutrition.sql` pode ser colado no SQL Editor no
 lugar dos dez arquivos do passo 2. Ele é gerado por concatenação das migrations, então não edite
-à mão: se algo precisar mudar, mude a migration e gere o arquivo de novo. O `pg_cron` precisa estar
+à mão: se algo precisar mudar, mude a migration e gere o arquivo de novo com
+`node scripts/build-release-sql.mjs` (um teste confere que ele está em dia). O `pg_cron` precisa estar
 ativo antes de rodá-lo. As conferências do passo 3 valem do mesmo jeito.
 
 ## 2. Google OAuth

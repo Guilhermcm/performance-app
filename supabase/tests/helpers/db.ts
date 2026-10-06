@@ -10,7 +10,7 @@ const MIGRATIONS = fileURLToPath(new URL('../../migrations/', import.meta.url))
 // JWT claim PostgREST sets, and the two client roles. Supabase also grants the client roles every
 // privilege on new objects in public by default, so RLS (not missing grants) is what keeps users
 // apart; the shim does the same so the tests exercise the policies.
-const SHIM = `
+export const SHIM = `
 create schema auth;
 create table auth.users (id uuid primary key, email text, raw_user_meta_data jsonb not null default '{}');
 create function auth.uid() returns uuid language sql stable as $$
