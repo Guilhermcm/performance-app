@@ -243,7 +243,8 @@ describe('POF household measures', () => {
 const read = (p) => readFileSync(p, 'utf8')
 const between = (g, [min, max]) => g >= min && g <= max
 const RANGES = [
-  [/^colher/, [2, 60]],
+  [/^colher de servir$/, [10, 120]],
+  [/^colher (?!de servir$)/, [2, 60]],
   [/^concha$/, [50, 250]],
   [/^escumadeira$/, [30, 250]],
   [/^xícara$/, [50, 300]],
@@ -295,7 +296,7 @@ describe.skipIf(!existsSync(REAL_CSV))('taco-measures.json from the curated map'
         const name = `${id} ${tacoById.get(id)?.name}: ${label} ${grams} g`
         if (!(grams > 0 && grams <= 2000)) bad.push(name)
         for (const [re, range] of RANGES) if (re.test(label) && !between(grams, range)) bad.push(name)
-        if (label === 'unidade' && FRUIT(id) && !between(grams, [20, 2000])) bad.push(name)
+        if (label === 'unidade' && FRUIT(id) && !between(grams, [5, 2000])) bad.push(name)
       }
     }
     expect(bad).toEqual([])

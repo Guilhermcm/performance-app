@@ -44,6 +44,11 @@ begin
     end if;
   end if;
 
+  -- A measure never moves to another food or person: the per-food limit is only counted on insert.
+  if tg_op = 'UPDATE' and (new.user_id <> old.user_id or new.food_key <> old.food_key) then
+    raise exception 'item_immutable' using errcode = 'P0001';
+  end if;
+
   new.updated_at := least(new.updated_at, now());
   if tg_op = 'UPDATE' and new.updated_at < old.updated_at then
     return null;

@@ -52,7 +52,7 @@ begin
                    order by t.week_start limit 1),
                  (select p.nutrition_days_per_week from public.profiles p where p.id = v_uid), 5),
                'on_target', (select count(*)::int from public.nutrition_days d
-                              where d.user_id = v_uid and d.on_target
+                              where d.user_id = v_uid and d.on_target and not d.imported
                                 and d.day between w.start and w.start + 6),
                'target_hit', exists (select 1 from public.xp_ledger l
                                       where l.user_id = v_uid and l.reason = 'nutrition_week_target'

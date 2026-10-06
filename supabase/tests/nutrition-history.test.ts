@@ -94,6 +94,19 @@ describe('get_nutrition_days: xp and weeks', () => {
       ['2026-09-28', '2026-10-05', '2026-10-12', '2026-10-19', '2026-10-26'])
   })
 
+  it('leaves imported days out of the week on-target count', async () => {
+    await loose(A, '2026-10-05')
+    // The server stores an imported on-target day; it shows in days but never counts in the week.
+    await sql(db,
+      `insert into public.nutrition_days
+         (user_id, day, kcal, protein_g, carbs_g, fat_g, meals, target, logged, on_target, balanced, imported)
+       values ($1, '2026-10-06', 2000, 150, 200, 60, 2, null, true, true, true, true)`, [A])
+    await at('2026-10-09')
+    const r = await call(A, '2026-10-05', '2026-10-11')
+    expect(r.days.find(d => d.day === '2026-10-06')?.on_target).toBe(true)
+    expect(r.weeks[0].on_target).toBe(1)
+  })
+
   it('keeps one person from seeing another', async () => {
     await loose(A, '2026-10-05')
     await at('2026-10-09')

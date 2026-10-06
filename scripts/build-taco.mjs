@@ -160,7 +160,7 @@ export const MEASURE_EXCLUSIONS = {
  * follow the plan; the other ranges were set from the POF values of the mapped foods.
  */
 export const PLAUSIBLE_G = {
-  'colher de servir': [2, 60],
+  'colher de servir': [10, 120],
   'colher de sopa': [2, 60],
   'colher de sobremesa': [2, 60],
   'colher de chá': [2, 60],

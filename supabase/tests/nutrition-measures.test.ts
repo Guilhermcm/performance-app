@@ -111,6 +111,34 @@ describe('food_measures limits', () => {
   })
 })
 
+describe('food_measures immutability', () => {
+  it('refuses a client moving a measure to another food or person', async () => {
+    const id = await add('taco:5', 'a', 100)
+    for (let i = 0; i < 10; i++) await add('taco:6', 'm' + i, 10)
+    await expect(asA(`update public.food_measures set food_key = 'taco:6' where id = $1`, [id]))
+      .rejects.toThrow(/item_immutable/)
+    await expect(asA('update public.food_measures set user_id = $2 where id = $1', [id, B]))
+      .rejects.toThrow(/item_immutable|row-level security/)
+    const [r] = await sql(db, 'select food_key, user_id from public.food_measures where id = $1', [id])
+    expect(r).toEqual({ food_key: 'taco:5', user_id: A })
+    expect((await sql(db, `select 1 from public.food_measures where food_key = 'taco:6'`))).toHaveLength(10)
+  })
+
+  it('still lets the client edit label and grams', async () => {
+    const id = await add('taco:5', 'a', 100)
+    await asA(`update public.food_measures set label = 'b', grams = 55 where id = $1`, [id])
+    const [r] = await sql(db, 'select label, grams from public.food_measures where id = $1', [id])
+    expect(r.label).toBe('b')
+    expect(Number(r.grams)).toBe(55)
+  })
+
+  it('does not apply to the server', async () => {
+    const id = await add('taco:5', 'a', 100)
+    await sql(db, `update public.food_measures set food_key = 'taco:6' where id = $1`, [id])
+    expect((await sql(db, 'select food_key from public.food_measures where id = $1', [id]))[0].food_key).toBe('taco:6')
+  })
+})
+
 describe('food_measures last write wins', () => {
   it('ignores an older update and clamps the clock', async () => {
     const id = await add('taco:5', 'a', 100)
