@@ -242,4 +242,45 @@ describe('NutritionScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
     expect(refresh).toHaveBeenCalled()
   })
+
+  // The diary stays open across midnight: "today" is recalculated, always in the profile's time
+  // zone, when the app comes back to the front and every minute.
+  describe('after midnight', () => {
+    // 02:59 UTC is 23:59 on the 6th in Sao Paulo.
+    const nearMidnight = () => {
+      vi.useRealTimers()
+      vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+      vi.setSystemTime(new Date('2026-10-07T02:59:00Z'))
+    }
+
+    it('shows the new day when the window gets focus back', () => {
+      nearMidnight()
+      render(<NutritionScreen />)
+      expect(screen.getByText('Arroz')).toBeTruthy()
+      act(() => { vi.setSystemTime(new Date('2026-10-07T03:01:00Z')); window.dispatchEvent(new Event('focus')) })
+      // Today is the 7th now and empty; the 6th is yesterday.
+      expect(screen.queryByText('Arroz')).toBeNull()
+      expect(screen.getByRole('radio', { name: 'Today' }).getAttribute('aria-checked')).toBe('true')
+      fireEvent.click(screen.getByRole('radio', { name: 'Yesterday' }))
+      expect(screen.getByText('Arroz')).toBeTruthy()
+    })
+
+    it('shows the new day on the one-minute tick', () => {
+      nearMidnight()
+      render(<NutritionScreen />)
+      act(() => { vi.setSystemTime(new Date('2026-10-07T03:01:00Z')); vi.advanceTimersByTime(60_000) })
+      expect(screen.queryByText('Arroz')).toBeNull()
+      fireEvent.click(screen.getByRole('radio', { name: 'Yesterday' }))
+      expect(screen.getByText('Arroz')).toBeTruthy()
+    })
+
+    it('keeps the day while it is still the same day in the profile time zone', () => {
+      nearMidnight()
+      // 01:30 UTC is already the 7th in London and Tokyo, but this profile is in Sao Paulo: 22:30 on the 6th.
+      vi.setSystemTime(new Date('2026-10-07T01:00:00Z'))
+      render(<NutritionScreen />)
+      act(() => { vi.setSystemTime(new Date('2026-10-07T01:30:00Z')); vi.advanceTimersByTime(60_000); window.dispatchEvent(new Event('focus')) })
+      expect(screen.getByText('Arroz')).toBeTruthy()
+    })
+  })
 })

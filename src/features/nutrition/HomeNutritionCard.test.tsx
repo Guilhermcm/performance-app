@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, cleanup, within, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, within, waitFor, act } from '@testing-library/react'
 
 const h = vi.hoisted(() => ({ nav: vi.fn(), toast: vi.fn() }))
 vi.mock('react-router-dom', () => ({ useNavigate: () => h.nav }))
@@ -131,5 +131,32 @@ describe('HomeNutritionCard', () => {
     await waitFor(() => expect(h.toast).toHaveBeenCalledWith('Could not save the target. Check your connection and try again.'))
     expect(useProfile.getState().profile?.nutrition_enabled).toBe(true)
     expect(within(screen.getByRole('dialog')).getByRole('button', { name: 'Turn on Nutrition' })).toBeTruthy()
+  })
+
+  // Home stays mounted overnight: the card follows the day, in the profile's time zone.
+  describe('after midnight', () => {
+    const NEXT = '2026-10-07'
+    const nearMidnight = () => {
+      vi.useRealTimers()
+      vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+      vi.setSystemTime(new Date('2026-10-07T02:59:00Z'))
+      useNutrition.setState({ logs: { [TODAY]: [logOf({ id: 'l0', day: TODAY, meal: 'lunch', kcal: 900, protein_g: 40 })] } })
+    }
+
+    it('starts the new day empty when the window gets focus back', () => {
+      nearMidnight()
+      render(<HomeNutritionCard />)
+      expect(screen.getByText('1,500 kcal left')).toBeTruthy()
+      act(() => { vi.setSystemTime(new Date('2026-10-07T03:01:00Z')); window.dispatchEvent(new Event('focus')) })
+      expect(screen.getByText('2,400 kcal left')).toBeTruthy()
+      expect(useNutrition.getState().logs[NEXT]).toBeUndefined()
+    })
+
+    it('starts the new day empty on the one-minute tick', () => {
+      nearMidnight()
+      render(<HomeNutritionCard />)
+      act(() => { vi.setSystemTime(new Date('2026-10-07T03:01:00Z')); vi.advanceTimersByTime(60_000) })
+      expect(screen.getByText('2,400 kcal left')).toBeTruthy()
+    })
   })
 })

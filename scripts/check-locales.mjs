@@ -36,7 +36,14 @@ for (const file of files) {
 // which is the usual shape of the bug and worth naming separately from plain gaps.
 const seen = new Map()
 for (const dict of locales.values()) for (const k of Object.keys(dict)) seen.set(k, (seen.get(k) || 0) + 1)
-const union = [...seen.keys()]
+
+// Plural forms: pl, ru and uk carry `key|one`, `key|few`, `key|many` beside `key` (lib/i18n-core.js
+// tn()), because their nouns change with the number. No other pack has them, so they are neither
+// required of every pack nor counted as a gap: they are checked on their own below.
+const PLURAL_FORM = /^(.*)\|(zero|one|two|few|many)$/s
+const PLURAL_LANGS = new Set(['pl', 'ru', 'uk'])
+const formOf = k => PLURAL_FORM.exec(k)
+const union = [...seen.keys()].filter(k => !formOf(k))
 
 // t('…{0}…', x) substitutes by index, so a translation that loses a {0} drops the number out of
 // the sentence and one that invents a {1} prints the braces at the reader. The KEY is the English
@@ -49,18 +56,23 @@ for (const [lang, dict] of locales) {
   const keys = new Set(Object.keys(dict))
   const missing = union.filter(k => !keys.has(k))
   const orphans = union.filter(k => keys.has(k) && seen.get(k) === 1)
+  // A form needs a language that uses it and a base string that some pack defines.
+  const forms = Object.keys(dict).filter(formOf)
+  const strayForms = forms.filter(k => !PLURAL_LANGS.has(lang) || !seen.has(formOf(k)[1]))
   // A blank value is worse than no translation: the English fallback only runs for a key that
   // is ABSENT, so an empty string reaches the screen as an empty screen.
   const blank = Object.entries(dict).filter(([, v]) => typeof v !== 'string' || !v.trim()).map(([k]) => k)
-  const mangled = Object.entries(dict).filter(([k, v]) => typeof v === 'string' && marks(v) !== marks(k))
-  if (missing.length || orphans.length || blank.length || mangled.length) {
+  // A form keeps the placeholders of its base string, like any other translation.
+  const mangled = Object.entries(dict).filter(([k, v]) => typeof v === 'string' && marks(v) !== marks(formOf(k)?.[1] ?? k))
+  if (missing.length || orphans.length || blank.length || mangled.length || strayForms.length) {
     failed = true
     console.error(`\n${lang}.js: ${keys.size}/${union.length} keys`)
     for (const k of missing) console.error(`  missing:   ${JSON.stringify(k)}`)
     for (const k of orphans) console.error(`  only here: ${JSON.stringify(k)}`)
     for (const k of blank) console.error(`  blank:     ${JSON.stringify(k)}`)
+    for (const k of strayForms) console.error(`  plural form without its base string, or in a pack that does not use plural forms: ${JSON.stringify(k)}`)
     for (const [k, v] of mangled)
-      console.error(`  placeholders: ${JSON.stringify(k)} has [${marks(k) || '—'}], ${JSON.stringify(v)} has [${marks(v) || '—'}]`)
+      console.error(`  placeholders: ${JSON.stringify(k)} has [${marks(formOf(k)?.[1] ?? k) || '—'}], ${JSON.stringify(v)} has [${marks(v) || '—'}]`)
   }
 }
 

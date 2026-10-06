@@ -10,7 +10,7 @@ import { effortOf } from '../lib/history.js'
 import { unlock, playOnSilentSupported, vibrateSupported } from '../lib/sound.js'
 import { IS_ANDROID } from '../lib/api.js'
 import { wakeLockSupported } from '../lib/wakelock.js'
-import { t, LANGS, INSTR_LANGS, EXERCISE_NAME_LANGS, baseLang } from '../lib/i18n.js'
+import { t, tn, LANGS, INSTR_LANGS, EXERCISE_NAME_LANGS, baseLang } from '../lib/i18n.js'
 import { SELECTABLE_LANGS } from '../lib/i18n-core.js'
 import { effectiveLang } from '../lib/default-lang.js'
 import { DEMO } from '../lib/demo.js'
@@ -87,7 +87,7 @@ export default function Settings() {
     try { out = await exportBackupZip(st.S, { fetchOne: signedIn ? fetchToStore : null }) }
     catch { toast(t('Something went wrong')); return }
     const name = 'opengym-backup-' + todayISO() + '.zip'
-    if (out.missing) toast(t(out.missing === 1 ? '{0} file could not be included' : '{0} files could not be included', out.missing))
+    if (out.missing) toast((out.missing === 1 ? t('{0} file could not be included', out.missing) : tn(out.missing, '{0} files could not be included', out.missing)))
     if (MOBILE) {
       try { await shareExportBlob(out.blob, name); if (!out.missing) toast(t('Backup exported')) } catch (e) { /* share sheet dismissed */ }
       return
@@ -123,9 +123,9 @@ export default function Settings() {
       const n = conflict.workouts
       menuSheet({
         title: t('Import backup?'),
-        subtitle: t(n === 1
-          ? 'The server has 1 workout that is not in this backup, logged since it was made or on another device. Replacing deletes it.'
-          : 'The server has {0} workouts that are not in this backup, logged since it was made or on another device. Replacing deletes them.', n),
+        subtitle: n === 1
+          ? t('The server has 1 workout that is not in this backup, logged since it was made or on another device. Replacing deletes it.')
+          : tn(n, 'The server has {0} workouts that are not in this backup, logged since it was made or on another device. Replacing deletes them.', n),
         items: [
           { icon: 'trash', label: t('Replace anyway'), danger: true, onClick: () => apply(null) },
           { icon: 'shuffle', label: t('Merge them in'), onClick: () => apply(conflict) },

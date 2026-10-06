@@ -3,7 +3,7 @@ import { toast } from 'sonner'
 import { ChevronRight, CloudOff } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { useOnline } from '@/lib/use-online'
-import { t } from '../../lib/i18n.js'
+import { t, tn } from '../../lib/i18n.js'
 import { useProfile } from '../profile/useProfile'
 import { fmtShortDay } from '../social/format'
 import { shiftDay, todayIn } from './days'
@@ -17,7 +17,7 @@ const DAYS_BACK = 30
 type Props = { day: string; meal: Meal | 'all'; open: boolean; onOpenChange: (open: boolean) => void }
 type Row = { day: string; count: number; kcal: number }
 
-const itemsText = (n: number) => (n === 1 ? t('1 item') : t('{0} items', n))
+const itemsText = (n: number) => (n === 1 ? t('1 item') : tn(n, '{0} items', n))
 
 const byDay = (logs: FoodLog[]) => {
   const out: Record<string, FoodLog[]> = {}
@@ -37,13 +37,17 @@ export default function CopyFromSheet({ day, meal, open, onOpenChange }: Props) 
   const yesterday = shiftDay(today, -1)
   const from = shiftDay(today, -DAYS_BACK)
   const [older, setOlder] = useState<Record<string, FoodLog[]>>({})
+  // The fetch of the older days failed while online: the list is only what the phone keeps.
+  const [olderFailed, setOlderFailed] = useState(false)
 
   useEffect(() => {
     if (!open || !online) return
     let live = true
+    setOlderFailed(false)
     fetchLogs(from, shiftDay(today, -(WINDOW_DAYS + 1))).then(
       ls => { if (live) setOlder(byDay(ls)) },
-      () => { /* the days on the phone are still listed */ }
+      // The days on the phone are still listed; a line says the older ones are missing.
+      () => { if (live) setOlderFailed(true) }
     )
     return () => { live = false }
   }, [open, online, from, today])
@@ -64,7 +68,7 @@ export default function CopyFromSheet({ day, meal, open, onOpenChange }: Props) 
     const s = useNutrition.getState()
     const source = logs[from]
     const n = meal === 'all' ? s.copyDay(from, day, source) : s.copyMeal(from, meal, day, meal, source)
-    toast(n === 1 ? t('1 item copied') : t('{0} items copied', n))
+    toast(n === 1 ? t('1 item copied') : tn(n, '{0} items copied', n))
     onOpenChange(false)
   }
 
@@ -96,6 +100,11 @@ export default function CopyFromSheet({ day, meal, open, onOpenChange }: Props) 
             </ul>
           ) : (
             <p className="rounded-2xl bg-card p-4 text-sm text-muted-foreground">{t('Nothing to copy from the last 30 days.')}</p>
+          )}
+          {online && olderFailed && (
+            <p role="status" className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+              <CloudOff aria-hidden className="size-3.5 shrink-0" />{t('Days older than two weeks could not be loaded.')}
+            </p>
           )}
           {!online && (
             <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">

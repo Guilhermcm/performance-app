@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { fmtAgo, changeCount, setsWorkCount, fmtDur } from './format.js'
+import { fmtAgo, changeCount, setsWorkCount, exCount, routineCount, fmtDur } from './format.js'
 import { _setLangState } from './i18n-core.js'
 import ar from '../locales/ar.js'
 import uk from '../locales/uk.js'
+import pl from '../locales/pl.js'
+import ru from '../locales/ru.js'
 
 // "Last synced: …" in Settings — the platform words it, in the UI language (en-GB here).
 describe('fmtAgo', () => {
@@ -41,6 +43,39 @@ describe('setsWorkCount', () => {
     _setLangState('uk', uk, null, null)
     expect(setsWorkCount(1, 1)).toBe(uk['{0} set · {1} work'].replace('{0}', '1').replace('{1}', '1'))
     expect(uk['{0} set · {1} work']).not.toBe(uk['{0} sets · {1} work'])
+  })
+})
+
+// Polish, Russian and Ukrainian inflect the noun with the number: the counts go through tn().
+describe('counted strings in pl, ru and uk', () => {
+  afterEach(() => _setLangState('en', {}, null, null))
+
+  it('picks the Polish form for 2, 5 and 22', () => {
+    _setLangState('pl', pl, null, null)
+    expect([1, 2, 5, 12, 22].map(exCount)).toEqual(['1 ćwiczenie', '2 ćwiczenia', '5 ćwiczeń', '12 ćwiczeń', '22 ćwiczenia'])
+    expect([2, 5].map(routineCount)).toEqual(['2 plany treningowe', '5 planów treningowych'])
+    expect(setsWorkCount(3, 2)).toBe('3 serie · 2 praca')
+  })
+
+  it('picks the Russian form, where 21 reads as one', () => {
+    _setLangState('ru', ru, null, null)
+    expect(setsWorkCount(1, 1)).toBe('1 подход · рабочих: 1')
+    expect(setsWorkCount(21, 3)).toBe('21 подход · рабочих: 3')
+    expect(setsWorkCount(22, 3)).toBe('22 подхода · рабочих: 3')
+    expect(setsWorkCount(25, 3)).toBe('25 подходов · 3 рабочих')
+    expect(setsWorkCount(11, 3)).toBe('11 подходов · 3 рабочих')
+  })
+
+  it('picks the Ukrainian form', () => {
+    _setLangState('uk', uk, null, null)
+    expect(setsWorkCount(3, 1)).toBe('3 підходи · робочих: 1')
+    expect(setsWorkCount(5, 1)).toBe('5 підходів · 1 робочих')
+  })
+
+  it('leaves English and the other packs on their singular and plural', () => {
+    expect([1, 2, 5, 22].map(exCount)).toEqual(['1 exercise', '2 exercises', '5 exercises', '22 exercises'])
+    _setLangState('ar', ar, null, null)
+    expect(exCount(3)).toBe(ar['{0} exercises'].replace('{0}', '3'))
   })
 })
 

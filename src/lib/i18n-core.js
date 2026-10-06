@@ -1,5 +1,5 @@
 // Runtime-agnostic core of the i18n module: state, constants and readers (t, dateLocale,
-// instrFor, exerciseNameFor, getLang). Plain Node-loadable — the browser-only pieces
+// tn, instrFor, exerciseNameFor, getLang). Plain Node-loadable — the browser-only pieces
 // (import.meta.glob lazy
 // loads, the React subscription hook) live in i18n.js and re-export from here.
 
@@ -70,11 +70,36 @@ export const getLang = () => lang
 export const dateLocale = () => DATE_LOCALES[lang] || 'en-GB'
 export const getVersion = () => version
 
-// Translate a source string; {0},{1}… are replaced with args (also on the English fallback).
-export function t(s, ...args) {
-  let v = dict[s] || s
+const fill = (v, args) => {
   for (let i = 0; i < args.length; i++) v = v.replaceAll('{' + i + '}', args[i])
   return v
+}
+
+// Translate a source string; {0},{1}… are replaced with args (also on the English fallback).
+export function t(s, ...args) {
+  return fill(dict[s] || s, args)
+}
+
+// The count's plural category in the current language: one, few, many or other. Built once per
+// language; a language Intl does not know falls back to English's two forms.
+const pluralRules = {}
+const pluralCategory = n => {
+  const l = baseLang(lang)
+  if (!pluralRules[l]) {
+    try { pluralRules[l] = new Intl.PluralRules(l) } catch { pluralRules[l] = new Intl.PluralRules('en') }
+  }
+  return pluralRules[l].select(n)
+}
+
+// A counted string: tn(n, '{0} items', n). The pack may carry a form per plural category as
+// `key|one`, `key|few` or `key|many`; Polish, Russian and Ukrainian do, since their nouns change
+// with the number (2 pozycje, 5 pozycji). A language without the form for n's category, and
+// English, show `key` itself, the string t() would show. Callers keep the singular string for
+// n === 1 (`n === 1 ? t('1 item') : tn(n, '{0} items', n)`), so it never reaches this lookup.
+export function tn(n, key, ...args) {
+  const category = pluralCategory(n)
+  const form = category === 'other' ? undefined : dict[key + '|' + category]
+  return fill(form || dict[key] || key, args)
 }
 
 // Instructions for an exercise in the current language (English steps as fallback).

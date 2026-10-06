@@ -1464,6 +1464,8 @@ export const PT_BR_OVERRIDES = {
   "Looking up the product…": "Buscando o produto…",
   "Last time ({0})": "Última vez ({0})",
   "Days older than two weeks need a connection.": "Dias de mais de duas semanas atrás só aparecem com conexão.",
+  "Loading your targets": "Carregando suas metas",
+  "Days older than two weeks could not be loaded.": "Não foi possível carregar os dias com mais de duas semanas.",
   "Pillars": "Pilares",
   "Sleep": "Sono",
   "Habits": "Hábitos",

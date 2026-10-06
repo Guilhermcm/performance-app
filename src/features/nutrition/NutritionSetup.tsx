@@ -83,6 +83,13 @@ function SetupBody({ profile, onDone }: { profile: Profile; onDone: () => void }
   const tomorrow = shiftDay(today, 1)
   // Any target row at all, in force or not: only the very first one may start today (RLS, 0009).
   const hasTarget = useNutrition(s => s.targets.length > 0)
+  // "No target yet" only means that once the targets have loaded; before that the first one could
+  // be written for today when a target is already there. The last step waits for them.
+  const loaded = useNutrition(s => s.status === 'ready')
+  useEffect(() => {
+    // A failed first load is tried again when the sheet opens, instead of leaving the button stuck.
+    if (useNutrition.getState().status === 'error') void useNutrition.getState().refresh()
+  }, [])
   const ahead = useNutrition(s => s.targetOn(tomorrow))
 
   const [patch, setPatch] = useState<Partial<ProfileInput>>({})
@@ -122,10 +129,10 @@ function SetupBody({ profile, onDone }: { profile: Profile; onDone: () => void }
 
   const at = steps.indexOf(step)
   const last = at === steps.length - 1
-  const canGo = step === 'profile' ? profileDone : step === 'activity' ? !!activity : !!target && !busy
+  const canGo = step === 'profile' ? profileDone : step === 'activity' ? !!activity : !!target && !busy && loaded
 
   const finish = async () => {
-    if (!target || !activity) return
+    if (!target || !activity || !loaded) return
     setBusy(true)
     try {
       await save({
@@ -269,7 +276,7 @@ function SetupBody({ profile, onDone }: { profile: Profile; onDone: () => void }
           </Button>
         )}
         <Button type="submit" form="nutrition-setup" className="h-12 flex-1 rounded-xl text-[15px] font-semibold" disabled={!canGo}>
-          {busy ? t('Saving…') : !last ? t('Next') : activating ? t('Turn on Nutrition') : t('Save')}
+          {busy ? t('Saving…') : !last ? t('Next') : !loaded ? t('Loading your targets') : activating ? t('Turn on Nutrition') : t('Save')}
         </Button>
       </DrawerFooter>
     </>

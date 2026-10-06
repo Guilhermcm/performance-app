@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, waitFor, act } from '@testing-library/react'
 
 const h = vi.hoisted(() => ({ toast: vi.fn() }))
 vi.mock('sonner', () => ({ toast: h.toast }))
@@ -38,7 +38,7 @@ beforeEach(() => {
   ;[save, setTarget, onOpenChange, h.toast].forEach(f => f.mockReset())
   save.mockImplementation(async (patch: object) => ({ ...useProfile.getState().profile, ...patch }))
   setTarget.mockResolvedValue(undefined)
-  useNutrition.setState({ setTarget, targets: [] })
+  useNutrition.setState({ setTarget, targets: [], status: 'ready' })
 })
 afterEach(() => { cleanup(); vi.useRealTimers(); useProfile.setState(realProfile); useNutrition.setState(realNutrition) })
 
@@ -172,6 +172,47 @@ describe('NutritionSetup', () => {
     expect(save).toHaveBeenCalledWith(expect.objectContaining({ nutrition_enabled: true }))
     expect(setTarget).toHaveBeenCalledTimes(1)
     expect(setTarget.mock.calls[0][1]).toBe('2026-10-07')
+  })
+
+  // The first target may start today only when the person has no target at all. Until the store
+  // has loaded the targets, "none yet" can just mean "not here yet", so the last step waits.
+  it('waits for the targets to load before the final button works', async () => {
+    withProfile({ activity_level: 'moderate' })
+    useNutrition.setState({ status: 'loading', targets: [] })
+    show()
+    next()
+    const wait = button('Loading your targets')
+    expect(wait.disabled).toBe(true)
+    expect(screen.queryByRole('button', { name: 'Turn on Nutrition' })).toBeNull()
+    fireEvent.click(wait)
+    fireEvent.submit(document.getElementById('nutrition-setup')!)
+    expect(save).not.toHaveBeenCalled()
+    expect(setTarget).not.toHaveBeenCalled()
+    act(() => { useNutrition.setState({ status: 'ready', targets: [targetOf({ valid_from: '2026-09-01', kcal: 2000 })] }) })
+    expect(button('Turn on Nutrition').disabled).toBe(false)
+    fireEvent.click(button('Turn on Nutrition'))
+    await waitFor(() => expect(setTarget).toHaveBeenCalledTimes(1))
+    // The targets that arrived say this is not the first one: it starts tomorrow.
+    expect(setTarget.mock.calls[0][1]).toBe('2026-10-07')
+  })
+
+  it('also waits while the store is idle or failed, and an edit waits the same way', () => {
+    withProfile({ nutrition_enabled: true, activity_level: 'moderate' })
+    for (const status of ['idle', 'error'] as const) {
+      useNutrition.setState({ status })
+      show()
+      next()
+      expect(button('Loading your targets').disabled).toBe(true)
+      cleanup()
+    }
+  })
+
+  it('does not hold back the earlier steps while the targets load', () => {
+    withProfile()
+    useNutrition.setState({ status: 'loading' })
+    show()
+    choose(/Moderately active/)
+    expect(button('Next').disabled).toBe(false)
   })
 
   it('writes nothing when turned back on with the same target already in force', async () => {

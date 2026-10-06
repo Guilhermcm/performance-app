@@ -2083,6 +2083,8 @@ export default {
   "Looking up the product…": "제품을 찾는 중…",
   "Last time ({0})": "지난번 ({0})",
   "Days older than two weeks need a connection.": "2주보다 오래된 날은 연결이 필요해요.",
+  "Loading your targets": "목표를 불러오는 중",
+  "Days older than two weeks could not be loaded.": "2주보다 오래된 날을 불러오지 못했어요.",
   "Pillars": "기둥",
   "Sleep": "수면",
   "Habits": "습관",

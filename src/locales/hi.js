@@ -2083,6 +2083,8 @@ export default {
   "Looking up the product…": "उत्पाद खोजा जा रहा है…",
   "Last time ({0})": "पिछली बार ({0})",
   "Days older than two weeks need a connection.": "दो हफ़्ते से पुराने दिनों के लिए कनेक्शन चाहिए।",
+  "Loading your targets": "आपके लक्ष्य लोड हो रहे हैं",
+  "Days older than two weeks could not be loaded.": "दो हफ़्ते से पुराने दिन लोड नहीं हो सके।",
   "Pillars": "स्तंभ",
   "Sleep": "नींद",
   "Habits": "आदतें",

@@ -2086,6 +2086,8 @@ export default {
   "Looking up the product…": "Termék keresése…",
   "Last time ({0})": "Legutóbb ({0})",
   "Days older than two weeks need a connection.": "A két hétnél régebbi napokhoz kapcsolat kell.",
+  "Loading your targets": "A célok betöltése folyamatban",
+  "Days older than two weeks could not be loaded.": "A két hétnél régebbi napokat nem sikerült betölteni.",
   "Pillars": "Pillérek",
   "Sleep": "Alvás",
   "Habits": "Szokások",

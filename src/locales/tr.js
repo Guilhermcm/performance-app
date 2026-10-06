@@ -2083,6 +2083,8 @@ export default {
   "Looking up the product…": "Ürün aranıyor…",
   "Last time ({0})": "Geçen sefer ({0})",
   "Days older than two weeks need a connection.": "İki haftadan eski günler için bağlantı gerekir.",
+  "Loading your targets": "Hedeflerin yükleniyor",
+  "Days older than two weeks could not be loaded.": "İki haftadan eski günler yüklenemedi.",
   "Pillars": "Sütunlar",
   "Sleep": "Uyku",
   "Habits": "Alışkanlıklar",

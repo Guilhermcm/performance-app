@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, cleanup, within, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, within, waitFor, act } from '@testing-library/react'
 
 const h = vi.hoisted(() => ({ toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }), fetchLogs: vi.fn() }))
 vi.mock('sonner', () => ({ toast: h.toast }))
@@ -12,6 +12,7 @@ import CopyFromSheet from './CopyFromSheet'
 import { useNutrition } from './useNutrition'
 import { useProfile } from '../profile/useProfile'
 import { ME, logOf } from './test-nutrition'
+import { _setLangState } from '../../lib/i18n-core.js'
 
 // 2026-10-06 15:00 UTC is noon in Sao Paulo.
 const TODAY = '2026-10-06'
@@ -110,5 +111,48 @@ describe('CopyFromSheet', () => {
     expect(h.fetchLogs).not.toHaveBeenCalled()
     expect(rows()).toHaveLength(1)
     expect(screen.getByText('Days older than two weeks need a connection.')).toBeTruthy()
+  })
+
+  it('says the older days did not load when the fetch fails online, and keeps the days on the phone', async () => {
+    h.fetchLogs.mockRejectedValue(new Error('network'))
+    render(<CopyFromSheet day={TODAY} meal="breakfast" open onOpenChange={onOpenChange} />)
+    expect(screen.queryByText('Days older than two weeks could not be loaded.')).toBeNull()
+    await waitFor(() => expect(screen.getByText('Days older than two weeks could not be loaded.')).toBeTruthy())
+    expect(rows()).toHaveLength(1)
+    // Online, so the offline line stays out of it.
+    expect(screen.queryByText('Days older than two weeks need a connection.')).toBeNull()
+  })
+
+  it('has no such line when the fetch works', async () => {
+    render(<CopyFromSheet day={TODAY} meal="breakfast" open onOpenChange={onOpenChange} />)
+    await waitFor(() => expect(h.fetchLogs).toHaveBeenCalled())
+    await act(async () => {})
+    expect(screen.queryByText('Days older than two weeks could not be loaded.')).toBeNull()
+  })
+
+  it('clears the line when the sheet is opened again and the fetch works', async () => {
+    h.fetchLogs.mockRejectedValueOnce(new Error('network'))
+    const { rerender } = render(<CopyFromSheet day={TODAY} meal="breakfast" open onOpenChange={onOpenChange} />)
+    await waitFor(() => expect(screen.getByText('Days older than two weeks could not be loaded.')).toBeTruthy())
+    rerender(<CopyFromSheet day={TODAY} meal="breakfast" open={false} onOpenChange={onOpenChange} />)
+    rerender(<CopyFromSheet day={TODAY} meal="breakfast" open onOpenChange={onOpenChange} />)
+    await waitFor(() => expect(screen.queryByText('Days older than two weeks could not be loaded.')).toBeNull())
+  })
+
+  describe('counts in Polish', () => {
+    afterEach(() => _setLangState('en', {}, null, null))
+
+    it('uses the plural form for the count of each day and of the copy toast', () => {
+      _setLangState('pl', {
+        '1 item': '1 pozycja', '{0} items': 'Pozycje: {0}', '{0} items|few': '{0} pozycje', '{0} items|many': '{0} pozycji',
+        '{0} items copied': 'Skopiowane pozycje: {0}', '{0} items copied|few': 'Skopiowano {0} pozycje', '{0} items copied|many': 'Skopiowano {0} pozycji'
+      }, null, null)
+      render(<CopyFromSheet day={TODAY} meal="all" open onOpenChange={onOpenChange} />)
+      const list = rows()
+      expect(list[0].textContent).toContain('3 pozycje')
+      expect(list[1].textContent).toContain('1 pozycja')
+      fireEvent.click(list[0])
+      expect(h.toast).toHaveBeenCalledWith('Skopiowano 3 pozycje')
+    })
   })
 })

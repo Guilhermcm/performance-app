@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   LANGS, INSTR_LANGS, EXERCISE_NAME_LANGS, DATE_LOCALES, DERIVED_LOCALES,
-  baseLang, derivePack, dateLocale, getLang, t, _setLangState, exerciseNameClass, exerciseNameFor, CASED_NAME_LANGS
+  baseLang, derivePack, dateLocale, getLang, t, tn, _setLangState, exerciseNameClass, exerciseNameFor, CASED_NAME_LANGS
 } from './i18n-core.js'
 import { EXDB } from './exercises-data.js'
 import de from '../locales/de.js'
@@ -219,5 +219,65 @@ import { SELECTABLE_LANGS } from './i18n-core.js'
 describe('SELECTABLE_LANGS', () => {
   it('offers only English and Brazilian Portuguese', () => {
     expect(SELECTABLE_LANGS).toEqual(['en', 'pt-BR'])
+  })
+})
+
+// tn(n, key, ...args): the plural form for n, per the active language's Intl.PluralRules. Only a
+// pack that has the form (`key|few`, `key|many`, ...) is asked for it; every other language falls
+// back to the plain key, the same string t() would show.
+describe('tn', () => {
+  const PL = {
+    '{0} items': 'Pozycje: {0}',
+    '{0} items|few': '{0} pozycje',
+    '{0} items|many': '{0} pozycji'
+  }
+  const RU = {
+    '{0} items': 'Записей: {0}',
+    '{0} items|one': '{0} запись',
+    '{0} items|few': '{0} записи',
+    '{0} items|many': '{0} записей'
+  }
+  const reset = () => _setLangState('en', {}, null, null)
+
+  it('picks few and many in Polish', () => {
+    _setLangState('pl', PL, null, null)
+    try {
+      expect(tn(2, '{0} items', 2)).toBe('2 pozycje')
+      expect(tn(5, '{0} items', 5)).toBe('5 pozycji')
+      expect(tn(22, '{0} items', 22)).toBe('22 pozycje')
+      expect(tn(12, '{0} items', 12)).toBe('12 pozycji')
+      expect(tn(0, '{0} items', 0)).toBe('0 pozycji')
+    } finally { reset() }
+  })
+
+  it('picks one, few and many in Russian, where 21 is "one" and 11 is "many"', () => {
+    _setLangState('ru', RU, null, null)
+    try {
+      expect(tn(21, '{0} items', 21)).toBe('21 запись')
+      expect(tn(2, '{0} items', 2)).toBe('2 записи')
+      expect(tn(5, '{0} items', 5)).toBe('5 записей')
+      expect(tn(11, '{0} items', 11)).toBe('11 записей')
+      expect(tn(22, '{0} items', 22)).toBe('22 записи')
+    } finally { reset() }
+  })
+
+  it('falls back to the plain key where the pack has no form for the category', () => {
+    _setLangState('uk', { '{0} items': 'Записів: {0}' }, null, null)
+    try { expect(tn(3, '{0} items', 3)).toBe('Записів: 3') } finally { reset() }
+    _setLangState('pt-BR', { '{0} items': '{0} itens' }, null, null)
+    try {
+      expect(tn(2, '{0} items', 2)).toBe('2 itens')
+      expect(tn(1000000, '{0} items', '1000000')).toBe('1000000 itens')
+    } finally { reset() }
+  })
+
+  it('is the source string in English, with every argument substituted', () => {
+    expect(tn(2, '{0} items', 2)).toBe('2 items')
+    expect(tn(3, '{0} sets · {1} work', 3, 2)).toBe('3 sets · 2 work')
+  })
+
+  it('follows the base language of a derived locale', () => {
+    _setLangState('de-CH', { '{0} items': '{0} Einträge' }, null, null)
+    try { expect(tn(4, '{0} items', 4)).toBe('4 Einträge') } finally { reset() }
   })
 })

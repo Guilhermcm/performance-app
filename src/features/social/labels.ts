@@ -1,5 +1,5 @@
 import { Apple, Dumbbell, Target, Weight, type LucideIcon } from 'lucide-react'
-import { t } from '../../lib/i18n.js'
+import { t, tn } from '../../lib/i18n.js'
 import { fmtDecimal } from './format'
 import type { ChallengeMode, ChallengeTemplate, SocialErrorCode } from './types'
 
@@ -46,9 +46,9 @@ export const MODE_TEXT: Record<ChallengeMode, { name: () => string; detail: () =
 
 // "1 workout", "12 workouts", "3 weeks", "12.5 t", "21 days on target".
 export function amountText(template: ChallengeTemplate, n: number): string {
-  if (template === 'workouts_count') return n === 1 ? t('1 workout') : t('{0} workouts', n)
-  if (template === 'weeks_on_target') return n === 1 ? t('1 week') : t('{0} weeks', n)
-  if (template === 'nutrition_days_on_target') return n === 1 ? t('1 day on target') : t('{0} days on target', n)
+  if (template === 'workouts_count') return n === 1 ? t('1 workout') : tn(n, '{0} workouts', n)
+  if (template === 'weeks_on_target') return n === 1 ? t('1 week') : tn(n, '{0} weeks', n)
+  if (template === 'nutrition_days_on_target') return n === 1 ? t('1 day on target') : tn(n, '{0} days on target', n)
   return t('{0} t', fmtDecimal(n))
 }
 

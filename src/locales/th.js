@@ -2094,6 +2094,8 @@ export default {
   "Looking up the product…": "กำลังค้นหาสินค้า…",
   "Last time ({0})": "ครั้งที่แล้ว ({0})",
   "Days older than two weeks need a connection.": "วันที่เก่ากว่าสองสัปดาห์ต้องใช้การเชื่อมต่อ",
+  "Loading your targets": "กำลังโหลดเป้าหมายของคุณ",
+  "Days older than two weeks could not be loaded.": "โหลดวันที่เก่ากว่าสองสัปดาห์ไม่สำเร็จ",
   "Pillars": "เสาหลัก",
   "Sleep": "การนอน",
   "Habits": "นิสัย",

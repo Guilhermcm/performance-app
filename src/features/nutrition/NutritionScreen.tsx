@@ -12,7 +12,8 @@ import { t } from '../../lib/i18n.js'
 import { useProfile } from '../profile/useProfile'
 import { fmtShortDay } from '../social/format'
 import { dayTotals } from './classify'
-import { shiftDay, todayIn } from './days'
+import { shiftDay } from './days'
+import { useToday } from './use-today'
 import { useNutrition } from './useNutrition'
 import { MEALS, dayStatus, fmtDecimal, fmtGrams, fmtKcal, fmtNumber, weekdayName } from './labels'
 import NutritionInvite from './NutritionInvite'
@@ -50,7 +51,7 @@ export default function NutritionScreen() {
   const status = useNutrition(s => s.status)
   const dropped = useNutrition(s => (s.droppedNotice ? s.droppedReason ?? 'refused' : null))
   const [which, setWhich] = useState<Which>('today')
-  const today = todayIn(profile?.timezone)
+  const today = useToday(profile?.timezone)
   const day = which === 'today' ? today : shiftDay(today, -1)
   const logs = useNutrition(s => s.logs[day] ?? NO_LOGS)
   const target = useNutrition(s => s.targetOn(day))

@@ -5,7 +5,7 @@ import MonthCalendar, { type CalendarCell, type CalendarLegendItem, type Calenda
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOnline } from '@/lib/use-online'
-import { dateLocale, t } from '../../lib/i18n.js'
+import { dateLocale, t, tn } from '../../lib/i18n.js'
 import { useProfile } from '../profile/useProfile'
 import { useProgress } from '../gamification/useProgress'
 import { todayIn } from './days'
@@ -36,7 +36,7 @@ const STATE_CLASS: Record<DayState, string> = {
   inactive: 'text-muted-foreground opacity-50',
 }
 
-const weeksText = (n: number) => (n === 1 ? t('1 week') : t('{0} weeks', n))
+const weeksText = (n: number) => (n === 1 ? t('1 week') : tn(n, '{0} weeks', n))
 const longDay = (iso: string) => new Date(iso + 'T12:00:00').toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })
 
 type Load = 'idle' | 'loading' | 'error'

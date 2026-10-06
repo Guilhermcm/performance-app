@@ -2083,6 +2083,8 @@ export default {
   "Looking up the product…": "正在查找商品…",
   "Last time ({0})": "上次 ({0})",
   "Days older than two weeks need a connection.": "两周以前的日子需要联网才能看到。",
+  "Loading your targets": "正在加载你的目标",
+  "Days older than two weeks could not be loaded.": "没能加载两周以前的日子。",
   "Pillars": "支柱",
   "Sleep": "睡眠",
   "Habits": "习惯",

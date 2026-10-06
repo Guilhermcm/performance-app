@@ -2103,6 +2103,8 @@ export default {
   "Looking up the product…": "Produkt wird gesucht…",
   "Last time ({0})": "Letztes Mal ({0})",
   "Days older than two weeks need a connection.": "Tage, die älter als zwei Wochen sind, brauchen eine Verbindung.",
+  "Loading your targets": "Deine Ziele werden geladen",
+  "Days older than two weeks could not be loaded.": "Tage, die älter als zwei Wochen sind, konnten nicht geladen werden.",
   "Pillars": "Säulen",
   "Sleep": "Schlaf",
   "Habits": "Gewohnheiten",

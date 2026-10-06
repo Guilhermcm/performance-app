@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 import { useStore } from '../../store/useStore.js'
 import { effectiveRoutines, effectiveRoutineIds, nextTrainingDay } from '../../lib/history.js'
 import { todayISO, isoOf, weekStartOf, weekDayOffset, DAYS, DAYN } from '../../lib/format.js'
-import { t, dateLocale } from '../../lib/i18n.js'
+import { t, tn, dateLocale } from '../../lib/i18n.js'
 import { dayOverrideSheet, calendarSheet, startFlow } from '../../sheets.jsx'
 import { glyphOf } from '../../lib/glyphs.js'
 import LegacyIcon from '../../components/Icon.jsx'
@@ -110,7 +110,7 @@ export function TodayCard() {
           </li>
         ))}
       </ol>
-      <p className="mt-2 text-right text-xs text-muted-foreground">{t(total === 1 ? '{0} workout total' : '{0} workouts total', total)}</p>
+      <p className="mt-2 text-right text-xs text-muted-foreground">{total === 1 ? t('{0} workout total', total) : tn(total, '{0} workouts total', total)}</p>
 
       <button type="button" data-testid="today-row" onClick={onToday}
         className="mt-2 flex min-h-16 w-full items-center gap-3 rounded-2xl bg-secondary/60 px-3 py-2.5 text-left outline-none transition-[background-color,transform] duration-150 hover:bg-secondary focus-visible:ring-[3px] focus-visible:ring-ring/50 active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100">
