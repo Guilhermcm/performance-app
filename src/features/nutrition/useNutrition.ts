@@ -182,7 +182,9 @@ export const useNutrition = create<NutritionStore>((set, get) => {
       if (!userId) return Promise.resolve()
       const gen = generation
       const job = (async () => {
-        await flush()
+        // A queue that cannot be sent now must not stop the pull: the diary still loads and the
+        // queue is tried again on the next refresh.
+        try { await flush() } catch { /* kept for the next refresh */ }
         if (gen !== generation) return
         const today = todayIn(useProfile.getState().profile?.timezone)
         const from = shiftDay(today, -WINDOW_DAYS)

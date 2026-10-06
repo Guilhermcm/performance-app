@@ -15,6 +15,7 @@ import { ADJUST, LIMITS, computeTarget, fitCarbs, macroGap } from './targets'
 import { ACTIVITY_LABEL, fmtGrams, fmtKcal } from './labels'
 import { shiftDay, todayIn } from './days'
 import { useNutrition } from './useNutrition'
+import { fetchTargets } from './nutrition-api'
 import { LB_TO_KG } from './weigh-in'
 import { Field, parseAmount } from './form'
 import type { ActivityLevel, Macros, NutritionTarget, Pace } from './types'
@@ -83,12 +84,14 @@ function SetupBody({ profile, onDone }: { profile: Profile; onDone: () => void }
   const tomorrow = shiftDay(today, 1)
   // Any target row at all, in force or not: only the very first one may start today (RLS, 0009).
   const hasTarget = useNutrition(s => s.targets.length > 0)
-  // "No target yet" only means that once the targets have loaded; before that the first one could
-  // be written for today when a target is already there. The last step waits for them.
+  // "No target yet" only means that once the targets have loaded. The button never waits for the
+  // whole diary to load (a slow or failed pull left it stuck on "Loading your targets"): when the
+  // store is not ready, finishing asks the server for the targets directly.
   const loaded = useNutrition(s => s.status === 'ready')
   useEffect(() => {
-    // A failed first load is tried again when the sheet opens, instead of leaving the button stuck.
-    if (useNutrition.getState().status === 'error') void useNutrition.getState().refresh()
+    // A failed or idle first load is tried again when the sheet opens.
+    const st = useNutrition.getState().status
+    if (st === 'error' || st === 'idle') void useNutrition.getState().refresh()
   }, [])
   const ahead = useNutrition(s => s.targetOn(tomorrow))
 
@@ -129,11 +132,22 @@ function SetupBody({ profile, onDone }: { profile: Profile; onDone: () => void }
 
   const at = steps.indexOf(step)
   const last = at === steps.length - 1
-  const canGo = step === 'profile' ? profileDone : step === 'activity' ? !!activity : !!target && !busy && loaded
+  const canGo = step === 'profile' ? profileDone : step === 'activity' ? !!activity : !!target && !busy
 
   const finish = async () => {
-    if (!target || !activity || !loaded) return
+    if (!target || !activity) return
     setBusy(true)
+    // Whether any target exists decides today or tomorrow; asked before anything is written.
+    let anyTarget = hasTarget
+    if (!loaded) {
+      try {
+        anyTarget = (await fetchTargets()).length > 0
+      } catch {
+        toast(t('Could not save the target. Check your connection and try again.'))
+        setBusy(false)
+        return
+      }
+    }
     try {
       await save({
         ...patch, activity_level: activity, nutrition_pace: pace, nutrition_days_per_week: days,
@@ -146,7 +160,7 @@ function SetupBody({ profile, onDone }: { profile: Profile; onDone: () => void }
     }
     // The first target ever (or one that never got saved) starts today; every later one tomorrow,
     // also when the pillar is turned back on. A target that is already the one in force writes nothing.
-    const from = hasTarget ? tomorrow : today
+    const from = anyTarget ? tomorrow : today
     const changed = from === today || !sameTarget(ahead, target)
     try {
       if (changed) await useNutrition.getState().setTarget(target, from)
@@ -276,7 +290,7 @@ function SetupBody({ profile, onDone }: { profile: Profile; onDone: () => void }
           </Button>
         )}
         <Button type="submit" form="nutrition-setup" className="h-12 flex-1 rounded-xl text-[15px] font-semibold" disabled={!canGo}>
-          {busy ? t('Saving…') : !last ? t('Next') : !loaded ? t('Loading your targets') : activating ? t('Turn on Nutrition') : t('Save')}
+          {busy ? t('Saving…') : !last ? t('Next') : activating ? t('Turn on Nutrition') : t('Save')}
         </Button>
       </DrawerFooter>
     </>
