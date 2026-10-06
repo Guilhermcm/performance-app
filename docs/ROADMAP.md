@@ -30,7 +30,7 @@ combinada a partir de outubro de 2026: **1c → 1d → 3 → 4 → 5 → 6** (a 
 | 0 | Fundação | G | — | concluída |
 | 1a | Gamificação individual | M | 0 | concluída |
 | 1b | Social | M | 1a | concluída |
-| 1c | Check-in com foto e social | M | 1b | especificada ([spec](superpowers/specs/2026-10-06-checkin-social-design.md)) |
+| 1c | Check-in com foto e social | M | 1b | em execução, pausada: 3 de 11 tarefas (banco de check-ins, social e XP) ([spec](superpowers/specs/2026-10-06-checkin-social-design.md), [plano](superpowers/plans/2026-10-06-fase-1c-checkin.md)) |
 | 1d | Plano com evidência | M | 1c | a especificar |
 | 2 | Nutrição | G | 1a | concluída (2a e 2b) |
 | 3 | Sono | P | 1a | especificada, execução adiada ([spec](superpowers/specs/2026-10-06-fase-3-sono-design.md)) |
