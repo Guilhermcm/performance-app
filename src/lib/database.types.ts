@@ -70,6 +70,18 @@ export interface Database {
         Update: Partial<Omit<Database['public']['Tables']['user_foods']['Insert'], 'id' | 'user_id'>>
         Relationships: []
       }
+      food_measures: {
+        Row: {
+          id: string; user_id: string; food_key: string; label: string; grams: number
+          created_at: string; updated_at: string
+        }
+        Insert: {
+          id: string; food_key: string; label: string; grams: number
+          user_id?: string; created_at?: string; updated_at?: string
+        }
+        Update: Partial<Omit<Database['public']['Tables']['food_measures']['Insert'], 'id' | 'user_id'>>
+        Relationships: []
+      }
       nutrition_days: {
         Row: {
           user_id: string; day: string; kcal: number; protein_g: number; carbs_g: number; fat_g: number
