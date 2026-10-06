@@ -29,7 +29,7 @@ recomendada (impacto em performance física primeiro).
 | 1a | Gamificação individual | M | 0 | concluída |
 | 1b | Social | M | 1a | concluída |
 | 2 | Nutrição | G | 1a | 2a concluída, 2b a especificar |
-| 3 | Sono | P | 1a | a especificar |
+| 3 | Sono | P | 1a | especificada ([spec](superpowers/specs/2026-10-06-fase-3-sono-design.md)) |
 | 4 | Hábitos + trackers | M | 1a | a especificar |
 | 5 | Painel de performance | M | 2, 3, 4 | a especificar |
 | 6 | Foco (ActivityWatch) | P | 1a | a especificar |
@@ -136,7 +136,8 @@ perfil, diário rápido, pilar Nutrição na gamificação.
 - Import CSV (formato Plees e genérico).
 - Eventos: `sleep_logged`, `night_on_target`. XP no molde padrão. Desafio: `sleep_nights_on_target`.
 - Acende o eixo Sono no radar de pilares da Home.
-- Fora: rastreio por sensores/sonar (exige app nativo).
+- Fora: rastreio por sensores/sonar (exige app nativo). Na spec, saíram também o botão
+  "dormir/acordei" (registro só de manhã) e o import CSV.
 
 **Origem:** Plees Tracker (modelo e estatísticas). Somn descartado (imaturo e dependente de sensores
 nativos).
