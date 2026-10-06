@@ -381,6 +381,7 @@ a conta.
 
 ## 12. Subprojeto 2 (próxima spec)
 
-O Plano como produto: catálogo curado de programas com explicação e referências (volume por músculo,
-frequência, faixas de repetição), análise do plano da pessoa contra essas regras com sugestões, e
-progresso dos exercícios para quem detalha. Brainstorm próprio depois desta spec aprovada.
+Vira a Fase 1d do roadmap, "Plano com evidência": catálogo curado de programas, análise do plano
+da pessoa contra as recomendações, com sugestões, e progresso dos exercícios para quem detalha.
+As referências científicas aparecem num ícone ⓘ ao lado de cada recomendação, nunca no texto.
+Brainstorm próprio depois desta spec aprovada.
