@@ -7,13 +7,19 @@
    `0002_gamification.sql`, `0003_gamification_cron.sql`, `0004_social.sql`,
    `0005_social_cron.sql`, `0006_delete_account.sql`, e as do pilar Nutrição: `0007_nutrition_base.sql`,
    `0008_weekly_targets_pillar.sql`, `0009_nutrition_diary.sql`, `0010_nutrition_close.sql`,
-   `0011_nutrition_week.sql`, `0012_nutrition_progress.sql`, `0013_nutrition_cron.sql`). Em um
-   projeto que já tem as anteriores, rode só as que faltam. A `0006` cria a exclusão de conta pelo
+   `0011_nutrition_week.sql`, `0012_nutrition_progress.sql`, `0013_nutrition_cron.sql`, e as da
+   Fase 2b: `0014_food_measures.sql`, `0015_nutrition_challenge.sql`,
+   `0016_nutrition_history.sql`). Em um projeto que já tem as anteriores, rode só as que faltam. A `0006` cria a exclusão de conta pelo
    próprio app (Perfil > Excluir minha conta) e precisa rodar como `postgres`, o usuário padrão do
-   SQL Editor, porque apaga a linha da conta em `auth.users`. Rode a `0007` a `0013` também como
+   SQL Editor, porque apaga a linha da conta em `auth.users`. Rode a `0007` a `0016` também como
    `postgres`: as funções que fecham os dias e pagam o XP escrevem como dono das tabelas.
-   Rode a `0007` a `0013` no Supabase antes de publicar o cliente novo. Sem elas, a aba Nutrição
+   Rode a `0007` a `0016` no Supabase antes de publicar o cliente novo. Sem elas, a aba Nutrição
    mostra "Não foi possível carregar seu diário alimentar" (em inglês, "Could not load your food diary").
+   A `0015` troca as assinaturas de `create_challenge` e `join_challenge`: as versões antigas são
+   apagadas e entram versões com o parâmetro novo `p_share_nutrition boolean default false`. Por isso
+   as migrations precisam rodar ANTES de publicar o cliente novo, que chama as duas funções com
+   todos os parâmetros nomeados. O cliente antigo, ainda em produção durante o deploy, continua
+   funcionando: ele chama as funções por parâmetros nomeados e os parâmetros novos têm valor padrão.
 3. Project Settings → API: copie `Project URL` e a chave `anon public`.
 
 ## 2. Google OAuth

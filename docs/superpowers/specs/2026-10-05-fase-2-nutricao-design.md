@@ -643,8 +643,9 @@ apps de saúde, compartilhar refeições, radar de amigos e comparação no rada
 
 ## 14. Licenças
 
-- **TACO** (NEPA/Unicamp): o plano confirma os termos de redistribuição antes de empacotar o JSON
-  e registra a citação em `NOTICE.md` e na seção TACO da busca.
+- **TACO** (NEPA/Unicamp): termos confirmados ("É permitida a reprodução total ou parcial do
+  material, desde que seja citada a fonte.", ver §16); a citação fica em `NOTICE.md` e na seção
+  TACO da busca.
 - **Open Food Facts**: dados ODbL, consulta sem base própria compartilhada; atribuição junto dos
   resultados e em `NOTICE.md`. Retratos em `user_foods` são da própria pessoa.
 - **Recharts** (MIT) e shadcn/ui Charts (MIT); pacote ZXing escolhido com licença compatível.

@@ -1,7 +1,7 @@
 # performance-app: Design da Fase 2b, Nutrição (medidas, histórico e desafio)
 
 - **Data:** 2026-10-06
-- **Status:** aguardando revisão
+- **Status:** implementada
 - **Roadmap:** [docs/ROADMAP.md](../../ROADMAP.md), Fase 2
 - **Base:** [spec da Fase 2](2026-10-05-fase-2-nutricao-design.md) (2a implementada, ver §16 dela) e
   [spec da Fundação](2026-10-04-performance-app-foundation-design.md) (desafios da 1b em §6)
@@ -185,3 +185,18 @@ nutrição mostra aos participantes só a contagem de dias no alvo, e só com o 
 | Atraso de 2 dias no resultado do desafio parecer bug | texto explícito com a data do resultado |
 | Opt-in de nutrição esquecido num caminho | validação no SQL, teste de payload |
 | Mudança de assinatura de `join_challenge` quebrar o cliente antigo | `drop` + parâmetros nomeados; cliente e migration no mesmo deploy (SETUP) |
+
+## 12. Decisões do plano 2b
+
+O plano e a execução da 2b fecharam estes pontos:
+
+- **Migrations:** `0014_food_measures.sql`, `0015_nutrition_challenge.sql` e `0016_nutrition_history.sql`.
+- **Assinaturas de desafio:** `create_challenge` e `join_challenge` ganham `p_share_nutrition boolean default false`, as antigas são apagadas e o cliente chama ambas com parâmetros nomeados.
+- **Fechamento:** `close_challenge` fecha os dias pendentes de cada participante antes de calcular o resultado.
+- **Data do resultado:** `ends_on + 3`, porque o servidor só fecha quando `challenge_today > ends_on + 2` (o +2 é a tolerância, não o dia do resultado).
+- **Medidas sugeridas:** vêm de um mapa TACO × POF curado à mão, com filtros de peso plausível (colher de servir de 10 a 120 g) e rótulos que não são traduzidos.
+- **Rótulos:** medidas pessoais nunca são flexionadas ("2 × concha"); os rótulos da POF são flexionados.
+- **Edição de medida:** uma medida não muda de alimento num update (o `food_key` fica fixo, o que fecha o desvio do limite por alimento).
+- **Dias importados:** nunca contam para o desafio nem para a contagem semanal de dias no alvo do calendário.
+- **Calendário genérico:** `MonthCalendar` fica em `src/components/calendar` para o pilar Sono reaproveitar.
+- **Plurais:** `tn()` usa as chaves `|one`, `|few` e `|many` só em pl, ru e uk.

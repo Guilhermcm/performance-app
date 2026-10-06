@@ -43,6 +43,28 @@ describe('privacy policy page', () => {
     expect(en).toContain('whether the pillar was on')
   })
 
+  it('covers personal household measures in both languages', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('medidas caseiras pessoais')
+    expect(pt).toContain('o nome da medida e o peso dela em gramas')
+    expect(pt).toContain('Só você vê as suas medidas')
+    expect(en).toContain('personal household measures')
+    expect(en).toContain('the name of the measure and its weight in grams')
+    expect(en).toContain('Only you see your measures')
+  })
+
+  it('tells the nutrition challenge needs opt-in and shows only the days on target', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('desafio de dias no alvo')
+    expect(pt).toContain('só entra se aceitar compartilhar essa contagem')
+    expect(pt).toContain('quantos dias você ficou na meta')
+    expect(en).toContain('days-on-target challenge')
+    expect(en).toContain('only join if you agree to share that count')
+    expect(en).toContain('how many days you were on target')
+  })
+
   it('points to the self-service account deletion in both languages', () => {
     expect(visible).toContain('Perfil &gt; Excluir minha conta')
     expect(visible).toContain('Profile &gt; Delete my account')

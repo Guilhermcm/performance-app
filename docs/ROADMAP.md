@@ -28,7 +28,7 @@ recomendada (impacto em performance física primeiro).
 | 0 | Fundação | G | — | concluída |
 | 1a | Gamificação individual | M | 0 | concluída |
 | 1b | Social | M | 1a | concluída |
-| 2 | Nutrição | G | 1a | 2a concluída, 2b a especificar |
+| 2 | Nutrição | G | 1a | concluída (2a e 2b) |
 | 3 | Sono | P | 1a | especificada, execução adiada ([spec](superpowers/specs/2026-10-06-fase-3-sono-design.md)) |
 | 4 | Hábitos + trackers | M | 1a | a especificar |
 | 5 | Painel de performance | M | 2, 3, 4 | a especificar |
@@ -114,9 +114,14 @@ perfil, diário rápido, pilar Nutrição na gamificação.
   960 XP/semana no molde da Força; streak `nutrition_week`; conquistas privadas.
 - Aba Nutrição na TabBar; **radar de pilares** na Home (shadcn/ui Charts) e barra de XP por pilar.
 
-**2b, medidas, histórico e desafio** ([spec](superpowers/specs/2026-10-06-fase-2b-nutricao-design.md))
-- Medidas caseiras pessoais e sugeridas (POF/IBGE), histórico em calendário, desafio
-  `nutrition_days_on_target`, pendências da 2a.
+**2b, medidas, histórico e desafio, concluída** ([spec](superpowers/specs/2026-10-06-fase-2b-nutricao-design.md))
+- Medidas caseiras pessoais e da POF/IBGE (113 alimentos da TACO com medidas sugeridas), criadas
+  e usadas offline na tela da porção.
+- Histórico em calendário do mês, com o detalhe de cada dia.
+- Desafio `nutrition_days_on_target` (equipe e solo), com opt-in; os participantes veem só a
+  contagem de dias no alvo.
+- Pendências da 2a resolvidas: dados reais da TACO, ativação sem metas carregadas, diário depois
+  da meia-noite, "Copiar de" com falha online e plurais em pl, ru e uk.
 
 **Fora:** USDA, importação de histórico e receitas (reavaliar ao abrir ao público), wger.
 
