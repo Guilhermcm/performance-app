@@ -66,7 +66,7 @@ describe('nutrition api', () => {
 
   it('calls get_nutrition_days with the range', async () => {
     h.rpc.mockResolvedValue({ data: { target: null, days: [] }, error: null })
-    await expect(api.fetchDays('2026-09-21', '2026-10-05')).resolves.toEqual({ target: null, days: [] })
+    await expect(api.fetchDays('2026-09-21', '2026-10-05')).resolves.toEqual({ target: null, days: [], weeks: [] })
     expect(h.rpc).toHaveBeenCalledWith('get_nutrition_days', { p_from: '2026-09-21', p_to: '2026-10-05' })
   })
 

@@ -50,4 +50,10 @@ export type NutritionDay = DayTotals & {
   on_target: boolean
   balanced: boolean
   imported: boolean
+  // XP the day's events paid, the weekly goal bonus included (absent from an older server).
+  xp?: number
 }
+
+export type NutritionWeek = { start: string; target: number; on_target: number; target_hit: boolean }
+
+export type NutritionHistory = { target: NutritionTarget | null; days: NutritionDay[]; weeks: NutritionWeek[] }

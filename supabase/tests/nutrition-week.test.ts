@@ -202,11 +202,11 @@ describe('get_nutrition_days', () => {
     expect(r.target).toEqual({ valid_from: '2026-10-09', mode: 'manual', kcal: 2200, protein_g: 160, carbs_g: 230, fat_g: 65 })
     expect(r.days).toEqual([
       { day: '2026-10-05', kcal: 2000, protein_g: 150, carbs_g: 200, fat_g: 60, meals: 2, target: T,
-        logged: true, on_target: true, balanced: true, imported: false },
+        logged: true, on_target: true, balanced: true, imported: false, xp: 240 },
       { day: '2026-10-06', kcal: 500, protein_g: 20, carbs_g: 50, fat_g: 10, meals: 1, target: T,
-        logged: false, on_target: false, balanced: false, imported: false },
+        logged: false, on_target: false, balanced: false, imported: false, xp: 0 },
       { day: '2026-10-07', kcal: 0, protein_g: 0, carbs_g: 0, fat_g: 0, meals: 0, target: T,
-        logged: false, on_target: false, balanced: false, imported: false },
+        logged: false, on_target: false, balanced: false, imported: false, xp: 0 },
     ])
     // It closed the pending days on the way and paid them.
     const [x] = await sql(db, `select count(*)::int as n from public.xp_ledger where user_id = $1 and reason = 'nutrition_day'`, [A])
@@ -219,7 +219,7 @@ describe('get_nutrition_days', () => {
     await expect(call(A, '2026-10-01', null as unknown as string)).rejects.toThrow(/invalid_range/)
 
     await makeUser(db, B)
-    expect(await call(B, '2026-10-01', '2026-10-10')).toEqual({ target: null, days: [] })
+    expect(await call(B, '2026-10-01', '2026-10-10')).toMatchObject({ target: null, days: [] })
     await expect(call(null, '2026-10-01', '2026-10-10')).rejects.toThrow(/permission denied/)
     await expect(asUser(db, A, () => db.query('select public.close_nutrition_weeks($1)', [A])))
       .rejects.toThrow(/permission denied/)

@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { FoodLog, NutritionDay, NutritionTarget, UserFood } from './types'
+import type { FoodLog, NutritionHistory, NutritionTarget, UserFood } from './types'
 
 export type NutritionErrorCode = 'day_closed' | 'too_many_items' | 'network'
 
@@ -138,11 +138,11 @@ export async function insertTarget(t: NutritionTarget): Promise<void> {
   await run(supabase.from('nutrition_targets').upsert(row as never, { onConflict: 'user_id,valid_from' }) as never)
 }
 
-export async function fetchDays(from: string, to: string): Promise<{ target: NutritionTarget | null; days: NutritionDay[] }> {
+export async function fetchDays(from: string, to: string): Promise<NutritionHistory> {
   const call = supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>
   let res: { data: unknown; error: unknown }
   try { res = await call('get_nutrition_days', { p_from: from, p_to: to }) } catch (e) { return fail(e) }
   if (res.error) fail(res.error)
-  const d = res.data as { target: NutritionTarget | null; days: NutritionDay[] } | null
-  return { target: d?.target ?? null, days: d?.days ?? [] }
+  const d = res.data as Partial<NutritionHistory> | null
+  return { target: d?.target ?? null, days: d?.days ?? [], weeks: d?.weeks ?? [] }
 }
