@@ -3,7 +3,7 @@ import { computeTarget, missingTargetInput } from './targets'
 import { shiftDay, todayIn } from './days'
 import { useNutrition } from './useNutrition'
 
-const LB_TO_KG = 0.45359237
+export const LB_TO_KG = 0.45359237
 
 // A weigh-in updates the profile weight and, with the pillar on and an automatic target in
 // force, writes a recalculated target that starts tomorrow (spec 3.3). A manual target is the

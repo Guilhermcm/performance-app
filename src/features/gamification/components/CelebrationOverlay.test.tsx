@@ -27,4 +27,25 @@ describe('CelebrationOverlay', () => {
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
     expect(onDone).toHaveBeenCalledTimes(1)
   })
+
+  it('shows a pillar level, the nutrition weekly goal and a nutrition badge', () => {
+    render(<CelebrationOverlay onDone={vi.fn()} items={[
+      { kind: 'pillar_level', pillar: 'nutrition', level: 2 },
+      { kind: 'week_target', pillar: 'nutrition', week_start: '2026-09-28' },
+      { kind: 'achievement', code: 'protein_7' }
+    ]} />)
+    expect(screen.getByText('Nutrition level 2')).toBeTruthy()
+    fireEvent.click(screen.getByText('Tap to continue'))
+    expect(screen.getByText('Nutrition goal met')).toBeTruthy()
+    expect(screen.getByText('+150 XP')).toBeTruthy()
+    fireEvent.click(screen.getByText('Tap to continue'))
+    expect(screen.getByText('Protein week')).toBeTruthy()
+    expect(screen.getByText('+100 XP')).toBeTruthy()
+  })
+
+  it('never shows a raw code for a badge it does not know', () => {
+    render(<CelebrationOverlay items={[{ kind: 'achievement', code: 'from_the_future' }]} onDone={vi.fn()} />)
+    expect(screen.queryByText('from_the_future')).toBeNull()
+    expect(screen.getByText('New achievement')).toBeTruthy()
+  })
 })

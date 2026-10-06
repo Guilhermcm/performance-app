@@ -11,6 +11,10 @@ import { t, dateLocale } from '../../lib/i18n.js'
 import { todayISO } from '../../lib/format.js'
 import { menuSheet } from '../../sheets.jsx'
 import ProfileProgress from '../gamification/ProfileProgress'
+import NutritionSetup from '../nutrition/NutritionSetup'
+import { useNutrition } from '../nutrition/useNutrition'
+import { todayIn } from '../nutrition/days'
+import { ACTIVITY_LABEL, fmtGrams, fmtKcal } from '../nutrition/labels'
 import DeleteAccount from './DeleteAccount'
 import { useProfile } from './useProfile'
 import { validateProfileInput } from './profile-api'
@@ -50,6 +54,7 @@ export default function ProfileScreen() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState(false)
   const [leaving, setLeaving] = useState(false)
+  const [setupOpen, setSetupOpen] = useState(false)
   // The feed sends people here to check their sharing: bring the switch into view and focus it.
   const focus = (useLocation().state as { focus?: string } | null)?.focus
   const ready = !!profile
@@ -131,6 +136,12 @@ export default function ProfileScreen() {
     persist(section, patch, null)
   }
 
+  // Turning the pillar on goes through the setup (target first); turning it off is one tap.
+  const toggleNutrition = async (on: boolean) => {
+    if (on) { setSetupOpen(true); return }
+    try { await save({ nutrition_enabled: false }) } catch { toast(t('Could not save. Your previous values were kept.')) }
+  }
+
   const toggleShare = async (on: boolean) => {
     try { await save({ share_activity: on }) } catch { toast(t('Could not save. Your previous values were kept.')) }
   }
@@ -210,6 +221,9 @@ export default function ProfileScreen() {
           )
         })}
 
+        <NutritionCard profile={profile} onToggle={toggleNutrition} onEdit={() => setSetupOpen(true)} />
+        <NutritionSetup open={setupOpen} onOpenChange={setSetupOpen} />
+
         <section data-slot="card" className="flex items-center gap-4 rounded-2xl border border-border bg-card py-2 pl-5 pr-4">
           <label htmlFor="share_activity" className="flex min-h-14 flex-1 cursor-pointer flex-col justify-center gap-0.5 py-2 text-left">
             <span className="text-[15px] font-semibold leading-snug">{t('Share workouts and PRs with friends')}</span>
@@ -273,5 +287,50 @@ function Summary({ section, profile }: { section: SectionKey; profile: Profile }
         <li key={e} className="rounded-full bg-secondary px-3 py-1.5 text-sm text-secondary-foreground first-letter:uppercase">{t(e)}</li>
       ))}
     </ul>
+  )
+}
+
+// Perfil > Nutrição: the pillar's switch and, once on, the target in force, the activity level and
+// the days on target per week, edited through the same setup sheet.
+function NutritionCard({ profile, onToggle, onEdit }: { profile: Profile; onToggle: (on: boolean) => void; onEdit: () => void }) {
+  const target = useNutrition(s => s.targetOn(todayIn(profile.timezone)))
+  const on = profile.nutrition_enabled
+  const title = t('Nutrition')
+  const row = (label: string, value: ReactNode) => (
+    <div key={label} className="flex min-h-11 items-center justify-between gap-4 py-2 text-[15px]">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="text-right font-medium tabular-nums">{value ?? '—'}</dd>
+    </div>
+  )
+  return (
+    <section data-slot="card" aria-labelledby="sec-nutrition" className="rounded-2xl border border-border bg-card px-5 pb-4 pt-3">
+      <div className="flex min-h-11 items-center justify-between gap-3">
+        <h2 id="sec-nutrition" className="text-[15px] font-semibold">{title}</h2>
+        <div className="flex items-center gap-1">
+          {on && (
+            <Button variant="ghost" className="h-11 gap-2 rounded-full px-3 text-muted-foreground hover:text-foreground"
+              aria-label={t('Edit') + ': ' + title} onClick={onEdit}>
+              <Pencil className="size-4" />{t('Edit')}
+            </Button>
+          )}
+          <Switch id="nutrition_enabled" aria-labelledby="sec-nutrition" className="relative after:absolute after:-inset-3"
+            checked={on} onCheckedChange={onToggle} />
+        </div>
+      </div>
+      {on ? (
+        <dl className="divide-y divide-border">
+          {row(t('Daily target'), target && <span className="font-mono">{fmtKcal(target.kcal)}</span>)}
+          {target && row(t('Protein'), <span className="font-mono">{fmtGrams(target.protein_g)}</span>)}
+          {target && row(t('Carbs'), <span className="font-mono">{fmtGrams(target.carbs_g)}</span>)}
+          {target && row(t('Fat'), <span className="font-mono">{fmtGrams(target.fat_g)}</span>)}
+          {row(t('Activity outside training'), profile.activity_level && ACTIVITY_LABEL[profile.activity_level].name())}
+          {row(t('Days on target per week'), <span className="font-mono">{profile.nutrition_days_per_week}</span>)}
+        </dl>
+      ) : (
+        <p className="pb-1 text-sm leading-snug text-muted-foreground">
+          {t('Get a daily calorie and protein target based on your profile. Days on target earn XP, like workouts do.')}
+        </p>
+      )}
+    </section>
   )
 }

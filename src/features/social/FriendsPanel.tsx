@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { useStore } from '../../store/useStore.js'
 import { t } from '../../lib/i18n.js'
-import { ACHIEVEMENTS, type AchievementCode } from '../gamification/achievements'
-import { ACHIEVEMENT_TEXT } from '../gamification/achievement-labels'
+import { ACHIEVEMENTS } from '../gamification/achievements'
+import { achievementTitle } from '../gamification/achievement-labels'
 import { AchievementIcon } from '../gamification/components/AchievementIcon'
 import { LevelBar } from '../gamification/components/LevelBar'
 import { fmtDay, fmtInt } from '../gamification/format'
@@ -169,7 +169,7 @@ function FriendSheet({ friend, onClose }: { friend: Friend | null; onClose: () =
                     {recent.map(a => (
                       <li key={a.code} className="flex items-center gap-2 rounded-full bg-secondary/70 py-1 pl-1 pr-3 text-xs font-medium">
                         <AchievementIcon code={a.code} unlocked className="size-7 rounded-full" />
-                        {ACHIEVEMENT_TEXT[a.code as AchievementCode]?.title() ?? a.code}
+                        {achievementTitle(a.code)}
                       </li>
                     ))}
                   </ul>

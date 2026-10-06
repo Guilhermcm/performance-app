@@ -28,7 +28,7 @@ export const LIMITS = {
   fat_g: [20, 300],
 } as const
 
-const ADJUST: Record<TargetInput['goal'], Record<Pace, number>> = {
+export const ADJUST: Record<TargetInput['goal'], Record<Pace, number>> = {
   fat_loss: { gentle: -0.1, standard: -0.2 },
   hypertrophy: { gentle: 0.05, standard: 0.1 },
   strength: { gentle: 0.05, standard: 0.05 },

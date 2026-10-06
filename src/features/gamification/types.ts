@@ -63,7 +63,13 @@ export type XpLine =
 
 export type XpPreview = { lines: XpLine[]; total: number }
 
-export type Celebration = { kind: 'level'; level: number } | { kind: 'achievement'; code: string }
+// pillar_level: a pillar's own level went up (the overall one is 'level'). week_target: the nutrition
+// weekly goal was met in a closed week; the strength goal stays in the post-workout summary.
+export type Celebration =
+  | { kind: 'level'; level: number }
+  | { kind: 'achievement'; code: string }
+  | { kind: 'pillar_level'; pillar: PillarKey; level: number }
+  | { kind: 'week_target'; pillar: 'nutrition'; week_start: string }
 
 // confirmed: the event queue was empty when the progress was read, so it already counts them.
 export type SyncResult = { progress: Progress | null; confirmed: boolean }

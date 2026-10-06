@@ -50,7 +50,10 @@ describe('NutritionScreen', () => {
     render(<NutritionScreen />)
     expect(screen.queryByTestId('kcal-ring')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: /Turn on/ }))
-    expect(h.nav).toHaveBeenCalledWith('/perfil')
+    // The setup opens right here, not in the profile.
+    expect(h.nav).not.toHaveBeenCalled()
+    expect(screen.getByRole('dialog')).toBeTruthy()
+    expect(screen.getByText('A few details first. Your target is based on them.')).toBeTruthy()
   })
 
   it('shows the kcal ring, three macro bars and the four meals with their totals', () => {

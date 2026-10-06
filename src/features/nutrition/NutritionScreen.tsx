@@ -1,5 +1,4 @@
 import { useEffect, useId, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { CircleCheck, CircleDashed, CloudOff, Copy, RefreshCw, Scale, Target } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -16,6 +15,7 @@ import { shiftDay, todayIn } from './days'
 import { useNutrition } from './useNutrition'
 import { MEALS, fmtDecimal, fmtGrams, fmtKcal, fmtNumber, weekdayName } from './labels'
 import NutritionInvite from './NutritionInvite'
+import NutritionSetup from './NutritionSetup'
 import MealCard from './MealCard'
 import PortionSheet from './PortionSheet'
 import QuickAddSheet from './QuickAddSheet'
@@ -43,7 +43,6 @@ function itemOfLog(l: FoodLog): FoodItem | null {
 // /nutricao: today or yesterday (the only days that can change, in the profile's time zone),
 // the kcal ring, the macros, the four meals and a summary of the days before.
 export default function NutritionScreen() {
-  const nav = useNavigate()
   const profile = useProfile(s => s.profile)
   const online = useOnline()
   const status = useNutrition(s => s.status)
@@ -63,6 +62,7 @@ export default function NutritionScreen() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [copyInto, setCopyInto] = useState<Meal | 'all'>('all')
   const [copyOpen, setCopyOpen] = useState(false)
+  const [setupOpen, setSetupOpen] = useState(false)
 
   // Items the server refused while offline: said once, then forgotten.
   useEffect(() => {
@@ -75,7 +75,8 @@ export default function NutritionScreen() {
     return (
       <Page>
         <h1 className="text-2xl font-semibold tracking-tight">{t('Nutrition')}</h1>
-        <NutritionInvite onActivate={() => nav('/perfil')} />
+        <NutritionInvite onActivate={() => setSetupOpen(true)} />
+        <NutritionSetup open={setupOpen} onOpenChange={setSetupOpen} />
       </Page>
     )
   }

@@ -9,6 +9,7 @@ import { ProgressHero } from './ProgressHero'
 import { TodayCard } from './TodayCard'
 import { BodyWeightCard } from './BodyWeightCard'
 import { CheckInCard, WelcomeCard } from './HomeCards'
+import HomeNutritionCard from '../nutrition/HomeNutritionCard'
 
 type HomeStore = { S: Record<string, any>; user: { id: string; name?: string } | null }
 
@@ -55,6 +56,7 @@ export default function HomeScreen() {
       {/* With no routines yet, setting up a plan is the one thing to do: it leads the page. */}
       {!S.routines.length && !S.active && <WelcomeCard />}
       {user && <ProgressHero />}
+      {user && <HomeNutritionCard />}
       <TodayCard />
       {S.checkIn !== false && <CheckInCard />}
       {S.showWeightCard !== false && <BodyWeightCard />}

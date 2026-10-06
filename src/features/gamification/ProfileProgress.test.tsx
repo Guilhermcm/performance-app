@@ -30,4 +30,13 @@ describe('ProfileProgress', () => {
     fireEvent.click(screen.getByRole('button', { name: /Achievements/ }))
     expect(h.nav).toHaveBeenCalledWith('/conquistas')
   })
+
+  it('adds the nutrition pillar once it has a level', () => {
+    useProgress.setState({ status: 'ready', progress: progressOf(1110, {}, { pillars: {
+      strength: { level: 5, into: 260, need: 300, xp: 960 }, nutrition: { level: 2, into: 20, need: 150, xp: 120 }
+    } }) })
+    render(<ProfileProgress />)
+    expect(screen.getByRole('progressbar', { name: 'Nutrition' })).toBeTruthy()
+    expect(screen.getByText('Level 2')).toBeTruthy()
+  })
 })

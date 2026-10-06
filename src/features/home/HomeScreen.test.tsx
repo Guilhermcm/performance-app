@@ -12,6 +12,7 @@ vi.mock('../../components/LineChart.jsx', () => ({ default: () => null }))
 
 import { useStore } from '../../store/useStore.js'
 import HomeScreen from './HomeScreen'
+import { useProfile } from '../profile/useProfile'
 
 const setS = (over: Record<string, unknown> = {}, user: unknown = null) =>
   useStore.setState((s: any) => ({ S: { ...s.S, routines: [], dayPlan: {}, workouts: [], bodyweight: [], active: null, week: {}, ...over }, user }))
@@ -58,5 +59,17 @@ describe('HomeScreen', () => {
     expect(h.bwSheet).toHaveBeenCalledTimes(1)
     expect(h.goalSheet).toHaveBeenCalledTimes(1)
     expect(h.weighInsSheet).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows the nutrition card to a signed-in account with a profile', () => {
+    localStorage.clear()
+    setS({}, { id: 'u1', name: 'Ana' })
+    useProfile.setState({ profile: { timezone: 'America/Sao_Paulo', nutrition_enabled: false } as never })
+    try {
+      render(<HomeScreen />)
+      expect(screen.getByText('Track what you eat')).toBeTruthy()
+    } finally {
+      useProfile.setState({ profile: null })
+    }
   })
 })
