@@ -62,4 +62,10 @@ describe('QuickAddSheet', () => {
     fireEvent.click(add())
     expect(updateLog).toHaveBeenCalledWith('q', { name: 'Lanche', kcal: 250, protein_g: 0, carbs_g: 0, fat_g: 0 })
   })
+
+  it('has no household measures: a quick item has no food behind it', () => {
+    render(<QuickAddSheet meal="lunch" day="2026-10-06" open onOpenChange={onOpenChange} />)
+    expect(screen.queryByRole('button', { name: 'Create measure' })).toBeNull()
+    expect(screen.queryByRole('group', { name: 'Portion shortcuts' })).toBeNull()
+  })
 })

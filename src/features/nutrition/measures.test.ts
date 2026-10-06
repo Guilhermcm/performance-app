@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { foodKey, mergeMeasures, loadSuggested } from './measures'
+import { foodKey, mergeMeasures, loadSuggested, measureKey, pluralPt, countedMeasure } from './measures'
 import { foodOf, itemOf, logOf, measureOf } from './test-nutrition'
 
 describe('foodKey', () => {
@@ -80,5 +80,52 @@ describe('loadSuggested', () => {
     expect(a['1'].length).toBeGreaterThan(0)
     expect(a['1'][0]).toEqual({ label: expect.any(String), grams: expect.any(Number) })
     expect(await loadSuggested()).toBe(a)
+  })
+})
+
+describe('measureKey', () => {
+  it('is the foodKey when the item has one', () => {
+    expect(measureKey(itemOf({ source: 'taco', source_id: '3' }), [])).toBe('taco:3')
+    expect(measureKey(foodOf({ id: 'f-1', source: 'custom', source_id: null }), [])).toBe('custom:f-1')
+  })
+
+  it('finds the saved custom food behind a recent or a logged item', () => {
+    const saved = foodOf({ id: 'f-9', source: 'custom', source_id: null, name: 'Bolo da vó', brand: null })
+    const other = foodOf({ id: 'f-8', source: 'custom', source_id: null, name: 'Bolo', brand: 'Padaria' })
+    const recent = itemOf({ source: 'custom', source_id: null, name: ' bolo da Vó ', brand: null, recent: true })
+    expect(measureKey(recent, [other, saved])).toBe('custom:f-9')
+  })
+
+  it('is null for a custom food that is not saved, and never borrows a TACO or OFF row', () => {
+    const custom = itemOf({ source: 'custom', source_id: null, name: 'Bolo da vó' })
+    expect(measureKey(custom, [])).toBeNull()
+    expect(measureKey(custom, [foodOf({ id: 'f-1', source: 'taco', source_id: null, name: 'Bolo da vó' })])).toBeNull()
+    expect(measureKey(itemOf({ source: 'taco', source_id: null }), [foodOf({ id: 'f-2', source: 'taco', source_id: null })])).toBeNull()
+  })
+})
+
+describe('pluralPt', () => {
+  it('pluralizes the words before the first preposition, the way the POF labels need', () => {
+    const cases: [string, string][] = [
+      ['colher de servir', 'colheres de servir'], ['colher de chá', 'colheres de chá'], ['concha', 'conchas'],
+      ['escumadeira', 'escumadeiras'], ['xícara', 'xícaras'], ['unidade pequena', 'unidades pequenas'],
+      ['copo americano', 'copos americanos'], ['copo de requeijão', 'copos de requeijão'], ['filé', 'filés'],
+      ['pedaço', 'pedaços'], ['pão', 'pães'], ['porção', 'porções'], ['pote', 'potes'], ['potinho', 'potinhos'],
+      ['bombom', 'bombons'], ['pastel', 'pastéis'], ['barril', 'barris'], ['lápis', 'lápis'], ['200 ml', '200 ml'],
+    ]
+    for (const [one, many] of cases) expect(pluralPt(one), one).toBe(many)
+  })
+})
+
+describe('countedMeasure', () => {
+  it('reads in Portuguese, singular below 2', () => {
+    expect(countedMeasure(2, 'colher de servir', true)).toBe('2 colheres de servir')
+    expect(countedMeasure(1, 'concha', true)).toBe('1 concha')
+    expect(countedMeasure(1.5, 'concha', true)).toBe('1.5 concha')
+    expect(countedMeasure(0.5, 'concha', true)).toBe('0.5 concha')
+  })
+
+  it('multiplies a label it cannot inflect', () => {
+    expect(countedMeasure(2, 'scoop', false)).toBe('2 × scoop')
   })
 })

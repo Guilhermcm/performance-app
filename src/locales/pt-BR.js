@@ -1479,6 +1479,21 @@ export const PT_BR_OVERRIDES = {
   "{0}: no weeks yet": "{0}: nenhuma semana ainda",
   "How much of the possible XP each pillar earned in the last 4 closed weeks and the 4 before them.": "Quanto do XP possível cada pilar ganhou nas últimas 4 semanas fechadas e nas 4 anteriores.",
   'Source code and license': 'Código-fonte e licença',
+  "Portion shortcuts": "Atalhos de porção",
+  "Create measure": "Criar medida",
+  "Measures: POF 2008-2009, IBGE": "Medidas: POF 2008-2009, IBGE",
+  "Half a measure less": "Meia medida a menos",
+  "Half a measure more": "Meia medida a mais",
+  "Quantity": "Quantidade",
+  "{0} × label serving": "{0} × porção do rótulo",
+  "Options for {0}": "Opções de {0}",
+  "Edit measure": "Editar medida",
+  "New measure": "Nova medida",
+  "A household measure of this food, like a ladle or a slice.": "Uma medida caseira deste alimento, como uma concha ou uma fatia.",
+  "Use 1 to 30 characters.": "Use de 1 a 30 caracteres.",
+  "Use between 1 and 2000 g.": "Use entre 1 e 2000 g.",
+  "This food already has 10 measures. Delete one to add another.": "Este alimento já tem 10 medidas. Exclua uma para criar outra.",
+  "ladle": "concha",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

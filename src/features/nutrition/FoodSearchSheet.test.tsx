@@ -13,7 +13,7 @@ vi.mock('sonner', () => ({ toast: h.toast }))
 vi.mock('@/components/ui/drawer', () => import('../social/test-drawer'))
 vi.mock('./outbox', () => ({ enqueue: vi.fn(), flushOutbox: vi.fn(async () => ({ sent: 0, dropped: 0, reasons: [] })), pending: () => [], clearOutbox: vi.fn() }))
 vi.mock('./off-api', () => ({ searchOff: h.searchOff, productByCode: h.productByCode }))
-vi.mock('./taco', () => ({ loadTaco: async () => h.taco }))
+vi.mock('./taco', () => ({ loadTaco: async () => h.taco, loadTacoMeasures: async () => ({}) }))
 
 import FoodSearchSheet from './FoodSearchSheet'
 import { closeDrawer } from '../social/test-drawer'

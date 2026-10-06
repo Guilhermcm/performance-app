@@ -1,4 +1,6 @@
 import { loadTacoMeasures } from './taco'
+import { keyOf } from './useNutrition'
+import { fmtDecimal } from './labels'
 import type { FoodItem, FoodLog, Measure, MeasureOption, UserFood } from './types'
 
 type Suggested = { label: string; grams: number }
@@ -42,4 +44,56 @@ export function mergeMeasures(personal: Measure[], suggested: Suggested[], item:
 // Suggested measures by TACO id, loaded on demand with the TACO data.
 export function loadSuggested(): Promise<Record<string, Suggested[]>> {
   return loadTacoMeasures()
+}
+
+// The key for the portion sheet. A recent or a logged custom food carries no row id (the diary
+// stores custom items with source_id null), so it is found among the saved foods the same way the
+// favourite star finds it: by name and brand. A custom food that is not saved has no key.
+export function measureKey(item: FoodItem | UserFood, foods: UserFood[]): string | null {
+  const k = foodKey(item)
+  if (k || item.source !== 'custom') return k
+  const want = keyOf(item)
+  const saved = foods.find(f => f.source === 'custom' && keyOf(f) === want)
+  return saved ? foodKey(saved) : null
+}
+
+// Words that end a measure's head: "colher | de servir", "copo | de requeijão".
+const PREP = new Set(['de', 'do', 'da', 'dos', 'das', 'com', 'sem', 'para', 'em', 'no', 'na', 'à', 'ao'])
+const ACCENT = /[áéíóúâêôãõ]/
+
+function pluralWord(w: string): string {
+  if (/\d/.test(w)) return w
+  const low = w.toLowerCase()
+  if (low === 'pão') return w.slice(0, -2) + 'ães'
+  if (low.endsWith('ão')) return w.slice(0, -2) + 'ões'
+  if (/[aeiouáéíóúâêô]$/.test(low)) return w + 's'
+  if (/[rz]$/.test(low)) return w + 'es'
+  if (low.endsWith('m')) return w.slice(0, -1) + 'ns'
+  const stem = w.slice(0, -2)
+  if (low.endsWith('al')) return stem + 'ais'
+  if (low.endsWith('ol')) return stem + 'óis'
+  if (low.endsWith('ul')) return stem + 'uis'
+  if (low.endsWith('el')) return stem + (ACCENT.test(stem) ? 'eis' : 'éis')
+  if (low.endsWith('il')) return stem + (ACCENT.test(stem) ? 'eis' : 'is')
+  return w
+}
+
+// Plural of a Portuguese measure name: the words before the first preposition change
+// ("colher de servir" -> "colheres de servir", "copo americano" -> "copos americanos").
+export function pluralPt(label: string): string {
+  const words = label.split(' ')
+  let head = true
+  return words.map(w => {
+    if (!head || !w) return w
+    if (PREP.has(w.toLowerCase())) { head = false; return w }
+    return pluralWord(w)
+  }).join(' ')
+}
+
+// "2 colheres de servir": a count and a measure name. Portuguese names agree with the count (singular
+// below 2, as in pt-BR); a name the app cannot inflect is multiplied instead ("2 × scoop").
+export function countedMeasure(qty: number, label: string, portuguese: boolean): string {
+  const n = fmtDecimal(qty)
+  if (!portuguese) return `${n} × ${label}`
+  return `${n} ${qty >= 2 ? pluralPt(label) : label}`
 }
