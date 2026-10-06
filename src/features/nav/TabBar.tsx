@@ -51,7 +51,7 @@ export default function TabBar({ onStart }: { onStart: (ids: unknown[]) => void 
   const S = useStore((s: AppStore) => s.S)
   const user = useStore((s: AppStore) => s.user)
   const isGuest = useStore((s: AppStore) => s.isGuest())
-  const waiting = useSocial(s => pendingInvites(s.challenges.data))
+  const waiting = useSocial(s => pendingInvites(s.challenges.data, todayISO()))
   if (!user && !isGuest) return null
   const cur = loc.pathname.split('/')[1] || 'home'
   const on = (k: TabKey) => TAB_OF[cur] === k

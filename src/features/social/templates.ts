@@ -91,8 +91,13 @@ export function challengeShare(c: Challenge): number {
   return Math.max(0, Math.min(1, value / c.target))
 }
 
-export const pendingInvites = (list: readonly Challenge[] | null): number =>
-  (list ?? []).filter(c => c.status === 'active' && !c.me.joined).length
+// An invitation I can still accept: the server refuses a join once the challenge's today is past
+// ends_on (challenge_closed), even while a nutrition challenge stays active for its grace days.
+export const canJoin = (c: Pick<Challenge, 'status' | 'me' | 'ends_on'>, today: string): boolean =>
+  c.status === 'active' && !c.me.joined && today <= c.ends_on
+
+export const pendingInvites = (list: readonly Challenge[] | null, today: string): number =>
+  (list ?? []).filter(c => canJoin(c, today)).length
 
 // The last day counts as one day left.
 export const daysLeft = (c: Challenge, today: string): number => daysInclusive(today, c.ends_on)

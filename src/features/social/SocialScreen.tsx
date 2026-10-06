@@ -3,6 +3,7 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { Activity, Swords, Trophy, Users, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { t } from '../../lib/i18n.js'
+import { todayISO } from '../../lib/format.js'
 import { useSocial } from './useSocial'
 import { pendingInvites } from './templates'
 import RankingPanel from './RankingPanel'
@@ -24,7 +25,7 @@ const PANELS: Record<Section, ComponentType> = { ranking: RankingPanel, desafios
 export default function SocialScreen() {
   const { section } = useParams()
   const navigate = useNavigate()
-  const waiting = useSocial(s => pendingInvites(s.challenges.data))
+  const waiting = useSocial(s => pendingInvites(s.challenges.data, todayISO()))
   if (!section || !(section in PANELS)) return <Navigate to="/social/ranking" replace />
   const Panel = PANELS[section as Section]
 

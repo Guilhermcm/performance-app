@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, cleanup, waitFor, within } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, waitFor, within, act } from '@testing-library/react'
 
 const h = vi.hoisted(() => ({ nav: vi.fn(), fetchDays: vi.fn(), fetchPeriods: vi.fn(), fetchLogs: vi.fn() }))
 vi.mock('react-router-dom', () => ({ useNavigate: () => h.nav }))
@@ -88,7 +88,36 @@ describe('HistoryScreen', () => {
     expect(screen.getByRole('img', { name: /\b7 October: Not yet/ })).toBeTruthy()
     const legend = screen.getByRole('list', { name: 'Legend' })
     expect(within(legend).getAllByRole('listitem').map(li => li.textContent))
-      .toEqual(['On target', 'Logged, off target', 'Not logged', 'Still open', 'Not tracked'])
+      .toEqual(['On target', 'Logged, off target', 'Not logged', 'Still open', 'Not tracked', 'Not yet'])
+  })
+
+  it('tells a day to come apart from a day that is not tracked, by look and not only by text', async () => {
+    h.fetchPeriods.mockResolvedValue([{ started_on: '2026-10-05', ended_on: null }])
+    render(<HistoryScreen />)
+    const future = await screen.findByRole('img', { name: /\b7 October: Not yet/ })
+    const untracked = screen.getByRole('img', { name: /\b1 October: Not tracked/ })
+    expect(future.getAttribute('data-state')).toBe('future')
+    expect(untracked.getAttribute('data-state')).toBe('inactive')
+    expect(future.className).not.toBe(untracked.className)
+    // The faded fill is for the days outside the record only.
+    expect(untracked.className).toContain('opacity-50')
+    expect(future.className).not.toContain('opacity-50')
+    expect(future.className).toContain('border-dotted')
+  })
+
+  it('moves to the new day when midnight passes while the screen is open', async () => {
+    vi.useRealTimers()
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+    // 23:59 on the 6th in Sao Paulo.
+    vi.setSystemTime(new Date('2026-10-07T02:59:00Z'))
+    h.fetchPeriods.mockResolvedValue([{ started_on: '2026-10-05', ended_on: null }])
+    render(<HistoryScreen />)
+    await act(async () => {})
+    expect(screen.getByRole('button', { name: /6 October: Still open/ }).getAttribute('aria-current')).toBe('date')
+    expect(screen.getByRole('img', { name: /\b7 October: Not yet/ })).toBeTruthy()
+    await act(async () => { vi.setSystemTime(new Date('2026-10-07T03:01:00Z')); vi.advanceTimersByTime(60_000) })
+    expect(screen.getByRole('button', { name: /7 October: Still open/ }).getAttribute('aria-current')).toBe('date')
+    expect(screen.queryByRole('img', { name: /\b7 October: Not yet/ })).toBeNull()
   })
 
   it('sums each week up beside it, with a badge when the weekly goal was met', async () => {

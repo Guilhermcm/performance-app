@@ -94,6 +94,15 @@ describe('DaySheet', () => {
     expect(screen.queryByText(/XP/)).toBeNull()
   })
 
+  it('calls a closed day without a row "Not logged", like the grid, and not "Still open"', async () => {
+    h.fetchLogs.mockResolvedValue([])
+    render(<DaySheet cell={cellOf(OLD, { state: 'none', data: null })} open onOpenChange={onOpenChange} />)
+    expect(screen.getByText('Not logged')).toBeTruthy()
+    expect(screen.queryByText('Still open')).toBeNull()
+    expect(screen.queryByText(/XP/)).toBeNull()
+    expect(await screen.findByText('Nothing logged on this day.')).toBeTruthy()
+  })
+
   it('says when the items could not be fetched and tries again', async () => {
     h.fetchLogs.mockRejectedValueOnce(new Error('boom'))
     render(<DaySheet cell={cellOf(OLD)} open onOpenChange={onOpenChange} />)

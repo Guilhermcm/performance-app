@@ -18,7 +18,7 @@ import { useSocial } from './useSocial'
 import { challengeOf } from './test-social'
 
 beforeEach(() => { useSocial.getState().reset(); h.nav.mockClear(); h.section = 'ranking' })
-afterEach(cleanup)
+afterEach(() => { cleanup(); vi.useRealTimers() })
 
 describe('SocialScreen', () => {
   it('shows the section from the route and switches without piling up history', () => {
@@ -36,8 +36,19 @@ describe('SocialScreen', () => {
   })
 
   it('marks challenge invitations waiting for an answer', () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-06T15:00:00Z'))
     useSocial.setState({ challenges: { status: 'ready', data: [challengeOf({ me: { joined: false, won: null } })], stale: false, error: null } })
     const { container } = render(<SocialScreen />)
     expect(container.querySelector('[data-slot="invite-dot"]')).toBeTruthy()
+  })
+
+  it('drops the mark once the invitation can no longer be joined', () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-19T15:00:00Z'))
+    const invite = challengeOf({ template: 'nutrition_days_on_target', ends_on: '2026-10-18', me: { joined: false, won: null } })
+    useSocial.setState({ challenges: { status: 'ready', data: [invite], stale: false, error: null } })
+    const { container } = render(<SocialScreen />)
+    expect(container.querySelector('[data-slot="invite-dot"]')).toBeNull()
   })
 })

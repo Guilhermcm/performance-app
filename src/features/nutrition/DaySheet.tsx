@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CircleDashed, CloudOff, RefreshCw, Sparkles } from 'lucide-react'
+import { Circle, CircleDashed, CloudOff, RefreshCw, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -9,9 +9,10 @@ import { t } from '../../lib/i18n.js'
 import { useProfile } from '../profile/useProfile'
 import { fmtShortDay } from '../social/format'
 import { dayTotals } from './classify'
-import { shiftDay, todayIn } from './days'
+import { shiftDay } from './days'
 import { fetchLogs } from './nutrition-api'
 import { WINDOW_DAYS, useNutrition } from './useNutrition'
+import { useToday } from './use-today'
 import { MEALS, dayStatus, fmtDecimal, fmtGrams, fmtKcal, fmtNumber, weekdayName } from './labels'
 import MealCard from './MealCard'
 import type { MonthCell } from './history'
@@ -30,7 +31,7 @@ const noop = () => {}
 export default function DaySheet({ cell, open, onOpenChange }: Props) {
   const tz = useProfile(s => s.profile?.timezone)
   const online = useOnline()
-  const today = todayIn(tz)
+  const today = useToday(tz)
   const day = cell?.day ?? null
   const local = useNutrition(s => (day ? s.logs[day] ?? NO_LOGS : NO_LOGS))
   const dayTarget = useNutrition(s => (day ? s.targetOn(day) : null))
@@ -56,7 +57,10 @@ export default function DaySheet({ cell, open, onOpenChange }: Props) {
   // An open day has no closed row yet: its numbers come from the phone, as the diary shows them.
   const totals: Macros = data ?? dayTotals(local)
   const target = data ? data.target : dayTarget
-  const status = data && cell.state !== 'open' ? dayStatus(data) : { text: t('Still open'), icon: CircleDashed, on: false }
+  // The same words as the grid's cell: a closed day without a row is "Not logged", not "Still open".
+  const status = data && cell.state !== 'open' ? dayStatus(data)
+    : cell.state === 'open' ? { text: t('Still open'), icon: CircleDashed, on: false }
+    : { text: t('Not logged'), icon: Circle, on: false }
   const StatusIcon = status.icon
 
   const rows: [string, string][] = [

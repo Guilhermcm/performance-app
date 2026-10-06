@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   GRACE, MODES, TEMPLATES, addDays, challengeShare, checkChallenge, daysInclusive, daysLeft, mondayOf, nextMonday,
-  pendingInvites, resultOn, suggestedTarget, targetRange, weeksTouched
+  canJoin, pendingInvites, resultOn, suggestedTarget, targetRange, weeksTouched
 } from './templates'
 import { challengeOf } from './test-social'
 import type { NewChallenge } from './types'
@@ -80,9 +80,18 @@ describe('progress helpers', () => {
   })
 
   it('counts invitations waiting for an answer', () => {
-    expect(pendingInvites(null)).toBe(0)
+    const today = '2026-10-06'
+    expect(pendingInvites(null, today)).toBe(0)
     expect(pendingInvites([challengeOf(), challengeOf({ id: 'c2', me: { joined: false, won: null } }),
-      challengeOf({ id: 'c3', status: 'won', me: { joined: false, won: null } })])).toBe(1)
+      challengeOf({ id: 'c3', status: 'won', me: { joined: false, won: null } })], today)).toBe(1)
+  })
+
+  it('stops counting an invitation once its last day has passed, even while the challenge is still active', () => {
+    const invite = challengeOf({ template: 'nutrition_days_on_target', ends_on: '2026-10-18', me: { joined: false, won: null } })
+    expect(pendingInvites([invite], '2026-10-18')).toBe(1)
+    expect(canJoin(invite, '2026-10-18')).toBe(true)
+    expect(pendingInvites([invite], '2026-10-19')).toBe(0)
+    expect(canJoin(invite, '2026-10-19')).toBe(false)
   })
 
   it('counts the last day as one day left', () => {

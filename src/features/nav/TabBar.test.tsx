@@ -16,7 +16,7 @@ beforeEach(() => {
   h.nav.mockClear()
   h.path = '/social/ranking'
 })
-afterEach(() => { cleanup(); useStore.setState({ user: null }) })
+afterEach(() => { cleanup(); vi.useRealTimers(); useStore.setState({ user: null }) })
 
 const tab = (name: RegExp) => screen.getByRole('button', { name })
 
@@ -55,8 +55,19 @@ describe('TabBar', () => {
   })
 
   it('counts challenge invitations on the social tab', () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-06T15:00:00Z'))
     useSocial.setState({ challenges: { status: 'ready', data: [challengeOf({ me: { joined: false, won: null } })], stale: false, error: null } })
     render(<TabBar onStart={() => {}} />)
     expect(screen.getByRole('button', { name: 'Social. Challenge invitations: 1' })).toBeTruthy()
+  })
+
+  it('does not count a nutrition invitation after its last day, while it is still active', () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-19T15:00:00Z'))
+    const invite = challengeOf({ template: 'nutrition_days_on_target', ends_on: '2026-10-18', me: { joined: false, won: null } })
+    useSocial.setState({ challenges: { status: 'ready', data: [invite], stale: false, error: null } })
+    render(<TabBar onStart={() => {}} />)
+    expect(screen.getByRole('button', { name: 'Social' })).toBeTruthy()
   })
 })

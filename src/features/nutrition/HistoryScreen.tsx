@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Award, Check, Circle, CircleDashed, CloudOff, Dot, Flame, Minus, RefreshCw } from 'lucide-react'
+import { ArrowLeft, Award, Check, Circle, CircleDashed, CloudOff, Clock, Dot, Flame, Minus, RefreshCw } from 'lucide-react'
 import MonthCalendar, { type CalendarCell, type CalendarLegendItem, type CalendarWeek } from '@/components/calendar/MonthCalendar'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -8,7 +8,7 @@ import { useOnline } from '@/lib/use-online'
 import { dateLocale, t, tn } from '../../lib/i18n.js'
 import { useProfile } from '../profile/useProfile'
 import { useProgress } from '../gamification/useProgress'
-import { todayIn } from './days'
+import { useToday } from './use-today'
 import { fetchDays, fetchPeriods } from './nutrition-api'
 import {
   buildMonth, firstMonth, isSettled, monthHasActiveDay, monthOf, monthRange, readHistory, shiftMonth, writeHistory,
@@ -16,24 +16,31 @@ import {
 } from './history'
 import DaySheet from './DaySheet'
 
+// What a cell shows: a day's state, or "future" for a day still to come, which must not read as a day
+// outside the periods.
+type CellState = DayState | 'future'
+
 // Icon and words per state: never by colour alone. "On target" is a check in the pillar colour,
 // "logged off target" a dot, "not logged" an empty ring, "still open" a dashed ring in an outlined
-// tile, and a day outside the periods is faded with a dash.
-const STATE: Record<DayState, { label: () => string; icon: ReactNode }> = {
+// tile, a day outside the periods is faded with a dash, and a day to come is a clock in a dotted
+// tile, not faded.
+const STATE: Record<CellState, { label: () => string; icon: ReactNode }> = {
   on_target: { label: () => t('On target'), icon: <Check className="size-4" strokeWidth={3} /> },
   logged: { label: () => t('Logged, off target'), icon: <Dot className="size-5" strokeWidth={4} /> },
   none: { label: () => t('Not logged'), icon: <Circle className="size-3" /> },
   open: { label: () => t('Still open'), icon: <CircleDashed className="size-3.5" /> },
   inactive: { label: () => t('Not tracked'), icon: <Minus className="size-3" /> },
+  future: { label: () => t('Not yet'), icon: <Clock className="size-3" /> },
 }
-const LEGEND_ORDER: DayState[] = ['on_target', 'logged', 'none', 'open', 'inactive']
+const LEGEND_ORDER: CellState[] = ['on_target', 'logged', 'none', 'open', 'inactive', 'future']
 
-const STATE_CLASS: Record<DayState, string> = {
+const STATE_CLASS: Record<CellState, string> = {
   on_target: 'bg-pillar-nutrition/15 text-pillar-nutrition',
   logged: 'bg-card text-foreground',
   none: 'bg-card text-muted-foreground',
   open: 'border border-dashed border-foreground/50 text-foreground',
   inactive: 'text-muted-foreground opacity-50',
+  future: 'border border-dotted border-border text-muted-foreground',
 }
 
 const weeksText = (n: number) => (n === 1 ? t('1 week') : tn(n, '{0} weeks', n))
@@ -49,7 +56,7 @@ export default function HistoryScreen() {
   const navigate = useNavigate()
   const userId = useProfile(s => s.profile?.id ?? null)
   const tz = useProfile(s => s.profile?.timezone)
-  const today = todayIn(tz)
+  const today = useToday(tz)
   const online = useOnline()
   const [cache, setCache] = useState<HistoryCache | null>(() => (userId ? readHistory(userId) : null))
   const [month, setMonth] = useState(() => monthOf(today))
@@ -182,12 +189,13 @@ export default function HistoryScreen() {
 }
 
 function toCell(c: MonthCell, today: string): CalendarCell {
-  const label = c.future ? t('Not yet') : STATE[c.state].label()
+  const state: CellState = c.future ? 'future' : c.state
+  const label = STATE[state].label()
   return {
     day: c.day,
-    state: c.state,
+    state,
     label,
-    icon: STATE[c.state].icon,
+    icon: STATE[state].icon,
     accessibleText: `${longDay(c.day)}: ${label}`,
     selectable: c.state !== 'inactive' || c.data != null,
     current: c.day === today,

@@ -38,6 +38,8 @@ const invited = (over: Partial<Challenge> = {}) => challengeOf({
 })
 
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date('2026-10-06T15:00:00Z'))
   localStorage.clear()
   useSocial.getState().reset()
   useSocial.setState({ userId: ME, load })
@@ -45,7 +47,7 @@ beforeEach(() => {
   h.join.mockResolvedValue(undefined)
   h.leave.mockResolvedValue(undefined)
 })
-afterEach(() => { cleanup(); useSocial.setState({ load: realLoad }); useProfile.setState({ profile: null }) })
+afterEach(() => { cleanup(); vi.useRealTimers(); useSocial.setState({ load: realLoad }); useProfile.setState({ profile: null }) })
 const pillar = (on: boolean) => useProfile.setState({ profile: { nutrition_enabled: on, timezone: 'America/Sao_Paulo' } as never })
 const NUT = 'nutrition_days_on_target' as const
 
@@ -184,6 +186,45 @@ describe('ChallengeDetail', () => {
     show([challengeOf({ template: NUT, target: 10, starts_on: addDays(today, -10), ends_on: addDays(today, -1) })])
     render(<ChallengeDetail />)
     expect(screen.queryByText(/Ends today/)).toBeNull()
-    expect(screen.getAllByText(new RegExp('Result on ' + fmtShortDay(addDays(today, 2)))).length).toBeGreaterThan(0)
+    // Once, in the header: the result line under the rule does not repeat it.
+    expect(screen.getAllByText(new RegExp('Result on ' + fmtShortDay(addDays(today, 2))))).toHaveLength(1)
+    expect(screen.getByText('Counting up to the day before yesterday')).toBeTruthy()
+  })
+
+  describe('an invitation to a nutrition challenge after its last day', () => {
+    // Still active on the server for two more days, but join_challenge refuses with challenge_closed.
+    const lastDay = '2026-10-18'
+    const late = (on: boolean) => {
+      pillar(on)
+      show([invited({ template: NUT, target: 10, ends_on: lastDay })])
+    }
+
+    it('is still joinable on the last day', () => {
+      vi.setSystemTime(new Date('2026-10-18T15:00:00Z'))
+      late(true)
+      render(<ChallengeDetail />)
+      expect(screen.getByRole('button', { name: 'Join challenge' })).toBeTruthy()
+      expect(screen.getByRole('button', { name: 'Decline' })).toBeTruthy()
+    })
+
+    it('offers no join once the day after the last day arrives, only Decline', async () => {
+      vi.setSystemTime(new Date('2026-10-19T15:00:00Z'))
+      late(true)
+      render(<ChallengeDetail />)
+      expect(screen.queryByRole('button', { name: 'Join challenge' })).toBeNull()
+      expect(screen.queryByRole('switch')).toBeNull()
+      fireEvent.click(screen.getByRole('button', { name: 'Decline' }))
+      await waitFor(() => expect(h.leave).toHaveBeenCalledWith('c1'))
+      expect(h.join).not.toHaveBeenCalled()
+    })
+
+    it('does not send the person to turn on the pillar for it', () => {
+      vi.setSystemTime(new Date('2026-10-19T15:00:00Z'))
+      late(false)
+      render(<ChallengeDetail />)
+      expect(screen.queryByRole('button', { name: 'Turn on the Nutrition pillar to join' })).toBeNull()
+      expect(screen.queryByRole('button', { name: 'Join challenge' })).toBeNull()
+      expect(screen.getByRole('button', { name: 'Decline' })).toBeTruthy()
+    })
   })
 })
