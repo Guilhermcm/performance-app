@@ -29,7 +29,7 @@ recomendada (impacto em performance física primeiro).
 | 1a | Gamificação individual | M | 0 | concluída |
 | 1b | Social | M | 1a | concluída |
 | 2 | Nutrição | G | 1a | 2a concluída, 2b a especificar |
-| 3 | Sono | P | 1a | especificada ([spec](superpowers/specs/2026-10-06-fase-3-sono-design.md)) |
+| 3 | Sono | P | 1a | especificada, execução adiada ([spec](superpowers/specs/2026-10-06-fase-3-sono-design.md)) |
 | 4 | Hábitos + trackers | M | 1a | a especificar |
 | 5 | Painel de performance | M | 2, 3, 4 | a especificar |
 | 6 | Foco (ActivityWatch) | P | 1a | a especificar |

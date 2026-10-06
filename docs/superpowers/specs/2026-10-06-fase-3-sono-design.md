@@ -1,12 +1,12 @@
 # performance-app: Design da Fase 3, Sono
 
 - **Data:** 2026-10-06
-- **Status:** aguardando revisão
+- **Status:** aprovada; execução adiada (não entra na publicação depois da 2b)
 - **Roadmap:** [docs/ROADMAP.md](../../ROADMAP.md), Fase 3
 - **Base:** [spec da Fase 2](2026-10-05-fase-2-nutricao-design.md) (molde do pilar: períodos, fechamento
   em D+2, XP, streak, conquistas privadas, radar), [spec da 2b](2026-10-06-fase-2b-nutricao-design.md)
   (calendário e desafio de pilar) e [spec da Fundação](2026-10-04-performance-app-foundation-design.md)
-- **Ordem:** executada logo depois da 2b, no mesmo branch, antes da publicação em produção.
+- **Ordem:** a execução fica para depois. A publicação em produção acontece ao fim da 2b, sem o Sono.
 
 ## 1. Entendimento e objetivo
 
@@ -536,12 +536,8 @@ comparação com amigos (Fase 5).
 | Nova assinatura de `join_challenge` quebrar o cliente | `drop` + parâmetros nomeados; cliente e migration no mesmo deploy (SETUP) |
 | Recharts pesar em `/sono` | gráficos sob demanda com skeleton, precache no service worker |
 
-## 13. Publicação depois da Fase 3
+## 13. Publicação
 
-Ao fim da Fase 3, com a revisão final limpa:
-
-1. PR #3 sai de rascunho e vai para o `main`; a Vercel publica em produção.
-2. As migrations `0007` em diante rodam no Supabase de produção, em ordem, e os jobs de cron
-   (`close-nutrition-days`, `close-sleep-nights`) são conferidos. Sem acesso ao projeto Supabase
-   nesta sessão, o passo a passo fica em `docs/SETUP.md` para a pessoa dona do projeto rodar.
-3. `docs/ROADMAP.md` marca as Fases 2 e 3 como concluídas.
+A publicação em produção não espera esta fase: ela acontece ao fim da 2b. Quando a Fase 3 for
+executada, as migrations `0017` a `0021` e o job `close-sleep-nights` entram no passo a passo de
+`docs/SETUP.md`, e o cliente e as migrations sobem no mesmo deploy (por causa de `join_challenge`).
