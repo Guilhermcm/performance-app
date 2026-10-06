@@ -1466,6 +1466,20 @@ export const PT_BR_OVERRIDES = {
   "Looking up the product…": "Buscando o produto…",
   "Last time ({0})": "Última vez ({0})",
   "Days older than two weeks need a connection.": "Dias de mais de duas semanas atrás só aparecem com conexão.",
+  "Pillars": "Pilares",
+  "Sleep": "Sono",
+  "Habits": "Hábitos",
+  "Coming soon": "Em breve",
+  "No weeks yet": "Nenhuma semana ainda",
+  "Turn on": "Ativar",
+  "Turned off": "Desligado",
+  "Last 4 weeks": "Últimas 4 semanas",
+  "4 weeks before": "4 semanas anteriores",
+  "Pillar details": "Detalhes dos pilares",
+  "{0} coming soon": "{0} em breve",
+  "{0}: off": "{0}: desligado",
+  "{0}: no weeks yet": "{0}: nenhuma semana ainda",
+  "How much of the possible XP each pillar earned in the last 4 closed weeks and the 4 before them.": "Quanto do XP possível cada pilar ganhou nas últimas 4 semanas fechadas e nas 4 anteriores.",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

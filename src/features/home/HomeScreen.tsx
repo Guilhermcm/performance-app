@@ -1,3 +1,4 @@
+import { lazy, Suspense, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BarChart3, Settings as SettingsIcon } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -10,6 +11,14 @@ import { TodayCard } from './TodayCard'
 import { BodyWeightCard } from './BodyWeightCard'
 import { CheckInCard, WelcomeCard } from './HomeCards'
 import HomeNutritionCard from '../nutrition/HomeNutritionCard'
+import { useProgress } from '../gamification/useProgress'
+import type { PillarKey } from '../gamification/types'
+import { PillarRadarSkeleton } from './PillarRadarSkeleton'
+
+// Recharts is heavy and only the radar uses it on the Home: it comes in its own chunk.
+const PillarRadar = lazy(() => import('./PillarRadar'))
+// The pillars out so far; sleep and habits show as coming soon.
+const RELEASED: PillarKey[] = ['strength', 'nutrition']
 
 type HomeStore = { S: Record<string, any>; user: { id: string; name?: string } | null }
 
@@ -56,10 +65,26 @@ export default function HomeScreen() {
       {/* With no routines yet, setting up a plan is the one thing to do: it leads the page. */}
       {!S.routines.length && !S.active && <WelcomeCard />}
       {user && <ProgressHero />}
+      {user && <HomeRadar />}
       {user && <HomeNutritionCard />}
       <TodayCard />
       {S.checkIn !== false && <CheckInCard />}
       {S.showWeightCard !== false && <BodyWeightCard />}
     </div>
+  )
+}
+
+// The radar under the level card. Until the progress and the profile are in (or while the cached
+// progress is from a build without the radar), and while the chunk loads, a skeleton of the same size.
+function HomeRadar() {
+  const radar = useProgress(s => s.progress?.radar)
+  const profile = useProfile(s => s.profile)
+  const nutrition = profile?.nutrition_enabled ?? false
+  const enabled = useMemo(() => ({ strength: true, nutrition }), [nutrition])
+  if (!radar || !profile) return <PillarRadarSkeleton />
+  return (
+    <Suspense fallback={<PillarRadarSkeleton />}>
+      <PillarRadar radar={radar} enabled={enabled} released={RELEASED} />
+    </Suspense>
   )
 }
