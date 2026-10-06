@@ -48,6 +48,13 @@ describe('privacy policy page', () => {
     expect(visible).toContain('Profile &gt; Delete my account')
   })
 
+  it('says unsent diary items stay on the device across sign-out, in both languages', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('ainda não foram enviados ficam guardados no aparelho e sobem na próxima vez que a mesma conta entrar')
+    expect(en).toContain('have not been sent yet stay saved on the device and go up the next time the same account signs in')
+  })
+
   it('uses no dash as a pause in its visible text', () => {
     const hits = visible.match(/.{0,30}(?:[—–]|\s-\s).{0,30}/g) || []
     expect(hits).toEqual([])

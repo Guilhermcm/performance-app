@@ -1,9 +1,8 @@
-import { clearOutbox } from './outbox'
 import { DAY_SEEN_KEY, INVITE_DISMISSED_KEY } from './storage-keys'
 
-// Signing out: what the nutrition feature keeps on this device for the account that left.
+// Signing out: the seen-day and invite flags go. The outbox stays: it is keyed per account, so unsent
+// diary writes wait on the device and go up the next time that same account signs in.
 export function clearNutritionLocal(): void {
-  clearOutbox()
   for (const k of [DAY_SEEN_KEY, INVITE_DISMISSED_KEY]) {
     try { localStorage.removeItem(k) } catch { /* ignore */ }
   }

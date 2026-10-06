@@ -12,7 +12,8 @@ vi.mock('../gamification/useProgress', () => ({ useProgress: { getState: () => p
 
 import { useNutrition, startNutritionSync } from './useNutrition'
 import { useProfile } from '../profile/useProfile'
-import { clearOutbox } from './outbox'
+import { clearOutbox, pending } from './outbox'
+import { clearNutritionLocal } from './sign-out'
 import { ME, OTHER, foodOf, itemOf, logOf, targetOf } from './test-nutrition'
 
 const TODAY = '2026-10-05', YESTERDAY = '2026-10-04'
@@ -252,6 +253,56 @@ describe('useNutrition', () => {
     expect(s.userId).toBeNull(); expect(s.logs).toEqual({}); expect(s.foods).toEqual([]); expect(s.targets).toEqual([])
     expect(s.status).toBe('idle')
     expect(cache()).toBeNull()
+  })
+})
+
+describe('sign-out with unsent items', () => {
+  it("keeps A's ops across sign-out, never sends them for B, and sends them when A returns", async () => {
+    await bound()
+    api.upsertLog.mockRejectedValue(new TypeError('Failed to fetch'))
+    const { id, updated_at, ...rest } = logOf({ day: TODAY })
+    const a = useNutrition.getState().addLog(rest)
+    await settle()
+    expect(pending(ME)).toHaveLength(1)
+
+    // what main.jsx does on SIGNED_OUT
+    useNutrition.getState().reset(); clearNutritionLocal()
+    expect(pending(ME)).toHaveLength(1)
+
+    api.upsertLog.mockReset().mockResolvedValue(undefined)
+    await useNutrition.getState().bind(OTHER)
+    await settle()
+    expect(api.upsertLog).not.toHaveBeenCalled()
+    expect(pending(OTHER)).toEqual([])
+    expect(Object.values(useNutrition.getState().logs).flat()).toEqual([])
+    expect(pending(ME)).toHaveLength(1)
+
+    useNutrition.getState().reset(); clearNutritionLocal()
+    await useNutrition.getState().bind(ME)
+    expect(api.upsertLog).toHaveBeenCalledTimes(1)
+    expect(api.upsertLog.mock.calls[0][0].id).toBe(a.id)
+    expect(pending(ME)).toEqual([])
+  })
+
+  it("shows A's unsent item in the diary when the pull does not have it yet", async () => {
+    await bound()
+    api.upsertLog.mockRejectedValue(new TypeError('Failed to fetch'))
+    const { id, updated_at, ...rest } = logOf({ day: TODAY })
+    const a = useNutrition.getState().addLog(rest)
+    await settle()
+    useNutrition.getState().reset(); clearNutritionLocal()
+    await useNutrition.getState().bind(ME)
+    expect(useNutrition.getState().logs[TODAY].map(l => l.id)).toEqual([a.id])
+  })
+
+  it('flushes the account pending ops on bind', async () => {
+    const { id, updated_at, ...rest } = logOf({ day: TODAY })
+    const l = { ...rest, id: 'x1', updated_at: '2026-10-05T12:00:00.000Z' }
+    const { enqueue } = await import('./outbox')
+    enqueue(ME, { kind: 'log', op: 'upsert', id: 'x1', row: l })
+    await useNutrition.getState().bind(ME)
+    expect(api.upsertLog).toHaveBeenCalledTimes(1)
+    expect(pending(ME)).toEqual([])
   })
 })
 

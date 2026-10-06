@@ -512,6 +512,8 @@ scripts/build-taco.mjs                 # planilha TACO → src/features/nutritio
 - Cópia local: itens de hoje, ontem e dos últimos 14 dias, resumos fechados, alimentos salvos,
   recentes. Pull no login, ao voltar o foco e ao reconectar. Presa à conta logada (como o store
   social).
+- **Decisão (sair da conta):** a fila `perf_food_outbox_v1` não é apagada no logout. Ela é por conta;
+  o que não foi enviado fica no aparelho e sobe no próximo login da mesma conta.
 - Offline: OFF mostra "Busca online indisponível sem conexão"; o leitor procura só em
   `user_foods`.
 - O plano confirma que o `sw.js` guarda os chunks sob demanda (TACO, ZXing, radar) para uso
