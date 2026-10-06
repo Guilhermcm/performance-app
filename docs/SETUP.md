@@ -5,10 +5,13 @@
 1. Crie um projeto em https://supabase.com/dashboard (região: São Paulo, South America).
 2. SQL Editor → cole e rode, em ordem, cada arquivo de `supabase/migrations/` (`0001_init.sql`,
    `0002_gamification.sql`, `0003_gamification_cron.sql`, `0004_social.sql`,
-   `0005_social_cron.sql`, `0006_delete_account.sql`). Em um projeto que já tem as anteriores,
-   rode só as que faltam. A `0006` cria a exclusão de conta pelo próprio app (Perfil > Excluir
-   minha conta) e precisa rodar como `postgres`, o usuário padrão do SQL Editor, porque apaga a
-   linha da conta em `auth.users`.
+   `0005_social_cron.sql`, `0006_delete_account.sql`, e as do pilar Nutrição: `0007_nutrition_base.sql`,
+   `0008_weekly_targets_pillar.sql`, `0009_nutrition_diary.sql`, `0010_nutrition_close.sql`,
+   `0011_nutrition_week.sql`, `0012_nutrition_progress.sql`, `0013_nutrition_cron.sql`). Em um
+   projeto que já tem as anteriores, rode só as que faltam. A `0006` cria a exclusão de conta pelo
+   próprio app (Perfil > Excluir minha conta) e precisa rodar como `postgres`, o usuário padrão do
+   SQL Editor, porque apaga a linha da conta em `auth.users`. Rode a `0007` a `0013` também como
+   `postgres`: as funções que fecham os dias e pagam o XP escrevem como dono das tabelas.
 3. Project Settings → API: copie `Project URL` e a chave `anon public`.
 
 ## 2. Google OAuth
@@ -57,14 +60,37 @@ O app fecha as semanas sempre que abre (`get_my_progress`). Um job diário mant�
 conquistas em dia para quem passa dias sem abrir.
 
 1. Supabase → Database → Extensions → procure `pg_cron` → Enable.
-2. SQL Editor → rode de novo `supabase/migrations/0003_gamification_cron.sql` e
-   `supabase/migrations/0005_social_cron.sql`.
+2. SQL Editor → rode de novo `supabase/migrations/0003_gamification_cron.sql`,
+   `supabase/migrations/0005_social_cron.sql` e `supabase/migrations/0013_nutrition_cron.sql`.
 3. Confira com `select jobname, schedule, command from cron.job order by jobname;`. O resultado
-   esperado tem duas linhas: `close-challenges | 15 6 * * * | select public.close_all_challenges()`
-   e `close-weeks | 0 6 * * * | select public.close_all_weeks()` (06:15 e 06:00 UTC).
+   esperado tem três linhas: `close-challenges | 15 6 * * * | select public.close_all_challenges()`,
+   `close-nutrition-days | 30 6 * * * | select public.close_all_nutrition_days()` e
+   `close-weeks | 0 6 * * * | select public.close_all_weeks()` (06:15, 06:30 e 06:00 UTC).
 
 Sem o `pg_cron` nada quebra. O streak de quem sumiu só é atualizado quando a pessoa abre o app de
 novo.
 
 Os desafios também fecham sozinhos quando alguém abre o app, a aba de desafios ou o ranking. O job
 só garante os +300 XP de quem passa dias sem abrir.
+
+Com a Nutrição é igual: o app fecha os dias e as semanas pendentes quando abre. O job
+`close-nutrition-days` fecha os dias de quem está com o pilar ligado e não abriu o app, paga o XP
+desses dias, a meta da semana e as conquistas, e mantém o streak de nutrição em dia.
+
+## 8. Tabela TACO (busca local de alimentos)
+
+A busca de alimentos usa a TACO (Tabela Brasileira de Composição de Alimentos, 4ª edição,
+NEPA/Unicamp) no próprio aparelho. Os dados ainda não estão no repositório: os termos de uso
+precisam ser confirmados (veja `NOTICE.md`). Até lá, `src/features/nutrition/data/taco.json` fica
+vazio e a busca mostra só os alimentos salvos e os resultados do Open Food Facts.
+
+Para incluir a tabela:
+
+1. Baixe a planilha oficial da TACO 4ª edição em https://www.nepa.unicamp.br/taco/.
+2. Converta para CSV com o cabeçalho
+   `id,nome,energia_kcal,proteina_g,carboidrato_g,lipideos_g,fibra_g` (valores por 100 g, com
+   ponto ou vírgula decimal) e salve em `scripts/data/taco-4ed.csv`.
+3. Rode `node scripts/build-taco.mjs`. O script gera `src/features/nutrition/data/taco.json` e
+   para com erro se as calorias de algum item não baterem com os macros (a regra está no topo do
+   script).
+4. Confira com `npm test` e faça o commit do CSV e do JSON.

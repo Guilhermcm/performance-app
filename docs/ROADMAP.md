@@ -28,7 +28,7 @@ recomendada (impacto em performance física primeiro).
 | 0 | Fundação | G | — | concluída |
 | 1a | Gamificação individual | M | 0 | concluída |
 | 1b | Social | M | 1a | concluída |
-| 2 | Nutrição | G | 1a | spec em revisão (2a + 2b) |
+| 2 | Nutrição | G | 1a | 2a concluída, 2b a especificar |
 | 3 | Sono | P | 1a | a especificar |
 | 4 | Hábitos + trackers | M | 1a | a especificar |
 | 5 | Painel de performance | M | 2, 3, 4 | a especificar |

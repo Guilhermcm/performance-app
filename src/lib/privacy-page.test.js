@@ -21,7 +21,17 @@ describe('privacy policy page', () => {
 
   it('has the English version and the update date', () => {
     expect(html).toContain('id="en"')
-    expect(visible).toContain('Última atualização: 5 de outubro de 2026')
+    expect(visible).toContain('Última atualização: 6 de outubro de 2026')
+    expect(visible).toContain('Last updated: October 6, 2026')
+  })
+
+  it('covers the nutrition pillar and Open Food Facts in both languages', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('Nutrição')
+    expect(pt).toContain('Open Food Facts')
+    expect(en).toContain('Nutrition')
+    expect(en).toContain('Open Food Facts')
   })
 
   it('points to the self-service account deletion in both languages', () => {

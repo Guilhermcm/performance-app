@@ -179,7 +179,8 @@ UPC-E. Where there is none (Safari on the iPhone, for one), it decodes the camer
 project, used under the **Apache License 2.0** (text at <https://www.apache.org/licenses/LICENSE-2.0>
 and in the package's own `LICENSE`). It loads on demand, only in browsers without a native detector
 and only when someone scans. Frames are decoded in memory and never uploaded or stored; only the
-code's digits are used, to look the product up.
+code's digits are used, to look the product up. (The package's `package.json` says MIT, but its
+`LICENSE` file and source headers are Apache-2.0, so Apache-2.0 is what this notice follows.)
 
 ### Camera scan & photo decode in the app — `@capacitor-mlkit/barcode-scanning`
 
@@ -189,6 +190,21 @@ by the Capawesome Team (Robin Genz), a Capacitor wrapper around Google's ML Kit,
 **Apache License 2.0**. openGym pins the `7.x` line to stay on Capacitor 7. The full license text is
 available at <https://www.apache.org/licenses/LICENSE-2.0> and in the package's own `LICENSE` file.
 The decoded string is what openGym keeps; the photo itself is never stored.
+
+## Charts
+
+### Recharts
+
+The pillar radar on the Home is drawn with [**Recharts**](https://github.com/recharts/recharts)
+(`recharts`, copyright (c) 2015-present recharts), under the **MIT License** (text in the package's
+own `LICENSE`). It loads on demand, in a chunk of its own, the first time the radar is shown.
+
+### shadcn/ui Charts
+
+`src/components/ui/chart.tsx` is the Charts component of [**shadcn/ui**](https://ui.shadcn.com)
+(copyright (c) 2023 shadcn), copied from its registry for Recharts 3 and trimmed, under the **MIT
+License** (<https://github.com/shadcn-ui/ui/blob/main/LICENSE.md>). The changes from upstream are
+described at the top of the file.
 
 ## Food data
 

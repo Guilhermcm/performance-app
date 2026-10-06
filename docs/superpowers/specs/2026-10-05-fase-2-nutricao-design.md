@@ -663,3 +663,22 @@ apps de saúde, compartilhar refeições, radar de amigos e comparação no rada
 | Dado de saúde vazar para amigos | conquistas `private`, bloco `nutrition` só no próprio, testes de payload |
 | Mudança em `weekly_targets` quebrar a Força | tabela de §5.5 vira tarefa explícita, com testes de `progress_card` e `get_friends` |
 | Export real dos apps diferente do esperado | perfis só com arquivo real do grupo; mapeador genérico como saída |
+
+## 16. Decisões do plano 2a
+
+O plano da 2a fechou pontos em que esta spec dizia outra coisa ou deixava em aberto:
+
+- **Escrita do servidor por papel, sem GUC.** O cliente escreve como `authenticated`; funções
+  `security definer` escrevem como o dono e não passam por RLS. Os triggers de `food_logs` só
+  aplicam as regras quando `current_user` é `authenticated` ou `anon` (substitui a marca de §5.4).
+- **`my_local_today()`.** O "hoje" do servidor no fuso do perfil sai de uma função só, usada pela
+  janela do diário e pelas políticas de `nutrition_targets`.
+- **Migrations `0007` a `0013`**, uma por tarefa de banco, em vez de `0007`/`0008`.
+- **`close_nutrition_weeks`** é uma função própria, chamada ao fim de `close_nutrition_days`, e
+  não um ramo de `close_all_weeks`.
+- **Hoje e amanhã no cliente** vêm do fuso do perfil, não do fuso do aparelho.
+- **Copiar de** busca online os dias 15 a 30; a cópia local cobre os últimos 14.
+- **TACO pendente.** A rede deste ambiente bloqueia a planilha oficial; `taco.json` segue vazio e
+  `docs/SETUP.md` §8 diz como gerar os dados depois.
+- **Offline.** Os chunks da TACO, do ZXing e do radar entram no precache do service worker pela
+  lista que o build escreve em `sw.js`, e funcionam offline desde a primeira abertura.
