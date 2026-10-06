@@ -24,9 +24,9 @@ import type { Challenge } from './types'
 
 // /social/desafios/:id: the rule, where the team (or I) stand against the goal, each member, and
 // the one action that fits: join or decline an invitation, leave (after a confirmation), or the
-// result once it ended. A nutrition challenge counts closed days only (up to the day before
-// yesterday) and gives its result later; joining it asks for the opt-in, and with the pillar off
-// the join button opens the pillar's setup instead.
+// result once it ended. After the last day there is no action at all. A nutrition challenge counts
+// closed days only (up to the day before yesterday) and gives its result later; joining it asks for
+// the opt-in, and with the pillar off the join button opens the pillar's setup instead.
 export default function ChallengeDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -83,7 +83,6 @@ export default function ChallengeDetail() {
   const mine = c.members.find(m => m.me)
   const value = c.mode === 'team' ? c.total : (mine?.progress ?? 0)
   const invited = c.status === 'active' && !c.me.joined
-  // Past ends_on a nutrition invitation can only be declined: the server refuses the join.
   const joinable = canJoin(c, today)
   const needsVolume = joinable && c.template === 'volume_total'
   const nutrition = c.template === 'nutrition_days_on_target'
@@ -104,7 +103,8 @@ export default function ChallengeDetail() {
       <p className="mt-3 text-sm leading-snug text-muted-foreground text-pretty">{tx.rule()} {MODE_TEXT[c.mode].detail()}</p>
       {nutrition && c.status === 'active' && (
         <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted-foreground">
-          <span>{t('Counting up to the day before yesterday')}</span>
+          {/* Nothing is counted before the first day. */}
+          {today >= c.starts_on && <span>{t('Counting up to the day before yesterday')}</span>}
           {/* After the last day the header already says it. */}
           {today <= c.ends_on && <span className="tabular-nums">{t('Result on {0}', fmtShortDay(resultOn(c)))}</span>}
         </p>
@@ -157,7 +157,9 @@ export default function ChallengeDetail() {
         </ul>
       </section>
 
-      {c.status === 'active' && (
+      {/* Past ends_on the server refuses join and leave (challenge_closed) even while a nutrition
+          challenge stays active for its grace days, so no action is offered: only status and result. */}
+      {c.status === 'active' && today <= c.ends_on && (
         <div className="mt-6 flex flex-col gap-2">
           {invited ? (
             <>

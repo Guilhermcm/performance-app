@@ -185,7 +185,6 @@ export const EN_OVERRIDES = {
   'No training history yet — starting conservatively.': 'No training history yet, so starting conservatively.',
   'The main lower-body driver — where most of the strength comes from.': 'The main lower-body driver, where most of the strength comes from.',
   'The same patterns, different variations — enough overlap to progress, enough difference to stay fresh.': 'The same patterns in different variations, with enough overlap to progress and enough difference to stay fresh.',
-  'This demo runs entirely in your browser on example data — nothing is sent anywhere. Passkey sign-in and sync across your devices come with the performance-app server, which you get by self-hosting it.': 'This demo runs entirely in your browser on example data, and nothing is sent anywhere. Passkey sign-in and sync across your devices come with the performance-app server, which you get by self-hosting it.',
   'Three things worth changing, and one worth knowing about. Everything else is working — the squat and the pulls are both progressing on schedule.': 'Three things worth changing, and one worth knowing about. Everything else is working: the squat and the pulls are both progressing on schedule.',
   'Thibaudeau — Powerlifting': 'Powerlifting (Thibaudeau)',
   'Your server cannot be reached — your changes are saved on this device and sync once it answers again.': 'Your server cannot be reached. Your changes are saved on this device and sync once it answers again.',

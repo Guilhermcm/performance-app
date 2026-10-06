@@ -44,7 +44,7 @@ export default function ChallengesPanel() {
   const groups: [string, Challenge[]][] = list ? [
     [t('Invitations'), list.filter(c => canJoin(c, today))],
     [t('In progress'), list.filter(c => c.status === 'active' && c.me.joined)],
-    // An invitation nobody joined in time can only be declined: it waits here for the server to close it.
+    // An invitation nobody joined in time has no action left (the server refuses join and decline): it waits here, without actions, until the server closes it.
     [t('Finished'), list.filter(c => c.status !== 'active' || (!c.me.joined && !canJoin(c, today)))]
   ] : []
 

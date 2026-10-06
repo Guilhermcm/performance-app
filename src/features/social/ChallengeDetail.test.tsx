@@ -207,15 +207,14 @@ describe('ChallengeDetail', () => {
       expect(screen.getByRole('button', { name: 'Decline' })).toBeTruthy()
     })
 
-    it('offers no join once the day after the last day arrives, only Decline', async () => {
+    it('offers no action once the day after the last day arrives: the server would refuse them all', () => {
       vi.setSystemTime(new Date('2026-10-19T15:00:00Z'))
       late(true)
       render(<ChallengeDetail />)
       expect(screen.queryByRole('button', { name: 'Join challenge' })).toBeNull()
+      expect(screen.queryByRole('button', { name: 'Decline' })).toBeNull()
       expect(screen.queryByRole('switch')).toBeNull()
-      fireEvent.click(screen.getByRole('button', { name: 'Decline' }))
-      await waitFor(() => expect(h.leave).toHaveBeenCalledWith('c1'))
-      expect(h.join).not.toHaveBeenCalled()
+      expect(screen.getByText(new RegExp('Result on ' + fmtShortDay('2026-10-21')))).toBeTruthy()
     })
 
     it('does not send the person to turn on the pillar for it', () => {
@@ -224,7 +223,45 @@ describe('ChallengeDetail', () => {
       render(<ChallengeDetail />)
       expect(screen.queryByRole('button', { name: 'Turn on the Nutrition pillar to join' })).toBeNull()
       expect(screen.queryByRole('button', { name: 'Join challenge' })).toBeNull()
-      expect(screen.getByRole('button', { name: 'Decline' })).toBeTruthy()
+      expect(screen.queryByRole('button', { name: 'Decline' })).toBeNull()
     })
+
+    it('still declines on the last day', async () => {
+      vi.setSystemTime(new Date('2026-10-18T15:00:00Z'))
+      late(true)
+      render(<ChallengeDetail />)
+      fireEvent.click(screen.getByRole('button', { name: 'Decline' }))
+      await waitFor(() => expect(h.leave).toHaveBeenCalledWith('c1'))
+    })
+  })
+
+  describe('a member of a nutrition challenge in its grace days', () => {
+    const lastDay = '2026-10-18'
+    const mine = () => show([challengeOf({ template: NUT, target: 10, ends_on: lastDay })])
+
+    it('can still leave on the last day', () => {
+      vi.setSystemTime(new Date('2026-10-18T15:00:00Z'))
+      pillar(true)
+      mine()
+      render(<ChallengeDetail />)
+      expect(screen.getByRole('button', { name: 'Leave challenge' })).toBeTruthy()
+    })
+
+    it('has no Leave button once the day after the last day arrives', () => {
+      vi.setSystemTime(new Date('2026-10-19T15:00:00Z'))
+      pillar(true)
+      mine()
+      render(<ChallengeDetail />)
+      expect(screen.queryByRole('button', { name: 'Leave challenge' })).toBeNull()
+      expect(screen.queryByRole('button', { name: 'Decline' })).toBeNull()
+      expect(screen.getByText(new RegExp('Result on ' + fmtShortDay('2026-10-21')))).toBeTruthy()
+    })
+  })
+
+  it('does not say it counts up to the day before yesterday before the challenge starts', () => {
+    pillar(true)
+    show([challengeOf({ template: NUT, target: 10, starts_on: '2026-10-08', ends_on: '2026-10-20' })])
+    render(<ChallengeDetail />)
+    expect(screen.queryByText('Counting up to the day before yesterday')).toBeNull()
   })
 })

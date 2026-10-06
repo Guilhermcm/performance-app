@@ -3,24 +3,49 @@
 ## 1. Supabase
 
 1. Crie um projeto em https://supabase.com/dashboard (região: São Paulo, South America).
-2. SQL Editor → cole e rode, em ordem, cada arquivo de `supabase/migrations/` (`0001_init.sql`,
-   `0002_gamification.sql`, `0003_gamification_cron.sql`, `0004_social.sql`,
-   `0005_social_cron.sql`, `0006_delete_account.sql`, e as do pilar Nutrição: `0007_nutrition_base.sql`,
-   `0008_weekly_targets_pillar.sql`, `0009_nutrition_diary.sql`, `0010_nutrition_close.sql`,
-   `0011_nutrition_week.sql`, `0012_nutrition_progress.sql`, `0013_nutrition_cron.sql`, e as da
-   Fase 2b: `0014_food_measures.sql`, `0015_nutrition_challenge.sql`,
-   `0016_nutrition_history.sql`). Em um projeto que já tem as anteriores, rode só as que faltam. A `0006` cria a exclusão de conta pelo
-   próprio app (Perfil > Excluir minha conta) e precisa rodar como `postgres`, o usuário padrão do
-   SQL Editor, porque apaga a linha da conta em `auth.users`. Rode a `0007` a `0016` também como
-   `postgres`: as funções que fecham os dias e pagam o XP escrevem como dono das tabelas.
-   Rode a `0007` a `0016` no Supabase antes de publicar o cliente novo. Sem elas, a aba Nutrição
-   mostra "Não foi possível carregar seu diário alimentar" (em inglês, "Could not load your food diary").
-   A `0015` troca as assinaturas de `create_challenge` e `join_challenge`: as versões antigas são
-   apagadas e entram versões com o parâmetro novo `p_share_nutrition boolean default false`. Por isso
-   as migrations precisam rodar ANTES de publicar o cliente novo, que chama as duas funções com
-   todos os parâmetros nomeados. O cliente antigo, ainda em produção durante o deploy, continua
-   funcionando: ele chama as funções por parâmetros nomeados e os parâmetros novos têm valor padrão.
+2. SQL Editor → em um projeto novo, cole e rode, em ordem, cada arquivo de `supabase/migrations/`,
+   de `0001_init.sql` a `0016_nutrition_history.sql`, um por consulta. Antes de rodar a `0013`, ative
+   o `pg_cron` (veja a seção 7). Em um projeto que já tem `0001` a `0006`, siga o roteiro abaixo.
+   A `0006` cria a exclusão de conta pelo próprio app (Perfil > Excluir minha conta) e precisa rodar
+   como `postgres`, o usuário padrão do SQL Editor, porque apaga a linha da conta em `auth.users`.
+   As `0007` a `0016` também rodam como `postgres`: as funções que fecham os dias e pagam o XP
+   escrevem como dono das tabelas.
 3. Project Settings → API: copie `Project URL` e a chave `anon public`.
+
+### Roteiro: banco de produção que já tem a 0001 a 0006
+
+Use este roteiro para levar um banco existente até a `0016`. Faça tudo antes de publicar o
+cliente novo. Sem as migrations, a aba Nutrição mostra "Não foi possível carregar seu diário
+alimentar" (em inglês, "Could not load your food diary"). O cliente antigo, ainda no ar durante o
+roteiro, continua funcionando: ele chama as funções por parâmetros nomeados e os parâmetros novos
+têm valor padrão.
+
+1. Ative o `pg_cron` antes de tudo, se ainda não estiver ativo: Supabase → Database → Extensions →
+   `pg_cron` → Enable. A `0013` agenda um job e depende dele.
+2. No SQL Editor, rode cada arquivo inteiro, em ordem, da `0007` à `0016`, um por consulta (uma
+   consulta nova para cada arquivo). Cada arquivo roda como uma única transação: se der erro, o
+   arquivo inteiro é desfeito. Pare no primeiro erro, corrija a causa e rode de novo só aquele
+   arquivo antes de seguir. A ordem é `0007_nutrition_base.sql`, `0008_weekly_targets_pillar.sql`,
+   `0009_nutrition_diary.sql`, `0010_nutrition_close.sql`, `0011_nutrition_week.sql`,
+   `0012_nutrition_progress.sql`, `0013_nutrition_cron.sql`, `0014_food_measures.sql`,
+   `0015_nutrition_challenge.sql` e `0016_nutrition_history.sql`. A `0015` apaga as versões antigas
+   de `create_challenge` e `join_challenge` e cria as novas com o parâmetro
+   `p_share_nutrition boolean default false`.
+3. Confira o resultado com três consultas:
+   - `select proname, pg_get_function_identity_arguments(oid) from pg_proc where proname in ('create_challenge','join_challenge');`
+     deve devolver exatamente uma linha para cada função, e as duas mostram o parâmetro
+     `p_share_nutrition`. Mais de uma linha por função indica uma migration pela metade.
+   - `select relrowsecurity from pg_class where relname = 'food_measures';` deve devolver `true`.
+   - `select jobname from cron.job order by jobname;` deve listar `close-nutrition-days` entre os
+     jobs (o conjunto completo está na seção 7).
+4. Se o app disser que não achou a função logo depois ("Could not find the function"), recarregue o
+   cache da API: `notify pgrst, 'reload schema';`.
+5. Só então faça o merge e o deploy do cliente novo.
+
+Atalho: o arquivo único `supabase/release/0007-0016_nutrition.sql` pode ser colado no SQL Editor no
+lugar dos dez arquivos do passo 2. Ele é gerado por concatenação das migrations, então não edite
+à mão: se algo precisar mudar, mude a migration e gere o arquivo de novo. O `pg_cron` precisa estar
+ativo antes de rodá-lo. As conferências do passo 3 valem do mesmo jeito.
 
 ## 2. Google OAuth
 

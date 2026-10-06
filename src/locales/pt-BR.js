@@ -846,7 +846,6 @@ export const PT_BR_OVERRIDES = {
   // --- connection indicator, Server & sync, changes not on the server yet ---
   'Waiting to sync': 'Aguardando sincronização',
   'Offline — the server cannot be reached': 'Offline: não é possível acessar o servidor',
-  'Your server’s address answered with something other tha performance-app (HTTP {0}). Your changes are kept here.': 'O endereço do seu servidor respondeu com algo que não é o performance-app (HTTP {0}). Suas alterações ficam aqui.',
   'Your server answered with an error (HTTP {0}). Your changes are kept here.': 'Seu servidor respondeu com um erro (HTTP {0}). Suas alterações ficam aqui.',
   'Your server no longer accepts this browser. Your changes are kept here.': 'Seu servidor não aceita mais este navegador. Suas alterações ficam aqui.',
   'This phone is no longer paired with your server. Your changes are kept here.': 'Este celular não está mais pareado com seu servidor. Suas alterações ficam aqui.',
@@ -917,7 +916,6 @@ export const PT_BR_OVERRIDES = {
   'Self-host performance-app': 'Hospedar o performance-app por conta própria',
   'Sessions have been running about fifteen minutes over. This is the accessory with the least to lose from one set fewer.': 'As sessões estão passando uns quinze minutos do previsto. Este é o exercício acessório que menos perde com uma série a menos.',
   'The two big lower-body and pressing patterns first, while you are fresh.': 'Primeiro os dois grandes padrões de membros inferiores e de empurrar, enquanto você está descansado.',
-  'This demo runs entirely in your browser on example data — nothing is sent anywhere. Passkey sign-in and sync across your devices come with the performance-app server, which you get by self-hosting it.': 'Esta demo roda inteira no seu navegador com dados de exemplo, e nada é enviado para lugar nenhum. O login com chave de acesso e a sincronização entre dispositivos vêm com o servidor performance-app, que você hospeda por conta própria.',
   'Three things worth changing, and one worth knowing about. Everything else is working — the squat and the pulls are both progressing on schedule.': 'Três coisas que vale mudar e uma que vale saber. Todo o resto está funcionando: o agachamento e as puxadas estão progredindo como previsto.',
   'You have moved this session to Saturday three weeks running. Better the plan says so than that you keep overriding it.': 'Você mudou esta sessão para sábado três semanas seguidas. Melhor o plano dizer isso do que você ficar alterando toda vez.',
   'You’re in the demo': 'Você está na demo',
