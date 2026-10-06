@@ -30,6 +30,13 @@ describe('HomeScreen', () => {
     expect(again.container.querySelector('[data-slot="progress-hero"]')).toBeTruthy()
   })
 
+  it('opens Stats from the header', () => {
+    setS()
+    render(<HomeScreen />)
+    fireEvent.click(screen.getByRole('button', { name: 'Stats' }))
+    expect(h.nav).toHaveBeenCalledWith('/stats')
+  })
+
   it('opens the gym check-in and hides it when switched off', () => {
     setS({ checkIn: true })
     render(<HomeScreen />)

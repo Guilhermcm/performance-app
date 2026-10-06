@@ -1,6 +1,6 @@
 import type { ReactElement, ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Users } from 'lucide-react'
+import { Apple, Users } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
 import { effectiveRoutineIds, effectiveRoutines } from '../../lib/history.js'
 import { todayISO } from '../../lib/format.js'
@@ -12,13 +12,14 @@ import { pendingInvites } from '../social/templates'
 // Icon.jsx is untyped JS; size and style are optional there (same cast as home/TodayCard.tsx).
 const Icon = LegacyIcon as unknown as (p: { name: string }) => ReactElement
 
-type TabKey = 'home' | 'plan' | 'social' | 'stats'
-// The tab a route lights: screens reached from a tab keep it lit.
+type TabKey = 'home' | 'plan' | 'nutrition' | 'social'
+// The tab a route lights: screens reached from a tab keep it lit. Stats left the bar (Phase 2a)
+// and opens from the Plan and Home headers, so it and its screens light Plan.
 const TAB_OF: Record<string, TabKey> = {
   home: 'home', settings: 'home', perfil: 'home', conquistas: 'home',
-  plan: 'plan', library: 'plan', muscles: 'plan',
-  social: 'social', convite: 'social',
-  stats: 'stats', history: 'stats', 'structural-balance': 'stats'
+  plan: 'plan', library: 'plan', muscles: 'plan', stats: 'plan', history: 'plan', 'structural-balance': 'plan',
+  nutricao: 'nutrition',
+  social: 'social', convite: 'social'
 }
 
 type AppStore = { S: any; user: unknown; isGuest: () => boolean }
@@ -42,7 +43,7 @@ function Tab({ active, glyph, label, count = 0, onClick }: { active: boolean; gl
   )
 }
 
-// Home, Plan, Start, Social and Stats (Decision 14). Keeps the legacy #tabbar markup and classes,
+// Home, Plan, Start, Nutrition and Social (Phase 2a, spec 8.3). Keeps the legacy #tabbar markup and classes,
 // so the glass, safe area and the raised Start button stay as they are.
 export default function TabBar({ onStart }: { onStart: (ids: unknown[]) => void }) {
   const nav = useNavigate()
@@ -74,9 +75,10 @@ export default function TabBar({ onStart }: { onStart: (ids: unknown[]) => void 
         <span className="cir"><Icon name={S.active ? (cur === 'workout' ? 'dumbbell' : 'play') : 'dumbbell'} /></span>
         <span>{S.active ? (cur === 'workout' ? t('Workout') : S.active.editingWorkoutId ? t('Edit workout') : t('Resume')) : t('Start')}</span>
       </button>
+      <Tab active={on('nutrition')} label={t('Nutrition')} onClick={() => nav('/nutricao')}
+        glyph={<Apple className="icn" width="1em" height="1em" strokeWidth={on('nutrition') ? 2 : 1.65} aria-hidden />} />
       <Tab active={on('social')} label={t('Social')} count={waiting} onClick={() => nav('/social')}
         glyph={<Users className="icn" width="1em" height="1em" strokeWidth={on('social') ? 2 : 1.65} aria-hidden />} />
-      <Tab active={on('stats')} glyph={<Icon name="chart" />} label={t('Stats')} onClick={() => nav('/stats')} />
     </nav>
   )
 }

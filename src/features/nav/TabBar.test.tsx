@@ -14,15 +14,16 @@ beforeEach(() => {
   useStore.setState({ S: JSON.parse(JSON.stringify(DEF)), user: { id: 'u1' } })
   useSocial.getState().reset()
   h.nav.mockClear()
+  h.path = '/social/ranking'
 })
 afterEach(() => { cleanup(); useStore.setState({ user: null }) })
 
 const tab = (name: RegExp) => screen.getByRole('button', { name })
 
 describe('TabBar', () => {
-  it('has Home, Plan, Start, Social and Stats, and opens the social area', () => {
+  it('has Home, Plan, Start, Nutrition and Social, and opens the social area', () => {
     render(<TabBar onStart={() => {}} />)
-    expect(screen.getAllByRole('button').map(b => b.textContent)).toEqual(['Home', 'Plan', 'Start', 'Social', 'Stats'])
+    expect(screen.getAllByRole('button').map(b => b.textContent)).toEqual(['Home', 'Plan', 'Start', 'Nutrition', 'Social'])
     expect(tab(/Social/).className).toBe('on')
     fireEvent.click(tab(/Social/))
     expect(h.nav).toHaveBeenCalledWith('/social')
@@ -36,6 +37,21 @@ describe('TabBar', () => {
     h.path = '/convite/AbCdEfGh12'
     render(<TabBar onStart={() => {}} />)
     expect(tab(/Social/).className).toBe('on')
+  })
+
+  it('lights Plan on Stats, History and Structural balance, and Nutrition on the diary', () => {
+    for (const path of ['/stats', '/history', '/structural-balance']) {
+      h.path = path
+      const { unmount } = render(<TabBar onStart={() => {}} />)
+      expect(tab(/Plan/).className).toBe('on')
+      unmount()
+    }
+    h.path = '/nutricao'
+    render(<TabBar onStart={() => {}} />)
+    expect(tab(/Nutrition/).className).toBe('on')
+    expect(tab(/Plan/).className).toBe('')
+    fireEvent.click(tab(/Nutrition/))
+    expect(h.nav).toHaveBeenCalledWith('/nutricao')
   })
 
   it('counts challenge invitations on the social tab', () => {

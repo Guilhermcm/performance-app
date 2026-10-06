@@ -47,7 +47,8 @@ function applyPending(userId: string, logs: Record<string, FoodLog[]>, foods: Us
   return { logs: groupByDay(all), foods: fs }
 }
 
-const keyOf = (i: { source: string; source_id: string | null; name: string; brand: string | null }) =>
+// One food across sources: its id at the source, or its name and brand when it has none.
+export const keyOf = (i: { source: string; source_id: string | null; name: string; brand: string | null }) =>
   i.source_id ? `${i.source}:${i.source_id}` : `${i.source}:${i.name.trim().toLowerCase()}|${(i.brand ?? '').trim().toLowerCase()}`
 
 const uuid = () => crypto.randomUUID()

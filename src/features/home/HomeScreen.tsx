@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Settings as SettingsIcon } from 'lucide-react'
+import { BarChart3, Settings as SettingsIcon } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { useStore } from '../../store/useStore.js'
@@ -12,7 +12,7 @@ import { CheckInCard, WelcomeCard } from './HomeCards'
 
 type HomeStore = { S: Record<string, any>; user: { id: string; name?: string } | null }
 
-// Home = where you stand and what to do now. Deep charts and history live in Stats.
+// Home = where you stand and what to do now. Deep charts and history live in Stats (header button).
 export default function HomeScreen() {
   const nav = useNavigate()
   const S = useStore((s: HomeStore) => s.S)
@@ -29,8 +29,12 @@ export default function HomeScreen() {
             {new Date().toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}
           </p>
         </div>
-        {/* Settings, then the profile at the far edge, where an account usually is. */}
+        {/* Stats (out of the tab bar since Phase 2a), Settings, then the profile at the far edge,
+            where an account usually is. */}
         <div className="flex flex-none items-center gap-1">
+          <Button variant="ghost" size="icon" className="size-11 rounded-full" aria-label={t('Stats')} onClick={() => nav('/stats')}>
+            <BarChart3 className="size-5" />
+          </Button>
           <Button variant="ghost" size="icon" className="size-11 rounded-full" aria-label={t('Settings')} onClick={() => nav('/settings')}>
             <SettingsIcon className="size-5" />
           </Button>
