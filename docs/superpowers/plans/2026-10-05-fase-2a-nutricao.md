@@ -600,3 +600,26 @@ public/privacidade.html, NOTICE.md, docs/SETUP.md, docs/ROADMAP.md
 - [ ] **Step 5: Commit** `docs: privacy, notices and setup for the nutrition pillar`.
 
 > **Revisão final (controlador):** revisor do branch inteiro contra a spec.
+
+## Registro de execução (decisões tomadas durante a execução)
+
+Executado por subagentes com revisão a cada três tarefas e revisão final do branch. Decisões que mudaram ou completaram o plano:
+
+- Ruling: replace the session-flag "server write mark" with role-based checks (RLS on activity_events insert excludes server_only kinds; food_logs guard is security invoker and only applies to authenticated/anon) — a client with SQL access could set the GUC in its own transaction; roles cannot be forged — if wrong, Task 1/3 rework of the guard only. Spec and plan updated (cc99a29).
+- Ruling: review cadence is one task review covering three tasks (after T3, T6, T9, T12, then T13–T14 with the final review) instead of one per task — the user asked for "revisão a cada três tarefas" — costs: a defect in task N may be built on by N+1 before review.
+- Ruling: T4 does not call close_nutrition_weeks; T5 adds that call when it creates the function — avoids a forward reference — costs nothing.
+- Ruling: T4 and T6 copy function bodies from the latest migration that defined them (0008 for award_xp, progress_card, get_my_progress, close_all_weeks) — otherwise T2's pillar changes would be lost — costs nothing.
+- Ruling: work on main-f7pdmv in place, no worktree — the environment mandates this branch and the container is already isolated — costs nothing.
+- Ruling: fold Minors 1,3,4,5 (stale weekly_targets type, untested first-target rule, bare toThrow, missing food_logs set_config test) into fix round 1 — they are cheap and make tests assert what they claim — costs one slightly larger fix diff.
+- Ruling: no streak replay needed for nutrition — a nutrition week is judged only after its 7 days have closed and closed days never reopen, so a goal can't be met in an already-judged week — costs a wrong streak if that invariant breaks.
+- Ruling: close_nutrition_days should start from max(nutrition_days.day)+1 (or first started_on) instead of re-scanning from first activation every call — skipped days (outside period / no target) can never become evaluable later — carried into Task 5 (it edits close_nutrition_days) — costs only performance if wrong.
+- Ruling: Task 5's temporary label workaround (ACHIEVEMENT_TEXT optional for nutrition codes, AchievementsScreen skips text-less badges, labels test excludes them) is accepted until Task 12, which must remove all three and add the 10 titles/descriptions — plan puts badge copy in Task 12 — costs a "x of 32 / 22 shown" mismatch only between T5 and T12.
+- Ruling: last_closed.xp includes the +150 weekly bonus when that day hit the goal — it is XP that day earned; the toast stays truthful — costs a slightly larger number in the toast if wrong.
+- Ruling: computeTarget.adjust = final kcal − rounded tdee (signed kcal); the setup screen may show it as a percentage of tdee — spec §3.1 only needs the one-line explanation — costs a UI recompute if wrong.
+- Ruling: split Task 9 — build script, loader, search.ts and off-api.ts now (fetch mocked in tests); the real TACO CSV/JSON and the OFF endpoint comparison wait for the user to allow the hosts or provide the spreadsheet — taco.json ships empty-safe ([]) until then and the build/test accept an absent CSV with a clear message; OFF text endpoint defaults to cgi/search.pl (Decision 5 default) — costs: no TACO results in search until data lands; endpoint choice unverified against live data.
+- Ruling: fix the timezone issue now with a todayIn(timezone) helper used by weigh-in, store refresh and (later) the UI window — the spec says "fuso do perfil" and the plan's todayISO instruction contradicts it — costs a small helper.
+- Ruling: fold Minors 1 (account switch race), 3 (60s retry timer), 5 (targets comment + floor/strength/gentle asserts), 8 (NOTICE wording), 10 (dropped notice text must not say "dias fechados" for too_many_items) into the same fix round; one fresh fixer covers T8 and T9 files since the original implementers are stopped — costs one larger diff.
+- Ruling: fix the plan gap (4) in this fix round — spec §3.3 requires it and ProfileScreen.persist is the single place — costs one more test file touched.
+- Ruling: fold Minors (confirms_on from shiftDay(today,2); pt-BR "Adicionar em {0}", "Removido: {0}"; reopen search when portion cancelled; scanner message for non-retail codes; recents serving chip label; portion 0–1 g validation; invite-dismissed key per user; role=status on skeletons) into the same round — cheap, user-facing — costs a larger diff.
+- Ruling: one final fix dispatch covering the Important and those five Minors — final-review protocol allows one wave — costs nothing extra.
+- Parked — residual: NutritionSetup on a second device with no cached targets and a failed refresh picks today and hits RLS until reload — Ruling: acceptable for the group size; fix in 2b by gating the final button on store status — costs an error toast in a rare offline window.
