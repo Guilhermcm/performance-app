@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, cleanup } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, within, waitFor } from '@testing-library/react'
 
 const h = vi.hoisted(() => ({ nav: vi.fn(), toast: vi.fn() }))
 vi.mock('react-router-dom', () => ({ useNavigate: () => h.nav }))
@@ -33,7 +33,7 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(new Date('2026-10-06T15:00:00Z'))
   localStorage.clear()
-  h.nav.mockReset()
+  h.nav.mockReset(); h.toast.mockReset()
   profile()
   useNutrition.setState({ ...realNutrition, userId: ME, status: 'ready', targets: [targetOf()], logs: {} })
   useProgress.setState({ status: 'ready', progress: progressOf(700, {}, { nutrition: {
@@ -82,9 +82,54 @@ describe('HomeNutritionCard', () => {
     expect(screen.getByRole('dialog')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Not now' }))
     expect(screen.queryByText('Track what you eat')).toBeNull()
-    expect(localStorage.getItem(DISMISSED)).toBe('1')
+    expect(JSON.parse(localStorage.getItem(DISMISSED)!)).toEqual(['u1'])
     unmount()
     render(<HomeNutritionCard />)
     expect(screen.queryByText('Track what you eat')).toBeNull()
+  })
+
+  it('keeps the invite for another account on the same device', () => {
+    localStorage.setItem(DISMISSED, JSON.stringify(['someone-else']))
+    profile({ nutrition_enabled: false })
+    render(<HomeNutritionCard />)
+    expect(screen.getByText('Track what you eat')).toBeTruthy()
+  })
+
+  it('confirms on the day after tomorrow in the profile time zone, not a cached date', () => {
+    useProgress.setState({ status: 'ready', progress: progressOf(700, {}, { nutrition: {
+      target: 5, on_target: 1, logged: 2, streak: { current: 0, best: 0, shields: 0 }, confirms_on: '2026-10-07', last_closed: null, last_week: null
+    } }) })
+    eat([1200, 80], [1150, 85])
+    render(<HomeNutritionCard />)
+    expect(screen.getByText('On target so far, confirms on Thursday')).toBeTruthy()
+  })
+
+  it('offers to set a target when today has none', () => {
+    useNutrition.setState({ targets: [] })
+    render(<HomeNutritionCard />)
+    expect(screen.getByText('No target for this day yet.')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Set target' }))
+    expect(screen.getByRole('heading', { name: 'Your nutrition target' })).toBeTruthy()
+  })
+
+  it('keeps the setup open when the first target cannot be saved', async () => {
+    const save = vi.fn(async (patch: object) => {
+      const p = { ...useProfile.getState().profile, ...patch }
+      useProfile.setState({ profile: p as never })
+      return p
+    })
+    const setTarget = vi.fn().mockRejectedValue(new Error('offline'))
+    profile({ nutrition_enabled: false, activity_level: null })
+    useProfile.setState({ save: save as never })
+    useNutrition.setState({ setTarget, targets: [] })
+    render(<HomeNutritionCard />)
+    fireEvent.click(screen.getByRole('button', { name: 'Turn on Nutrition' }))
+    const sheet = screen.getByRole('dialog')
+    fireEvent.click(within(sheet).getByRole('radio', { name: /Moderately active/ }))
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Next' }))
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Turn on Nutrition' }))
+    await waitFor(() => expect(h.toast).toHaveBeenCalledWith('Could not save the target. Check your connection and try again.'))
+    expect(useProfile.getState().profile?.nutrition_enabled).toBe(true)
+    expect(within(screen.getByRole('dialog')).getByRole('button', { name: 'Turn on Nutrition' })).toBeTruthy()
   })
 })

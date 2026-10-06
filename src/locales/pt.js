@@ -2084,4 +2084,8 @@ export default {
   "{0} nutrition weeks in a row": "{0} semanas seguidas na nutrição",
   "{0} on target": "{0} no alvo",
   "{0} on target, +{1} XP": "{0} no alvo, +{1} XP",
+  "Set target": "Definir meta",
+  "Looking up the product…": "A procurar o produto…",
+  "Last time ({0})": "Última vez ({0})",
+  "Days older than two weeks need a connection.": "Os dias com mais de duas semanas só aparecem com ligação.",
 }

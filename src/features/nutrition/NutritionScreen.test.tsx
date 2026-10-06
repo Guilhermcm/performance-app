@@ -1,12 +1,14 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, cleanup, within, act } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, within, act, waitFor } from '@testing-library/react'
 
 const h = vi.hoisted(() => ({ nav: vi.fn(), toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }) }))
 vi.mock('react-router-dom', () => ({ useNavigate: () => h.nav }))
 vi.mock('sonner', () => ({ toast: h.toast }))
 vi.mock('@/components/ui/drawer', () => import('../social/test-drawer'))
 // The store's writes go to the outbox; here they only need to land in memory.
+// "Copy from" asks the server for days older than the phone keeps.
+vi.mock('./nutrition-api', async orig => ({ ...(await orig<typeof import('./nutrition-api')>()), fetchLogs: vi.fn(async () => []) }))
 vi.mock('./outbox', () => ({ enqueue: vi.fn(), flushOutbox: vi.fn(async () => ({ sent: 0, dropped: 0, reasons: [] })), pending: () => [], clearOutbox: vi.fn() }))
 
 import NutritionScreen from './NutritionScreen'
@@ -18,6 +20,8 @@ import type { NutritionDay } from './types'
 // 2026-10-06 15:00 UTC is noon in Sao Paulo.
 const TODAY = '2026-10-06', YESTERDAY = '2026-10-05'
 const realState = useNutrition.getState()
+const realProfile = useProfile.getState()
+const BODY = { id: 'u1', birth_date: '1996-10-06', sex: 'male', height_cm: 178, weight_kg: 80, goal: 'hypertrophy', activity_level: 'moderate', nutrition_pace: 'standard', nutrition_days_per_week: 5 }
 
 const profile = (over: Record<string, unknown> = {}) =>
   useProfile.setState({ status: 'ready', profile: { timezone: 'America/Sao_Paulo', nutrition_enabled: true, unit: 'kg', ...over } as never })
@@ -42,7 +46,7 @@ beforeEach(() => {
     }
   })
 })
-afterEach(() => { cleanup(); vi.useRealTimers(); setOnline(true); useNutrition.setState(realState); useProfile.setState({ profile: null }) })
+afterEach(() => { cleanup(); vi.useRealTimers(); setOnline(true); useNutrition.setState(realState); useProfile.setState({ ...realProfile, profile: null }) })
 
 describe('NutritionScreen', () => {
   it('invites to turn the pillar on when it is off', () => {
@@ -54,6 +58,42 @@ describe('NutritionScreen', () => {
     expect(h.nav).not.toHaveBeenCalled()
     expect(screen.getByRole('dialog')).toBeTruthy()
     expect(screen.getByText('A few details first. Your target is based on them.')).toBeTruthy()
+  })
+
+  it('keeps the setup open with a retry when the first target cannot be saved', async () => {
+    // useProfile.save is optimistic: the pillar is on before the target is written.
+    const save = vi.fn(async (patch: object) => {
+      const p = { ...useProfile.getState().profile, ...patch }
+      useProfile.setState({ profile: p as never })
+      return p
+    })
+    const setTarget = vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValue(undefined)
+    profile({ ...BODY, nutrition_enabled: false, activity_level: null })
+    useProfile.setState({ save: save as never })
+    useNutrition.setState({ setTarget, targets: [] })
+    render(<NutritionScreen />)
+    fireEvent.click(screen.getByRole('button', { name: 'Turn on Nutrition' }))
+    let sheet = screen.getByRole('dialog')
+    fireEvent.click(within(sheet).getByRole('radio', { name: /Moderately active/ }))
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Next' }))
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Turn on Nutrition' }))
+    await waitFor(() => expect(h.toast).toHaveBeenCalledWith('Could not save the target. Check your connection and try again.'))
+    expect(useProfile.getState().profile?.nutrition_enabled).toBe(true)
+    sheet = screen.getByRole('dialog')
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Turn on Nutrition' }))
+    await waitFor(() => expect(setTarget).toHaveBeenCalledTimes(2))
+    expect(setTarget).toHaveBeenLastCalledWith(expect.objectContaining({ mode: 'auto' }), TODAY)
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+  })
+
+  it('offers to set a target on a day without one', () => {
+    profile(BODY)
+    useNutrition.setState({ targets: [] })
+    render(<NutritionScreen />)
+    expect(screen.getByText('No target for this day yet.')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Set target' }))
+    expect(screen.getByRole('dialog')).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Your nutrition target' })).toBeTruthy()
   })
 
   it('shows the kcal ring, three macro bars and the four meals with their totals', () => {

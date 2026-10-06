@@ -2084,4 +2084,8 @@ export default {
   "{0} nutrition weeks in a row": "영양 {0}주 연속",
   "{0} on target": "{0} 목표 달성",
   "{0} on target, +{1} XP": "{0} 목표 달성, +{1} XP",
+  "Set target": "목표 설정",
+  "Looking up the product…": "제품을 찾는 중…",
+  "Last time ({0})": "지난번 ({0})",
+  "Days older than two weeks need a connection.": "2주보다 오래된 날은 연결이 필요해요.",
 }

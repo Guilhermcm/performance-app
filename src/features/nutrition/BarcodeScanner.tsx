@@ -25,6 +25,7 @@ export default function BarcodeScanner({ open, onOpenChange, onCode }: Props) {
   const [typing, setTyping] = useState(false)
   const [code, setCode] = useState('')
   const [tried, setTried] = useState(false)
+  const [wrongCode, setWrongCode] = useState(false)
   const [nativeTry, setNativeTry] = useState(0)
   // The effect below runs once per opening; the latest callbacks are read through refs.
   const done = useRef({ onCode, onOpenChange })
@@ -32,7 +33,7 @@ export default function BarcodeScanner({ open, onOpenChange, onCode }: Props) {
 
   useEffect(() => {
     if (!open) return
-    setCamera('starting'); setTorch(null); setTyping(false); setCode(''); setTried(false)
+    setCamera('starting'); setTorch(null); setTyping(false); setCode(''); setTried(false); setWrongCode(false)
     let stopped = false
     let stream: MediaStream | null = null
     let timer: ReturnType<typeof setTimeout> | null = null
@@ -54,7 +55,10 @@ export default function BarcodeScanner({ open, onOpenChange, onCode }: Props) {
           const hit = await scanCode()
           if (stopped) return
           if (hit && isBarcode(hit.value)) found(hit.value)
-          else { setCamera('on'); setTyping(!hit) }
+          else {
+            // Nothing read, or a code that is not on a product (a QR): say so and type it.
+            setCamera('on'); setTyping(true); setWrongCode(!!hit)
+          }
         } catch (e) {
           if (stopped) return
           setCamera(String((e as Error)?.message) === 'permission-denied' ? 'denied' : 'unavailable')
@@ -105,7 +109,7 @@ export default function BarcodeScanner({ open, onOpenChange, onCode }: Props) {
   }
 
   const digits = code.trim()
-  const codeError = tried && !isBarcode(digits) ? t('Barcodes have 8 to 14 digits.') : null
+  const codeError = (tried && !isBarcode(digits)) || (wrongCode && !digits) ? t('Barcodes have 8 to 14 digits.') : null
   const submit = () => {
     setTried(true)
     if (!isBarcode(digits)) return
@@ -156,7 +160,7 @@ export default function BarcodeScanner({ open, onOpenChange, onCode }: Props) {
           {typing && (
             <form className="flex items-end gap-2" onSubmit={e => { e.preventDefault(); submit() }}>
               <Field id="scan-code" className="flex-1" label={t('Barcode')} value={code} numeric maxLength={14}
-                onChange={v => { setCode(v.replace(/\D/g, '')); setTried(false) }} error={codeError} />
+                onChange={v => { setCode(v.replace(/\D/g, '')); setTried(false); setWrongCode(false) }} error={codeError} />
               <Button type="submit" className={cn('h-11 rounded-xl', codeError && 'mb-6')}>{t('Look up')}</Button>
             </form>
           )}

@@ -33,6 +33,8 @@ export type FoodItem = {
   serving_g: number | null
   serving_label: string | null
   barcode: string | null
+  // From recents(): serving_g is the amount logged last time, not the label serving.
+  recent?: boolean
 }
 
 export type UserFood = FoodItem & { id: string; favorite: boolean; updated_at: string }

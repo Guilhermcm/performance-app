@@ -1330,9 +1330,9 @@ export const PT_BR_OVERRIDES = {
   "Over": "Acima",
   "Day summary": "Resumo do dia",
   "No target for this day yet.": "Ainda não há meta para este dia.",
-  "Add to {0}": "Adicionar ao {0}",
+  "Add to {0}": "Adicionar em {0}",
   "Delete {0}": "Excluir {0}",
-  "{0} removed": "{0} removido",
+  "{0} removed": "Removido: {0}",
   "Nothing logged yet.": "Nada registrado ainda.",
   "Offline. What you log stays on this phone and syncs when you reconnect.": "Sem conexão. O que você registrar fica neste aparelho e sincroniza quando a conexão voltar.",
   "Some items from days that already closed were not saved.": "Alguns itens de dias já fechados não foram salvos.",
@@ -1462,6 +1462,10 @@ export const PT_BR_OVERRIDES = {
   "{0} nutrition weeks in a row": "{0} semanas seguidas na nutrição",
   "{0} on target": "{0} no alvo",
   "{0} on target, +{1} XP": "{0} no alvo, +{1} XP",
+  "Set target": "Definir meta",
+  "Looking up the product…": "Buscando o produto…",
+  "Last time ({0})": "Última vez ({0})",
+  "Days older than two weeks need a connection.": "Dias de mais de duas semanas atrás só aparecem com conexão.",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

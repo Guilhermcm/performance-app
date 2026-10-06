@@ -7,7 +7,8 @@ import { shiftDay, todayIn } from './days'
 import type { FoodItem, FoodLog, Meal, NutritionDay, NutritionTarget, UserFood } from './types'
 
 const CACHE = 'perf_nutrition_v1'
-const WINDOW_DAYS = 14
+// Days of logs kept on the phone; "Copy from" asks the server for the older ones.
+export const WINDOW_DAYS = 14
 const RECENTS = 50
 
 type Saved = { userId: string; logs: Record<string, FoodLog[]>; foods: UserFood[]; targets: NutritionTarget[]; closed: NutritionDay[] }
@@ -74,8 +75,9 @@ export type NutritionStore = {
   updateLog(id: string, patch: Partial<FoodLog>): void
   removeLog(id: string): FoodLog | undefined
   restoreLog(l: FoodLog): void
-  copyMeal(fromDay: string, fromMeal: Meal, toDay: string, toMeal: Meal): number
-  copyDay(fromDay: string, toDay: string): number
+  // `source`: the logs of `fromDay` when the phone does not keep that day (fetched for the copy).
+  copyMeal(fromDay: string, fromMeal: Meal, toDay: string, toMeal: Meal, source?: FoodLog[]): number
+  copyDay(fromDay: string, toDay: string, source?: FoodLog[]): number
   saveFood(f: Omit<UserFood, 'id' | 'updated_at'>): UserFood
   toggleFavorite(item: FoodItem): void
   setTarget(t: Omit<NutritionTarget, 'valid_from'>, validFrom: string): Promise<void>
@@ -233,12 +235,12 @@ export const useNutrition = create<NutritionStore>((set, get) => {
       queue({ kind: 'log', op: 'upsert', id: log.id, row: log })
     },
 
-    copyMeal(fromDay, fromMeal, toDay, toMeal) {
-      return copyLogs((get().logs[fromDay] ?? []).filter(l => l.meal === fromMeal), toDay, () => toMeal)
+    copyMeal(fromDay, fromMeal, toDay, toMeal, source) {
+      return copyLogs((source ?? get().logs[fromDay] ?? []).filter(l => l.meal === fromMeal), toDay, () => toMeal)
     },
 
-    copyDay(fromDay, toDay) {
-      return copyLogs(get().logs[fromDay] ?? [], toDay, l => l.meal)
+    copyDay(fromDay, toDay, source) {
+      return copyLogs(source ?? get().logs[fromDay] ?? [], toDay, l => l.meal)
     },
 
     saveFood(f) {
@@ -251,9 +253,11 @@ export const useNutrition = create<NutritionStore>((set, get) => {
     toggleFavorite(item) {
       const key = keyOf(item)
       const cur = get().foods.find(f => keyOf(f) === key)
+      // A recent's mark only names the portion shortcut; it is no part of the food.
+      const { recent: _recent, ...plain } = item
       const food: UserFood = cur
         ? { ...cur, favorite: !cur.favorite, updated_at: stamp() }
-        : { ...item, id: uuid(), favorite: true, updated_at: stamp() }
+        : { ...plain, id: uuid(), favorite: true, updated_at: stamp() }
       putFood(food)
       queue({ kind: 'food', op: 'upsert', id: food.id, row: food })
     },
@@ -287,7 +291,7 @@ export const useNutrition = create<NutritionStore>((set, get) => {
         out.push({
           source: l.source as FoodItem['source'], source_id: l.source_id, name: l.name, brand: l.brand,
           per100: { kcal: per(l.kcal), protein: per(l.protein_g), carbs: per(l.carbs_g), fat: per(l.fat_g), fiber: l.fiber_g == null ? null : per(l.fiber_g) },
-          serving_g: l.grams, serving_label: null, barcode: null
+          serving_g: l.grams, serving_label: null, barcode: null, recent: true
         })
         if (out.length === RECENTS) break
       }

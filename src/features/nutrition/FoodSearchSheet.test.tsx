@@ -1,9 +1,10 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { useState } from 'react'
 import { render, screen, fireEvent, cleanup, within, act } from '@testing-library/react'
 
 const h = vi.hoisted(() => ({
-  toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }),
+  toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn(), loading: vi.fn(() => 'lookup'), dismiss: vi.fn() }),
   searchOff: vi.fn(),
   productByCode: vi.fn(),
   taco: [] as unknown[]
@@ -15,6 +16,7 @@ vi.mock('./off-api', () => ({ searchOff: h.searchOff, productByCode: h.productBy
 vi.mock('./taco', () => ({ loadTaco: async () => h.taco }))
 
 import FoodSearchSheet from './FoodSearchSheet'
+import { closeDrawer } from '../social/test-drawer'
 import { useNutrition } from './useNutrition'
 import { ME, foodOf, itemOf, logOf } from './test-nutrition'
 
@@ -37,7 +39,7 @@ beforeEach(() => {
   setOnline(true)
   // No camera here: the scanner goes straight to its message and "Type code".
   Object.defineProperty(navigator, 'mediaDevices', { value: undefined, configurable: true })
-  onOpenChange.mockReset(); h.toast.mockReset(); h.searchOff.mockReset(); h.productByCode.mockReset()
+  onOpenChange.mockReset(); h.toast.mockReset(); h.toast.loading.mockClear(); h.toast.dismiss.mockReset(); h.searchOff.mockReset(); h.productByCode.mockReset()
   h.searchOff.mockResolvedValue({ items: [] })
   h.taco = [itemOf({ source: 'taco', source_id: 'taco-9', name: 'Arroz integral cozido', per100: { kcal: 124, protein: 2.6, carbs: 25.8, fat: 1 } })]
   useNutrition.setState({
@@ -151,7 +153,7 @@ describe('FoodSearchSheet', () => {
     expect(h.productByCode).toHaveBeenCalledWith('7891000100103')
     const dialog = screen.getByRole('heading', { name: 'Create food' }).closest('[role=dialog]') as HTMLElement
     expect((within(dialog).getByLabelText('Barcode') as HTMLInputElement).value).toBe('7891000100103')
-    expect(h.toast).toHaveBeenCalledWith('Barcode not found. Create the food with it.')
+    expect(h.toast).toHaveBeenCalledWith('Barcode not found. Create the food with it.', expect.objectContaining({ id: 'lookup' }))
   })
 
   it('opens the portion for a barcode found among the own foods', async () => {
@@ -165,5 +167,66 @@ describe('FoodSearchSheet', () => {
     await settle()
     expect(screen.getByRole('heading', { name: 'Whey da loja' })).toBeTruthy()
     expect(h.productByCode).not.toHaveBeenCalled()
+  })
+
+  it('shows a loading toast while a barcode is looked up online, replaced by the answer', async () => {
+    let answer!: (v: unknown) => void
+    h.productByCode.mockReturnValue(new Promise(r => { answer = r }))
+    await open()
+    fireEvent.click(screen.getByRole('button', { name: 'Scan barcode' }))
+    await settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Type code' }))
+    fireEvent.change(screen.getByLabelText('Barcode'), { target: { value: '7891000100103' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Look up' }))
+    await settle()
+    expect(h.toast.loading).toHaveBeenCalledWith('Looking up the product…')
+    expect(h.toast.dismiss).not.toHaveBeenCalled()
+    await act(async () => { answer(itemOf({ source: 'off', source_id: '7891000100103', name: 'Granola Boa' })) })
+    await settle()
+    expect(h.toast.dismiss).toHaveBeenCalledWith('lookup')
+    expect(screen.getByRole('heading', { name: 'Granola Boa' })).toBeTruthy()
+  })
+
+  it('replaces the loading toast with the error when the lookup fails', async () => {
+    h.productByCode.mockResolvedValue({ error: 'failed' })
+    await open()
+    fireEvent.click(screen.getByRole('button', { name: 'Scan barcode' }))
+    await settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Type code' }))
+    fireEvent.change(screen.getByLabelText('Barcode'), { target: { value: '7891000100103' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Look up' }))
+    await settle()
+    expect(h.toast).toHaveBeenCalledWith('Could not look up this barcode.', expect.objectContaining({ id: 'lookup' }))
+  })
+
+  it('goes back to the search, query kept, when the portion closes without adding', async () => {
+    function Host() {
+      const [o, setO] = useState(true)
+      return <FoodSearchSheet day={DAY} meal="lunch" open={o} onOpenChange={setO} />
+    }
+    render(<Host />)
+    await settle()
+    search('arroz')
+    fireEvent.click(screen.getByRole('button', { name: /^Arroz integral cozido/ }))
+    expect(screen.queryByRole('searchbox', { name: 'Search foods' })).toBeNull()
+    // The test drawer has no swipe: closing is the portion's own onOpenChange(false), as vaul calls it.
+    const portion = screen.getByRole('heading', { name: 'Arroz integral cozido' }).closest('[role=dialog]') as HTMLElement
+    expect(portion).toBeTruthy()
+    await act(async () => { closeDrawer(portion) })
+    expect((screen.getByRole('searchbox', { name: 'Search foods' }) as HTMLInputElement).value).toBe('arroz')
+  })
+
+  it('does not reopen the search after the portion is added', async () => {
+    function Host() {
+      const [o, setO] = useState(true)
+      return <FoodSearchSheet day={DAY} meal="lunch" open={o} onOpenChange={setO} />
+    }
+    render(<Host />)
+    await settle()
+    search('arroz')
+    fireEvent.click(screen.getByRole('button', { name: /^Arroz integral cozido/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Add' }))
+    expect(screen.queryByRole('searchbox', { name: 'Search foods' })).toBeNull()
+    expect(useNutrition.getState().logs[DAY]?.map(l => l.name)).toEqual(['Arroz integral cozido'])
   })
 })

@@ -2084,4 +2084,8 @@ export default {
   "{0} nutrition weeks in a row": "连续 {0} 周饮食达标",
   "{0} on target": "{0} 达标",
   "{0} on target, +{1} XP": "{0} 达标，+{1} XP",
+  "Set target": "设定目标",
+  "Looking up the product…": "正在查找商品…",
+  "Last time ({0})": "上次 ({0})",
+  "Days older than two weeks need a connection.": "两周以前的日子需要联网才能看到。",
 }

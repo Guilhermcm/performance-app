@@ -2084,4 +2084,8 @@ export default {
   "{0} nutrition weeks in a row": "{0} нед. питания подряд",
   "{0} on target": "{0}: в цели",
   "{0} on target, +{1} XP": "{0}: в цели, +{1} XP",
+  "Set target": "Задать цель",
+  "Looking up the product…": "Ищем продукт…",
+  "Last time ({0})": "В прошлый раз ({0})",
+  "Days older than two weeks need a connection.": "Для дней старше двух недель нужно подключение.",
 }

@@ -14,13 +14,19 @@ import type { FoodItem, FoodLog, Meal } from './types'
 
 const SHORTCUTS = [50, 100, 150, 200] as const
 const STEP = 10
+const MIN_G = 1
 const MAX_G = 5000
 
-type Props = { item: FoodItem; meal: Meal; day: string; log?: FoodLog; open: boolean; onOpenChange: (open: boolean) => void }
+type Props = {
+  item: FoodItem; meal: Meal; day: string; log?: FoodLog; open: boolean; onOpenChange: (open: boolean) => void
+  // Called when the portion is added or saved, before the sheet closes.
+  onSaved?: () => void
+}
 
 // How much of a food: grams with a stepper, shortcuts and the label serving, the totals as they
 // change, and a star that keeps the food among the favourites. Adds to the meal, or edits `log`.
-export default function PortionSheet({ item, meal, day, log, open, onOpenChange }: Props) {
+// A recent food's shortcut is the amount logged last time.
+export default function PortionSheet({ item, meal, day, log, open, onOpenChange, onSaved }: Props) {
   const [text, setText] = useState('')
   const favorite = useNutrition(s => s.foods.some(f => f.favorite && keyOf(f) === keyOf(item)))
 
@@ -29,7 +35,7 @@ export default function PortionSheet({ item, meal, day, log, open, onOpenChange 
   }, [open, log, item])
 
   const grams = parseAmount(text)
-  const valid = grams != null && Number.isFinite(grams) && grams > 0 && grams <= MAX_G
+  const valid = grams != null && Number.isFinite(grams) && grams >= MIN_G && grams <= MAX_G
   const totals = portion(item.per100, valid ? grams : 0)
   const setGrams = (g: number) => setText(String(Math.round(g * 10) / 10))
   const step = (dir: 1 | -1) => setGrams(Math.min(MAX_G, Math.max(STEP, (valid ? grams : 0) + dir * STEP)))
@@ -39,6 +45,7 @@ export default function PortionSheet({ item, meal, day, log, open, onOpenChange 
     const s = useNutrition.getState()
     if (log) s.updateLog(log.id, { grams, ...totals })
     else s.addLog({ day, meal, name: item.name, brand: item.brand, source: item.source, source_id: item.source_id, grams, ...totals })
+    onSaved?.()
     onOpenChange(false)
   }
 
@@ -77,7 +84,8 @@ export default function PortionSheet({ item, meal, day, log, open, onOpenChange 
           <div className="flex flex-wrap gap-2">
             {serving && (
               <Chip on={valid && grams === serving} onClick={() => setGrams(serving)}>
-                {item.serving_label ? `${item.serving_label} (${fmtGrams(serving)})` : t('Label serving ({0})', fmtGrams(serving))}
+                {item.recent ? t('Last time ({0})', fmtGrams(serving))
+                  : item.serving_label ? `${item.serving_label} (${fmtGrams(serving)})` : t('Label serving ({0})', fmtGrams(serving))}
               </Chip>
             )}
             {SHORTCUTS.map(g => <Chip key={g} on={valid && grams === g} onClick={() => setGrams(g)}>{fmtGrams(g)}</Chip>)}

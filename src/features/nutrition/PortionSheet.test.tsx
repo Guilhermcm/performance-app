@@ -62,6 +62,26 @@ describe('PortionSheet', () => {
     fireEvent.change(screen.getByLabelText('Grams'), { target: { value: '5001' } })
     expect(save().disabled).toBe(true)
     expect(screen.getByText('Use between 1 and 5000 g.')).toBeTruthy()
+    fireEvent.change(screen.getByLabelText('Grams'), { target: { value: '0,5' } })
+    expect(save().disabled).toBe(true)
+    fireEvent.change(screen.getByLabelText('Grams'), { target: { value: '1' } })
+    expect(save().disabled).toBe(false)
+  })
+
+  it('names the shortcut of a recent food after the last amount used', () => {
+    render(<PortionSheet item={itemOf({ serving_g: 120, recent: true })} meal="lunch" day="2026-10-06" open onOpenChange={onOpenChange} />)
+    expect(grams()).toBe('120')
+    expect(screen.queryByRole('button', { name: /Label serving/ })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: '100 g' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Last time (120 g)' }))
+    expect(grams()).toBe('120')
+  })
+
+  it('tells the caller when the portion was added', () => {
+    const onSaved = vi.fn()
+    render(<PortionSheet item={itemOf()} meal="lunch" day="2026-10-06" open onOpenChange={onOpenChange} onSaved={onSaved} />)
+    fireEvent.click(save())
+    expect(onSaved).toHaveBeenCalled()
   })
 
   it('stars the food through toggleFavorite and shows it as a favorite', () => {

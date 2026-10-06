@@ -71,13 +71,19 @@ export default function NutritionScreen() {
     useNutrition.getState().dismissDropped()
   }, [dropped])
 
+  // The setup sits outside both branches: turning the pillar on flips the profile before the
+  // target is written, and the sheet must stay open (with its retry) if that write fails.
+  const setup = <NutritionSetup open={setupOpen} onOpenChange={setSetupOpen} />
+
   if (!profile?.nutrition_enabled) {
     return (
-      <Page>
-        <h1 className="text-2xl font-semibold tracking-tight">{t('Nutrition')}</h1>
-        <NutritionInvite onActivate={() => setSetupOpen(true)} />
-        <NutritionSetup open={setupOpen} onOpenChange={setSetupOpen} />
-      </Page>
+      <>
+        <Page>
+          <h1 className="text-2xl font-semibold tracking-tight">{t('Nutrition')}</h1>
+          <NutritionInvite onActivate={() => setSetupOpen(true)} />
+        </Page>
+        {setup}
+      </>
     )
   }
 
@@ -104,52 +110,55 @@ export default function NutritionScreen() {
   const earlier = closed.filter(d => d.day < shiftDay(today, -1)).sort((a, b) => (a.day < b.day ? 1 : -1)).slice(0, EARLIER)
 
   return (
-    <Page>
-      <header className="flex flex-col gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">{t('Nutrition')}</h1>
-        <ToggleGroup type="single" value={which} aria-label={t('Day')} onValueChange={v => { if (v) setWhich(v as Which) }}
-          className="grid w-full grid-cols-2 gap-1 rounded-2xl bg-secondary/60 p-1">
-          {(['today', 'yesterday'] as const).map(w => (
-            <ToggleGroupItem key={w} value={w}
-              className="h-11 rounded-xl text-sm font-medium text-muted-foreground data-[state=on]:bg-card data-[state=on]:text-foreground data-[state=on]:shadow-sm">
-              {w === 'today' ? t('Today') : t('Yesterday')}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-      </header>
+    <>
+      <Page>
+        <header className="flex flex-col gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight">{t('Nutrition')}</h1>
+          <ToggleGroup type="single" value={which} aria-label={t('Day')} onValueChange={v => { if (v) setWhich(v as Which) }}
+            className="grid w-full grid-cols-2 gap-1 rounded-2xl bg-secondary/60 p-1">
+            {(['today', 'yesterday'] as const).map(w => (
+              <ToggleGroupItem key={w} value={w}
+                className="h-11 rounded-xl text-sm font-medium text-muted-foreground data-[state=on]:bg-card data-[state=on]:text-foreground data-[state=on]:shadow-sm">
+                {w === 'today' ? t('Today') : t('Yesterday')}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+        </header>
 
-      {!online && (
-        <p className="flex items-center gap-2 text-xs text-muted-foreground">
-          <CloudOff aria-hidden className="size-3.5 shrink-0" />{t('Offline. What you log stays on this phone and syncs when you reconnect.')}
-        </p>
-      )}
+        {!online && (
+          <p className="flex items-center gap-2 text-xs text-muted-foreground">
+            <CloudOff aria-hidden className="size-3.5 shrink-0" />{t('Offline. What you log stays on this phone and syncs when you reconnect.')}
+          </p>
+        )}
 
-      {status === 'loading' || status === 'idle' ? <DaySkeleton /> : status === 'error' ? (
-        <div role="alert" className="flex flex-col items-start gap-3 rounded-2xl border border-border bg-card p-5">
-          <p className="text-[15px] font-medium leading-snug">{t('Could not load your food diary.')}</p>
-          <Button variant="outline" className="h-11 gap-2 rounded-xl" onClick={() => void useNutrition.getState().refresh()}>
-            <RefreshCw aria-hidden className="size-4" />{t('Try again')}
-          </Button>
-        </div>
-      ) : (
-        <>
-          <DaySummary totals={dayTotals(logs)} target={target} />
-          {MEALS.map(m => (
-            <MealCard key={m} meal={m} logs={logs.filter(l => l.meal === m)} editable onAdd={onAdd} onEdit={onEdit} onDelete={onDelete}
-              onCopy={onCopy} onRepeat={day === today ? undefined : onRepeat} />
-          ))}
-          <Button variant="outline" className="h-11 gap-2 self-start rounded-xl" onClick={() => onCopy('all')}>
-            <Copy aria-hidden className="size-4" />{t('Copy a whole day')}
-          </Button>
-          {earlier.length > 0 && <EarlierDays days={earlier} />}
-        </>
-      )}
+        {status === 'loading' || status === 'idle' ? <DaySkeleton /> : status === 'error' ? (
+          <div role="alert" className="flex flex-col items-start gap-3 rounded-2xl border border-border bg-card p-5">
+            <p className="text-[15px] font-medium leading-snug">{t('Could not load your food diary.')}</p>
+            <Button variant="outline" className="h-11 gap-2 rounded-xl" onClick={() => void useNutrition.getState().refresh()}>
+              <RefreshCw aria-hidden className="size-4" />{t('Try again')}
+            </Button>
+          </div>
+        ) : (
+          <>
+            <DaySummary totals={dayTotals(logs)} target={target} onSetTarget={() => setSetupOpen(true)} />
+            {MEALS.map(m => (
+              <MealCard key={m} meal={m} logs={logs.filter(l => l.meal === m)} editable onAdd={onAdd} onEdit={onEdit} onDelete={onDelete}
+                onCopy={onCopy} onRepeat={day === today ? undefined : onRepeat} />
+            ))}
+            <Button variant="outline" className="h-11 gap-2 self-start rounded-xl" onClick={() => onCopy('all')}>
+              <Copy aria-hidden className="size-4" />{t('Copy a whole day')}
+            </Button>
+            {earlier.length > 0 && <EarlierDays days={earlier} />}
+          </>
+        )}
 
-      <FoodSearchSheet day={day} meal={searchMeal} open={searchOpen} onOpenChange={setSearchOpen} />
-      <CopyFromSheet day={day} meal={copyInto} open={copyOpen} onOpenChange={setCopyOpen} />
-      <QuickAddSheet meal={quick.meal} log={quick.log} day={day} open={quickOpen} onOpenChange={setQuickOpen} />
-      {edit && <PortionSheet item={edit.item} log={edit.log} meal={edit.log.meal} day={edit.log.day} open={editOpen} onOpenChange={setEditOpen} />}
-    </Page>
+        <FoodSearchSheet day={day} meal={searchMeal} open={searchOpen} onOpenChange={setSearchOpen} />
+        <CopyFromSheet day={day} meal={copyInto} open={copyOpen} onOpenChange={setCopyOpen} />
+        <QuickAddSheet meal={quick.meal} log={quick.log} day={day} open={quickOpen} onOpenChange={setQuickOpen} />
+        {edit && <PortionSheet item={edit.item} log={edit.log} meal={edit.log.meal} day={edit.log.day} open={editOpen} onOpenChange={setEditOpen} />}
+      </Page>
+      {setup}
+    </>
   )
 }
 
@@ -162,7 +171,7 @@ const C = 2 * Math.PI * R
 
 // The kcal ring with what was eaten, the goal and what is left (or how far over), and the three
 // macro bars, each with its name and grams.
-function DaySummary({ totals, target }: { totals: DayTotals; target: Macros | null }) {
+function DaySummary({ totals, target, onSetTarget }: { totals: DayTotals; target: Macros | null; onSetTarget: () => void }) {
   const eaten = Math.round(totals.kcal)
   const goal = target ? Math.round(target.kcal) : null
   const left = goal == null ? null : goal - eaten
@@ -204,7 +213,14 @@ function DaySummary({ totals, target }: { totals: DayTotals; target: Macros | nu
               <dd className="font-mono text-xl font-semibold tabular-nums">{fmtNumber(goal)}</dd>
             </div>
           )}
-          {goal == null && <p className="text-xs text-muted-foreground">{t('No target for this day yet.')}</p>}
+          {goal == null && (
+            <div className="flex flex-col items-start gap-2">
+              <p className="text-xs text-muted-foreground">{t('No target for this day yet.')}</p>
+              <Button variant="outline" className="h-11 gap-2 rounded-xl" onClick={onSetTarget}>
+                <Target aria-hidden className="size-4" />{t('Set target')}
+              </Button>
+            </div>
+          )}
         </dl>
       </div>
 
@@ -265,7 +281,7 @@ function EarlierDays({ days }: { days: NutritionDay[] }) {
 // The shape of the day while the first load runs.
 function DaySkeleton() {
   return (
-    <div aria-busy="true" aria-label={t('Loading…')} className="flex flex-col gap-4">
+    <div role="status" aria-busy="true" aria-label={t('Loading…')} className="flex flex-col gap-4">
       <div className="flex items-center gap-5 rounded-3xl bg-card p-5">
         <Skeleton className="size-32 rounded-full" />
         <div className="flex flex-1 flex-col gap-3"><Skeleton className="h-6 w-20" /><Skeleton className="h-6 w-24" /></div>

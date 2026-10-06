@@ -13,6 +13,7 @@ import { menuSheet } from '../../sheets.jsx'
 import ProfileProgress from '../gamification/ProfileProgress'
 import NutritionSetup from '../nutrition/NutritionSetup'
 import { useNutrition } from '../nutrition/useNutrition'
+import { refreshAutoTarget } from '../nutrition/auto-target'
 import { todayIn } from '../nutrition/days'
 import { ACTIVITY_LABEL, fmtGrams, fmtKcal } from '../nutrition/labels'
 import DeleteAccount from './DeleteAccount'
@@ -40,6 +41,10 @@ const SECTIONS: { key: SectionKey; title: () => string; fields: (keyof ProfileIn
   { key: 'goal', title: () => t('Your goal'), fields: ['goal', 'level', 'days_per_week'], render: p => <GoalFields {...p} /> },
   { key: 'equipment', title: () => t('Your equipment'), fields: ['equipment'], render: p => <EquipmentField {...p} /> }
 ]
+
+// What the automatic nutrition target is calculated from, among the fields edited here (activity
+// and pace are edited in the nutrition setup, which writes its own target).
+const TARGET_INPUTS: (keyof ProfileInput)[] = ['goal', 'birth_date', 'sex', 'height_cm', 'weight_kg']
 
 const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]!.toUpperCase()).join('') || '?'
 const ENTER = 'animate-in fade-in-0 slide-in-from-top-1 duration-200 motion-reduce:animate-none'
@@ -91,6 +96,8 @@ export default function ProfileScreen() {
     setBusy(true)
     try {
       const saved = await save(patch)
+      // A new automatic target from tomorrow; a manual one stays. Never throws.
+      if (TARGET_INPUTS.some(k => k in patch)) void refreshAutoTarget(saved)
       const store = useStore.getState() as AppStore
       if (convert !== null) store.setUnit(saved.unit, { convert })
       // Only the equipment filter follows the profile here: the language and week start applied at

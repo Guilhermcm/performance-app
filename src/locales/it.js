@@ -2084,4 +2084,8 @@ export default {
   "{0} nutrition weeks in a row": "{0} settimane di nutrizione di fila",
   "{0} on target": "{0} in obiettivo",
   "{0} on target, +{1} XP": "{0} in obiettivo, +{1} XP",
+  "Set target": "Imposta l'obiettivo",
+  "Looking up the product…": "Cerco il prodotto…",
+  "Last time ({0})": "L'ultima volta ({0})",
+  "Days older than two weeks need a connection.": "I giorni di oltre due settimane fa richiedono una connessione.",
 }

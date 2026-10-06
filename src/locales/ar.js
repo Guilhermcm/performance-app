@@ -2137,4 +2137,8 @@ export default {
   "{0} nutrition weeks in a row": "{0} أسابيع تغذية متتالية",
   "{0} on target": "{0}: ضمن الهدف",
   "{0} on target, +{1} XP": "{0}: ضمن الهدف، +{1} XP",
+  "Set target": "تحديد الهدف",
+  "Looking up the product…": "جارٍ البحث عن المنتج…",
+  "Last time ({0})": "آخر مرة ({0})",
+  "Days older than two weeks need a connection.": "الأيام الأقدم من أسبوعين تحتاج إلى اتصال.",
 }

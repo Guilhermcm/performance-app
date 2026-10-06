@@ -108,6 +108,26 @@ describe('useNutrition', () => {
     expect(useNutrition.getState().copyDay('2026-01-01', TODAY)).toBe(0)
   })
 
+  it('copies from logs handed in, for days older than the ones kept on the phone', async () => {
+    await bound()
+    const old = logOf({ id: 'r1', day: '2026-09-15', meal: 'lunch', source: 'custom', source_id: null, name: 'Tapioca', grams: 80, kcal: 210 })
+    const dinner = logOf({ id: 'r2', day: '2026-09-15', meal: 'dinner', name: 'Sopa' })
+    expect(useNutrition.getState().copyMeal('2026-09-15', 'lunch', TODAY, 'breakfast', [old, dinner])).toBe(1)
+    expect(useNutrition.getState().logs[TODAY][0]).toMatchObject({ meal: 'breakfast', source: 'custom', name: 'Tapioca', grams: 80, kcal: 210 })
+    expect(useNutrition.getState().copyDay('2026-09-15', TODAY, [old, dinner])).toBe(2)
+    expect(useNutrition.getState().logs[TODAY]).toHaveLength(3)
+  })
+
+  it('marks recents so the portion can name the last amount, and keeps that mark out of saved foods', async () => {
+    await bound()
+    api.fetchLogs.mockResolvedValue([logOf({ day: TODAY, source_id: 'taco-3', name: 'Feijão', grams: 120, kcal: 90 })])
+    await useNutrition.getState().refresh()
+    const [r] = useNutrition.getState().recents()
+    expect(r).toMatchObject({ recent: true, serving_g: 120 })
+    useNutrition.getState().toggleFavorite(r)
+    expect(useNutrition.getState().foods[0]).not.toHaveProperty('recent')
+  })
+
   it('lists 50 distinct recents, newest first', async () => {
     await bound()
     const logs = Array.from({ length: 60 }, (_, i) =>

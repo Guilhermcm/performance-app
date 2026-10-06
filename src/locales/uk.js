@@ -2081,4 +2081,8 @@ export default {
   "{0} nutrition weeks in a row": "{0} тиж. харчування поспіль",
   "{0} on target": "{0}: у цілі",
   "{0} on target, +{1} XP": "{0}: у цілі, +{1} XP",
+  "Set target": "Задати ціль",
+  "Looking up the product…": "Шукаємо продукт…",
+  "Last time ({0})": "Минулого разу ({0})",
+  "Days older than two weeks need a connection.": "Для днів, старших за два тижні, потрібне з’єднання.",
 }

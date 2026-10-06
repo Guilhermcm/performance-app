@@ -1,14 +1,16 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, CloudOff } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
+import { useOnline } from '@/lib/use-online'
 import { t } from '../../lib/i18n.js'
 import { useProfile } from '../profile/useProfile'
 import { fmtShortDay } from '../social/format'
 import { shiftDay, todayIn } from './days'
-import { useNutrition } from './useNutrition'
+import { WINDOW_DAYS, useNutrition } from './useNutrition'
+import { fetchLogs } from './nutrition-api'
 import { MEAL_LABEL, fmtKcal, weekdayName } from './labels'
-import type { Meal } from './types'
+import type { FoodLog, Meal } from './types'
 
 const DAYS_BACK = 30
 
@@ -17,15 +19,37 @@ type Row = { day: string; count: number; kcal: number }
 
 const itemsText = (n: number) => (n === 1 ? t('1 item') : t('{0} items', n))
 
+const byDay = (logs: FoodLog[]) => {
+  const out: Record<string, FoodLog[]> = {}
+  for (const l of logs) (out[l.day] ??= []).push(l)
+  return out
+}
+
 // "Copy from…": the days of the last 30 that have something in this meal (or anything, for a
 // whole day), newest first, each with its item count and kcal. Tapping one copies its items into
-// `day` as new items, the food and its numbers kept as they were.
+// `day` as new items, the food and its numbers kept as they were. The phone keeps two weeks; the
+// older days are fetched when the sheet opens online, and offline a line says they need a connection.
 export default function CopyFromSheet({ day, meal, open, onOpenChange }: Props) {
   const tz = useProfile(s => s.profile?.timezone)
-  const logs = useNutrition(s => s.logs)
+  const local = useNutrition(s => s.logs)
+  const online = useOnline()
   const today = todayIn(tz)
   const yesterday = shiftDay(today, -1)
   const from = shiftDay(today, -DAYS_BACK)
+  const [older, setOlder] = useState<Record<string, FoodLog[]>>({})
+
+  useEffect(() => {
+    if (!open || !online) return
+    let live = true
+    fetchLogs(from, shiftDay(today, -(WINDOW_DAYS + 1))).then(
+      ls => { if (live) setOlder(byDay(ls)) },
+      () => { /* the days on the phone are still listed */ }
+    )
+    return () => { live = false }
+  }, [open, online, from, today])
+
+  // The phone's copy of a day wins over the fetched one: it has the changes not yet sent.
+  const logs = useMemo(() => ({ ...older, ...local }), [older, local])
 
   const rows = useMemo<Row[]>(() => Object.entries(logs)
     .filter(([d]) => d !== day && d >= from && d <= today)
@@ -38,7 +62,8 @@ export default function CopyFromSheet({ day, meal, open, onOpenChange }: Props) 
 
   const copy = (from: string) => {
     const s = useNutrition.getState()
-    const n = meal === 'all' ? s.copyDay(from, day) : s.copyMeal(from, meal, day, meal)
+    const source = logs[from]
+    const n = meal === 'all' ? s.copyDay(from, day, source) : s.copyMeal(from, meal, day, meal, source)
     toast(n === 1 ? t('1 item copied') : t('{0} items copied', n))
     onOpenChange(false)
   }
@@ -71,6 +96,11 @@ export default function CopyFromSheet({ day, meal, open, onOpenChange }: Props) 
             </ul>
           ) : (
             <p className="rounded-2xl bg-card p-4 text-sm text-muted-foreground">{t('Nothing to copy from the last 30 days.')}</p>
+          )}
+          {!online && (
+            <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+              <CloudOff aria-hidden className="size-3.5 shrink-0" />{t('Days older than two weeks need a connection.')}
+            </p>
           )}
         </div>
       </DrawerContent>

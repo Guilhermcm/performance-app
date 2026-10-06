@@ -2095,4 +2095,8 @@ export default {
   "{0} nutrition weeks in a row": "โภชนาการ {0} สัปดาห์ติดต่อกัน",
   "{0} on target": "{0} ตามเป้า",
   "{0} on target, +{1} XP": "{0} ตามเป้า, +{1} XP",
+  "Set target": "ตั้งเป้าหมาย",
+  "Looking up the product…": "กำลังค้นหาสินค้า…",
+  "Last time ({0})": "ครั้งที่แล้ว ({0})",
+  "Days older than two weeks need a connection.": "วันที่เก่ากว่าสองสัปดาห์ต้องใช้การเชื่อมต่อ",
 }

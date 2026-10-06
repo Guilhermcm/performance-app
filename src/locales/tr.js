@@ -2084,4 +2084,8 @@ export default {
   "{0} nutrition weeks in a row": "Üst üste {0} beslenme haftası",
   "{0} on target": "{0}: hedefte",
   "{0} on target, +{1} XP": "{0}: hedefte, +{1} XP",
+  "Set target": "Hedef belirle",
+  "Looking up the product…": "Ürün aranıyor…",
+  "Last time ({0})": "Geçen sefer ({0})",
+  "Days older than two weeks need a connection.": "İki haftadan eski günler için bağlantı gerekir.",
 }

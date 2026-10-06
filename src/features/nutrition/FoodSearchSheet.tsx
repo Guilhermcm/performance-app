@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { CloudOff, PenLine, Plus, RefreshCw, ScanBarcode, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -64,10 +64,14 @@ export default function FoodSearchSheet({ day, meal, open, onOpenChange }: Props
   const [createOpen, setCreateOpen] = useState(false)
   const [createCode, setCreateCode] = useState<string | undefined>()
   const [scanOpen, setScanOpen] = useState(false)
+  // A food picked from the list: closing its portion without adding goes back to this search.
+  const back = useRef(false)
+  const keepQuery = useRef(false)
 
   useEffect(() => {
     if (!open) return
-    setQ('')
+    if (keepQuery.current) keepQuery.current = false
+    else setQ('')
     let live = true
     loadTaco().then(items => { if (live) setTaco(items) }, () => { if (live) setTaco([]) })
     return () => { live = false }
@@ -102,26 +106,41 @@ export default function FoodSearchSheet({ day, meal, open, onOpenChange }: Props
   }, [off.items, sections])
 
   const pick = (item: FoodItem) => {
+    back.current = true
     setPortion(item); setPortionOpen(true)
     onOpenChange(false)
   }
+  const onPortionOpenChange = (o: boolean) => {
+    setPortionOpen(o)
+    if (o || !back.current) return
+    back.current = false
+    keepQuery.current = true
+    onOpenChange(true)
+  }
+  const showPortion = (item: FoodItem) => { back.current = false; setPortion(item); setPortionOpen(true) }
   const openQuick = () => { setQuickOpen(true); onOpenChange(false) }
   const openCreate = (code?: string) => { setCreateCode(code); setCreateOpen(true); onOpenChange(false) }
   const openScan = () => { setScanOpen(true); onOpenChange(false) }
 
+  // A lookup that goes online shows a loading toast, which the answer then replaces.
   const lookup = async (code: string) => {
-    const r = await lookupBarcode(code, useNutrition.getState().foods)
-    if ('item' in r) { setPortion(r.item); setPortionOpen(true); return }
+    let id: string | number | undefined
+    const r = await lookupBarcode(code, useNutrition.getState().foods, () => { id = toast.loading(t('Looking up the product…')) })
+    if ('item' in r) {
+      if (id != null) toast.dismiss(id)
+      showPortion(r.item)
+      return
+    }
     if ('notFound' in r) {
-      toast(t('Barcode not found. Create the food with it.'))
+      toast(t('Barcode not found. Create the food with it.'), { id })
       openCreate(code)
       return
     }
     if (r.error === 'offline') {
-      toast(t('No connection and this code is not in your foods.'), { action: { label: t('Create food'), onClick: () => openCreate(code) } })
+      toast(t('No connection and this code is not in your foods.'), { id, action: { label: t('Create food'), onClick: () => openCreate(code) } })
       return
     }
-    toast(t('Could not look up this barcode.'), { action: { label: t('Try again'), onClick: () => void lookup(code) } })
+    toast(t('Could not look up this barcode.'), { id, action: { label: t('Try again'), onClick: () => void lookup(code) } })
   }
 
   const offBusy = off.state === 'waiting'
@@ -168,7 +187,7 @@ export default function FoodSearchSheet({ day, meal, open, onOpenChange }: Props
             {online3 && off.state !== 'idle' && (
               <Section title={t('Packaged foods')} note={t('Data: Open Food Facts')} busy={offBusy}>
                 {offBusy ? (
-                  <div aria-label={t('Searching online…')} className="flex flex-col gap-1">
+                  <div role="status" aria-label={t('Searching online…')} className="flex flex-col gap-1">
                     {[0, 1, 2].map(i => <Skeleton key={i} className="h-14 rounded-2xl" />)}
                   </div>
                 ) : off.state === 'offline' ? (
@@ -201,10 +220,11 @@ export default function FoodSearchSheet({ day, meal, open, onOpenChange }: Props
         </DrawerContent>
       </Drawer>
 
-      {portion && <PortionSheet item={portion} meal={meal} day={day} open={portionOpen} onOpenChange={setPortionOpen} />}
+      {portion && <PortionSheet item={portion} meal={meal} day={day} open={portionOpen} onOpenChange={onPortionOpenChange}
+        onSaved={() => { back.current = false }} />}
       <QuickAddSheet meal={meal} day={day} open={quickOpen} onOpenChange={setQuickOpen} />
       <CustomFoodSheet barcode={createCode} open={createOpen} onOpenChange={setCreateOpen}
-        onSaved={food => { setPortion(food); setPortionOpen(true) }} />
+        onSaved={showPortion} />
       <BarcodeScanner open={scanOpen} onOpenChange={setScanOpen} onCode={code => void lookup(code)} />
     </>
   )

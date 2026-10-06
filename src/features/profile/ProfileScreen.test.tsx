@@ -14,7 +14,8 @@ const h = vi.hoisted(() => ({
   update: vi.fn(),
   menuSheet: vi.fn(),
   toast: vi.fn(),
-  S: { unit: 'kg' } as Record<string, unknown>
+  S: { unit: 'kg' } as Record<string, unknown>,
+  refreshAutoTarget: vi.fn(async (_p: unknown) => false)
 }))
 vi.mock('./useProfile', () => ({ useProfile: (sel?: any) => { const s = { profile: P, save: h.save }; return sel ? sel(s) : s } }))
 vi.mock('../../store/useStore.js', () => {
@@ -24,6 +25,7 @@ vi.mock('../../store/useStore.js', () => {
 vi.mock('../../sheets.jsx', () => ({ menuSheet: h.menuSheet }))
 vi.mock('sonner', () => ({ toast: h.toast }))
 vi.mock('../../lib/equipment.js', () => ({ ALL_EQUIPMENT: ['barbell', 'body weight'] }))
+vi.mock('../nutrition/auto-target', () => ({ refreshAutoTarget: h.refreshAutoTarget }))
 vi.mock('../nutrition/NutritionSetup', () => ({
   default: ({ open }: { open: boolean }) => (open ? <div role="dialog" aria-label="Nutrition setup" /> : null)
 }))
@@ -194,5 +196,23 @@ describe('ProfileScreen', () => {
     fireEvent.click(screen.getByRole('switch', { name: /Nutrition/ }))
     await waitFor(() => expect(h.save).toHaveBeenCalledWith({ nutrition_enabled: false }))
     useNutrition.setState({ targets: [] })
+  })
+
+  it('refreshes the automatic target after a change to the data it is based on', async () => {
+    P = { ...BASE, nutrition_enabled: true, activity_level: 'moderate' }
+    show()
+    fireEvent.click(screen.getByRole('button', { name: 'Edit: About you' }))
+    fireEvent.change(screen.getByLabelText(/height/i), { target: { value: '170' } })
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => expect(h.refreshAutoTarget).toHaveBeenCalledWith(expect.objectContaining({ height_cm: 170 })))
+  })
+
+  it('leaves the target alone after a change that does not affect it', async () => {
+    P = { ...BASE, nutrition_enabled: true, activity_level: 'moderate' }
+    show()
+    fireEvent.click(screen.getByRole('button', { name: 'Edit: Your equipment' }))
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => expect(h.save).toHaveBeenCalled())
+    expect(h.refreshAutoTarget).not.toHaveBeenCalled()
   })
 })

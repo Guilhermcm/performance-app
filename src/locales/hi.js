@@ -2084,4 +2084,8 @@ export default {
   "{0} nutrition weeks in a row": "लगातार {0} पोषण हफ़्ते",
   "{0} on target": "{0}: लक्ष्य में",
   "{0} on target, +{1} XP": "{0}: लक्ष्य में, +{1} XP",
+  "Set target": "लक्ष्य तय करें",
+  "Looking up the product…": "उत्पाद खोजा जा रहा है…",
+  "Last time ({0})": "पिछली बार ({0})",
+  "Days older than two weeks need a connection.": "दो हफ़्ते से पुराने दिनों के लिए कनेक्शन चाहिए।",
 }

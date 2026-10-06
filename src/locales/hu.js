@@ -2087,4 +2087,8 @@ export default {
   "{0} nutrition weeks in a row": "{0} táplálkozási hét egymás után",
   "{0} on target": "{0}: célban",
   "{0} on target, +{1} XP": "{0}: célban, +{1} XP",
+  "Set target": "Cél megadása",
+  "Looking up the product…": "Termék keresése…",
+  "Last time ({0})": "Legutóbb ({0})",
+  "Days older than two weeks need a connection.": "A két hétnél régebbi napokhoz kapcsolat kell.",
 }

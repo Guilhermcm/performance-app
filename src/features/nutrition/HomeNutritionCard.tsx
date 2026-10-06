@@ -6,7 +6,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { t } from '../../lib/i18n.js'
 import { useProfile } from '../profile/useProfile'
-import { useProgress } from '../gamification/useProgress'
 import { classifyDay, dayTotals } from './classify'
 import { shiftDay, todayIn } from './days'
 import { fmtNumber } from './labels'
@@ -30,27 +29,44 @@ const CONFIRMS_ON = [
 ]
 const confirmsOn = (iso: string) => CONFIRMS_ON[new Date(iso + 'T12:00:00').getDay()]()
 
-const isDismissed = () => { try { return localStorage.getItem(DISMISSED) === '1' } catch { return false } }
+// The accounts that dismissed the invite on this device, so another account still sees it.
+const dismissedBy = (): string[] => {
+  try {
+    const v = JSON.parse(localStorage.getItem(DISMISSED) || '[]')
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []
+  } catch { return [] }
+}
 
 // Home's "Nutrition today": a compact kcal ring, what is left and a way to log, with a preview when
 // the day is on target so far. With the pillar off, an invite that goes away for good once dismissed.
+// The setup lives here, outside both: turning the pillar on flips the profile before the target is
+// written, and the sheet must stay open (with its retry) if that write fails.
 export default function HomeNutritionCard() {
   const profile = useProfile(s => s.profile)
+  const [setup, setSetup] = useState(false)
   if (!profile) return null
-  return profile.nutrition_enabled ? <TodayCard timezone={profile.timezone} /> : <Invite />
+  return (
+    <>
+      {profile.nutrition_enabled
+        ? <TodayCard timezone={profile.timezone} onSetTarget={() => setSetup(true)} />
+        : <Invite userId={profile.id} onActivate={() => setSetup(true)} />}
+      <NutritionSetup open={setup} onOpenChange={setSetup} />
+    </>
+  )
 }
 
-function TodayCard({ timezone }: { timezone: string }) {
+function TodayCard({ timezone, onSetTarget }: { timezone: string; onSetTarget: () => void }) {
   const nav = useNavigate()
   const today = todayIn(timezone)
   const status = useNutrition(s => s.status)
   const logs = useNutrition(s => s.logs[today] ?? NO_LOGS)
   const target = useNutrition(s => s.targetOn(today))
-  const confirms = useProgress(s => s.progress?.nutrition?.confirms_on) ?? shiftDay(today, 2)
+  // Today closes two days later (spec: confirms_on = today + 2), counted in the profile time zone.
+  const confirms = shiftDay(today, 2)
 
   if (status === 'idle' || status === 'loading') {
     return (
-      <section aria-busy="true" aria-label={t('Nutrition today')} className="flex items-center gap-4 rounded-3xl border border-border bg-card p-4">
+      <section role="status" aria-busy="true" aria-label={t('Nutrition today')} className="flex items-center gap-4 rounded-3xl border border-border bg-card p-4">
         <Skeleton className="size-16 rounded-full" />
         <div className="flex flex-1 flex-col gap-2"><Skeleton className="h-5 w-28" /><Skeleton className="h-4 w-20" /></div>
         <Skeleton className="h-11 w-24 rounded-xl" />
@@ -85,6 +101,9 @@ function TodayCard({ timezone }: { timezone: string }) {
           <p className="font-mono text-sm tabular-nums text-muted-foreground">
             {left == null ? t('No target for this day yet.') : left >= 0 ? t('{0} kcal left', fmtNumber(left)) : t('{0} kcal over', fmtNumber(-left))}
           </p>
+          {left == null && (
+            <Button variant="link" className="h-11 px-0 text-sm" onClick={onSetTarget}>{t('Set target')}</Button>
+          )}
         </div>
         <Button className="h-11 gap-1.5 rounded-xl px-4" onClick={() => nav('/nutricao')}>
           <Plus aria-hidden className="size-4" />{t('Log')}
@@ -116,12 +135,11 @@ function Ring({ share, over }: { share: number; over: boolean }) {
   )
 }
 
-function Invite() {
-  const [hidden, setHidden] = useState(isDismissed)
-  const [setup, setSetup] = useState(false)
+function Invite({ userId, onActivate }: { userId: string; onActivate: () => void }) {
+  const [hidden, setHidden] = useState(() => dismissedBy().includes(userId))
   if (hidden) return null
   const dismiss = () => {
-    try { localStorage.setItem(DISMISSED, '1') } catch { /* storage blocked: hidden for this visit only */ }
+    try { localStorage.setItem(DISMISSED, JSON.stringify([...dismissedBy(), userId])) } catch { /* storage blocked: hidden for this visit only */ }
     setHidden(true)
   }
   return (
@@ -139,8 +157,7 @@ function Invite() {
       <p className="mt-2 text-sm leading-snug text-muted-foreground">
         {t('Get a daily calorie and protein target based on your profile. Days on target earn XP, like workouts do.')}
       </p>
-      <Button variant="outline" className="mt-3 h-11 rounded-xl" onClick={() => setSetup(true)}>{t('Turn on Nutrition')}</Button>
-      <NutritionSetup open={setup} onOpenChange={setSetup} />
+      <Button variant="outline" className="mt-3 h-11 rounded-xl" onClick={onActivate}>{t('Turn on Nutrition')}</Button>
     </section>
   )
 }
