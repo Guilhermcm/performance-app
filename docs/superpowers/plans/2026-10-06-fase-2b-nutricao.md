@@ -203,3 +203,34 @@ function loadSuggested(): Promise<Record<string, { label: string; grams: number 
 - [ ] **Step 4: Commit** `docs: privacy, notices and setup for phase 2b`.
 
 > **Revisão final (controlador):** revisor do branch da 2b inteira contra a spec, cobrindo também a Task 10.
+
+## Registro de execução (decisões tomadas durante a execução)
+
+Executado por subagentes com revisão a cada três tarefas (1 a 3, 4 a 6, 7 a 9) e revisão final do
+branch, que cobriu a Task 10. Decisões que mudaram ou completaram o plano:
+
+- **Medidas presas ao alimento.** O trigger de `food_measures` recusa, para o cliente, um update que
+  troque `food_key` ou `user_id` (`item_immutable`); sem isso dava para passar do limite de 10.
+- **Dias importados** não contam em `weeks[].on_target` de `get_nutrition_days`.
+- **Faixas da POF.** No build, colher de servir aceita de 10 a 120 g (dado oficial de ensopados e
+  mamão fica entre 63 e 100 g). O teste das medidas exige unidade de fruta a partir de 20 g, com
+  lista explícita para frutas pequenas (vazia hoje), e unidade de melancia, melão, abacaxi e mamão a
+  partir de 250 g. Arroz integral entrou no mapa; são 113 alimentos.
+- **Rótulos.** Medidas pessoais nunca são flexionadas ("2 × concha · 90 g"); só os rótulos da POF,
+  um conjunto fechado, vão para o plural. Alimento próprio acha sua chave pelo alimento salvo com o
+  mesmo nome e marca.
+- **Calendário genérico** em `src/components/calendar/MonthCalendar.tsx`, para o Sono reaproveitar.
+  Dias futuros têm estado próprio ("Ainda não").
+- **Resultado do desafio** sai em `ends_on + 3`: o servidor fecha quando `challenge_today > ends_on +
+  2`. Depois do último dia o detalhe não oferece ação nenhuma (entrar, recusar ou sair), porque
+  `join_challenge` e `leave_challenge` recusam com `challenge_closed`; convite vencido vai para
+  "Encerrados".
+- **Plurais.** `tn()` usa `|one`, `|few` e `|many`, só em pl, ru e uk (ru e uk precisam de `|one`
+  para 21).
+- **Publicação.** `supabase/release/0007-0016_nutrition.sql` é gerado das migrations
+  (`scripts/build-release-sql.mjs`), com teste de sincronia e um teste PGlite que o aplica num banco
+  com 0001 a 0006 e linhas existentes. `docs/SETUP.md` tem o roteiro para produção.
+- **Pendências aceitas** (menores, para depois): checagem local do limite de 500 medidas; Drawer de
+  medida empilhado sobre o da porção (conferir no aparelho); dois alimentos próprios com mesmo nome
+  e marca dividem a chave; desafios em carência contam no limite de 10 ativos; aba antiga aberta
+  durante o deploy mostra erro até recarregar; `loadTaco` mantém a promessa rejeitada em memória.
