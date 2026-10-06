@@ -108,12 +108,21 @@ describe('Settings — reset everything', () => {
   })
 })
 
-describe('Settings — footer', () => {
-  // This app's own source (AGPL), with the openGym it is based on still credited next to it.
-  it('links the source code to its home on GitHub', () => {
+describe('Settings, footer', () => {
+  // Only the AGPL source link is shown: no third-party names or credits in the interface.
+  it('links the source code and license to its home on GitHub', () => {
     mount()
     const links = [...host.querySelectorAll('a')]
-    expect(links.find(a => a.textContent === 'Source code (AGPL-3.0)').getAttribute('href')).toBe('https://github.com/Guilhermcm/performance-app')
-    expect(links.find(a => a.textContent === 'Based on openGym').getAttribute('href')).toBe('https://github.com/DuarteSantos8/openGym')
+    expect(links.find(a => a.textContent === 'Source code and license').getAttribute('href')).toBe('https://github.com/Guilhermcm/performance-app')
+  })
+
+  it('shows no third-party names or media credits', () => {
+    mount()
+    const footer = [...host.querySelectorAll('a')].find(a => a.textContent === 'Source code and license').parentElement
+    expect(footer.textContent).toContain('performance-app v')
+    for (const banned of ['openGym', 'exercises-dataset', 'Gym visual', 'gymvisual']) {
+      expect(host.textContent).not.toContain(banned)
+    }
+    expect([...host.querySelectorAll('a')].map(a => a.getAttribute('href')).join(' ')).not.toMatch(/opengym|gymvisual/i)
   })
 })

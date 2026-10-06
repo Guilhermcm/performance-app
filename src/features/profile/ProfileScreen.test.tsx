@@ -158,9 +158,9 @@ describe('ProfileScreen', () => {
     await waitFor(() => expect(h.signOut).toHaveBeenLastCalledWith({ force: true }))
   })
 
-  it('links the source code (AGPL)', () => {
+  it('links the source code and license', () => {
     show()
-    expect(screen.getByRole('link', { name: /source code/i }).getAttribute('href')).toBe('https://github.com/Guilhermcm/performance-app')
+    expect(screen.getByRole('link', { name: /source code and license/i }).getAttribute('href')).toBe('https://github.com/Guilhermcm/performance-app')
     expect(SOURCE_URL).toBe('https://github.com/Guilhermcm/performance-app')
   })
 
@@ -169,7 +169,7 @@ describe('ProfileScreen', () => {
     const order = [
       screen.getByRole('button', { name: /sign out/i }),
       screen.getByRole('button', { name: 'Delete my account' }),
-      screen.getByRole('link', { name: /source code/i })
+      screen.getByRole('link', { name: /source code and license/i })
     ]
     for (let i = 1; i < order.length; i++) {
       expect(order[i - 1].compareDocumentPosition(order[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()

@@ -245,7 +245,7 @@ export default function ProfileScreen() {
         <DeleteAccount />
         <a className="mx-auto inline-flex min-h-11 items-center gap-2 px-3 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
           href={SOURCE_URL} target="_blank" rel="noreferrer">
-          <CodeXml aria-hidden className="size-4" />{t('Source code (AGPL-3.0)')}
+          <CodeXml aria-hidden className="size-4" />{t('Source code and license')}
         </a>
         {/* A plain link, not a route: the policy is a static page outside the hash router. */}
         <a className="mx-auto -mt-3 inline-flex min-h-11 items-center gap-2 px-3 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"

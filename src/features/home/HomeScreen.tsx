@@ -34,7 +34,7 @@ export default function HomeScreen() {
     <div className="mx-auto flex w-full max-w-md flex-col gap-3 font-sans text-foreground">
       <header className="flex items-start justify-between gap-3 pb-1">
         <div className="min-w-0">
-          <h1 className="truncate text-[28px] font-semibold leading-tight tracking-tight">{user ? t('Hi {0}', name) : 'openGym'}</h1>
+          <h1 className="truncate text-[28px] font-semibold leading-tight tracking-tight">{user ? t('Hi {0}', name) : 'performance-app'}</h1>
           <p className="text-sm text-muted-foreground first-letter:uppercase">
             {new Date().toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}
           </p>
