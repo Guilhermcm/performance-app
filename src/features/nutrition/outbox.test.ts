@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-vi.mock('@/lib/supabase', () => ({ supabase: {} }))
+const auth = vi.hoisted(() => ({ session: { access_token: 't' } as object | null }))
+vi.mock('@/lib/supabase', () => ({ supabase: { auth: { getSession: async () => ({ data: { session: auth.session } }) } } }))
 const api = vi.hoisted(() => ({ upsertLog: vi.fn(), deleteLog: vi.fn(), upsertFood: vi.fn(), deleteFood: vi.fn() }))
 vi.mock('./nutrition-api', async orig => ({ ...(await orig<typeof import('./nutrition-api')>()), ...api }))
 
@@ -11,7 +12,7 @@ import { ME, OTHER, logOf } from './test-nutrition'
 const refused = (m: string) => Object.assign(new Error(m), { code: m })
 
 beforeEach(() => {
-  localStorage.clear(); clearOutbox()
+  localStorage.clear(); clearOutbox(); auth.session = { access_token: 't' }
   Object.values(api).forEach(f => f.mockReset().mockResolvedValue(undefined))
 })
 
@@ -33,6 +34,16 @@ describe('food outbox', () => {
     expect(api.deleteLog).not.toHaveBeenCalled()
     await expect(flushOutbox(ME)).resolves.toEqual({ sent: 2, left: 0, dropped: 0, reasons: [] })
     expect(b.id).toBe('b')
+  })
+
+  it('sends nothing and drops nothing without a live session', async () => {
+    enqueue(ME, { kind: 'log', op: 'delete', id: 'a' })
+    enqueue(ME, { kind: 'log', op: 'delete', id: 'b' })
+    auth.session = null
+    await expect(flushOutbox(ME)).resolves.toEqual({ sent: 0, left: 2, dropped: 0, reasons: [] })
+    expect(api.deleteLog).not.toHaveBeenCalled()
+    auth.session = { access_token: 't' }
+    await expect(flushOutbox(ME)).resolves.toMatchObject({ sent: 2, left: 0 })
   })
 
   it('collapses ops on the same id', async () => {

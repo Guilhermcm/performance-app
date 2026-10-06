@@ -2,9 +2,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // The real nutrition-api wrapper runs here; only the supabase client answers with PostgREST-shaped errors.
-const db = vi.hoisted(() => ({ answer: vi.fn() }))
+const db = vi.hoisted(() => ({ answer: vi.fn(), session: { access_token: 't' } as object | null }))
 vi.mock('@/lib/supabase', () => ({
   supabase: {
+    auth: { getSession: async () => ({ data: { session: db.session } }) },
     from: () => ({
       upsert: (row: { id: string }) => db.answer(row.id),
       delete: () => ({ eq: (_c: string, id: string) => db.answer(id) })
@@ -18,7 +19,7 @@ import { ME, logOf } from './test-nutrition'
 const ok = { data: null, error: null }
 const pg = (code: string, message: string) => ({ data: null, error: { code, message, details: null, hint: null } })
 
-beforeEach(() => { localStorage.clear(); clearOutbox(); db.answer.mockReset().mockResolvedValue(ok) })
+beforeEach(() => { localStorage.clear(); clearOutbox(); db.answer.mockReset().mockResolvedValue(ok); db.session = { access_token: 't' } })
 
 const queue3 = () => {
   for (const id of ['a', 'b', 'c']) enqueue(ME, { kind: 'log', op: 'upsert', id, row: logOf({ id }) })
@@ -43,10 +44,25 @@ describe('outbox through the real api wrapper', () => {
     await expect(flushOutbox(ME)).resolves.toMatchObject({ dropped: 1, left: 0 })
   })
 
-  it.each([['22001'], ['23503'], ['23505'], ['42501']])('drops SQLSTATE %s', async c => {
+  it.each([['22001'], ['23503'], ['23505']])('drops SQLSTATE %s', async c => {
     enqueue(ME, { kind: 'log', op: 'delete', id: 'a' })
     db.answer.mockResolvedValue(pg(c, 'boom'))
     await expect(flushOutbox(ME)).resolves.toMatchObject({ dropped: 1, left: 0 })
+  })
+
+  it('keeps a 42501 (anon key after a lost session) queued, in order', async () => {
+    queue3()
+    db.answer.mockResolvedValueOnce(pg('42501', 'permission denied for table food_logs'))
+    await expect(flushOutbox(ME)).resolves.toEqual({ sent: 0, left: 3, dropped: 0, reasons: [] })
+    expect(pending(ME).map(o => o.id)).toEqual(['a', 'b', 'c'])
+    await expect(flushOutbox(ME)).resolves.toMatchObject({ sent: 3, left: 0 })
+  })
+
+  it('does not even call the server without a session', async () => {
+    queue3()
+    db.session = null
+    await expect(flushOutbox(ME)).resolves.toEqual({ sent: 0, left: 3, dropped: 0, reasons: [] })
+    expect(db.answer).not.toHaveBeenCalled()
   })
 
   it('keeps the queue, in order, on a network failure', async () => {

@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-vi.mock('@/lib/supabase', () => ({ supabase: {} }))
+vi.mock('@/lib/supabase', () => ({ supabase: { auth: { getSession: async () => ({ data: { session: { access_token: 't' } } }) } } }))
 const api = vi.hoisted(() => ({
   fetchLogs: vi.fn(), fetchFoods: vi.fn(), fetchTargets: vi.fn(), fetchDays: vi.fn(), insertTarget: vi.fn(),
   upsertLog: vi.fn(), deleteLog: vi.fn(), upsertFood: vi.fn(), deleteFood: vi.fn()
@@ -236,20 +236,33 @@ describe('useNutrition', () => {
 })
 
 describe('startNutritionSync', () => {
-  it('retries every 60 s and stops when cleaned up', async () => {
+  const vis = (v: 'visible' | 'hidden') => Object.defineProperty(document, 'visibilityState', { value: v, configurable: true })
+  it('every 60 s only sends a waiting outbox, in a visible tab, without pulling; stop clears it', async () => {
     await bound()
+    api.upsertLog.mockRejectedValue(new TypeError('Failed to fetch'))
+    const { id, updated_at, ...rest } = logOf({ day: TODAY })
+    useNutrition.getState().addLog(rest)
+    await settle()
     vi.useFakeTimers()
-    api.fetchFoods.mockClear()
+    api.upsertLog.mockClear(); api.fetchFoods.mockClear()
     const stop = startNutritionSync()
     await vi.advanceTimersByTimeAsync(59_000)
-    expect(api.fetchFoods).not.toHaveBeenCalled()
+    expect(api.upsertLog).not.toHaveBeenCalled()
     await vi.advanceTimersByTimeAsync(1_000)
-    expect(api.fetchFoods).toHaveBeenCalledTimes(1)
+    expect(api.upsertLog).toHaveBeenCalledTimes(1)
+    expect(api.fetchFoods).not.toHaveBeenCalled()
+    vis('hidden')
     await vi.advanceTimersByTimeAsync(60_000)
-    expect(api.fetchFoods).toHaveBeenCalledTimes(2)
+    expect(api.upsertLog).toHaveBeenCalledTimes(1)
+    vis('visible')
+    api.upsertLog.mockResolvedValue(undefined)
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(api.upsertLog).toHaveBeenCalledTimes(2)
+    // outbox now empty: nothing more is sent
+    await vi.advanceTimersByTimeAsync(120_000)
+    expect(api.upsertLog).toHaveBeenCalledTimes(2)
+    expect(api.fetchFoods).not.toHaveBeenCalled()
     stop()
-    await vi.advanceTimersByTimeAsync(180_000)
-    expect(api.fetchFoods).toHaveBeenCalledTimes(2)
     vi.useRealTimers()
   })
 })

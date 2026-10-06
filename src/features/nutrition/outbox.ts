@@ -1,5 +1,6 @@
 import type { FoodLog, UserFood } from './types'
 import * as api from './nutrition-api'
+import { supabase } from '@/lib/supabase'
 
 export type OutboxOp = { kind: 'log' | 'food'; op: 'upsert' | 'delete'; id: string; row?: FoodLog | UserFood }
 
@@ -45,7 +46,16 @@ async function send(op: OutboxOp): Promise<void> {
 
 export type FlushResult = { sent: number; left: number; dropped: number; reasons: api.RefusedReason[] }
 
+// Without a live session a request goes out as anon and fails (42501): send nothing, drop nothing.
+async function hasSession(): Promise<boolean> {
+  try {
+    const { data } = await supabase.auth.getSession()
+    return !!data?.session
+  } catch { return false }
+}
+
 async function run(userId: string): Promise<FlushResult> {
+  if (!(await hasSession())) return { sent: 0, left: pending(userId).length, dropped: 0, reasons: [] }
   let sent = 0
   let dropped = 0
   const reasons = new Set<api.RefusedReason>()

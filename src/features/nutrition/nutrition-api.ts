@@ -38,14 +38,15 @@ const sqlstateOf = (e: unknown): string | null => {
 }
 
 // Refused for good: a P0001 with one of our messages, a check/unique/FK violation (23xxx), a data
-// exception (22xxx) or an RLS/privilege denial (42501). Everything else (fetch failures, timeouts,
+// exception (22xxx). 42501 is NOT a refusal: PostgREST also answers it when the session is lost and
+// the request went out with the anon key, so it stays queued. Everything else (fetch failures, timeouts,
 // 5xx, expired sessions, unknown codes) is "try again".
 export function classify(e: unknown): NutritionError {
   if (e instanceof NutritionError) return e
   const detail = messageOf(e)
   const sqlstate = sqlstateOf(e)
   const known = (KNOWN as readonly string[]).includes(detail) ? (detail as NutritionErrorCode) : null
-  const refused = P0001_REFUSALS.includes(detail) || (sqlstate != null && (/^2[23]/.test(sqlstate) || sqlstate === '42501'))
+  const refused = P0001_REFUSALS.includes(detail) || (sqlstate != null && /^2[23]/.test(sqlstate))
   const code: NutritionErrorCode = known ?? 'network'
   return new NutritionError(code, {
     refused, sqlstate, detail,

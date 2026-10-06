@@ -65,6 +65,8 @@ export type NutritionStore = {
   droppedReason: 'day_closed' | 'refused' | null
   bind(userId: string): Promise<void>
   refresh(): Promise<void>
+  // Sends what is waiting in the outbox, if anything; no pull.
+  flushPending(): Promise<void>
   reset(): void
   dismissDropped(): void
   addLog(l: Omit<FoodLog, 'id' | 'updated_at'>): FoodLog
@@ -186,6 +188,11 @@ export const useNutrition = create<NutritionStore>((set, get) => {
       return job
     },
 
+    async flushPending() {
+      const userId = get().userId
+      if (userId && pending(userId).length) await flush()
+    },
+
     reset() {
       generation++
       refreshing = null
@@ -295,8 +302,11 @@ export function startNutritionSync(): () => void {
   const onVisible = () => { if (document.visibilityState === 'visible') run() }
   window.addEventListener('online', run)
   document.addEventListener('visibilitychange', onVisible)
-  // A write that failed with the network up and no event after it still gets another try.
-  const timer = window.setInterval(run, 60_000)
+  // A write that failed with the network up and no event after it still gets another try: the
+  // tick only sends the outbox (no pull), and only for a visible tab with something waiting.
+  const timer = window.setInterval(() => {
+    if (document.visibilityState === 'visible') void useNutrition.getState().flushPending()
+  }, 60_000)
   return () => {
     window.clearInterval(timer)
     window.removeEventListener('online', run)
