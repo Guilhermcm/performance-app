@@ -28,6 +28,7 @@ recomendada (impacto em performance física primeiro).
 | 0 | Fundação | G | — | concluída |
 | 1a | Gamificação individual | M | 0 | concluída |
 | 1b | Social | M | 1a | concluída |
+| 1c | Check-in com foto e social | M | 1b | especificada ([spec](superpowers/specs/2026-10-06-checkin-social-design.md)) |
 | 2 | Nutrição | G | 1a | concluída (2a e 2b) |
 | 3 | Sono | P | 1a | especificada, execução adiada ([spec](superpowers/specs/2026-10-06-fase-3-sono-design.md)) |
 | 4 | Hábitos + trackers | M | 1a | a especificar |
