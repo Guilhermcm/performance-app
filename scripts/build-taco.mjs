@@ -3,7 +3,7 @@
 // Source: TACO, Tabela Brasileira de Composição de Alimentos, 4ª edição (NEPA/Unicamp).
 // Get the official spreadsheet at https://www.nepa.unicamp.br/taco/ and convert it to CSV with the
 // header: id,nome,energia_kcal,proteina_g,carboidrato_g,lipideos_g,fibra_g (values per 100 g,
-// decimal point or comma). TACO terms of use are pending confirmation (see NOTICE.md).
+// decimal point or comma). Provenance and terms: scripts/data/README.md and NOTICE.md.
 //
 // TACO legend handling:
 //   "Tr" (traço)      -> 0
@@ -22,7 +22,16 @@ const DEFAULT_CSV = fileURLToPath(new URL('./data/taco-4ed.csv', import.meta.url
 const DEFAULT_OUT = fileURLToPath(new URL('../src/features/nutrition/data/taco.json', import.meta.url))
 
 /** ids whose official kcal diverges from 4P + 4C + 9F (e.g. alcohol, polyols). */
-export const KCAL_EXCEPTIONS = new Set([])
+export const KCAL_EXCEPTIONS = new Set([
+  '114', // Coentro, folhas desidratadas: 37 g de fibra, que a TACO não conta como energia cheia
+  '220', // Limão, tahiti, cru: carboidrato inclui 1,2 g de fibra e muito açúcar-ácido, kcal oficial menor
+  '472', // Cana, aguardente 1: energia vem só do álcool, sem macros na tabela
+  '474', // Cerveja, pilsen 2: parte da energia vem do álcool (7 kcal/g), que não está nas colunas
+  '513', // Fermento em pó, químico: carboidrato é de sais e amido não digerível, kcal oficial metade do 4P+4C+9F
+  '514', // Fermento biológico: 4,2 g de fibra e carboidrato de baixa digestibilidade
+  '539', // Feijão tropeiro mineiro: preparação composta, kcal calculada por receita
+  '540' // Feijoada: preparação composta, kcal calculada por receita (desvio de 16%)
+])
 
 export function parseCsv(text) {
   const rows = []

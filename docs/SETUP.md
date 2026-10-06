@@ -82,11 +82,11 @@ desses dias, a meta da semana e as conquistas, e mantém o streak de nutrição 
 ## 8. Tabela TACO (busca local de alimentos)
 
 A busca de alimentos usa a TACO (Tabela Brasileira de Composição de Alimentos, 4ª edição,
-NEPA/Unicamp) no próprio aparelho. Os dados ainda não estão no repositório: os termos de uso
-precisam ser confirmados (veja `NOTICE.md`). Até lá, `src/features/nutrition/data/taco.json` fica
-vazio e a busca mostra só os alimentos salvos e os resultados do Open Food Facts.
+NEPA/Unicamp) no próprio aparelho. Os 597 alimentos já estão em
+`src/features/nutrition/data/taco.json`; a origem, os termos e a citação estão em
+`scripts/data/README.md` e `NOTICE.md`.
 
-Para incluir a tabela:
+Para regenerar a tabela a partir do CSV:
 
 1. Baixe a planilha oficial da TACO 4ª edição em https://www.nepa.unicamp.br/taco/.
 2. Converta para CSV com o cabeçalho

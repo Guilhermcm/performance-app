@@ -215,9 +215,10 @@ whose database is available under the **Open Database License (ODbL) 1.0**. Prod
 demand; a product the person saves keeps only its nutrition values (name, brand and per 100 g amounts);
 no credit is stored with it.
 
-### TACO (pending confirmation of terms)
+### TACO
 
-The local food table is built from the *Tabela Brasileira de Composição de Alimentos (TACO)*, 4ª
-edição, NEPA/Unicamp. Citation: NEPA, UNICAMP. TACO: Tabela brasileira de composição de alimentos.
-4. ed. rev. e ampl. Campinas: NEPA/UNICAMP, 2011. The terms of use have not been confirmed yet, and
-`src/features/nutrition/data/taco.json` stays empty until they are (see `scripts/build-taco.mjs`).
+The local food table (`src/features/nutrition/data/taco.json`) is built from the *Tabela Brasileira
+de Composição de Alimentos (TACO)*, 4ª edição, published by NEPA/Unicamp. The official edition states:
+"É permitida a reprodução total ou parcial do material, desde que seja citada a fonte." Source:
+NEPA/UNICAMP. Tabela Brasileira de Composição de Alimentos (TACO). 4ª ed. Campinas, 2011.
+Provenance and checks are in `scripts/data/README.md`.

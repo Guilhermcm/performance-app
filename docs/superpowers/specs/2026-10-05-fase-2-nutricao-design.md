@@ -680,7 +680,7 @@ O plano da 2a fechou pontos em que esta spec dizia outra coisa ou deixava em abe
   não um ramo de `close_all_weeks`.
 - **Hoje e amanhã no cliente** vêm do fuso do perfil, não do fuso do aparelho.
 - **Copiar de** busca online os dias 15 a 30; a cópia local cobre os últimos 14.
-- **TACO pendente.** A rede deste ambiente bloqueia a planilha oficial; `taco.json` segue vazio e
-  `docs/SETUP.md` §8 diz como gerar os dados depois.
+- **TACO empacotada.** Os termos permitem reprodução com citação da fonte; `taco.json` tem os 597
+  alimentos da 4ª edição e a origem está em `scripts/data/README.md` e `NOTICE.md`.
 - **Offline.** Os chunks da TACO, do ZXing e do radar entram no precache do service worker pela
   lista que o build escreve em `sw.js`, e funcionam offline desde a primeira abertura.

@@ -64,8 +64,6 @@ describe('build-taco', () => {
     expect(readFileSync(OUT, 'utf8')).toBe(before)
   })
 
-  // Blocker in the ledger: the official TACO spreadsheet could not be downloaded in the build
-  // environment, so scripts/data/taco-4ed.csv does not exist yet.
   it.skipIf(!existsSync(REAL_CSV))('generates between 550 and 650 items from the real CSV', () => {
     const dir = mkdtempSync(join(tmpdir(), 'taco-'))
     const out = join(dir, 'taco.json')
