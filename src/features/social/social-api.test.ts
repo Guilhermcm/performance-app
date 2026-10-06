@@ -1,3 +1,4 @@
+import { readFileSync, readdirSync } from 'node:fs'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const h = vi.hoisted(() => ({ rpc: vi.fn(), from: vi.fn() }))
@@ -29,16 +30,28 @@ describe('social api', () => {
     h.rpc.mockResolvedValue({ data: { id: 'c9' }, error: null })
     await expect(api.createChallenge({
       template: 'volume_total', title: 'Toneladas', mode: 'team', target: 20,
-      starts_on: '2026-10-05', ends_on: '2026-11-03', invitees: ['b'], share_volume: true
+      starts_on: '2026-10-05', ends_on: '2026-11-03', invitees: ['b'], share_volume: true, share_nutrition: false
     })).resolves.toBe('c9')
     expect(h.rpc).toHaveBeenLastCalledWith('create_challenge', {
       p_template: 'volume_total', p_title: 'Toneladas', p_mode: 'team', p_target: 20,
-      p_starts_on: '2026-10-05', p_ends_on: '2026-11-03', p_invitees: ['b'], p_share_volume: true
+      p_starts_on: '2026-10-05', p_ends_on: '2026-11-03', p_invitees: ['b'], p_share_volume: true,
+      p_share_nutrition: false
     })
+    await api.createChallenge({
+      template: 'nutrition_days_on_target', title: 'No alvo', mode: 'solo', target: 20,
+      starts_on: '2026-10-05', ends_on: '2026-11-03', invitees: ['b'], share_volume: false, share_nutrition: true
+    })
+    expect(h.rpc).toHaveBeenLastCalledWith('create_challenge', expect.objectContaining({
+      p_template: 'nutrition_days_on_target', p_share_volume: false, p_share_nutrition: true
+    }))
 
     h.rpc.mockResolvedValue({ data: null, error: null })
-    await api.joinChallenge('c9', true)
-    expect(h.rpc).toHaveBeenLastCalledWith('join_challenge', { p_id: 'c9', p_share_volume: true })
+    await api.joinChallenge('c9', { shareVolume: true })
+    expect(h.rpc).toHaveBeenLastCalledWith('join_challenge', { p_id: 'c9', p_share_volume: true, p_share_nutrition: false })
+    await api.joinChallenge('c9', { shareNutrition: true })
+    expect(h.rpc).toHaveBeenLastCalledWith('join_challenge', { p_id: 'c9', p_share_volume: false, p_share_nutrition: true })
+    await api.joinChallenge('c9')
+    expect(h.rpc).toHaveBeenLastCalledWith('join_challenge', { p_id: 'c9', p_share_volume: false, p_share_nutrition: false })
     await api.leaveChallenge('c9')
     expect(h.rpc).toHaveBeenLastCalledWith('leave_challenge', { p_id: 'c9' })
 
@@ -60,6 +73,10 @@ describe('social api', () => {
   it('turns server errors into typed codes and the rest into network', async () => {
     h.rpc.mockResolvedValue({ data: null, error: { message: 'invite_expired' } })
     await expect(api.acceptInvite('AbCdEfGh12')).rejects.toMatchObject({ name: 'SocialError', code: 'invite_expired' })
+    h.rpc.mockResolvedValue({ data: null, error: { message: 'nutrition_opt_in_required' } })
+    await expect(api.joinChallenge('c9', { shareNutrition: false })).rejects.toMatchObject({ code: 'nutrition_opt_in_required' })
+    h.rpc.mockResolvedValue({ data: null, error: { message: 'nutrition_off' } })
+    await expect(api.joinChallenge('c9', { shareNutrition: true })).rejects.toMatchObject({ code: 'nutrition_off' })
     h.rpc.mockResolvedValue({ data: null, error: { message: 'boom' } })
     await expect(api.getFriends()).rejects.toMatchObject({ code: 'network' })
     h.rpc.mockRejectedValue(new TypeError('Failed to fetch'))
@@ -94,5 +111,44 @@ describe('social api', () => {
       ['eq', ['user_a', '0000000a-0000-0000-0000-000000000000']],
       ['eq', ['user_b', '0000000b-0000-0000-0000-000000000000']]
     ])
+  })
+})
+
+// The newest definition of a function in supabase/migrations, as its parameter names. A client that
+// names every parameter keeps working while the old and the new signature coexist during a deploy
+// (Review Focus 5), and a renamed parameter fails here instead of in production.
+const MIGRATIONS = new URL('../../../supabase/migrations/', import.meta.url)
+function sqlParams(fn: string): string[] {
+  const head = new RegExp(`create (?:or replace )?function public\\.${fn}\\(([^)]*)\\)`, 'g')
+  let params: string[] | null = null
+  for (const file of readdirSync(MIGRATIONS).filter(f => f.endsWith('.sql')).sort()) {
+    for (const m of readFileSync(new URL(file, MIGRATIONS), 'utf8').matchAll(head)) {
+      params = m[1].split(',').map(p => p.trim().split(/\s+/)[0]).filter(Boolean)
+    }
+  }
+  if (!params) throw new Error('no definition of ' + fn)
+  return params
+}
+
+describe('challenge RPCs against the migrations', () => {
+  it('names every parameter of create_challenge and join_challenge', async () => {
+    h.rpc.mockResolvedValue({ data: { id: 'c9' }, error: null })
+    await api.createChallenge({
+      template: 'nutrition_days_on_target', title: 'No alvo', mode: 'team', target: 5,
+      starts_on: '2026-10-05', ends_on: '2026-10-11', invitees: ['b'], share_volume: false, share_nutrition: true
+    })
+    expect(Object.keys(h.rpc.mock.lastCall![1]).sort()).toEqual(sqlParams('create_challenge').sort())
+    h.rpc.mockResolvedValue({ data: null, error: null })
+    await api.joinChallenge('c9', { shareNutrition: true })
+    expect(Object.keys(h.rpc.mock.lastCall![1]).sort()).toEqual(sqlParams('join_challenge').sort())
+  })
+
+  it('leaves the feed and the friend card without nutrition', () => {
+    // 0015 brings the nutrition challenge and nothing else to what friends see of each other.
+    const nutrition = readFileSync(new URL('0015_nutrition_challenge.sql', MIGRATIONS), 'utf8')
+    for (const fn of ['get_feed', 'get_friends', 'progress_card']) expect(nutrition).not.toContain('public.' + fn)
+    for (const file of ['FeedPanel.tsx', 'FriendsPanel.tsx']) {
+      expect(readFileSync(new URL('./' + file, import.meta.url), 'utf8'), file).not.toMatch(/nutrition/i)
+    }
   })
 })

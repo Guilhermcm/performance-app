@@ -7,7 +7,7 @@ import { t } from '../../lib/i18n.js'
 import { todayISO } from '../../lib/format.js'
 import { useSocial } from './useSocial'
 import { MODE_TEXT, TEMPLATE_TEXT } from './labels'
-import { challengeShare, daysLeft } from './templates'
+import { challengeShare, daysLeft, resultOn } from './templates'
 import { fmtShortDay } from './format'
 import { PersonAvatar } from './components/PersonAvatar'
 import { EmptyState, ErrorState, ListSkeleton, StaleNote } from './components/states'
@@ -22,6 +22,8 @@ export function statusLine(c: Challenge, today: string): string {
   if (c.status === 'lost') return t('Not this time')
   if (c.status === 'cancelled') return t('Cancelled')
   if (c.starts_on > today) return t('Starts {0}', fmtShortDay(c.starts_on))
+  // Past the last day, waiting for the server to close it (two more days for nutrition).
+  if (today > c.ends_on) return t('Result on {0}', fmtShortDay(resultOn(c)))
   return daysLeft(c, today) <= 1 ? t('Ends today') : t('{0} days left', daysLeft(c, today))
 }
 

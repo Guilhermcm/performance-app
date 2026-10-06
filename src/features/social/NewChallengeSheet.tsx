@@ -11,9 +11,11 @@ import { cn } from '@/lib/utils'
 import { t } from '../../lib/i18n.js'
 import { todayISO } from '../../lib/format.js'
 import { useProgress } from '../gamification/useProgress'
+import { useProfile } from '../profile/useProfile'
+import NutritionSetup from '../nutrition/NutritionSetup'
 import { createChallenge, toSocialError } from './social-api'
 import { useSocial } from './useSocial'
-import { MODE_TEXT, TEMPLATE_TEXT, amountText, autoTitle, socialErrorText } from './labels'
+import { MODE_TEXT, TEMPLATE_TEXT, amountText, autoTitle, nutritionOptInText, socialErrorText } from './labels'
 import { fmtShortDay } from './format'
 import {
   DURATIONS, MAX_INVITEES, MODES, TARGET_STEP, TEMPLATES, addDays, checkChallenge, clampTarget, nextMonday,
@@ -25,14 +27,19 @@ import { InviteButton } from './InviteButton'
 import type { ChallengeMode, ChallengeTemplate, NewChallenge } from './types'
 
 type Start = 'today' | 'monday'
+const NUTRITION: ChallengeTemplate = 'nutrition_days_on_target'
 
 // A challenge from a template with parameters, in one bottom sheet: what counts, format,
-// duration and start, goal (suggested until touched), who joins, the volume opt-in and a name
-// that writes itself until edited. The same rules as the server decide whether it can be sent.
+// duration and start, goal (suggested until touched), who joins, the volume or nutrition opt-in and
+// a name that writes itself until edited. The same rules as the server decide whether it can be
+// sent. With the Nutrition pillar off, the nutrition template is listed off, with a way to turn the
+// pillar on (the same setup the Nutrition tab opens); once on, it is picked.
 export default function NewChallengeSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const navigate = useNavigate()
   const friends = useSocial(s => s.friends.data) ?? []
-  const weekly = useProgress(s => s.progress?.week.target ?? 3)
+  const weeklyWorkouts = useProgress(s => s.progress?.week.target ?? 3)
+  const nutritionOn = useProfile(s => s.profile?.nutrition_enabled ?? false)
+  const weeklyDays = useProfile(s => s.profile?.nutrition_days_per_week ?? 5)
   const today = todayISO()
   const [template, setTemplate] = useState<ChallengeTemplate>('workouts_count')
   const [mode, setMode] = useState<ChallengeMode>('team')
@@ -42,32 +49,45 @@ export default function NewChallengeSheet({ open, onClose }: { open: boolean; on
   const [target, setTarget] = useState<number | null>(null)
   const [title, setTitle] = useState<string | null>(null)
   const [shareVolume, setShareVolume] = useState(false)
+  const [shareNutrition, setShareNutrition] = useState(false)
+  const [setupOpen, setSetupOpen] = useState(false)
+  // Asked for the pillar from here: the nutrition template is picked once it is on.
+  const [wantNutrition, setWantNutrition] = useState(false)
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
     if (!open) return
     setTemplate('workouts_count'); setMode('team'); setDays(30); setStart('today')
-    setPicked([]); setTarget(null); setTitle(null); setShareVolume(false)
+    setPicked([]); setTarget(null); setTitle(null); setShareVolume(false); setShareNutrition(false)
+    setWantNutrition(false)
   }, [open])
+  useEffect(() => {
+    if (!nutritionOn || !wantNutrition) return
+    setWantNutrition(false); setTemplate(NUTRITION); setTarget(null)
+  }, [nutritionOn, wantNutrition])
 
   const effMode: ChallengeMode = MODES[template].includes(mode) ? mode : 'solo'
   const startsOn = start === 'today' ? today : nextMonday(today)
   const endsOn = addDays(startsOn, days - 1)
-  const range = targetRange(template, startsOn, endsOn)
+  const range = targetRange(template, startsOn, endsOn, effMode, picked.length)
+  const weekly = template === NUTRITION ? weeklyDays : weeklyWorkouts
   const goal = target === null
     ? suggestedTarget(template, effMode, startsOn, endsOn, weekly, picked.length + 1)
     : clampTarget(target, range)
   const name = title ?? autoTitle(template, goal, days)
   const draft: NewChallenge = {
     template, title: name, mode: effMode, target: goal, starts_on: startsOn, ends_on: endsOn,
-    invitees: picked, share_volume: shareVolume
+    invitees: picked, share_volume: shareVolume, share_nutrition: shareNutrition
   }
-  const problem = checkChallenge(draft, today)
+  const problem = checkChallenge(draft, today, { nutritionOn })
   // Why the button is off, shown before anyone taps it.
   const hint = problem === 'title' ? t('Give the challenge a name.')
     : problem === 'invitees' ? (friends.length === 0 ? t('Add a friend to create challenges.') : t('Pick at least one friend.'))
     : problem === 'volume' ? t('Agree to share your volume to create this challenge.')
+    : problem === 'nutrition_off' ? t('Turn on the Nutrition pillar to create this challenge.')
+    : problem === 'nutrition' ? t('Agree to show your days on target to create this challenge.')
     : ''
+  const optIn = nutritionOptInText()
 
   // A new shape gets a new suggested goal.
   const reshape = (change: () => void) => { change(); setTarget(null) }
@@ -105,19 +125,34 @@ export default function NewChallengeSheet({ open, onClose }: { open: boolean; on
                 const tx = TEMPLATE_TEXT[k]
                 const Icon = tx.icon
                 const on = k === template
-                return (
-                  <button key={k} type="button" role="radio" aria-checked={on} onClick={() => reshape(() => setTemplate(k))}
-                    className={cn('flex min-h-16 items-start gap-3 rounded-2xl border p-3 text-left outline-none transition-colors duration-150 focus-visible:ring-[3px] focus-visible:ring-ring/50',
-                      on ? 'border-primary bg-primary/10' : 'border-border bg-card')}>
-                    <span className={cn('grid size-10 shrink-0 place-items-center rounded-xl', on ? 'bg-primary text-primary-foreground' : 'bg-secondary text-foreground')}>
+                const off = k === NUTRITION && !nutritionOn
+                const radio = (
+                  <button key={k} type="button" role="radio" aria-checked={on} disabled={off} aria-describedby={off ? 'nutrition-off-why' : undefined}
+                    onClick={() => reshape(() => setTemplate(k))}
+                    className={cn('flex min-h-16 w-full items-start gap-3 rounded-2xl border p-3 text-left outline-none transition-colors duration-150 focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed',
+                      on ? 'border-primary bg-primary/10' : off ? 'border-transparent' : 'border-border bg-card')}>
+                    <span className={cn('grid size-10 shrink-0 place-items-center rounded-xl', on ? 'bg-primary text-primary-foreground' : 'bg-secondary text-foreground', off && 'opacity-60')}>
                       <Icon aria-hidden className="size-5" />
                     </span>
-                    <span className="min-w-0 flex-1">
+                    <span className={cn('min-w-0 flex-1', off && 'opacity-60')}>
                       <span className="block text-[15px] font-medium">{tx.name()}</span>
                       <span className="block text-xs leading-snug text-muted-foreground">{tx.rule()}</span>
                     </span>
                     {on && <Check aria-hidden className={cn('mt-1 size-4 shrink-0', ACCENT_TEXT)} />}
                   </button>
+                )
+                if (!off) return radio
+                // Off, with why and the one step that turns it on.
+                return (
+                  <div key={k} className="rounded-2xl border border-dashed border-border">
+                    {radio}
+                    <div className="flex items-center gap-3 px-3 pb-3">
+                      <p id="nutrition-off-why" className="flex-1 text-xs leading-snug text-muted-foreground">{t('Only for people with the Nutrition pillar on.')}</p>
+                      <Button variant="outline" className="h-11 shrink-0 rounded-xl" onClick={() => { setWantNutrition(true); setSetupOpen(true) }}>
+                        {t('Turn on Nutrition')}
+                      </Button>
+                    </div>
+                  </div>
                 )
               })}
             </div>
@@ -130,6 +165,16 @@ export default function NewChallengeSheet({ open, onClose }: { open: boolean; on
                 <span className="block text-xs leading-snug text-muted-foreground">{t('People in this challenge see how many tonnes you lift. Never the load of each exercise.')}</span>
               </label>
               <Switch id="share-volume" checked={shareVolume} onCheckedChange={setShareVolume} />
+            </div>
+          )}
+
+          {template === NUTRITION && (
+            <div className="flex items-start gap-3 rounded-2xl border border-border p-3">
+              <label htmlFor="share-nutrition" className="flex-1 cursor-pointer">
+                <span className="block text-[15px] font-medium">{optIn.label}</span>
+                <span className="block text-xs leading-snug text-muted-foreground">{optIn.detail}</span>
+              </label>
+              <Switch id="share-nutrition" checked={shareNutrition} onCheckedChange={setShareNutrition} />
             </div>
           )}
 
@@ -204,6 +249,7 @@ export default function NewChallengeSheet({ open, onClose }: { open: boolean; on
           </Button>
         </DrawerFooter>
       </DrawerContent>
+      <NutritionSetup open={setupOpen} onOpenChange={o => { setSetupOpen(o); if (!o && !useProfile.getState().profile?.nutrition_enabled) setWantNutrition(false) }} />
     </Drawer>
   )
 }

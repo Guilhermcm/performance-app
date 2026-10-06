@@ -1,16 +1,22 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, waitFor, act } from '@testing-library/react'
 
 const h = vi.hoisted(() => ({ nav: vi.fn(), createChallenge: vi.fn(), toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }) }))
 vi.mock('react-router-dom', () => ({ useNavigate: () => h.nav }))
 vi.mock('./social-api', async orig => ({ ...(await orig<typeof import('./social-api')>()), createChallenge: h.createChallenge }))
 vi.mock('sonner', () => ({ toast: h.toast }))
 vi.mock('@/components/ui/drawer', () => import('./test-drawer'))
+// The pillar's activation sheet, as a stand-in that only says whether it is open.
+vi.mock('../nutrition/NutritionSetup', async () => {
+  const { createElement } = await import('react')
+  return { default: ({ open }: { open: boolean }) => (open ? createElement('div', { role: 'dialog', 'aria-label': 'Nutrition setup' }) : null) }
+})
 
 import NewChallengeSheet from './NewChallengeSheet'
 import { useSocial } from './useSocial'
 import { useProgress } from '../gamification/useProgress'
+import { useProfile } from '../profile/useProfile'
 import { SocialError } from './social-api'
 import { addDays } from './templates'
 import { todayISO } from '../../lib/format.js'
@@ -21,6 +27,8 @@ const load = vi.fn(async () => null)
 const onClose = vi.fn()
 const ready = <T,>(data: T) => ({ status: 'ready' as const, data, stale: false, error: null })
 const create = () => screen.getByRole('button', { name: 'Create challenge' }) as HTMLButtonElement
+const pillar = (on: boolean) => useProfile.setState({ profile: { nutrition_enabled: on, nutrition_days_per_week: 5, timezone: 'America/Sao_Paulo' } as never })
+const nutritionRadio = () => screen.getByRole('radio', { name: /Days on nutrition target/ }) as HTMLButtonElement
 
 beforeEach(() => {
   localStorage.clear()
@@ -29,7 +37,7 @@ beforeEach(() => {
   useSocial.setState({ userId: ME, load, friends: ready([friendOf(BIA, 'Bia'), friendOf(CAIO, 'Caio')]) })
   ;[load, onClose, h.nav, h.createChallenge, h.toast.success, h.toast.error].forEach(f => f.mockReset())
 })
-afterEach(() => { cleanup(); useSocial.setState({ load: realLoad }) })
+afterEach(() => { cleanup(); useSocial.setState({ load: realLoad }); useProfile.setState({ profile: null }) })
 
 describe('NewChallengeSheet', () => {
   it('suggests a goal and a name from what is picked', () => {
@@ -90,7 +98,7 @@ describe('NewChallengeSheet', () => {
     const today = todayISO()
     expect(h.createChallenge).toHaveBeenCalledWith({
       template: 'workouts_count', title: '24 workouts in 30 days', mode: 'team', target: 24,
-      starts_on: today, ends_on: addDays(today, 29), invitees: [BIA], share_volume: false
+      starts_on: today, ends_on: addDays(today, 29), invitees: [BIA], share_volume: false, share_nutrition: false
     })
     expect(onClose).toHaveBeenCalled()
     expect(load).toHaveBeenCalledWith('challenges')
@@ -104,5 +112,78 @@ describe('NewChallengeSheet', () => {
     fireEvent.click(create())
     await waitFor(() => expect(h.toast.error).toHaveBeenCalledWith('You already have 10 challenges in progress.'))
     expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('lists the nutrition challenge turned off, with the way to turn the pillar on', () => {
+    pillar(false)
+    render(<NewChallengeSheet open onClose={onClose} />)
+    expect(nutritionRadio().disabled).toBe(true)
+    expect(screen.getByText('Only for people with the Nutrition pillar on.')).toBeTruthy()
+    fireEvent.click(nutritionRadio())
+    expect(nutritionRadio().getAttribute('aria-checked')).toBe('false')
+    fireEvent.click(screen.getByRole('button', { name: 'Turn on Nutrition' }))
+    expect(screen.getByRole('dialog', { name: 'Nutrition setup' })).toBeTruthy()
+    // The setup turns the pillar on: the template opens up and is picked for the person.
+    act(() => pillar(true))
+    expect(nutritionRadio().disabled).toBe(false)
+    expect(nutritionRadio().getAttribute('aria-checked')).toBe('true')
+    expect(screen.queryByText('Only for people with the Nutrition pillar on.')).toBeNull()
+  })
+
+  it('suggests days on target and keeps the goal inside the period', () => {
+    pillar(true)
+    render(<NewChallengeSheet open onClose={onClose} />)
+    fireEvent.click(nutritionRadio())
+    // 5 days on target a week (the profile) over 30 days, only me so far.
+    expect(screen.getByText('21 days on target')).toBeTruthy()
+    fireEvent.click(screen.getByRole('checkbox', { name: /Bia/ }))
+    expect(screen.getByText('42 days on target')).toBeTruthy()
+    expect((screen.getByLabelText('Challenge name') as HTMLInputElement).value).toBe('42 days on target in 30 days')
+    fireEvent.click(screen.getByRole('radio', { name: 'Solo' }))
+    fireEvent.click(screen.getByRole('button', { name: '7 days' }))
+    expect(screen.getByText('5 days on target')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'More' }))
+    fireEvent.click(screen.getByRole('button', { name: 'More' }))
+    expect(screen.getByText('7 days on target')).toBeTruthy()
+    expect((screen.getByRole('button', { name: 'More' }) as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('asks for the opt-in before creating a nutrition challenge and sends it', async () => {
+    pillar(true)
+    h.createChallenge.mockResolvedValue('c9')
+    render(<NewChallengeSheet open onClose={onClose} />)
+    fireEvent.click(nutritionRadio())
+    fireEvent.click(screen.getByRole('checkbox', { name: /Bia/ }))
+    expect(screen.getByText('Agree to show your days on target to create this challenge.')).toBeTruthy()
+    expect(create().disabled).toBe(true)
+    fireEvent.click(screen.getByRole('switch', { name: /Show participants how many days I was on target/ }))
+    expect(screen.queryByText('Agree to show your days on target to create this challenge.')).toBeNull()
+    fireEvent.click(create())
+    await waitFor(() => expect(h.nav).toHaveBeenCalledWith('/social/desafios/c9'))
+    expect(h.createChallenge).toHaveBeenCalledWith(expect.objectContaining({
+      template: 'nutrition_days_on_target', mode: 'team', target: 42, invitees: [BIA], share_nutrition: true
+    }))
+  })
+
+  it('says when the pillar went off under an open form', () => {
+    pillar(true)
+    render(<NewChallengeSheet open onClose={onClose} />)
+    fireEvent.click(nutritionRadio())
+    fireEvent.click(screen.getByRole('checkbox', { name: /Bia/ }))
+    fireEvent.click(screen.getByRole('switch', { name: /Show participants/ }))
+    act(() => pillar(false))
+    expect(screen.getByText('Turn on the Nutrition pillar to create this challenge.')).toBeTruthy()
+    expect(create().disabled).toBe(true)
+  })
+
+  it('explains the nutrition refusals of the server', async () => {
+    pillar(true)
+    h.createChallenge.mockRejectedValue(new SocialError('nutrition_off'))
+    render(<NewChallengeSheet open onClose={onClose} />)
+    fireEvent.click(nutritionRadio())
+    fireEvent.click(screen.getByRole('checkbox', { name: /Bia/ }))
+    fireEvent.click(screen.getByRole('switch', { name: /Show participants/ }))
+    fireEvent.click(create())
+    await waitFor(() => expect(h.toast.error).toHaveBeenCalledWith('Turn on the Nutrition pillar to take part in this challenge.'))
   })
 })

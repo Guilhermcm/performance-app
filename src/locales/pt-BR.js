@@ -1515,6 +1515,20 @@ export const PT_BR_OVERRIDES = {
   "This day's items need a connection.": "Os itens desse dia precisam de conexão.",
   "Could not load this day's items.": "Não foi possível carregar os itens desse dia.",
   "Nothing logged on this day.": "Nada registrado neste dia.",
+  "To take part, agree to show how many days you were on target.": "Para participar, aceite mostrar quantos dias você ficou no alvo.",
+  "Turn on the Nutrition pillar to take part in this challenge.": "Ative o pilar Nutrição para participar deste desafio.",
+  "Days on nutrition target": "Dias no alvo de nutrição",
+  "Days in the period that each person hits their nutrition target. Others only see how many, never what you ate.": "Dias do período em que cada pessoa bate o alvo de nutrição. Os outros só veem quantos, nunca o que você comeu.",
+  "1 day on target": "1 dia no alvo",
+  "{0} days on target in {1} days": "{0} dias no alvo em {1} dias",
+  "Show participants how many days I was on target": "Mostrar aos participantes quantos dias fiquei no alvo",
+  "They see only that number, never your meals, calories or targets.": "Eles veem só esse número, nunca suas refeições, calorias ou metas.",
+  "Turn on the Nutrition pillar to create this challenge.": "Ative o pilar Nutrição para criar este desafio.",
+  "Agree to show your days on target to create this challenge.": "Aceite mostrar seus dias no alvo para criar este desafio.",
+  "Only for people with the Nutrition pillar on.": "Só para quem está com o pilar Nutrição ligado.",
+  "Turn on the Nutrition pillar to join": "Ative o pilar Nutrição para participar",
+  "Counting up to the day before yesterday": "Contando até anteontem",
+  "Result on {0}": "Resultado sai em {0}",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }
