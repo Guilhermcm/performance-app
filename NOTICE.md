@@ -179,3 +179,18 @@ by the Capawesome Team (Robin Genz), a Capacitor wrapper around Google's ML Kit,
 **Apache License 2.0**. openGym pins the `7.x` line to stay on Capacitor 7. The full license text is
 available at <https://www.apache.org/licenses/LICENSE-2.0> and in the package's own `LICENSE` file.
 The decoded string is what openGym keeps; the photo itself is never stored.
+
+## Food data
+
+### Open Food Facts
+
+Packaged-food search and barcode lookup query [**Open Food Facts**](https://world.openfoodfacts.org/),
+whose database is available under the **Open Database License (ODbL) 1.0**. Products are fetched on
+demand; a product the person saves keeps its nutrition values and the credit "Dados: Open Food Facts".
+
+### TACO (pending confirmation of terms)
+
+The local food table is built from the *Tabela Brasileira de Composição de Alimentos (TACO)*, 4ª
+edição, NEPA/Unicamp. Citation: NEPA, UNICAMP. TACO: Tabela brasileira de composição de alimentos.
+4. ed. rev. e ampl. Campinas: NEPA/UNICAMP, 2011. The terms of use have not been confirmed yet, and
+`src/features/nutrition/data/taco.json` stays empty until they are (see `scripts/build-taco.mjs`).
