@@ -42,15 +42,18 @@ export default function AchievementsScreen() {
         </div>
       ) : (
         <ul className="mt-5 grid grid-cols-2 gap-3 pb-6">
-          {ACHIEVEMENTS.map(a => <Tile key={a.code} a={a} at={unlocked.get(a.code) ?? null} value={progress.stats[a.metric]} />)}
+          {ACHIEVEMENTS.map(a => (
+            <Tile key={a.code} a={a} text={ACHIEVEMENT_TEXT[a.code]} at={unlocked.get(a.code) ?? null} value={progress.stats[a.metric]} />
+          ))}
         </ul>
       )}
     </div>
   )
 }
 
-function Tile({ a, at, value }: { a: Achievement; at: string | null; value: number | undefined }) {
-  const text = ACHIEVEMENT_TEXT[a.code]
+type TileText = { title: () => string; detail: () => string }
+
+function Tile({ a, text, at, value }: { a: Achievement; text: TileText; at: string | null; value: number | undefined }) {
   const on = at !== null
   const reached = Math.min(value ?? 0, a.threshold)
   return (

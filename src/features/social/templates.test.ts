@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
-  addDays, challengeShare, checkChallenge, daysInclusive, daysLeft, mondayOf, nextMonday,
-  pendingInvites, suggestedTarget, targetRange, weeksTouched
+  GRACE, MODES, TEMPLATES, addDays, challengeShare, checkChallenge, daysInclusive, daysLeft, mondayOf, nextMonday,
+  canJoin, pendingInvites, resultOn, suggestedTarget, targetRange, weeksTouched
 } from './templates'
 import { challengeOf } from './test-social'
 import type { NewChallenge } from './types'
@@ -9,8 +9,9 @@ import type { NewChallenge } from './types'
 const today = '2026-10-05'
 const draft = (over: Partial<NewChallenge> = {}): NewChallenge => ({
   template: 'workouts_count', title: 'Outubro forte', mode: 'team', target: 6,
-  starts_on: '2026-10-05', ends_on: '2026-10-18', invitees: ['b'], share_volume: false, ...over
+  starts_on: '2026-10-05', ends_on: '2026-10-18', invitees: ['b'], share_volume: false, share_nutrition: false, ...over
 })
+const NUT = 'nutrition_days_on_target' as const
 
 describe('calendar helpers', () => {
   it('count days and weeks like the database', () => {
@@ -79,13 +80,80 @@ describe('progress helpers', () => {
   })
 
   it('counts invitations waiting for an answer', () => {
-    expect(pendingInvites(null)).toBe(0)
+    const today = '2026-10-06'
+    expect(pendingInvites(null, today)).toBe(0)
     expect(pendingInvites([challengeOf(), challengeOf({ id: 'c2', me: { joined: false, won: null } }),
-      challengeOf({ id: 'c3', status: 'won', me: { joined: false, won: null } })])).toBe(1)
+      challengeOf({ id: 'c3', status: 'won', me: { joined: false, won: null } })], today)).toBe(1)
+  })
+
+  it('stops counting an invitation once its last day has passed, even while the challenge is still active', () => {
+    const invite = challengeOf({ template: 'nutrition_days_on_target', ends_on: '2026-10-18', me: { joined: false, won: null } })
+    expect(pendingInvites([invite], '2026-10-18')).toBe(1)
+    expect(canJoin(invite, '2026-10-18')).toBe(true)
+    expect(pendingInvites([invite], '2026-10-19')).toBe(0)
+    expect(canJoin(invite, '2026-10-19')).toBe(false)
   })
 
   it('counts the last day as one day left', () => {
     expect(daysLeft(challengeOf(), '2026-10-18')).toBe(1)
     expect(daysLeft(challengeOf(), '2026-10-05')).toBe(14)
+  })
+})
+
+// The same rules as create_challenge in supabase/migrations/0015_nutrition_challenge.sql;
+// supabase/tests/challenge-rules-parity.test.ts runs both against the same cases.
+describe('nutrition_days_on_target', () => {
+  const nut = (over: Partial<NewChallenge> = {}) => draft({ template: NUT, target: 10, share_nutrition: true, ...over })
+  const on = { nutritionOn: true }
+
+  it('is a template for teams and for solo', () => {
+    expect(TEMPLATES).toContain(NUT)
+    expect(MODES[NUT]).toEqual(['team', 'solo'])
+  })
+
+  it('bounds the goal by the days, times the people in a team', () => {
+    expect(targetRange(NUT, '2026-10-05', '2026-10-11', 'solo', 1)).toEqual({ min: 1, max: 7 })
+    expect(targetRange(NUT, '2026-10-05', '2026-10-11', 'team', 1)).toEqual({ min: 1, max: 14 })
+    expect(targetRange(NUT, '2026-10-05', '2026-10-11', 'team', 2)).toEqual({ min: 1, max: 21 })
+    expect(targetRange(NUT, '2026-10-05', '2027-01-04', 'solo', 19)).toEqual({ min: 1, max: 92 })
+    expect(targetRange(NUT, '2026-10-05', '2027-01-04', 'team', 19)).toEqual({ min: 1, max: 1840 })
+  })
+
+  it('suggests the weekly days on target over the period, per person in a team', () => {
+    expect(suggestedTarget(NUT, 'solo', '2026-10-05', '2026-11-03', 5, 2)).toBe(21)
+    expect(suggestedTarget(NUT, 'team', '2026-10-05', '2026-11-03', 5, 2)).toBe(42)
+    expect(suggestedTarget(NUT, 'solo', '2026-10-05', '2026-10-11', 7, 1)).toBe(7)
+  })
+
+  it('accepts the edges', () => {
+    expect(checkChallenge(nut(), today, on)).toBeNull()
+    expect(checkChallenge(nut({ mode: 'solo', target: 14 }), today, on)).toBeNull()
+    expect(checkChallenge(nut({ mode: 'team', target: 28 }), today, on)).toBeNull()
+    expect(checkChallenge(nut({ mode: 'team', target: 42, invitees: ['b', 'c'] }), today, on)).toBeNull()
+  })
+
+  it.each([
+    [{ mode: 'solo', target: 15 }, 'target'],
+    [{ mode: 'team', target: 29 }, 'target'],
+    [{ mode: 'team', target: 43, invitees: ['b', 'c'] }, 'target'],
+    [{ target: 0 }, 'target'],
+    [{ ends_on: '2027-01-05' }, 'dates'],
+    [{ share_nutrition: false }, 'nutrition']
+  ] as [Partial<NewChallenge>, string][])('refuses %j as %s', (over, problem) => {
+    expect(checkChallenge(nut(over), today, on)).toBe(problem)
+  })
+
+  it('needs the pillar on, before the opt-in', () => {
+    expect(checkChallenge(nut(), today, { nutritionOn: false })).toBe('nutrition_off')
+    expect(checkChallenge(nut({ share_nutrition: false }), today)).toBe('nutrition_off')
+    // The other templates do not care about the pillar.
+    expect(checkChallenge(draft(), today, { nutritionOn: false })).toBeNull()
+  })
+
+  it('gives the result two days later than the others, as challenge_grace does', () => {
+    expect(GRACE).toEqual({ workouts_count: 0, weeks_on_target: 0, volume_total: 0, nutrition_days_on_target: 2 })
+    // ends_on 2026-10-18: its last day closes at the start of the 20th, the challenge on the 21st.
+    expect(resultOn(challengeOf({ template: NUT }))).toBe('2026-10-21')
+    expect(resultOn(challengeOf())).toBe('2026-10-19')
   })
 })

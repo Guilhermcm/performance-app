@@ -69,6 +69,38 @@ describe('check-locales.mjs', () => {
     expect(r.out).toContain('missing')
   })
 
+  // pl, ru and uk carry plural forms as `key|few` / `key|many` (and `|one` for ru and uk, where 21
+  // is "one"). The other packs keep the one plural string, so these keys are not theirs to carry.
+  describe('plural forms', () => {
+    const base = { '{0} items': 'Pozycje: {0}', 'Save': 'Zapisz' }
+    const rest = { '{0} items': '{0} itens', 'Save': 'Salvar' }
+    const pl = { ...base, '{0} items|few': '{0} pozycje', '{0} items|many': '{0} pozycji' }
+
+    it('accepts plural keys that only pl, ru and uk carry', () => {
+      const r = run({ pl, ru: { ...base, '{0} items|one': '{0} запись' }, uk: base, pt: rest, de: rest })
+      expect(r.out).toContain('in sync')
+      expect(r.code).toBe(0)
+    })
+
+    it('fails a plural key in a language that does not use the forms', () => {
+      const r = run({ pl, ru: base, uk: base, de: { ...rest, '{0} items|few': '{0} Einträge' } })
+      expect(r.code).toBe(1)
+      expect(r.out).toContain('{0} items|few')
+    })
+
+    it('fails a plural form whose base key no pack defines', () => {
+      const r = run({ pl: { ...pl, 'Gone {0}|few': 'Gone {0}' }, ru: base, uk: base, de: rest })
+      expect(r.code).toBe(1)
+      expect(r.out).toContain('Gone {0}|few')
+    })
+
+    it('fails a plural form that lost the placeholder', () => {
+      const r = run({ pl: { ...pl, '{0} items|few': 'pozycje' }, ru: base, uk: base, de: rest })
+      expect(r.code).toBe(1)
+      expect(r.out).toContain('placeholders')
+    })
+  })
+
   // The app's own packs, so the suite carries the same check CI does rather than only the rule.
   it('passes the locale packs this app ships', () => {
     const r = spawnSync(process.execPath, [script], { encoding: 'utf8' })

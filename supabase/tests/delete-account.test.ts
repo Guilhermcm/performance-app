@@ -41,6 +41,8 @@ beforeEach(async () => {
   const fromB = await one<{ code: string }>(db, B, 'select public.create_invite() as v')
   await one(db, A, 'select public.accept_invite($1) as v', [fromB.code])
   await one(db, A, 'select public.create_invite() as v')   // still open
+  await sql(db, `insert into public.food_measures (id, user_id, food_key, label, grams)
+                 values (gen_random_uuid(), $1, 'taco:12', 'concha', 120)`, [A])
   // Ana trains, syncs and earns XP, a streak, a weekly target and a badge.
   await rows(db, A, 'select public.push_state($1::jsonb, 0)', [JSON.stringify({ workouts: [] })])
   await event(db, A, 'workout_completed', '2026-10-05', 'a1')
@@ -60,7 +62,7 @@ describe('delete_my_account', () => {
     const before = await rowsPointingAt(A)
     // The setup reaches every table that can hold the person.
     for (const t of ['profiles', 'app_state', 'activity_events', 'weekly_targets', 'xp_ledger', 'streaks',
-      'user_achievements', 'friend_invites', 'friendships', 'challenges', 'challenge_members']) {
+      'user_achievements', 'food_measures', 'friend_invites', 'friendships', 'challenges', 'challenge_members']) {
       expect(before.tables.has(t)).toBe(true)
       expect(before.hits.some(h => h.startsWith(t + '.'))).toBe(true)
     }

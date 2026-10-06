@@ -54,6 +54,12 @@ describe('WorkoutXpSummary', () => {
     expect(screen.getByText('Counting your XP…')).toBeTruthy()
   })
 
+  it('names a badge it does not know without its code', async () => {
+    await show({ preview: { lines: [{ kind: 'achievement', amount: 50, code: 'from_the_future' }], total: 50 }, settled: never() })
+    expect(screen.queryByText(/from_the_future/)).toBeNull()
+    expect(screen.getByText('Achievement bonus')).toBeTruthy()
+  })
+
   it('says why a session paid nothing', async () => {
     await show({ preview: { lines: [], total: 0 }, settled: never() })
     expect(screen.getByText('No XP this time. You already got the two extra workouts this week.')).toBeTruthy()

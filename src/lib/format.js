@@ -1,5 +1,5 @@
 // Formatting + date helpers (ported from the vanilla app, unit taken from the store where needed).
-import { dateLocale, t, exerciseNameFor, exerciseNameClass } from './i18n-core.js'
+import { dateLocale, t, tn, exerciseNameFor, exerciseNameClass } from './i18n-core.js'
 export const todayISO = () => {
   const d = new Date()
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
@@ -66,11 +66,11 @@ export const fmtPlate = n => (Math.round(n * 100) / 100).toLocaleString(dateLoca
 // "7'535 kg" — two numbers you can't compare at a glance.
 export const fmtVol = (v, unit) => fmtNum(v) + ' ' + unit
 // Plural forms are not automatic when the English string is the key.
-export const exCount = n => t(n === 1 ? '{0} exercise' : '{0} exercises', n)
-export const routineCount = n => t(n === 1 ? '{0} routine' : '{0} routines', n)
-export const changeCount = n => t(n === 1 ? '{0} change' : '{0} changes', n)
+export const exCount = n => n === 1 ? t('{0} exercise', n) : tn(n, '{0} exercises', n)
+export const routineCount = n => n === 1 ? t('{0} routine', n) : tn(n, '{0} routines', n)
+export const changeCount = n => n === 1 ? t('{0} change', n) : tn(n, '{0} changes', n)
 // The Sets tile of the finish summary: all the sets logged, then how many of them were work sets.
-export const setsWorkCount = (n, work) => t(n === 1 ? '{0} set · {1} work' : '{0} sets · {1} work', n, work)
+export const setsWorkCount = (n, work) => n === 1 ? t('{0} set · {1} work', n, work) : tn(n, '{0} sets · {1} work', n, work)
 
 // "5 minutes ago", "yesterday", "now" — in the UI language, from the platform's own rules
 // (Intl.RelativeTimeFormat), so no pack has to carry a word for every unit and plural. Used for

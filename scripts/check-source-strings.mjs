@@ -2,7 +2,7 @@
 // The companion to check-locales.mjs, which compares the locale packs to each other and so
 // cannot see a key that is missing from all of them: that renders English in every language
 // while every check stays green. This walks src/ instead, collects the literals actually
-// passed to t(), and reports the ones no pack defines.
+// passed to t() and tn(), and reports the ones no pack defines.
 //
 //   node scripts/check-source-strings.mjs          # report only, exit 0
 //   node scripts/check-source-strings.mjs --strict # exit 1 if anything is missing
@@ -36,10 +36,14 @@ function walk(dir, out = []) {
 // t('literal') / t("literal") — preceded by a non-identifier char so DateTimeFormat( misses.
 const CALL = /(^|[^A-Za-z0-9_$.])t\(\s*(['"])((?:\\.|(?!\2)[^\\])*)\2/g
 
+// tn(count, 'literal', ...) — the plural-aware call; the key is its second argument. The count is
+// any expression without a quote or backtick in it, so tn(list.length, '…') and tn(Math.max(a, b), '…') read too.
+const COUNT_CALL = /(^|[^A-Za-z0-9_$.])tn\(\s*[^'"`]*?,\s*(['"])((?:\\.|(?!\2)[^\\])*)\2/g
+
 const used = new Map()
 for (const file of walk(srcDir)) {
   const text = readFileSync(file, 'utf8')
-  for (const m of text.matchAll(CALL)) {
+  for (const m of [...text.matchAll(CALL), ...text.matchAll(COUNT_CALL)]) {
     const key = m[3].replace(/\\(['"\\])/g, '$1')
     if (!key) continue
     if (!used.has(key)) used.set(key, new Set())

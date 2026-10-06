@@ -9,10 +9,12 @@ import { cn } from '@/lib/utils'
 import { t } from '../../lib/i18n.js'
 import { todayISO } from '../../lib/format.js'
 import { useProgress } from '../gamification/useProgress'
+import { useProfile } from '../profile/useProfile'
+import NutritionSetup from '../nutrition/NutritionSetup'
 import { joinChallenge, leaveChallenge, toSocialError } from './social-api'
 import { useSocial } from './useSocial'
-import { MODE_TEXT, TEMPLATE_TEXT, amountText, socialErrorText } from './labels'
-import { challengeShare } from './templates'
+import { MODE_TEXT, TEMPLATE_TEXT, amountText, nutritionOptInText, socialErrorText } from './labels'
+import { canJoin, challengeShare, resultOn } from './templates'
 import { fmtShortDay } from './format'
 import { statusLine } from './ChallengesPanel'
 import { PersonAvatar } from './components/PersonAvatar'
@@ -22,7 +24,9 @@ import type { Challenge } from './types'
 
 // /social/desafios/:id: the rule, where the team (or I) stand against the goal, each member, and
 // the one action that fits: join or decline an invitation, leave (after a confirmation), or the
-// result once it ended.
+// result once it ended. After the last day there is no action at all. A nutrition challenge counts
+// closed days only (up to the day before yesterday) and gives its result later; joining it asks for
+// the opt-in, and with the pillar off the join button opens the pillar's setup instead.
 export default function ChallengeDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -30,6 +34,9 @@ export default function ChallengeDetail() {
   const [busy, setBusy] = useState(false)
   const [leaving, setLeaving] = useState(false)
   const [shareVolume, setShareVolume] = useState(false)
+  const [shareNutrition, setShareNutrition] = useState(false)
+  const [setupOpen, setSetupOpen] = useState(false)
+  const nutritionOn = useProfile(s => s.profile?.nutrition_enabled ?? false)
   useEffect(() => { void useSocial.getState().load('challenges') }, [])
   const c = res.data?.find(x => x.id === id) ?? null
   const today = todayISO()
@@ -76,7 +83,12 @@ export default function ChallengeDetail() {
   const mine = c.members.find(m => m.me)
   const value = c.mode === 'team' ? c.total : (mine?.progress ?? 0)
   const invited = c.status === 'active' && !c.me.joined
-  const needsOptIn = invited && c.template === 'volume_total'
+  const joinable = canJoin(c, today)
+  const needsVolume = joinable && c.template === 'volume_total'
+  const nutrition = c.template === 'nutrition_days_on_target'
+  const needsNutrition = joinable && nutrition
+  const blocked = (needsVolume && !shareVolume) || (needsNutrition && !shareNutrition)
+  const optIn = nutritionOptInText()
 
   return page(
     <>
@@ -89,6 +101,14 @@ export default function ChallengeDetail() {
       </p>
       {res.stale && <div className="mt-2"><StaleNote stale /></div>}
       <p className="mt-3 text-sm leading-snug text-muted-foreground text-pretty">{tx.rule()} {MODE_TEXT[c.mode].detail()}</p>
+      {nutrition && c.status === 'active' && (
+        <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted-foreground">
+          {/* Nothing is counted before the first day. */}
+          {today >= c.starts_on && <span>{t('Counting up to the day before yesterday')}</span>}
+          {/* After the last day the header already says it. */}
+          {today <= c.ends_on && <span className="tabular-nums">{t('Result on {0}', fmtShortDay(resultOn(c)))}</span>}
+        </p>
+      )}
 
       {c.status !== 'active' && <Result c={c} />}
 
@@ -137,23 +157,44 @@ export default function ChallengeDetail() {
         </ul>
       </section>
 
-      {c.status === 'active' && (
+      {/* Past ends_on the server refuses join and leave (challenge_closed) even while a nutrition
+          challenge stays active for its grace days, so no action is offered: only status and result. */}
+      {c.status === 'active' && today <= c.ends_on && (
         <div className="mt-6 flex flex-col gap-2">
           {invited ? (
             <>
-              {needsOptIn && (
-                <div className="flex items-start gap-3 rounded-2xl border border-border p-3">
-                  <label htmlFor="join-volume" className="flex-1 cursor-pointer">
-                    <span className="block text-[15px] font-medium">{t('Share my volume in this challenge')}</span>
-                    <span className="block text-xs leading-snug text-muted-foreground">{t('People in this challenge see how many tonnes you lift. Never the load of each exercise.')}</span>
-                  </label>
-                  <Switch id="join-volume" checked={shareVolume} onCheckedChange={setShareVolume} />
-                </div>
+              {joinable && (
+                <>
+                  {needsVolume && (
+                    <div className="flex items-start gap-3 rounded-2xl border border-border p-3">
+                      <label htmlFor="join-volume" className="flex-1 cursor-pointer">
+                        <span className="block text-[15px] font-medium">{t('Share my volume in this challenge')}</span>
+                        <span className="block text-xs leading-snug text-muted-foreground">{t('People in this challenge see how many tonnes you lift. Never the load of each exercise.')}</span>
+                      </label>
+                      <Switch id="join-volume" checked={shareVolume} onCheckedChange={setShareVolume} />
+                    </div>
+                  )}
+                  {needsNutrition && nutritionOn && (
+                    <div className="flex items-start gap-3 rounded-2xl border border-border p-3">
+                      <label htmlFor="join-nutrition" className="flex-1 cursor-pointer">
+                        <span className="block text-[15px] font-medium">{optIn.label}</span>
+                        <span className="block text-xs leading-snug text-muted-foreground">{optIn.detail}</span>
+                      </label>
+                      <Switch id="join-nutrition" checked={shareNutrition} onCheckedChange={setShareNutrition} />
+                    </div>
+                  )}
+                  {needsNutrition && !nutritionOn ? (
+                    <Button className="h-12 rounded-2xl text-[15px] font-semibold" onClick={() => setSetupOpen(true)}>
+                      {t('Turn on the Nutrition pillar to join')}
+                    </Button>
+                  ) : (
+                    <Button className="h-12 gap-2 rounded-2xl text-[15px] font-semibold" disabled={busy || blocked} aria-busy={busy}
+                      onClick={() => act(() => joinChallenge(c.id, { shareVolume: needsVolume && shareVolume, shareNutrition: needsNutrition && shareNutrition }), t('You joined the challenge'))}>
+                      {busy && <LoaderCircle aria-hidden className="size-5 animate-spin motion-reduce:animate-none" />}{t('Join challenge')}
+                    </Button>
+                  )}
+                </>
               )}
-              <Button className="h-12 gap-2 rounded-2xl text-[15px] font-semibold" disabled={busy || (needsOptIn && !shareVolume)} aria-busy={busy}
-                onClick={() => act(() => joinChallenge(c.id, needsOptIn && shareVolume), t('You joined the challenge'))}>
-                {busy && <LoaderCircle aria-hidden className="size-5 animate-spin motion-reduce:animate-none" />}{t('Join challenge')}
-              </Button>
               <Button variant="ghost" className="h-12 rounded-2xl" disabled={busy}
                 onClick={() => act(() => leaveChallenge(c.id), t('Invitation declined'), toList)}>{t('Decline')}</Button>
             </>
@@ -171,6 +212,7 @@ export default function ChallengeDetail() {
           )}
         </div>
       )}
+      {needsNutrition && <NutritionSetup open={setupOpen} onOpenChange={setSetupOpen} />}
     </>
   )
 }

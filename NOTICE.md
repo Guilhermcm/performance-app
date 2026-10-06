@@ -171,6 +171,17 @@ photo uses [**jsQR**](https://github.com/cozmo/jsQR) by Cosmo Wolfe, under the *
 Where the browser has a native `BarcodeDetector`, that is tried first and jsQR is the fallback.
 Video frames are decoded in memory and never uploaded or stored.
 
+### Food barcode scan in the browser: `@zxing/library`
+
+The nutrition barcode reader asks the browser's `BarcodeDetector` for EAN-13, EAN-8, UPC-A and
+UPC-E. Where there is none (Safari on the iPhone, for one), it decodes the camera frames with
+[**ZXing for JS**](https://github.com/zxing-js/library) (`@zxing/library`), a port of the ZXing
+project, used under the **Apache License 2.0** (text at <https://www.apache.org/licenses/LICENSE-2.0>
+and in the package's own `LICENSE`). It loads on demand, only in browsers without a native detector
+and only when someone scans. Frames are decoded in memory and never uploaded or stored; only the
+code's digits are used, to look the product up. (The package's `package.json` says MIT, but its
+`LICENSE` file and source headers are Apache-2.0, so Apache-2.0 is what this notice follows.)
+
 ### Camera scan & photo decode in the app — `@capacitor-mlkit/barcode-scanning`
 
 In the Android/iOS app, reading a code — from the camera or from an imported photo — uses the
@@ -179,3 +190,44 @@ by the Capawesome Team (Robin Genz), a Capacitor wrapper around Google's ML Kit,
 **Apache License 2.0**. openGym pins the `7.x` line to stay on Capacitor 7. The full license text is
 available at <https://www.apache.org/licenses/LICENSE-2.0> and in the package's own `LICENSE` file.
 The decoded string is what openGym keeps; the photo itself is never stored.
+
+## Charts
+
+### Recharts
+
+The pillar radar on the Home is drawn with [**Recharts**](https://github.com/recharts/recharts)
+(`recharts`, copyright (c) 2015-present recharts), under the **MIT License** (text in the package's
+own `LICENSE`). It loads on demand, in a chunk of its own, the first time the radar is shown.
+
+### shadcn/ui Charts
+
+`src/components/ui/chart.tsx` is the Charts component of [**shadcn/ui**](https://ui.shadcn.com)
+(copyright (c) 2023 shadcn), copied from its registry for Recharts 3 and trimmed, under the **MIT
+License** (<https://github.com/shadcn-ui/ui/blob/main/LICENSE.md>). The changes from upstream are
+described at the top of the file.
+
+## Food data
+
+### Open Food Facts
+
+Packaged-food search and barcode lookup query [**Open Food Facts**](https://world.openfoodfacts.org/),
+whose database is available under the **Open Database License (ODbL) 1.0**. Products are fetched on
+demand; a product the person saves keeps only its nutrition values (name, brand and per 100 g amounts);
+no credit is stored with it.
+
+### TACO
+
+The local food table (`src/features/nutrition/data/taco.json`) is built from the *Tabela Brasileira
+de Composição de Alimentos (TACO)*, 4ª edição, published by NEPA/Unicamp. The official edition states:
+"É permitida a reprodução total ou parcial do material, desde que seja citada a fonte." Source:
+NEPA/UNICAMP. Tabela Brasileira de Composição de Alimentos (TACO). 4ª ed. Campinas, 2011.
+Provenance and checks are in `scripts/data/README.md`.
+
+### POF 2008-2009 (IBGE)
+
+The suggested household measures (`src/features/nutrition/data/taco-measures.json`), such as
+"colher de servir" or "concha" with their weight in grams, come from the *Tabela de Medidas
+Referidas para os Alimentos Consumidos no Brasil* of the *Pesquisa de Orçamentos Familiares
+2008-2009*, published by IBGE. The table is copied without changes to `scripts/data/pof-medidas.csv`,
+and `scripts/data/taco-pof-map.csv` pairs 113 TACO foods with their POF food and preparation.
+Source: Medidas: POF 2008-2009, IBGE. Provenance and checks are in `scripts/data/README.md`.

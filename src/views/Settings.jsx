@@ -10,7 +10,7 @@ import { effortOf } from '../lib/history.js'
 import { unlock, playOnSilentSupported, vibrateSupported } from '../lib/sound.js'
 import { IS_ANDROID } from '../lib/api.js'
 import { wakeLockSupported } from '../lib/wakelock.js'
-import { t, LANGS, INSTR_LANGS, EXERCISE_NAME_LANGS, baseLang } from '../lib/i18n.js'
+import { t, tn, LANGS, INSTR_LANGS, EXERCISE_NAME_LANGS, baseLang } from '../lib/i18n.js'
 import { SELECTABLE_LANGS } from '../lib/i18n-core.js'
 import { effectiveLang } from '../lib/default-lang.js'
 import { DEMO } from '../lib/demo.js'
@@ -87,7 +87,7 @@ export default function Settings() {
     try { out = await exportBackupZip(st.S, { fetchOne: signedIn ? fetchToStore : null }) }
     catch { toast(t('Something went wrong')); return }
     const name = 'opengym-backup-' + todayISO() + '.zip'
-    if (out.missing) toast(t(out.missing === 1 ? '{0} file could not be included' : '{0} files could not be included', out.missing))
+    if (out.missing) toast((out.missing === 1 ? t('{0} file could not be included', out.missing) : tn(out.missing, '{0} files could not be included', out.missing)))
     if (MOBILE) {
       try { await shareExportBlob(out.blob, name); if (!out.missing) toast(t('Backup exported')) } catch (e) { /* share sheet dismissed */ }
       return
@@ -123,9 +123,9 @@ export default function Settings() {
       const n = conflict.workouts
       menuSheet({
         title: t('Import backup?'),
-        subtitle: t(n === 1
-          ? 'The server has 1 workout that is not in this backup, logged since it was made or on another device. Replacing deletes it.'
-          : 'The server has {0} workouts that are not in this backup, logged since it was made or on another device. Replacing deletes them.', n),
+        subtitle: n === 1
+          ? t('The server has 1 workout that is not in this backup, logged since it was made or on another device. Replacing deletes it.')
+          : tn(n, 'The server has {0} workouts that are not in this backup, logged since it was made or on another device. Replacing deletes them.', n),
         items: [
           { icon: 'trash', label: t('Replace anyway'), danger: true, onClick: () => apply(null) },
           { icon: 'shuffle', label: t('Merge them in'), onClick: () => apply(conflict) },
@@ -379,7 +379,7 @@ export default function Settings() {
       {/* 14 is AUTO_BACKUP_KEEP in lib/mobile.js, written out because the Settings tests mock
           that module wholesale; mobile.autobackup.test.js pins the two together. */}
       {MOBILE && <Row icon="history" iconTint="var(--blue)" title={t('Auto-backup on changes')}
-        subtitle={t('Saves a dated copy to Documents/openGym after finishing a workout or editing a routine, and keeps the newest {0} — point a sync app at that folder, or copy it out by hand.', 14)}>
+        subtitle={t('Saves a dated copy to Documents/performance-app after finishing a workout or editing a routine, and keeps the newest {0} — point a sync app at that folder, or copy it out by hand.', 14)}>
         <Switch checked={!!S.autoBackup} onChange={v => update(s => { s.autoBackup = v })} />
       </Row>}
       <Row icon="trash" iconTint="var(--red)" title={t('Reset everything')} danger onClick={resetEverything} />
@@ -393,7 +393,7 @@ export default function Settings() {
     {!MOBILE && <Section title={t('Tip')}>
       <Row icon="lightbulb" iconTint="var(--yellow)"
         title={IS_ANDROID ? t('In Chrome: ⋮ menu → Add to Home screen') : t('In Safari: Share → Add to Home Screen')}
-        subtitle={t('to install openGym as a full-screen app.') + ' ' + (user ? t('Your data syncs with your profile — sign in anywhere to see it.') : t('Guest data stays on this device — export a backup now and then!'))} />
+        subtitle={t('to install performance-app as a full-screen app.') + ' ' + (user ? t('Your data syncs with your profile — sign in anywhere to see it.') : t('Guest data stays on this device — export a backup now and then!'))} />
     </Section>}
 
     {/* The version, at the bottom of Settings — which is where the support template has been
@@ -401,13 +401,10 @@ export default function Settings() {
         address bar and no about box, so without this there is no way to tell which build you
         are running, or whether an update actually installed. */}
     <div className="dim small" style={{ textAlign: 'center', marginTop: 4, lineHeight: 1.6 }}>
-      openGym v{__APP_VERSION__} · {t('free & open source (AGPL v3)')}<br />
-      <a href={SOURCE_URL} target="_blank" rel="noopener" style={{ display: 'inline-block', padding: '10px 6px' }}>{t('Source code (AGPL-3.0)')}</a> ·{' '}
-      <a href="https://github.com/DuarteSantos8/openGym" target="_blank" rel="noopener" style={{ display: 'inline-block', padding: '10px 6px' }}>{t('Based on openGym')}</a><br />
+      performance-app v{__APP_VERSION__} ·{' '}
+      <a href={SOURCE_URL} target="_blank" rel="noopener" style={{ display: 'inline-block', padding: '10px 6px' }}>{t('Source code and license')}</a><br />
       {/* A plain link, not a route: the policy is a static page outside the hash router. */}
-      <a href="/privacidade" style={{ display: 'inline-block', padding: '10px 6px' }}>{t('Privacy policy')}</a><br />
-      exercise data: hasaneyldrm/exercises-dataset (MIT)<br />
-      exercise images and animations © <a href="https://gymvisual.com/" target="_blank" rel="noopener">Gym visual</a>
+      <a href="/privacidade" style={{ display: 'inline-block', padding: '10px 6px' }}>{t('Privacy policy')}</a>
     </div>
   </div>
 }

@@ -60,6 +60,16 @@ describe('useProgress', () => {
     expect(useProgress.getState().pending).toEqual([])
   })
 
+  it('completes a marker saved before phase 2a without celebrating the pillar levels it lacks', async () => {
+    const withPillar = progressOf(400, {}, { pillars: { strength: { level: 3, into: 50, need: 200, xp: 400 }, nutrition: { level: 2, into: 0, need: 150, xp: 100 } } })
+    localStorage.setItem('perf_celebrated_v1', JSON.stringify({ userId: 'u1', value: { level: withPillar.level.level, codes: [] } }))
+    api.fetchProgress.mockResolvedValue(withPillar)
+    await useProgress.getState().load('u1')
+    expect(useProgress.getState().pending).toEqual([])
+    const seen = JSON.parse(localStorage.getItem('perf_celebrated_v1')!).value
+    expect(seen.pillarLevels).toEqual({ strength: 3, nutrition: 2 })
+  })
+
   it('runs one follow-up when asked during a refresh', async () => {
     api.fetchProgress.mockResolvedValue(P1)
     useProgress.setState({ userId: 'u1' })

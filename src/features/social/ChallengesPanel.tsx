@@ -7,7 +7,7 @@ import { t } from '../../lib/i18n.js'
 import { todayISO } from '../../lib/format.js'
 import { useSocial } from './useSocial'
 import { MODE_TEXT, TEMPLATE_TEXT } from './labels'
-import { challengeShare, daysLeft } from './templates'
+import { canJoin, challengeShare, daysLeft, resultOn } from './templates'
 import { fmtShortDay } from './format'
 import { PersonAvatar } from './components/PersonAvatar'
 import { EmptyState, ErrorState, ListSkeleton, StaleNote } from './components/states'
@@ -22,6 +22,8 @@ export function statusLine(c: Challenge, today: string): string {
   if (c.status === 'lost') return t('Not this time')
   if (c.status === 'cancelled') return t('Cancelled')
   if (c.starts_on > today) return t('Starts {0}', fmtShortDay(c.starts_on))
+  // Past the last day, waiting for the server to close it (two more days for nutrition).
+  if (today > c.ends_on) return t('Result on {0}', fmtShortDay(resultOn(c)))
   return daysLeft(c, today) <= 1 ? t('Ends today') : t('{0} days left', daysLeft(c, today))
 }
 
@@ -40,9 +42,10 @@ export default function ChallengesPanel() {
   const list = res.data
   const hasFriends = (friends.data?.length ?? 0) > 0
   const groups: [string, Challenge[]][] = list ? [
-    [t('Invitations'), list.filter(c => c.status === 'active' && !c.me.joined)],
+    [t('Invitations'), list.filter(c => canJoin(c, today))],
     [t('In progress'), list.filter(c => c.status === 'active' && c.me.joined)],
-    [t('Finished'), list.filter(c => c.status !== 'active')]
+    // An invitation nobody joined in time has no action left (the server refuses join and decline): it waits here, without actions, until the server closes it.
+    [t('Finished'), list.filter(c => c.status !== 'active' || (!c.me.joined && !canJoin(c, today)))]
   ] : []
 
   return (
@@ -83,7 +86,7 @@ export default function ChallengesPanel() {
 function ChallengeCard({ c, today }: { c: Challenge; today: string }) {
   const navigate = useNavigate()
   const Icon = TEMPLATE_TEXT[c.template].icon
-  const invited = c.status === 'active' && !c.me.joined
+  const invited = canJoin(c, today)
   return (
     <button type="button" onClick={() => navigate('/social/desafios/' + c.id)}
       className={cn('flex w-full flex-col gap-3 rounded-2xl border bg-card p-4 text-left outline-none transition-colors duration-150 hover:bg-secondary/40 focus-visible:ring-[3px] focus-visible:ring-ring/50',
@@ -100,7 +103,7 @@ function ChallengeCard({ c, today }: { c: Challenge; today: string }) {
       <span className="flex items-center gap-3">
         {invited ? (
           <span className={cn('min-w-0 flex-1 text-sm font-medium', ACCENT_TEXT)}>{t('{0} invited you', c.invited_by ?? '')}</span>
-        ) : c.status === 'active' ? (
+        ) : c.status === 'active' && c.me.joined ? (
           <span aria-hidden className="block h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-primary/15">
             <span className="block h-full rounded-full bg-primary transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
               style={{ width: `${challengeShare(c) * 100}%` }} />

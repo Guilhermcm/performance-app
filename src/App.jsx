@@ -30,6 +30,9 @@ import { Toaster } from './components/ui/sonner.tsx'
 import { useProfile } from './features/profile/useProfile.ts'
 import { useProgress, startProgressSync } from './features/gamification/useProgress.ts'
 import { useSocial } from './features/social/useSocial.ts'
+import { useNutrition, startNutritionSync } from './features/nutrition/useNutrition.ts'
+import NutritionScreen from './features/nutrition/NutritionScreen.tsx'
+import NutritionHistoryScreen from './features/nutrition/HistoryScreen.tsx'
 import SocialScreen from './features/social/SocialScreen.tsx'
 import ChallengeDetail from './features/social/ChallengeDetail.tsx'
 import InviteScreen, { InviteRoute } from './features/social/InviteScreen.tsx'
@@ -147,7 +150,7 @@ function Shell() {
 
   // The profile in memory belongs to whoever is signed in; signing out drops it.
   useEffect(() => {
-    if (!user) { useProfile.getState().reset(); useProgress.getState().reset(); useSocial.getState().reset() }
+    if (!user) { useProfile.getState().reset(); useProgress.getState().reset(); useSocial.getState().reset(); useNutrition.getState().reset() }
   }, [user?.id])
   // No tab bar while the profile loads or the onboarding is on screen (a guest has no profile).
   const profileReady = useProfile(s => s.status === 'ready' && !s.onboarding) || !user
@@ -162,6 +165,12 @@ function Shell() {
   // challenges right away (tab badge, and due ones close on the server).
   useEffect(() => {
     if (user && profileReady) useSocial.getState().bind(user.id)
+  }, [user?.id, profileReady])
+  // The food diary: saved copy at once, queued changes sent, then pulled again on focus and reconnect.
+  useEffect(() => {
+    if (!user || !profileReady) return
+    void useNutrition.getState().bind(user.id)
+    return startNutritionSync()
   }, [user?.id, profileReady])
 
   const authed = user || isGuest
@@ -205,6 +214,8 @@ function Shell() {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/perfil" element={<ProfileScreen />} />
                 <Route path="/conquistas" element={<AchievementsScreen />} />
+                <Route path="/nutricao" element={<NutritionScreen />} />
+                <Route path="/nutricao/historico" element={<NutritionHistoryScreen />} />
                 <Route path="/social" element={<Navigate to="/social/ranking" replace />} />
                 <Route path="/social/desafios/:id" element={<ChallengeDetail />} />
                 <Route path="/social/:section" element={<SocialScreen />} />

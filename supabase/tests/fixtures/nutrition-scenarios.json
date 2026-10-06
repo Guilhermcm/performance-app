@@ -1,0 +1,1014 @@
+{
+  "days": [
+    {
+      "name": "example target, every macro on the mark",
+      "totals": {
+        "kcal": 3010,
+        "protein": 160,
+        "carbs": 404,
+        "fat": 84,
+        "meals": 3
+      },
+      "target": {
+        "kcal": 3010,
+        "protein_g": 160,
+        "carbs_g": 404,
+        "fat_g": 84
+      },
+      "expect": {
+        "logged": true,
+        "on_target": true,
+        "balanced": true
+      }
+    },
+    {
+      "name": "kcal at 90% counts",
+      "totals": {
+        "kcal": 2709,
+        "protein": 160,
+        "carbs": 404,
+        "fat": 84,
+        "meals": 3
+      },
+      "target": {
+        "kcal": 3010,
+        "protein_g": 160,
+        "carbs_g": 404,
+        "fat_g": 84
+      },
+      "expect": {
+        "logged": true,
+        "on_target": true,
+        "balanced": true
+      }
+    },
+    {
+      "name": "kcal at 110% counts",
+      "totals": {
+        "kcal": 3311,
+        "protein": 160,
+        "carbs": 404,
+        "fat": 84,
+        "meals": 3
+      },
+      "target": {
+        "kcal": 3010,
+        "protein_g": 160,
+        "carbs_g": 404,
+        "fat_g": 84
+      },
+      "expect": {
+        "logged": true,
+        "on_target": true,
+        "balanced": true
+      }
+    },
+    {
+      "name": "kcal at 89.9% is off target",
+      "totals": {
+        "kcal": 2705.9,
+        "protein": 160,
+        "carbs": 404,
+        "fat": 84,
+        "meals": 3
+      },
+      "target": {
+        "kcal": 3010,
+        "protein_g": 160,
+        "carbs_g": 404,
+        "fat_g": 84
+      },
+      "expect": {
+        "logged": true,
+        "on_target": false,
+        "balanced": false
+      }
+    },
+    {
+      "name": "kcal at 110.1% is off target",
+      "totals": {
+        "kcal": 3314.1,
+        "protein": 160,
+        "carbs": 404,
+        "fat": 84,
+        "meals": 3
+      },
+      "target": {
+        "kcal": 3010,
+        "protein_g": 160,
+        "carbs_g": 404,
+        "fat_g": 84
+      },
+      "expect": {
+        "logged": true,
+        "on_target": false,
+        "balanced": false
+      }
+    },
+    {
+      "name": "protein equal to the target counts",
+      "totals": {
+        "kcal": 3010,
+        "protein": 160,
+        "carbs": 404,
+        "fat": 84,
+        "meals": 2
+      },
+      "target": {
+        "kcal": 3010,
+        "protein_g": 160,
+        "carbs_g": 404,
+        "fat_g": 84
+      },
+      "expect": {
+        "logged": true,
+        "on_target": true,
+        "balanced": true
+      }
+    },
+    {
+      "name": "protein one tenth short is off target",
+      "totals": {
+        "kcal": 3010,
+        "protein": 159.9,
+        "carbs": 404,
+        "fat": 84,
+        "meals": 2
+      },
+      "target": {
+        "kcal": 3010,
+        "protein_g": 160,
+        "carbs_g": 404,
+        "fat_g": 84
+      },
+      "expect": {
+        "logged": true,
+        "on_target": false,
+        "balanced": false
+      }
+    },
+    {
+      "name": "carbs at 120% stay balanced",
+      "totals": {
+        "kcal": 3010,
+        "protein": 160,
+        "carbs": 484.8,
+        "fat": 84,
+        "meals": 3
+      },
+      "target": {
+        "kcal": 3010,
+        "protein_g": 160,
+        "carbs_g": 404,
+        "fat_g": 84
+      },
+      "expect": {
+        "logged": true,
+        "on_target": true,
+        "balanced": true
+      }
+    },
+    {
+      "name": "carbs at 120.1% are not balanced",
+      "totals": {
+        "kcal": 3010,
+        "protein": 160,
+        "carbs": 485.2,
+        "fat": 84,
+        "meals": 3
+      },
+      "target": {
+        "kcal": 3010,
+        "protein_g": 160,
+        "carbs_g": 404,
+        "fat_g": 84
+      },
+      "expect": {
+        "logged": true,
+        "on_target": true,
+        "balanced": false
+      }
+    },
+    {
+      "name": "carbs at 80% stay balanced",
+      "totals": {
+        "kcal": 3010,
+        "protein": 160,
+        "carbs": 323.2,
+        "fat": 84,
+        "meals": 3
+      },
+      "target": {
+        "kcal": 3010,
+        "protein_g": 160,
+        "carbs_g": 404,
+        "fat_g": 84
+      },
+      "expect": {
+        "logged": true,
+        "on_target": true,
+        "balanced": true
+      }
+    },
+    {
+      "name": "fat at 79.9% is not balanced",
+      "totals": {
+        "kcal": 3010,
+        "protein": 160,
+        "carbs": 404,
+        "fat": 67.1,
+        "meals": 3
+      },
+      "target": {
+        "kcal": 3010,
+        "protein_g": 160,
+        "carbs_g": 404,
+        "fat_g": 84
+      },
+      "expect": {
+        "logged": true,
+        "on_target": true,
+        "balanced": false
+      }
+    },
+    {
+      "name": "fat at 120% stays balanced",
+      "totals": {
+        "kcal": 3010,
+        "protein": 160,
+        "carbs": 404,
+        "fat": 100.8,
+        "meals": 3
+      },
+      "target": {
+        "kcal": 3010,
+        "protein_g": 160,
+        "carbs_g": 404,
+        "fat_g": 84
+      },
+      "expect": {
+        "logged": true,
+        "on_target": true,
+        "balanced": true
+      }
+    },
+    {
+      "name": "one meal with everything is not logged",
+      "totals": {
+        "kcal": 3010,
+        "protein": 160,
+        "carbs": 404,
+        "fat": 84,
+        "meals": 1
+      },
+      "target": {
+        "kcal": 3010,
+        "protein_g": 160,
+        "carbs_g": 404,
+        "fat_g": 84
+      },
+      "expect": {
+        "logged": false,
+        "on_target": false,
+        "balanced": false
+      }
+    },
+    {
+      "name": "kcal at 50% is logged",
+      "totals": {
+        "kcal": 1505,
+        "protein": 40,
+        "carbs": 100,
+        "fat": 30,
+        "meals": 2
+      },
+      "target": {
+        "kcal": 3010,
+        "protein_g": 160,
+        "carbs_g": 404,
+        "fat_g": 84
+      },
+      "expect": {
+        "logged": true,
+        "on_target": false,
+        "balanced": false
+      }
+    },
+    {
+      "name": "kcal under 50% is not logged",
+      "totals": {
+        "kcal": 1504.9,
+        "protein": 40,
+        "carbs": 100,
+        "fat": 30,
+        "meals": 4
+      },
+      "target": {
+        "kcal": 3010,
+        "protein_g": 160,
+        "carbs_g": 404,
+        "fat_g": 84
+      },
+      "expect": {
+        "logged": false,
+        "on_target": false,
+        "balanced": false
+      }
+    },
+    {
+      "name": "empty day",
+      "totals": {
+        "kcal": 0,
+        "protein": 0,
+        "carbs": 0,
+        "fat": 0,
+        "meals": 0
+      },
+      "target": {
+        "kcal": 3010,
+        "protein_g": 160,
+        "carbs_g": 404,
+        "fat_g": 84
+      },
+      "expect": {
+        "logged": false,
+        "on_target": false,
+        "balanced": false
+      }
+    },
+    {
+      "name": "2000 kcal target, on target and balanced",
+      "totals": {
+        "kcal": 1950,
+        "protein": 155,
+        "carbs": 210,
+        "fat": 58,
+        "meals": 4
+      },
+      "target": {
+        "kcal": 2000,
+        "protein_g": 150,
+        "carbs_g": 200,
+        "fat_g": 60
+      },
+      "expect": {
+        "logged": true,
+        "on_target": true,
+        "balanced": true
+      }
+    }
+  ],
+  "weeks": [
+    {
+      "name": "T=3: seven days on target and balanced reach the 960 cap",
+      "target": 3,
+      "days": [
+        {
+          "on": "2026-09-07",
+          "classes": [
+            "day_logged",
+            "day_on_target",
+            "macros_balanced"
+          ]
+        },
+        {
+          "on": "2026-09-08",
+          "classes": [
+            "day_logged",
+            "day_on_target",
+            "macros_balanced"
+          ]
+        },
+        {
+          "on": "2026-09-09",
+          "classes": [
+            "day_logged",
+            "day_on_target",
+            "macros_balanced"
+          ]
+        },
+        {
+          "on": "2026-09-10",
+          "classes": [
+            "day_logged",
+            "day_on_target",
+            "macros_balanced"
+          ]
+        },
+        {
+          "on": "2026-09-11",
+          "classes": [
+            "day_logged",
+            "day_on_target",
+            "macros_balanced"
+          ]
+        },
+        {
+          "on": "2026-09-12",
+          "classes": [
+            "day_logged",
+            "day_on_target",
+            "macros_balanced"
+          ]
+        },
+        {
+          "on": "2026-09-13",
+          "classes": [
+            "day_logged",
+            "day_on_target",
+            "macros_balanced"
+          ]
+        }
+      ],
+      "awards": [
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_day",
+          "amount": 200,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_balanced",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_day",
+          "amount": 200,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_balanced",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_day",
+          "amount": 200,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_week_target",
+          "amount": 150,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_balanced",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_day_extra",
+          "amount": 25,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_day_extra",
+          "amount": 25,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        }
+      ],
+      "total": 960
+    },
+    {
+      "name": "T=5: seven days on target and balanced reach the 960 cap",
+      "target": 5,
+      "days": [
+        {
+          "on": "2026-09-07",
+          "classes": [
+            "day_logged",
+            "day_on_target",
+            "macros_balanced"
+          ]
+        },
+        {
+          "on": "2026-09-08",
+          "classes": [
+            "day_logged",
+            "day_on_target",
+            "macros_balanced"
+          ]
+        },
+        {
+          "on": "2026-09-09",
+          "classes": [
+            "day_logged",
+            "day_on_target",
+            "macros_balanced"
+          ]
+        },
+        {
+          "on": "2026-09-10",
+          "classes": [
+            "day_logged",
+            "day_on_target",
+            "macros_balanced"
+          ]
+        },
+        {
+          "on": "2026-09-11",
+          "classes": [
+            "day_logged",
+            "day_on_target",
+            "macros_balanced"
+          ]
+        },
+        {
+          "on": "2026-09-12",
+          "classes": [
+            "day_logged",
+            "day_on_target",
+            "macros_balanced"
+          ]
+        },
+        {
+          "on": "2026-09-13",
+          "classes": [
+            "day_logged",
+            "day_on_target",
+            "macros_balanced"
+          ]
+        }
+      ],
+      "awards": [
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_day",
+          "amount": 120,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_balanced",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_day",
+          "amount": 120,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_balanced",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_day",
+          "amount": 120,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_balanced",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_day",
+          "amount": 120,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_day",
+          "amount": 120,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_week_target",
+          "amount": 150,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_day_extra",
+          "amount": 25,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_day_extra",
+          "amount": 25,
+          "week": "2026-09-07"
+        }
+      ],
+      "total": 960
+    },
+    {
+      "name": "T=7: seven days on target and balanced stop at 910",
+      "target": 7,
+      "days": [
+        {
+          "on": "2026-09-07",
+          "classes": [
+            "day_logged",
+            "day_on_target",
+            "macros_balanced"
+          ]
+        },
+        {
+          "on": "2026-09-08",
+          "classes": [
+            "day_logged",
+            "day_on_target",
+            "macros_balanced"
+          ]
+        },
+        {
+          "on": "2026-09-09",
+          "classes": [
+            "day_logged",
+            "day_on_target",
+            "macros_balanced"
+          ]
+        },
+        {
+          "on": "2026-09-10",
+          "classes": [
+            "day_logged",
+            "day_on_target",
+            "macros_balanced"
+          ]
+        },
+        {
+          "on": "2026-09-11",
+          "classes": [
+            "day_logged",
+            "day_on_target",
+            "macros_balanced"
+          ]
+        },
+        {
+          "on": "2026-09-12",
+          "classes": [
+            "day_logged",
+            "day_on_target",
+            "macros_balanced"
+          ]
+        },
+        {
+          "on": "2026-09-13",
+          "classes": [
+            "day_logged",
+            "day_on_target",
+            "macros_balanced"
+          ]
+        }
+      ],
+      "awards": [
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_day",
+          "amount": 86,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_balanced",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_day",
+          "amount": 86,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_balanced",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_day",
+          "amount": 86,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_balanced",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_day",
+          "amount": 86,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_day",
+          "amount": 86,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_day",
+          "amount": 86,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_day",
+          "amount": 84,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_week_target",
+          "amount": 150,
+          "week": "2026-09-07"
+        }
+      ],
+      "total": 910
+    },
+    {
+      "name": "T=5: logged only pays 10 a day",
+      "target": 5,
+      "days": [
+        {
+          "on": "2026-09-07",
+          "classes": [
+            "day_logged"
+          ]
+        },
+        {
+          "on": "2026-09-08",
+          "classes": [
+            "day_logged"
+          ]
+        },
+        {
+          "on": "2026-09-09",
+          "classes": [
+            "day_logged"
+          ]
+        },
+        {
+          "on": "2026-09-10",
+          "classes": [
+            "day_logged"
+          ]
+        },
+        {
+          "on": "2026-09-11",
+          "classes": [
+            "day_logged"
+          ]
+        },
+        {
+          "on": "2026-09-12",
+          "classes": [
+            "day_logged"
+          ]
+        },
+        {
+          "on": "2026-09-13",
+          "classes": [
+            "day_logged"
+          ]
+        }
+      ],
+      "awards": [
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        }
+      ],
+      "total": 70
+    },
+    {
+      "name": "T=5: goal missed, four days on target and no bonus",
+      "target": 5,
+      "days": [
+        {
+          "on": "2026-09-07",
+          "classes": [
+            "day_logged",
+            "day_on_target"
+          ]
+        },
+        {
+          "on": "2026-09-08",
+          "classes": [
+            "day_logged",
+            "day_on_target"
+          ]
+        },
+        {
+          "on": "2026-09-09",
+          "classes": [
+            "day_logged",
+            "day_on_target"
+          ]
+        },
+        {
+          "on": "2026-09-10",
+          "classes": [
+            "day_logged",
+            "day_on_target"
+          ]
+        },
+        {
+          "on": "2026-09-11",
+          "classes": [
+            "day_logged"
+          ]
+        },
+        {
+          "on": "2026-09-12",
+          "classes": [
+            "day_logged"
+          ]
+        },
+        {
+          "on": "2026-09-13",
+          "classes": [
+            "day_logged"
+          ]
+        }
+      ],
+      "awards": [
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_day",
+          "amount": 120,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_day",
+          "amount": 120,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_day",
+          "amount": 120,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_day",
+          "amount": 120,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "nutrition_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        }
+      ],
+      "total": 550
+    }
+  ]
+}

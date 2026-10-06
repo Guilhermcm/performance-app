@@ -6,5 +6,7 @@
   { "name": "level badges skip the ones already held", "stats": { "level": 25 }, "unlocked": ["level_10"], "expect": ["level_25"] },
   { "name": "early bird", "stats": { "early_workouts": 5 }, "unlocked": [], "expect": ["early_bird"] },
   { "name": "nothing reached", "stats": { "workouts": 0 }, "unlocked": [], "expect": [] },
+  { "name": "nutrition badges", "stats": { "nutrition_logged_days": 1, "nutrition_on_target_days": 50, "nutrition_week_targets": 1, "nutrition_best_streak": 4, "protein_best_run": 6 }, "unlocked": ["nutrition_days_10"], "expect": ["nutrition_first_day", "nutrition_days_50", "nutrition_week_target_1", "nutrition_streak_4"] },
+  { "name": "a long protein run", "stats": { "protein_best_run": 7, "nutrition_best_streak": 26 }, "unlocked": [], "expect": ["nutrition_streak_4", "nutrition_streak_12", "nutrition_streak_26", "protein_7"] },
   { "name": "social badges for the friends phase", "stats": { "friends": 1, "challenges_won": 5 }, "unlocked": [], "expect": ["first_friend", "challenge_first", "challenge_won_5"] }
 ]

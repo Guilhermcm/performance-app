@@ -23,7 +23,10 @@ function lineLabel(l: XpLine): string {
     case 'goal': return t('Weekly goal bonus')
     case 'pr': return t('Personal records ×{0}', l.count)
     case 'weight': return t('Weigh-in')
-    case 'achievement': return t('Achievement: {0}', ACHIEVEMENT_TEXT[l.code as AchievementCode]?.title() ?? l.code)
+    case 'achievement': {
+      const text = ACHIEVEMENT_TEXT[l.code as AchievementCode]
+      return text ? t('Achievement: {0}', text.title()) : t('Achievement bonus')
+    }
     default: return t('Other gains')
   }
 }

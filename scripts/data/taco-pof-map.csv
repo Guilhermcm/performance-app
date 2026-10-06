@@ -1,0 +1,114 @@
+taco_id,pof_codigo_alimento,pof_codigo_preparacao,nota
+1,6300201,99,A POF registra o arroz integral como é comido (cozido) no preparo 99
+3,6300101,99,A POF registra o arroz como é comido (cozido) no preparo 99
+7,6500401,99,
+8,8002301,99,A POF não separa o maisena dos outros biscoitos doces
+13,8002201,99,A POF não separa o cream cracker dos outros biscoitos salgados
+45,7700401,99,
+52,8001401,99,
+53,8000105,99,PAO DE SAL é o pão francês na POF; unidade de 50 g
+64,6703901,2,A POF não separa os tipos de abóbora
+70,6703701,2,
+77,6700101,99,A POF não separa os tipos de alface
+78,6700101,99,A POF não separa os tipos de alface
+86,6400303,2,
+88,6400401,2,
+91,6400101,2,
+93,8501502,99,Batata palito da POF; a batata frita da TACO é em palito
+97,6401101,2,
+100,6701704,2,
+107,6705701,1,
+109,6401201,2,
+110,6401201,1,
+112,6704101,2,
+116,6700501,7,
+118,6700601,2,
+122,6501401,99,
+129,6400601,2,
+131,8502201,99,
+132,6400601,5,
+140,8000801,99,
+142,6704001,99,
+149,6700901,1,
+152,6702001,99,
+157,6705101,99,
+163,6802701,99,
+164,6802601,99,
+182,6801101,99,A unidade da POF é a de banana prata
+200,6804201,99,A POF não separa goiaba branca e vermelha
+207,6807801,99,
+214,6801801,99,A POF agrupa as laranjas (bahia, pera, seleta, lima)
+215,8500407,99,
+220,6802001,99,A POF agrupa os limões
+222,6803001,99,A POF não separa as variedades de maçã
+226,6803101,99,Unidade de 310 g é a do papaia; o formosa fica de fora
+232,6803301,99,
+235,6803401,99,
+236,6803501,99,
+238,6802202,99,
+243,6803601,99,A POF não separa as variedades de pera
+251,6802201,99,
+260,8400101,99,
+272,8400301,99,
+277,7703402,99,
+284,7260101,2,
+301,7200101,4,A POF não separa as espécies; peixe de mar assado
+317,7200101,3,A POF não separa as espécies; peixe de mar grelhado
+319,7703002,99,
+326,7104301,2,Carne moída cozida da POF; não separa o corte
+344,7100201,3,
+346,7100201,3,
+358,7100101,3,
+370,7100301,3,
+377,7100501,3,
+381,7100304,3,
+383,7100304,3,
+384,8100101,2,
+403,7800103,4,Frango inteiro assado: medidas por parte (asa, coxa, sobrecoxa, peito)
+406,7800401,4,
+408,7800401,2,
+410,7800401,3,
+417,8100502,3,
+420,8102207,3,
+423,8102204,99,Linguiça (suína, bovina, mista); preparo 99 tem os mesmos pesos do grelhado sem a unidade pequena repetida
+424,8102601,99,
+429,7103305,3,
+435,7103401,4,
+439,8102901,99,
+443,8102701,99,
+448,7901204,99,
+451,7901201,99,Iogurte de qualquer sabor
+453,7900901,99,
+456,7900710,99,
+457,7903601,99,
+458,7900101,99,
+459,7900601,99,
+460,7901304,99,
+461,7902001,99,A POF não separa minas frescal e meia cura
+463,7901801,99,
+467,7901701,99,
+468,7902901,99,
+469,7902201,99,
+478,8202101,99,
+484,8506501,99,Omelete da POF (sem distinção de recheio)
+485,7803501,99,
+488,7803301,2,
+490,7803301,5,
+491,6900821,99,
+492,6906602,99,Açúcar da POF (sem distinção de tipo)
+493,6900304,99,
+494,6906602,99,Açúcar da POF (sem distinção de tipo)
+507,6901602,99,
+524,7004301,99,
+533,6902901,99,Cuscuz de milho (nordestino) da POF
+539,8506101,99,
+558,6301001,99,Amendoim em grão da POF
+560,7700201,99,
+561,6303102,99,A POF agrupa os feijões comuns cozidos (preto, mulatinho, roxo, rosinha etc.)
+563,6301603,99,Fradinho é uma variedade de feijão de corda
+567,6303102,99,A POF agrupa os feijões comuns cozidos
+577,6302901,99,Lentilha cozida no preparo 99
+587,6600501,99,
+588,6600801,99,
+589,6600701,99,
+597,6601501,99,

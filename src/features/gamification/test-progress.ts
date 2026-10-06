@@ -8,10 +8,12 @@ export function progressOf(total: number, week: Partial<WeekProgress> = {}, over
     total_xp: total,
     level: levelFor(total),
     pillars: { strength: { ...levelFor(total), xp: total } },
-    week: { start: '2026-10-05', xp: 0, max: 960, target: 3, workouts: 1, extras: 0, prs: 0, target_hit: false, weighed_today: false, ...week },
+    week: { start: '2026-10-05', xp: 0, max: 960, target: 3, workouts: 1, extras: 0, prs: 0, target_hit: false, weighed_today: false,
+            pillars: { strength: 0, nutrition: 0, bonus: 0 }, ...week },
     streak: { current: 0, best: 0, shields: 0 },
     achievements: [],
     stats: {},
+    radar: { strength: { current: null, previous: null }, nutrition: { current: null, previous: null } },
     ...over
   }
 }

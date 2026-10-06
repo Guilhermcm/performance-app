@@ -3,7 +3,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
-const P = { id: 'u1', display_name: 'Ana', avatar_url: null, birth_date: null, sex: null, height_cm: 165, weight_kg: 62, goal: 'strength', level: 'beginner', days_per_week: 3, equipment: [], unit: 'kg', locale: 'pt-BR', timezone: 'America/Sao_Paulo', share_activity: false, created_at: '', updated_at: '' }
+let P: Record<string, unknown>
+const BASE = { id: 'u1', display_name: 'Ana', avatar_url: null, birth_date: null, sex: null, height_cm: 165, weight_kg: 62, goal: 'strength', level: 'beginner', days_per_week: 3, equipment: [], unit: 'kg', locale: 'pt-BR', timezone: 'America/Sao_Paulo', share_activity: false, created_at: '', updated_at: '',
+  nutrition_enabled: false, activity_level: null, nutrition_pace: 'standard', nutrition_days_per_week: 5 }
+P = BASE
 const h = vi.hoisted(() => ({
   save: vi.fn(async (p: any) => ({ ...P, ...p })),
   signOut: vi.fn(async (_o?: any): Promise<any> => ({ owed: false })),
@@ -11,7 +14,8 @@ const h = vi.hoisted(() => ({
   update: vi.fn(),
   menuSheet: vi.fn(),
   toast: vi.fn(),
-  S: { unit: 'kg' } as Record<string, unknown>
+  S: { unit: 'kg' } as Record<string, unknown>,
+  refreshAutoTarget: vi.fn(async (_p: unknown) => false)
 }))
 vi.mock('./useProfile', () => ({ useProfile: (sel?: any) => { const s = { profile: P, save: h.save }; return sel ? sel(s) : s } }))
 vi.mock('../../store/useStore.js', () => {
@@ -21,8 +25,13 @@ vi.mock('../../store/useStore.js', () => {
 vi.mock('../../sheets.jsx', () => ({ menuSheet: h.menuSheet }))
 vi.mock('sonner', () => ({ toast: h.toast }))
 vi.mock('../../lib/equipment.js', () => ({ ALL_EQUIPMENT: ['barbell', 'body weight'] }))
+vi.mock('../nutrition/auto-target', () => ({ refreshAutoTarget: h.refreshAutoTarget }))
+vi.mock('../nutrition/NutritionSetup', () => ({
+  default: ({ open }: { open: boolean }) => (open ? <div role="dialog" aria-label="Nutrition setup" /> : null)
+}))
 
 import ProfileScreen, { SOURCE_URL } from './ProfileScreen'
+import { useNutrition } from '../nutrition/useNutrition'
 
 const show = () => render(<MemoryRouter><ProfileScreen /></MemoryRouter>)
 
@@ -30,6 +39,7 @@ beforeEach(() => {
   Object.values(h).forEach(f => typeof f === 'function' && (f as any).mockClear())
   h.signOut.mockImplementation(async () => ({ owed: false }))
   h.S = { unit: 'kg' }
+  P = BASE
 })
 afterEach(cleanup)
 
@@ -148,9 +158,9 @@ describe('ProfileScreen', () => {
     await waitFor(() => expect(h.signOut).toHaveBeenLastCalledWith({ force: true }))
   })
 
-  it('links the source code (AGPL)', () => {
+  it('links the source code and license', () => {
     show()
-    expect(screen.getByRole('link', { name: /source code/i }).getAttribute('href')).toBe('https://github.com/Guilhermcm/performance-app')
+    expect(screen.getByRole('link', { name: /source code and license/i }).getAttribute('href')).toBe('https://github.com/Guilhermcm/performance-app')
     expect(SOURCE_URL).toBe('https://github.com/Guilhermcm/performance-app')
   })
 
@@ -159,10 +169,50 @@ describe('ProfileScreen', () => {
     const order = [
       screen.getByRole('button', { name: /sign out/i }),
       screen.getByRole('button', { name: 'Delete my account' }),
-      screen.getByRole('link', { name: /source code/i })
+      screen.getByRole('link', { name: /source code and license/i })
     ]
     for (let i = 1; i < order.length; i++) {
       expect(order[i - 1].compareDocumentPosition(order[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     }
+  })
+
+  it('opens the nutrition setup from the switch while the pillar is off', () => {
+    show()
+    expect(screen.getByRole('heading', { name: 'Nutrition' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('switch', { name: /Nutrition/ }))
+    expect(screen.getByRole('dialog', { name: 'Nutrition setup' })).toBeTruthy()
+    expect(h.save).not.toHaveBeenCalled()
+  })
+
+  it('shows the target, the activity and the days, edits them and turns the pillar off', async () => {
+    P = { ...BASE, nutrition_enabled: true, activity_level: 'moderate', nutrition_days_per_week: 4 }
+    useNutrition.setState({ targets: [{ valid_from: '2026-10-01', mode: 'auto', kcal: 2400, protein_g: 160, carbs_g: 270, fat_g: 70 }] })
+    show()
+    expect(screen.getByText('2,400 kcal')).toBeTruthy()
+    expect(screen.getByText('Moderately active')).toBeTruthy()
+    expect(screen.getByText('4')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Edit: Nutrition' }))
+    expect(screen.getByRole('dialog', { name: 'Nutrition setup' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('switch', { name: /Nutrition/ }))
+    await waitFor(() => expect(h.save).toHaveBeenCalledWith({ nutrition_enabled: false }))
+    useNutrition.setState({ targets: [] })
+  })
+
+  it('refreshes the automatic target after a change to the data it is based on', async () => {
+    P = { ...BASE, nutrition_enabled: true, activity_level: 'moderate' }
+    show()
+    fireEvent.click(screen.getByRole('button', { name: 'Edit: About you' }))
+    fireEvent.change(screen.getByLabelText(/height/i), { target: { value: '170' } })
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => expect(h.refreshAutoTarget).toHaveBeenCalledWith(expect.objectContaining({ height_cm: 170 })))
+  })
+
+  it('leaves the target alone after a change that does not affect it', async () => {
+    P = { ...BASE, nutrition_enabled: true, activity_level: 'moderate' }
+    show()
+    fireEvent.click(screen.getByRole('button', { name: 'Edit: Your equipment' }))
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => expect(h.save).toHaveBeenCalled())
+    expect(h.refreshAutoTarget).not.toHaveBeenCalled()
   })
 })

@@ -1,0 +1,7 @@
+id,nome,energia_kcal,proteina_g,carboidrato_g,lipideos_g,fibra_g
+1,"Arroz, tipo 1, cozido",128,2.5,28.1,0.2,1.6
+2,"Feijão, carioca, cozido",76,4.8,13.6,0.5,8.5
+3,"Café, infusão 10%",9,0.7,1.5,Tr,NA
+4,"Sal, de mesa",0,0,0,0,NA
+5,"Peito de frango, grelhado",159,32,0,2.5,*
+6,"Item com kcal fora",300,1,1,1,0

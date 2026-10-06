@@ -31,9 +31,14 @@ describe('get_my_progress', () => {
       total_xp: 340,
       level: { level: 3, into: 90, need: 200 },
       pillars: { strength: { level: 2, into: 140, need: 150, xp: 240 } },
-      week: { start: '2026-09-14', xp: 340, max: 960, target: 3, workouts: 1, extras: 0, prs: 1, target_hit: false, weighed_today: true },
+      week: { start: '2026-09-14', xp: 340, max: 960, target: 3, workouts: 1, extras: 0, prs: 1, target_hit: false, weighed_today: true,
+              pillars: { strength: 240, nutrition: 0, bonus: 100 } },
+      // No closed week yet: the first one is the running week.
+      radar: { strength: { current: null, previous: null }, nutrition: { current: null, previous: null } },
       streak: { current: 0, best: 0, shields: 0 },
-      stats: { workouts: 1, prs: 1, week_targets: 0, best_streak: 0, weigh_in_run: 1, early_workouts: 0, friends: 0, challenges_won: 0, level: 3 }
+      stats: { workouts: 1, prs: 1, week_targets: 0, best_streak: 0, weigh_in_run: 1, early_workouts: 0, friends: 0, challenges_won: 0, level: 3,
+               nutrition_logged_days: 0, nutrition_on_target_days: 0, nutrition_week_targets: 0,
+               nutrition_best_streak: 0, protein_best_run: 0 }
     })
     expect(achievements.map((a: { code: string }) => a.code).sort()).toEqual(['first_pr', 'first_workout'])
     expect(achievements.every((a: { unlocked_at: unknown }) => typeof a.unlocked_at === 'string')).toBe(true)

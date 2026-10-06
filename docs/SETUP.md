@@ -3,13 +3,49 @@
 ## 1. Supabase
 
 1. Crie um projeto em https://supabase.com/dashboard (região: São Paulo, South America).
-2. SQL Editor → cole e rode, em ordem, cada arquivo de `supabase/migrations/` (`0001_init.sql`,
-   `0002_gamification.sql`, `0003_gamification_cron.sql`, `0004_social.sql`,
-   `0005_social_cron.sql`, `0006_delete_account.sql`). Em um projeto que já tem as anteriores,
-   rode só as que faltam. A `0006` cria a exclusão de conta pelo próprio app (Perfil > Excluir
-   minha conta) e precisa rodar como `postgres`, o usuário padrão do SQL Editor, porque apaga a
-   linha da conta em `auth.users`.
+2. SQL Editor → em um projeto novo, cole e rode, em ordem, cada arquivo de `supabase/migrations/`,
+   de `0001_init.sql` a `0016_nutrition_history.sql`, um por consulta. Antes de rodar a `0013`, ative
+   o `pg_cron` (veja a seção 7). Em um projeto que já tem `0001` a `0006`, siga o roteiro abaixo.
+   A `0006` cria a exclusão de conta pelo próprio app (Perfil > Excluir minha conta) e precisa rodar
+   como `postgres`, o usuário padrão do SQL Editor, porque apaga a linha da conta em `auth.users`.
+   As `0007` a `0016` também rodam como `postgres`: as funções que fecham os dias e pagam o XP
+   escrevem como dono das tabelas.
 3. Project Settings → API: copie `Project URL` e a chave `anon public`.
+
+### Roteiro: banco de produção que já tem a 0001 a 0006
+
+Use este roteiro para levar um banco existente até a `0016`. Faça tudo antes de publicar o
+cliente novo. Sem as migrations, a aba Nutrição mostra "Não foi possível carregar seu diário
+alimentar" (em inglês, "Could not load your food diary"). O cliente antigo, ainda no ar durante o
+roteiro, continua funcionando: ele chama as funções por parâmetros nomeados e os parâmetros novos
+têm valor padrão.
+
+1. Ative o `pg_cron` antes de tudo, se ainda não estiver ativo: Supabase → Database → Extensions →
+   `pg_cron` → Enable. A `0013` agenda um job e depende dele.
+2. No SQL Editor, rode cada arquivo inteiro, em ordem, da `0007` à `0016`, um por consulta (uma
+   consulta nova para cada arquivo). Pare no primeiro erro e não siga para o próximo arquivo:
+   anote a mensagem e resolva a causa antes de continuar. A ordem é `0007_nutrition_base.sql`, `0008_weekly_targets_pillar.sql`,
+   `0009_nutrition_diary.sql`, `0010_nutrition_close.sql`, `0011_nutrition_week.sql`,
+   `0012_nutrition_progress.sql`, `0013_nutrition_cron.sql`, `0014_food_measures.sql`,
+   `0015_nutrition_challenge.sql` e `0016_nutrition_history.sql`. A `0015` apaga as versões antigas
+   de `create_challenge` e `join_challenge` e cria as novas com o parâmetro
+   `p_share_nutrition boolean default false`.
+3. Confira o resultado com três consultas:
+   - `select proname, pg_get_function_identity_arguments(oid) from pg_proc where proname in ('create_challenge','join_challenge');`
+     deve devolver exatamente uma linha para cada função, e as duas mostram o parâmetro
+     `p_share_nutrition`. Mais de uma linha por função indica uma migration pela metade.
+   - `select relrowsecurity from pg_class where relname = 'food_measures';` deve devolver `true`.
+   - `select jobname from cron.job order by jobname;` deve listar `close-nutrition-days` entre os
+     jobs (o conjunto completo está na seção 7).
+4. Se o app disser que não achou a função logo depois ("Could not find the function"), recarregue o
+   cache da API: `notify pgrst, 'reload schema';`.
+5. Só então faça o merge e o deploy do cliente novo.
+
+Atalho: o arquivo único `supabase/release/0007-0016_nutrition.sql` pode ser colado no SQL Editor no
+lugar dos dez arquivos do passo 2. Ele é gerado por concatenação das migrations, então não edite
+à mão: se algo precisar mudar, mude a migration e gere o arquivo de novo com
+`node scripts/build-release-sql.mjs` (um teste confere que ele está em dia). O `pg_cron` precisa estar
+ativo antes de rodá-lo. As conferências do passo 3 valem do mesmo jeito.
 
 ## 2. Google OAuth
 
@@ -57,14 +93,38 @@ O app fecha as semanas sempre que abre (`get_my_progress`). Um job diário mant�
 conquistas em dia para quem passa dias sem abrir.
 
 1. Supabase → Database → Extensions → procure `pg_cron` → Enable.
-2. SQL Editor → rode de novo `supabase/migrations/0003_gamification_cron.sql` e
-   `supabase/migrations/0005_social_cron.sql`.
+2. SQL Editor → rode de novo `supabase/migrations/0003_gamification_cron.sql`,
+   `supabase/migrations/0005_social_cron.sql` e `supabase/migrations/0013_nutrition_cron.sql`.
 3. Confira com `select jobname, schedule, command from cron.job order by jobname;`. O resultado
-   esperado tem duas linhas: `close-challenges | 15 6 * * * | select public.close_all_challenges()`
-   e `close-weeks | 0 6 * * * | select public.close_all_weeks()` (06:15 e 06:00 UTC).
+   esperado tem três linhas: `close-challenges | 15 6 * * * | select public.close_all_challenges()`,
+   `close-nutrition-days | 30 6 * * * | select public.close_all_nutrition_days()` e
+   `close-weeks | 0 6 * * * | select public.close_all_weeks()` (06:15, 06:30 e 06:00 UTC).
 
 Sem o `pg_cron` nada quebra. O streak de quem sumiu só é atualizado quando a pessoa abre o app de
 novo.
 
 Os desafios também fecham sozinhos quando alguém abre o app, a aba de desafios ou o ranking. O job
 só garante os +300 XP de quem passa dias sem abrir.
+
+Com a Nutrição é igual: o app fecha os dias e as semanas pendentes quando abre. O job
+`close-nutrition-days` fecha os dias de quem está com o pilar ligado e não abriu o app, paga o XP
+desses dias, a meta da semana e as conquistas, e mantém o streak de nutrição em dia.
+
+## 8. Tabela TACO (busca local de alimentos)
+
+A busca de alimentos usa a TACO (Tabela Brasileira de Composição de Alimentos, 4ª edição,
+NEPA/Unicamp) no próprio aparelho. Os 597 alimentos já estão em
+`src/features/nutrition/data/taco.json`; a origem, os termos e a citação estão em
+`scripts/data/README.md` e `NOTICE.md`.
+
+Para regenerar a tabela a partir do CSV:
+
+1. Baixe a planilha oficial da TACO 4ª edição em https://www.nepa.unicamp.br/taco/.
+2. Converta para CSV com o cabeçalho
+   `id,nome,energia_kcal,proteina_g,carboidrato_g,lipideos_g,fibra_g` (valores por 100 g, com
+   ponto ou vírgula decimal) e salve em `scripts/data/taco-4ed.csv`.
+3. Rode `node scripts/build-taco.mjs`. O script gera `src/features/nutrition/data/taco.json` e
+   `taco-measures.json` (medidas caseiras da POF, a partir de `scripts/data/taco-pof-map.csv` e
+   `scripts/data/pof-medidas.csv`) e para com erro se as calorias de algum item não baterem com
+   os macros (a regra está no topo do script).
+4. Confira com `npm test` e faça o commit do CSV e dos JSON.

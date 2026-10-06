@@ -1,17 +1,23 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, useReducedMotion } from 'motion/react'
-import { Crown } from 'lucide-react'
+import { Apple, CalendarCheck, Crown, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { t } from '../../../lib/i18n.js'
 import { achievementByCode, type AchievementCode } from '../achievements'
-import { ACHIEVEMENT_TEXT } from '../achievement-labels'
+import { ACHIEVEMENT_TEXT, achievementTitle } from '../achievement-labels'
+import { WEEK_TARGET_BONUS } from '../xp'
 import { AchievementIcon } from './AchievementIcon'
 import { ACCENT_TEXT } from './accent'
 import { fmtInt } from '../format'
-import type { Celebration } from '../types'
+import type { Celebration, PillarKey } from '../types'
 
 type View = { eyebrow: string; title: string; detail: string; xp: number; icon: ReactNode }
+
+// The pillars with a level-up card (celebrations.ts); another one falls back to the plain level.
+const PILLAR_LEVEL: Partial<Record<PillarKey, { title: (level: number) => string; icon: LucideIcon; tone: string }>> = {
+  nutrition: { title: level => t('Nutrition level {0}', level), icon: Apple, tone: 'bg-pillar-nutrition/15 text-pillar-nutrition' }
+}
 
 function viewOf(c: Celebration): View {
   if (c.kind === 'level') {
@@ -20,9 +26,24 @@ function viewOf(c: Celebration): View {
       icon: <span className="grid size-20 place-items-center rounded-3xl bg-primary text-primary-foreground"><Crown className="size-10" strokeWidth={1.75} /></span>
     }
   }
+  if (c.kind === 'pillar_level') {
+    const p = PILLAR_LEVEL[c.pillar]
+    const Icon = p?.icon ?? Crown
+    return {
+      eyebrow: t('Level up!'), title: p ? p.title(c.level) : t('Level {0}', c.level), detail: t('You reached level {0}.', c.level), xp: 0,
+      icon: <span className={cn('grid size-20 place-items-center rounded-3xl', p?.tone ?? 'bg-primary text-primary-foreground')}><Icon className="size-10" strokeWidth={1.75} /></span>
+    }
+  }
+  if (c.kind === 'week_target') {
+    return {
+      eyebrow: t('Weekly goal met'), title: t('Nutrition goal met'),
+      detail: t('You hit your target on enough days last week.'), xp: WEEK_TARGET_BONUS,
+      icon: <span className="grid size-20 place-items-center rounded-3xl bg-pillar-nutrition/15 text-pillar-nutrition"><CalendarCheck className="size-10" strokeWidth={1.75} /></span>
+    }
+  }
   const text = ACHIEVEMENT_TEXT[c.code as AchievementCode]
   return {
-    eyebrow: t('Achievement unlocked'), title: text ? text.title() : c.code, detail: text ? text.detail() : '',
+    eyebrow: t('Achievement unlocked'), title: achievementTitle(c.code), detail: text ? text.detail() : '',
     xp: achievementByCode(c.code)?.xp ?? 0,
     icon: <AchievementIcon code={c.code} unlocked className="size-20 rounded-3xl" />
   }

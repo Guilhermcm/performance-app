@@ -13,6 +13,8 @@ import { LevelBar } from '../gamification/components/LevelBar'
 import { StreakBadge } from '../gamification/components/StreakBadge'
 import { fmtInt } from '../gamification/format'
 import { ACCENT_TEXT } from '../gamification/components/accent'
+import { WEEK_MAX } from '../gamification/xp'
+import type { WeekProgress } from '../gamification/types'
 
 const CARD = 'relative overflow-hidden rounded-3xl border border-border bg-card p-5 text-card-foreground'
 
@@ -55,7 +57,7 @@ export function ProgressHero() {
 
   const lv = progress.level
   const week = progress.week
-  const weekPct = Math.min(100, (week.xp / week.max) * 100)
+  const segments = weekSegments(week)
 
   return (
     <section data-slot="progress-hero" aria-labelledby="hero-level"
@@ -92,9 +94,23 @@ export function ProgressHero() {
           <span className="text-sm font-medium">{t('This week')}</span>
           <span className="font-mono text-sm tabular-nums text-muted-foreground">{t('{0} of {1} XP', fmtInt(week.xp), fmtInt(week.max))}</span>
         </div>
-        <div aria-hidden className="h-1.5 overflow-hidden rounded-full bg-primary/15">
-          <div className="h-full rounded-full bg-primary transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none" style={{ width: `${weekPct}%` }} />
+        <div aria-hidden className="flex h-1.5 gap-px overflow-hidden rounded-full bg-primary/15">
+          {segments.filter(sg => sg.pct > 0).map(sg => (
+            <div key={sg.key} data-slot="week-segment" data-pillar={sg.key} style={{ width: `${sg.pct}%` }}
+              className={cn('h-full shrink-0 transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none', SEGMENT[sg.key].fill)} />
+          ))}
         </div>
+        {segments.length > 1 && (
+          <ul aria-label={t('XP this week by pillar')} className="flex list-none flex-wrap gap-x-4 gap-y-1 p-0 text-xs text-muted-foreground">
+            {segments.map(sg => (
+              <li key={sg.key} className="flex items-center gap-1.5">
+                <span aria-hidden className={cn('size-2 rounded-full', SEGMENT[sg.key].fill)} />
+                <span>{SEGMENT[sg.key].label()}</span>
+                <span className="font-mono tabular-nums text-foreground">{fmtInt(sg.xp)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
         <div className="flex items-center justify-between gap-3">
           <SessionDots target={week.target} done={week.workouts} extras={week.extras} />
           <span className={cn('text-sm', week.target_hit ? cn('font-medium', ACCENT_TEXT) : 'text-muted-foreground')}>
@@ -118,6 +134,30 @@ export function ProgressHero() {
       )}
     </section>
   )
+}
+
+type SegmentKey = 'strength' | 'nutrition' | 'bonus'
+const SEGMENT: Record<SegmentKey, { label: () => string; fill: string }> = {
+  strength: { label: () => t('Strength'), fill: 'bg-[var(--pillar-strength)]' },
+  nutrition: { label: () => t('Nutrition'), fill: 'bg-pillar-nutrition' },
+  // Badges and challenges belong to no pillar: a neutral tone.
+  bonus: { label: () => t('Bonus'), fill: 'bg-muted-foreground/60' }
+}
+
+// The week's XP split by pillar, each a share of the week's maximum, laid end to end and cut at
+// 100%. Nutrition shows while it is part of the week (a second pillar raises the maximum), bonus
+// once there is some. A cached week from an older build has no split: it is all strength.
+export function weekSegments(week: WeekProgress): { key: SegmentKey; xp: number; pct: number }[] {
+  const p = week.pillars ?? { strength: week.xp, nutrition: 0, bonus: 0 }
+  const shown: [SegmentKey, number][] = [['strength', p.strength]]
+  if (week.max > WEEK_MAX || p.nutrition > 0) shown.push(['nutrition', p.nutrition])
+  if (p.bonus > 0) shown.push(['bonus', p.bonus])
+  let room = 100
+  return shown.map(([key, xp]) => {
+    const pct = Math.min(room, Math.max(0, (xp / week.max) * 100))
+    room -= pct
+    return { key, xp, pct }
+  })
 }
 
 // One pill per planned session of the week (filled once done), then a dot per extra session.

@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, cleanup } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, within } from '@testing-library/react'
 
 const h = vi.hoisted(() => ({ nav: vi.fn() }))
 vi.mock('react-router-dom', () => ({ useNavigate: () => h.nav }))
@@ -63,10 +63,41 @@ describe('ProgressHero', () => {
     expect(screen.getByText('Finish a workout to earn your first XP.')).toBeTruthy()
   })
 
+  it('splits the week bar into strength, nutrition and bonus, each with its name', () => {
+    ready(progressOf(950, { xp: 520, max: 1920, pillars: { strength: 300, nutrition: 170, bonus: 50 } }))
+    const { container } = render(<ProgressHero />)
+    expect(screen.getByText('520 of 1,920 XP')).toBeTruthy()
+    const seg = (k: string) => container.querySelector(`[data-slot="week-segment"][data-pillar="${k}"]`) as HTMLElement
+    expect(seg('strength').style.width).toBe('15.625%')
+    expect(seg('nutrition').style.width).toBe(`${(170 / 1920) * 100}%`)
+    expect(seg('bonus').style.width).toBe(`${(50 / 1920) * 100}%`)
+    const legend = screen.getByRole('list', { name: 'XP this week by pillar' })
+    expect(within(legend).getByText('Strength')).toBeTruthy()
+    expect(within(legend).getByText('Nutrition')).toBeTruthy()
+    expect(within(legend).getByText('Bonus')).toBeTruthy()
+    expect(within(legend).getByText('170')).toBeTruthy()
+  })
+
+  it('keeps the segmented bar within 100%', () => {
+    ready(progressOf(950, { xp: 2100, max: 1920, pillars: { strength: 900, nutrition: 900, bonus: 300 } }))
+    const { container } = render(<ProgressHero />)
+    const widths = [...container.querySelectorAll<HTMLElement>('[data-slot="week-segment"]')].map(e => parseFloat(e.style.width))
+    expect(widths.reduce((a, b) => a + b, 0)).toBeCloseTo(100)
+  })
+
+  it('reads a cached week from an older build as all strength', () => {
+    const p = progressOf(400, { xp: 400 })
+    delete (p.week as Partial<typeof p.week>).pillars
+    ready(p)
+    const { container } = render(<ProgressHero />)
+    expect((container.querySelector('[data-slot="week-segment"][data-pillar="strength"]') as HTMLElement).style.width).toBe(`${(400 / 960) * 100}%`)
+    expect(container.querySelector('[data-pillar="nutrition"]')).toBeNull()
+  })
+
   it('opens the achievements', () => {
     ready()
     render(<ProgressHero />)
-    expect(screen.getByText('0 of 22 unlocked')).toBeTruthy()
+    expect(screen.getByText('0 of 32 unlocked')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /Achievements/ }))
     expect(h.nav).toHaveBeenCalledWith('/conquistas')
   })

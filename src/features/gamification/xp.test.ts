@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import fixture from '../../../supabase/tests/fixtures/xp-scenarios.json'
-import { levelFor, replay, sessionXp, streakAfter, weekStartOf, WEEK_MAX, type XpEvent } from './xp'
+import nutrition from '../../../supabase/tests/fixtures/nutrition-scenarios.json'
+import { nutritionWeekAwards, levelFor, replay, sessionXp, streakAfter, weekStartOf, WEEK_MAX, type XpEvent } from './xp'
 
 describe('xp rules (client mirror)', () => {
   it.each(fixture.levels)('levelFor($xp)', l => {
@@ -29,5 +30,19 @@ describe('xp rules (client mirror)', () => {
 
   it('weeks start on Monday', () => {
     expect(['2026-10-05', '2026-10-11', '2026-10-12'].map(weekStartOf)).toEqual(['2026-10-05', '2026-10-05', '2026-10-12'])
+  })
+
+  it.each(nutrition.weeks)('nutrition: $name', w => {
+    const days = w.days.map(d => ({
+      on: d.on,
+      classes: {
+        logged: d.classes.includes('day_logged'),
+        on_target: d.classes.includes('day_on_target'),
+        balanced: d.classes.includes('macros_balanced'),
+      },
+    }))
+    const awards = nutritionWeekAwards(days, w.target)
+    expect(awards).toEqual(w.awards)
+    expect(awards.reduce((n, a) => n + a.amount, 0)).toBe(w.total)
   })
 })

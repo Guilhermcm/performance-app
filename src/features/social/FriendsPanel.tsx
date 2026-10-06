@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { useStore } from '../../store/useStore.js'
 import { t } from '../../lib/i18n.js'
-import { ACHIEVEMENTS, type AchievementCode } from '../gamification/achievements'
-import { ACHIEVEMENT_TEXT } from '../gamification/achievement-labels'
+import { ACHIEVEMENTS } from '../gamification/achievements'
+import { achievementTitle } from '../gamification/achievement-labels'
 import { AchievementIcon } from '../gamification/components/AchievementIcon'
 import { LevelBar } from '../gamification/components/LevelBar'
 import { fmtDay, fmtInt } from '../gamification/format'
@@ -17,6 +17,9 @@ import { InviteButton, useOfferLink } from './InviteButton'
 import { PersonAvatar } from './components/PersonAvatar'
 import { EmptyState, ErrorState, ListSkeleton, StaleNote } from './components/states'
 import type { Friend, MyInvite } from './types'
+
+// Friends never receive private badges, so the count leaves them out of the total too.
+const PUBLIC_BADGES = ACHIEVEMENTS.filter(a => !a.private).length
 
 type AppStore = { user: { id: string } | null }
 
@@ -159,14 +162,14 @@ function FriendSheet({ friend, onClose }: { friend: Friend | null; onClose: () =
               <div>
                 <p className="flex items-baseline justify-between gap-3 text-sm">
                   <span className="font-medium">{t('Achievements')}</span>
-                  <span className="text-muted-foreground">{t('{0} of {1} unlocked', c.achievements.length, ACHIEVEMENTS.length)}</span>
+                  <span className="text-muted-foreground">{t('{0} of {1} unlocked', c.achievements.length, PUBLIC_BADGES)}</span>
                 </p>
                 {recent.length > 0 && (
                   <ul className="mt-2 flex list-none flex-wrap gap-2 p-0">
                     {recent.map(a => (
                       <li key={a.code} className="flex items-center gap-2 rounded-full bg-secondary/70 py-1 pl-1 pr-3 text-xs font-medium">
                         <AchievementIcon code={a.code} unlocked className="size-7 rounded-full" />
-                        {ACHIEVEMENT_TEXT[a.code as AchievementCode]?.title() ?? a.code}
+                        {achievementTitle(a.code)}
                       </li>
                     ))}
                   </ul>

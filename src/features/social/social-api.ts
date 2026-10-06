@@ -6,7 +6,7 @@ import type {
 const CODES: readonly SocialErrorCode[] = [
   'not_signed_in', 'no_profile', 'invite_not_found', 'invite_expired', 'invite_used', 'self_invite',
   'already_friends', 'invite_limit', 'not_friends', 'invalid_challenge', 'challenge_limit',
-  'challenge_not_found', 'challenge_closed', 'volume_opt_in_required'
+  'challenge_not_found', 'challenge_closed', 'volume_opt_in_required', 'nutrition_opt_in_required', 'nutrition_off'
 ]
 
 export class SocialError extends Error {
@@ -67,14 +67,21 @@ export const getWeeklyLeaderboard = () => rpc<Leaderboard>('get_weekly_leaderboa
 export const getAlltimeLeaderboard = () => rpc<Leaderboard>('get_alltime_leaderboard')
 export const getChallenges = () => rpc<Challenge[]>('get_challenges')
 
+// Every parameter by name (0015_nutrition_challenge.sql): PostgREST picks the function by the names
+// sent, so a call stays unambiguous while old and new signatures meet during a deploy, and
+// social-api.test.ts checks the names against the newest migration.
 export const createChallenge = async (c: NewChallenge): Promise<string> =>
   (await rpc<{ id: string }>('create_challenge', {
     p_template: c.template, p_title: c.title, p_mode: c.mode, p_target: c.target,
-    p_starts_on: c.starts_on, p_ends_on: c.ends_on, p_invitees: c.invitees, p_share_volume: c.share_volume
+    p_starts_on: c.starts_on, p_ends_on: c.ends_on, p_invitees: c.invitees, p_share_volume: c.share_volume,
+    p_share_nutrition: c.share_nutrition
   })).id
 
-export const joinChallenge = async (id: string, shareVolume = false): Promise<void> => {
-  await rpc<null>('join_challenge', { p_id: id, p_share_volume: shareVolume })
+// The opt-ins a template asks for when joining: volume_total shares the volume, the nutrition
+// template the count of days on target.
+export type JoinOptIns = { shareVolume?: boolean; shareNutrition?: boolean }
+export const joinChallenge = async (id: string, { shareVolume = false, shareNutrition = false }: JoinOptIns = {}): Promise<void> => {
+  await rpc<null>('join_challenge', { p_id: id, p_share_volume: shareVolume, p_share_nutrition: shareNutrition })
 }
 export const leaveChallenge = async (id: string): Promise<void> => {
   await rpc<null>('leave_challenge', { p_id: id })

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { fetchProgress } from './progress-api'
-import { celebrationsSince, markerOf, type SeenMarker } from './celebrations'
+import { celebrationsSince, completeMarker, markerOf, type SeenMarker } from './celebrations'
 import type { Celebration, Progress } from './types'
 
 const CACHE = 'perf_progress_v1'
@@ -50,6 +50,11 @@ export const useProgress = create<ProgressStore>((set, get) => {
       // The first answer for this person on this device sets what counts as already seen.
       let seen = read<SeenMarker>(SEEN, userId)
       if (!seen) { seen = markerOf(progress); write(SEEN, userId, seen) }
+      else {
+        // A marker from before phase 2a: what it lacks counts as already seen.
+        const done = completeMarker(seen, progress)
+        if (done !== seen) { seen = done; write(SEEN, userId, seen) }
+      }
       set({ progress, status: 'ready', stale: false, pending: celebrationsSince(seen, progress) })
       return progress
     } catch {
