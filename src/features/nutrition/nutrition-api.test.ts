@@ -4,7 +4,7 @@ const h = vi.hoisted(() => ({ rpc: vi.fn(), from: vi.fn() }))
 vi.mock('@/lib/supabase', () => ({ supabase: { rpc: h.rpc, from: h.from } }))
 
 import * as api from './nutrition-api'
-import { foodOf, logOf, targetOf } from './test-nutrition'
+import { foodOf, logOf, measureOf, targetOf } from './test-nutrition'
 
 function chain(result: { data?: unknown; error: unknown }) {
   const calls: [string, unknown[]][] = []
@@ -62,6 +62,29 @@ describe('nutrition api', () => {
     expect(c.calls).toContainEqual(['eq', ['id', 'a']])
     await api.insertTarget(targetOf({ valid_from: '2026-10-06' }))
     expect(h.from).toHaveBeenLastCalledWith('nutrition_targets')
+  })
+
+  it('upserts a measure with its own updated_at and no user id, and deletes by id', async () => {
+    const c = chain({ error: null }); h.from.mockReturnValue(c.proxy)
+    await api.upsertMeasure(measureOf({ id: 'm', food_key: 'taco:1', label: 'concha', grams: 117.5 }))
+    expect(h.from).toHaveBeenCalledWith('food_measures')
+    const row = (c.calls.find(x => x[0] === 'upsert')![1] as [Record<string, unknown>])[0]
+    expect(row).toEqual({ id: 'm', food_key: 'taco:1', label: 'concha', grams: 117.5, updated_at: '2026-10-05T12:00:00.000Z' })
+    await api.deleteMeasure('m')
+    expect(c.calls).toContainEqual(['eq', ['id', 'm']])
+  })
+
+  it('reads measures and turns numeric grams into numbers', async () => {
+    const c = chain({ data: [{ id: 'm', user_id: 'u', food_key: 'off:789', label: 'copo', grams: '200.0', created_at: 'x', updated_at: 'y' }], error: null })
+    h.from.mockReturnValue(c.proxy)
+    await expect(api.fetchMeasures()).resolves.toEqual([{ id: 'm', food_key: 'off:789', label: 'copo', grams: 200, updated_at: 'y' }])
+    expect(h.from).toHaveBeenCalledWith('food_measures')
+  })
+
+  it('treats too_many_measures as a refusal for good', async () => {
+    expect(api.isRefused({ message: 'too_many_measures' })).toBe(true)
+    const c = chain({ error: { code: 'P0001', message: 'too_many_measures' } }); h.from.mockReturnValue(c.proxy)
+    await expect(api.upsertMeasure(measureOf())).rejects.toMatchObject({ refused: true, reason: 'refused' })
   })
 
   it('calls get_nutrition_days with the range', async () => {

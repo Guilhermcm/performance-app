@@ -1,8 +1,8 @@
-import type { FoodLog, UserFood } from './types'
+import type { FoodLog, Measure, UserFood } from './types'
 import * as api from './nutrition-api'
 import { supabase } from '@/lib/supabase'
 
-export type OutboxOp = { kind: 'log' | 'food'; op: 'upsert' | 'delete'; id: string; row?: FoodLog | UserFood }
+export type OutboxOp = { kind: 'log' | 'food' | 'measure'; op: 'upsert' | 'delete'; id: string; row?: FoodLog | UserFood | Measure }
 
 const KEY = 'perf_food_outbox_v1'
 type Queues = Record<string, OutboxOp[]>
@@ -41,6 +41,7 @@ const remove = (userId: string, op: OutboxOp) => {
 
 async function send(op: OutboxOp): Promise<void> {
   if (op.kind === 'log') return op.op === 'upsert' ? api.upsertLog(op.row as FoodLog) : api.deleteLog(op.id)
+  if (op.kind === 'measure') return op.op === 'upsert' ? api.upsertMeasure(op.row as Measure) : api.deleteMeasure(op.id)
   return op.op === 'upsert' ? api.upsertFood(op.row as UserFood) : api.deleteFood(op.id)
 }
 

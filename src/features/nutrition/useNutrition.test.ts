@@ -4,7 +4,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 vi.mock('@/lib/supabase', () => ({ supabase: { auth: { getSession: async () => ({ data: { session: { access_token: 't' } } }) } } }))
 const api = vi.hoisted(() => ({
   fetchLogs: vi.fn(), fetchFoods: vi.fn(), fetchTargets: vi.fn(), fetchDays: vi.fn(), insertTarget: vi.fn(),
-  upsertLog: vi.fn(), deleteLog: vi.fn(), upsertFood: vi.fn(), deleteFood: vi.fn()
+  upsertLog: vi.fn(), deleteLog: vi.fn(), upsertFood: vi.fn(), deleteFood: vi.fn(),
+  fetchMeasures: vi.fn(), upsertMeasure: vi.fn(), deleteMeasure: vi.fn()
 }))
 vi.mock('./nutrition-api', async orig => ({ ...(await orig<typeof import('./nutrition-api')>()), ...api }))
 const progress = vi.hoisted(() => ({ refresh: vi.fn() }))
@@ -14,7 +15,7 @@ import { useNutrition, startNutritionSync } from './useNutrition'
 import { useProfile } from '../profile/useProfile'
 import { clearOutbox, pending } from './outbox'
 import { clearNutritionLocal } from './sign-out'
-import { ME, OTHER, foodOf, itemOf, logOf, targetOf } from './test-nutrition'
+import { ME, OTHER, foodOf, itemOf, logOf, measureOf, targetOf } from './test-nutrition'
 
 const TODAY = '2026-10-05', YESTERDAY = '2026-10-04'
 const cache = () => JSON.parse(localStorage.getItem('perf_nutrition_v1') || 'null')
@@ -26,7 +27,7 @@ beforeEach(() => {
   useNutrition.getState().reset()
   Object.values(api).forEach(f => f.mockReset().mockResolvedValue(undefined))
   progress.refresh.mockReset()
-  api.fetchLogs.mockResolvedValue([]); api.fetchFoods.mockResolvedValue([]); api.fetchTargets.mockResolvedValue([])
+  api.fetchLogs.mockResolvedValue([]); api.fetchFoods.mockResolvedValue([]); api.fetchTargets.mockResolvedValue([]); api.fetchMeasures.mockResolvedValue([])
   api.fetchDays.mockResolvedValue({ target: null, days: [] })
 })
 
@@ -335,5 +336,133 @@ describe('startNutritionSync', () => {
     expect(api.fetchFoods).not.toHaveBeenCalled()
     stop()
     vi.useRealTimers()
+  })
+})
+
+describe('measures', () => {
+  const draft = { food_key: 'taco:1', label: 'concha', grams: 120 }
+  const failing = () => api.upsertMeasure.mockRejectedValue(new TypeError('Failed to fetch'))
+
+  it('pulls measures with the diary and keeps them in the saved copy', async () => {
+    const m = measureOf({ id: 'm1' })
+    api.fetchMeasures.mockResolvedValue([m])
+    await bound()
+    expect(useNutrition.getState().measures).toEqual([m])
+    expect(cache().measures).toEqual([m])
+    useNutrition.getState().reset()
+    api.fetchMeasures.mockReturnValue(new Promise(() => {}))
+    localStorage.setItem('perf_nutrition_v1', JSON.stringify({ userId: ME, logs: {}, foods: [], targets: [], closed: [], measures: [m] }))
+    void useNutrition.getState().bind(ME)
+    expect(useNutrition.getState().measures).toEqual([m])
+  })
+
+  it('reads a saved copy from before measures existed', async () => {
+    localStorage.setItem('perf_nutrition_v1', JSON.stringify({ userId: ME, logs: {}, foods: [], targets: [], closed: [] }))
+    api.fetchMeasures.mockReturnValue(new Promise(() => {}))
+    void useNutrition.getState().bind(ME)
+    expect(useNutrition.getState().measures).toEqual([])
+  })
+
+  it('adds a measure at once, trimmed, and sends it', async () => {
+    await bound()
+    const m = useNutrition.getState().addMeasure({ ...draft, label: '  concha ' })
+    expect(m).toMatchObject({ food_key: 'taco:1', label: 'concha', grams: 120, updated_at: new Date().toISOString() })
+    expect(m.id).toBeTruthy()
+    expect(useNutrition.getState().measures).toEqual([m])
+    expect(useNutrition.getState().measuresFor('taco:1')).toEqual([m])
+    expect(useNutrition.getState().measuresFor('taco:2')).toEqual([])
+    expect(cache().measures).toEqual([m])
+    await settle()
+    expect(api.upsertMeasure).toHaveBeenCalledWith(m)
+    expect(pending(ME)).toEqual([])
+  })
+
+  it('creates offline and sends when the network is back', async () => {
+    await bound()
+    failing()
+    const m = useNutrition.getState().addMeasure(draft)
+    await settle()
+    expect(pending(ME)).toEqual([{ kind: 'measure', op: 'upsert', id: m.id, row: m }])
+    expect(useNutrition.getState().measures).toEqual([m])
+    // the pull does not erase what the server has not heard yet
+    await useNutrition.getState().refresh()
+    expect(useNutrition.getState().measures).toEqual([m])
+    api.upsertMeasure.mockReset().mockResolvedValue(undefined)
+    await useNutrition.getState().flushPending()
+    expect(api.upsertMeasure).toHaveBeenCalledWith(m)
+    expect(pending(ME)).toEqual([])
+  })
+
+  it('updates label and grams but never the food, and removes', async () => {
+    await bound()
+    const m = useNutrition.getState().addMeasure(draft)
+    vi.setSystemTime(new Date(2026, 9, 5, 12, 5, 0))
+    useNutrition.getState().updateMeasure(m.id, { label: ' escumadeira ', grams: 85, food_key: 'taco:99', id: 'zzz' })
+    const [u] = useNutrition.getState().measures
+    expect(u).toEqual({ id: m.id, food_key: 'taco:1', label: 'escumadeira', grams: 85, updated_at: new Date().toISOString() })
+    await settle()
+    expect(api.upsertMeasure).toHaveBeenLastCalledWith(u)
+    useNutrition.getState().updateMeasure('missing', { grams: 1 })
+    useNutrition.getState().removeMeasure(m.id)
+    expect(useNutrition.getState().measures).toEqual([])
+    await settle()
+    expect(api.deleteMeasure).toHaveBeenCalledWith(m.id)
+  })
+
+  it('a measure deleted offline stays gone after a pull that still has it', async () => {
+    const m = measureOf({ id: 'm1' })
+    api.fetchMeasures.mockResolvedValue([m])
+    await bound()
+    api.deleteMeasure.mockRejectedValue(new TypeError('Failed to fetch'))
+    useNutrition.getState().removeMeasure('m1')
+    await settle()
+    await useNutrition.getState().refresh()
+    expect(useNutrition.getState().measures).toEqual([])
+  })
+
+  it("does not show one person's measures to another account", async () => {
+    await bound()
+    failing()
+    const m = useNutrition.getState().addMeasure(draft)
+    await settle()
+    useNutrition.getState().reset(); clearNutritionLocal()
+    expect(cache()).toBeNull()
+    api.upsertMeasure.mockReset().mockResolvedValue(undefined)
+    await useNutrition.getState().bind(OTHER)
+    await settle()
+    expect(useNutrition.getState().measures).toEqual([])
+    expect(api.upsertMeasure).not.toHaveBeenCalled()
+    expect(pending(ME)).toHaveLength(1)
+    // a saved copy that belongs to someone else is ignored too
+    useNutrition.getState().reset()
+    localStorage.setItem('perf_nutrition_v1', JSON.stringify({ userId: ME, logs: {}, foods: [], targets: [], closed: [], measures: [m] }))
+    api.fetchMeasures.mockReturnValue(new Promise(() => {}))
+    void useNutrition.getState().bind(OTHER)
+    expect(useNutrition.getState().measures).toEqual([])
+    // and A sends them on return; the server has them by the time of the pull
+    useNutrition.getState().reset()
+    api.fetchMeasures.mockResolvedValue([m])
+    await useNutrition.getState().bind(ME)
+    expect(api.upsertMeasure).toHaveBeenCalledWith(m)
+    expect(useNutrition.getState().measures).toEqual([m])
+  })
+
+  it('drops a refused measure with the existing notice', async () => {
+    await bound()
+    api.upsertMeasure.mockRejectedValue(Object.assign(new Error('too_many_measures'), { code: 'P0001' }))
+    useNutrition.getState().addMeasure(draft)
+    await settle()
+    expect(pending(ME)).toEqual([])
+    expect(useNutrition.getState().droppedNotice).toBe(true)
+    expect(useNutrition.getState().droppedReason).toBe('refused')
+  })
+
+  it('drops an item_immutable refusal too', async () => {
+    await bound()
+    api.upsertMeasure.mockRejectedValueOnce(Object.assign(new Error('item_immutable'), { code: 'P0001' }))
+    useNutrition.getState().addMeasure(draft)
+    await settle()
+    expect(pending(ME)).toEqual([])
+    expect(useNutrition.getState().droppedReason).toBe('refused')
   })
 })

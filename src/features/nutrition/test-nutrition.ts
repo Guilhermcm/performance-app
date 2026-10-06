@@ -1,4 +1,4 @@
-import type { FoodItem, FoodLog, NutritionTarget, UserFood } from './types'
+import type { FoodItem, FoodLog, Measure, NutritionTarget, UserFood } from './types'
 
 export const ME = '00000000-0000-0000-0000-00000000000a'
 export const OTHER = '00000000-0000-0000-0000-00000000000b'
@@ -19,3 +19,6 @@ export const foodOf = (over: Partial<UserFood> = {}): UserFood =>
 
 export const targetOf = (over: Partial<NutritionTarget> = {}): NutritionTarget =>
   ({ valid_from: '2026-10-01', mode: 'auto', kcal: 2400, protein_g: 160, carbs_g: 270, fat_g: 70, ...over })
+
+export const measureOf = (over: Partial<Measure> = {}): Measure =>
+  ({ id: `measure-${++n}`, food_key: 'taco:1', label: 'concha', grams: 120, updated_at: '2026-10-05T12:00:00.000Z', ...over })

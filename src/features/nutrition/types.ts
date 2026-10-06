@@ -39,6 +39,13 @@ export type FoodItem = {
 
 export type UserFood = FoodItem & { id: string; favorite: boolean; updated_at: string }
 
+// A personal household measure ("concha" = 120 g) of one food; `food_key` is built by foodKey().
+export type Measure = { id: string; food_key: string; label: string; grams: number; updated_at: string }
+
+// One chip of the portion row. 'serving' is the label serving of the food, 'last' the amount logged
+// last time; for those the label is the serving's own text or the amount in grams.
+export type MeasureOption = { label: string; grams: number; kind: 'personal' | 'suggested' | 'serving' | 'last'; id?: string }
+
 export type NutritionTarget = Macros & { valid_from: string; mode: 'auto' | 'manual' }
 
 export type DayClass = { logged: boolean; on_target: boolean; balanced: boolean }

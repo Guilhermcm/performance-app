@@ -1,11 +1,11 @@
 // The chunks the app loads on demand that still have to work offline from the first launch: the
-// TACO table (food search), ZXing (barcode scanner without BarcodeDetector) and the pillar radar
+// TACO table and its suggested measures (food search), ZXing (barcode scanner without BarcodeDetector) and the pillar radar
 // (Recharts). public/sw.js precaches what index.html references; these are not in it, so the
 // build writes their file names into the worker (vite.config.ts, swStamp). The locale packs and
 // the other lazy chunks stay out on purpose: together they are many megabytes, and the runtime
 // network-first cache keeps whichever ones a device has used.
 export const ON_DEMAND_MODULES = [
-  /\/src\/features\/nutrition\/data\/taco\.json$/,
+  /\/src\/features\/nutrition\/data\/taco(-measures)?\.json$/,
   /\/node_modules\/@zxing\/library\//,
   /\/src\/features\/home\/PillarRadar\.tsx$/
 ]

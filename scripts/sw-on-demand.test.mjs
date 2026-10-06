@@ -28,6 +28,14 @@ describe('onDemandFiles', () => {
     ])
   })
 
+  it('lists the suggested measures chunk next to the TACO one, so food search works offline from the first launch', () => {
+    const b = {
+      'assets/taco-c.js': chunk('assets/taco-c.js', ['/app/src/features/nutrition/data/taco.json']),
+      'assets/taco-measures-h.js': chunk('assets/taco-measures-h.js', ['/app/src/features/nutrition/data/taco-measures.json'])
+    }
+    expect(onDemandFiles(b)).toEqual(['./assets/taco-c.js', './assets/taco-measures-h.js'])
+  })
+
   it('reads Windows module ids too', () => {
     const b = { 'assets/taco-c.js': chunk('assets/taco-c.js', ['C:\\app\\src\\features\\nutrition\\data\\taco.json']) }
     expect(onDemandFiles(b)).toEqual(['./assets/taco-c.js'])

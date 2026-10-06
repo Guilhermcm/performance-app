@@ -4,15 +4,15 @@ import { enqueue, flushOutbox, pending, type OutboxOp } from './outbox'
 import { useProgress } from '../gamification/useProgress'
 import { useProfile } from '../profile/useProfile'
 import { shiftDay, todayIn } from './days'
-import type { FoodItem, FoodLog, Meal, NutritionDay, NutritionTarget, UserFood } from './types'
+import type { FoodItem, FoodLog, Meal, Measure, NutritionDay, NutritionTarget, UserFood } from './types'
 
 const CACHE = 'perf_nutrition_v1'
 // Days of logs kept on the phone; "Copy from" asks the server for the older ones.
 export const WINDOW_DAYS = 14
 const RECENTS = 50
 
-type Saved = { userId: string; logs: Record<string, FoodLog[]>; foods: UserFood[]; targets: NutritionTarget[]; closed: NutritionDay[] }
-type Data = Pick<Saved, 'logs' | 'foods' | 'targets' | 'closed'>
+type Saved = { userId: string; logs: Record<string, FoodLog[]>; foods: UserFood[]; targets: NutritionTarget[]; closed: NutritionDay[]; measures?: Measure[] }
+type Data = Required<Pick<Saved, 'logs' | 'foods' | 'targets' | 'closed' | 'measures'>>
 
 const readSaved = (userId: string): Saved | null => {
   try {
@@ -33,19 +33,23 @@ const groupByDay = (logs: FoodLog[]): Record<string, FoodLog[]> => {
 const sortTargets = (t: NutritionTarget[]) => [...t].sort((a, b) => (a.valid_from < b.valid_from ? -1 : 1))
 
 // What the server sent, with the changes it has not heard about yet laid on top.
-function applyPending(userId: string, logs: Record<string, FoodLog[]>, foods: UserFood[]): { logs: Record<string, FoodLog[]>; foods: UserFood[] } {
+function applyPending(userId: string, logs: Record<string, FoodLog[]>, foods: UserFood[], measures: Measure[]): { logs: Record<string, FoodLog[]>; foods: UserFood[]; measures: Measure[] } {
   let all = Object.values(logs).flat()
   let fs = foods
+  let ms = measures
   for (const op of pending(userId) as OutboxOp[]) {
     if (op.kind === 'log') {
       all = all.filter(l => l.id !== op.id)
       if (op.op === 'upsert') all.push(op.row as FoodLog)
+    } else if (op.kind === 'measure') {
+      ms = ms.filter(m => m.id !== op.id)
+      if (op.op === 'upsert') ms = [...ms, op.row as Measure]
     } else {
       fs = fs.filter(f => f.id !== op.id)
       if (op.op === 'upsert') fs = [op.row as UserFood, ...fs]
     }
   }
-  return { logs: groupByDay(all), foods: fs }
+  return { logs: groupByDay(all), foods: fs, measures: ms }
 }
 
 // One food across sources: its id at the source, or its name and brand when it has none.
@@ -62,6 +66,7 @@ export type NutritionStore = {
   foods: UserFood[]
   targets: NutritionTarget[]
   closed: NutritionDay[]
+  measures: Measure[]
   droppedNotice: boolean
   // Why items were dropped, so the screen picks the text: 'day_closed' only when every drop was a closed day.
   droppedReason: 'day_closed' | 'refused' | null
@@ -83,9 +88,15 @@ export type NutritionStore = {
   setTarget(t: Omit<NutritionTarget, 'valid_from'>, validFrom: string): Promise<void>
   targetOn(day: string): NutritionTarget | null
   recents(): FoodItem[]
+  // Personal household measures. The food a measure belongs to never changes: a patch to food_key or id is ignored.
+  addMeasure(m: Omit<Measure, 'id' | 'updated_at'>): Measure
+  updateMeasure(id: string, patch: Partial<Measure>): void
+  removeMeasure(id: string): void
+  // Smallest first, like the suggested ones.
+  measuresFor(key: string): Measure[]
 }
 
-const empty = () => ({ logs: {} as Record<string, FoodLog[]>, foods: [] as UserFood[], targets: [] as NutritionTarget[], closed: [] as NutritionDay[] })
+const empty = () => ({ logs: {} as Record<string, FoodLog[]>, foods: [] as UserFood[], targets: [] as NutritionTarget[], closed: [] as NutritionDay[], measures: [] as Measure[] })
 
 // Bumped by reset(): an answer from before a sign-out must not land in the next account's store.
 let generation = 0
@@ -93,8 +104,8 @@ let refreshing: Promise<void> | null = null
 
 export const useNutrition = create<NutritionStore>((set, get) => {
   const persist = () => {
-    const { userId, logs, foods, targets, closed } = get()
-    if (userId) save(userId, { logs, foods, targets, closed })
+    const { userId, logs, foods, targets, closed, measures } = get()
+    if (userId) save(userId, { logs, foods, targets, closed, measures })
   }
 
   // The outbox is the queue; this only wakes it and takes in what happened to it.
@@ -124,6 +135,10 @@ export const useNutrition = create<NutritionStore>((set, get) => {
   const find = (id: string) => Object.values(get().logs).flat().find(l => l.id === id)
   const putFood = (f: UserFood) => {
     set(s => ({ foods: [f, ...s.foods.filter(x => x.id !== f.id)] }))
+    persist()
+  }
+  const putMeasure = (m: Measure) => {
+    set(s => ({ measures: [...s.measures.filter(x => x.id !== m.id), m] }))
     persist()
   }
   const stamp = (): string => new Date().toISOString()
@@ -156,7 +171,7 @@ export const useNutrition = create<NutritionStore>((set, get) => {
       set({
         userId, droppedNotice: false, droppedReason: null,
         status: saved ? 'ready' : 'loading', stale: !!saved,
-        logs: saved?.logs ?? {}, foods: saved?.foods ?? [], targets: saved?.targets ?? [], closed: saved?.closed ?? []
+        logs: saved?.logs ?? {}, foods: saved?.foods ?? [], targets: saved?.targets ?? [], closed: saved?.closed ?? [], measures: saved?.measures ?? []
       })
       return get().refresh()
     },
@@ -173,11 +188,11 @@ export const useNutrition = create<NutritionStore>((set, get) => {
         const from = shiftDay(today, -WINDOW_DAYS)
         const before = new Set(get().closed.map(d => d.day))
         try {
-          const [logs, foods, targets, days] = await Promise.all([
-            api.fetchLogs(from, today), api.fetchFoods(), api.fetchTargets(), api.fetchDays(from, today)
+          const [logs, foods, targets, days, measures] = await Promise.all([
+            api.fetchLogs(from, today), api.fetchFoods(), api.fetchTargets(), api.fetchDays(from, today), api.fetchMeasures()
           ])
           if (gen !== generation) return
-          const merged = applyPending(userId, groupByDay(logs), foods)
+          const merged = applyPending(userId, groupByDay(logs), foods, measures)
           set({ ...merged, targets: sortTargets(targets), closed: days.days, status: 'ready', stale: false })
           persist()
           // Fetching days closes the due ones on the server, which can award XP.
@@ -273,6 +288,37 @@ export const useNutrition = create<NutritionStore>((set, get) => {
       let found: NutritionTarget | null = null
       for (const t of get().targets) if (t.valid_from <= day && (!found || t.valid_from > found.valid_from)) found = t
       return found
+    },
+
+    addMeasure(m) {
+      const measure: Measure = { id: uuid(), food_key: m.food_key, label: m.label.trim(), grams: m.grams, updated_at: stamp() }
+      putMeasure(measure)
+      queue({ kind: 'measure', op: 'upsert', id: measure.id, row: measure })
+      return measure
+    },
+
+    updateMeasure(id, patch) {
+      const cur = get().measures.find(m => m.id === id)
+      if (!cur) return
+      const measure: Measure = {
+        ...cur,
+        label: patch.label === undefined ? cur.label : patch.label.trim(),
+        grams: patch.grams === undefined ? cur.grams : patch.grams,
+        updated_at: stamp()
+      }
+      putMeasure(measure)
+      queue({ kind: 'measure', op: 'upsert', id, row: measure })
+    },
+
+    removeMeasure(id) {
+      if (!get().measures.some(m => m.id === id)) return
+      set(s => ({ measures: s.measures.filter(m => m.id !== id) }))
+      persist()
+      queue({ kind: 'measure', op: 'delete', id })
+    },
+
+    measuresFor(key) {
+      return get().measures.filter(m => m.food_key === key).sort((a, b) => a.grams - b.grams || (a.label < b.label ? -1 : a.label > b.label ? 1 : 0))
     },
 
     // Distinct foods from the saved window, newest first. Quick entries have no food behind them.

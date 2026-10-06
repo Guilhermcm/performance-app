@@ -14,7 +14,7 @@ vi.mock('@/lib/supabase', () => ({
 }))
 
 import { enqueue, flushOutbox, clearOutbox, pending } from './outbox'
-import { ME, logOf } from './test-nutrition'
+import { ME, logOf, measureOf } from './test-nutrition'
 
 const ok = { data: null, error: null }
 const pg = (code: string, message: string) => ({ data: null, error: { code, message, details: null, hint: null } })
@@ -38,7 +38,7 @@ describe('outbox through the real api wrapper', () => {
     await expect(flushOutbox(ME)).resolves.toEqual({ sent: 2, left: 0, dropped: 1, reasons: ['day_closed'] })
   })
 
-  it.each([['too_many_foods'], ['item_immutable'], ['import_forbidden'], ['too_many_items']])('drops %s', async m => {
+  it.each([['too_many_foods'], ['too_many_measures'], ['item_immutable'], ['import_forbidden'], ['too_many_items']])('drops %s', async m => {
     enqueue(ME, { kind: 'log', op: 'delete', id: 'a' })
     db.answer.mockResolvedValue(pg('P0001', m))
     await expect(flushOutbox(ME)).resolves.toMatchObject({ dropped: 1, left: 0 })
@@ -77,5 +77,12 @@ describe('outbox through the real api wrapper', () => {
     await expect(flushOutbox(ME)).resolves.toMatchObject({ sent: 0, left: 3 })
     await expect(flushOutbox(ME)).resolves.toEqual({ sent: 3, left: 0, dropped: 0, reasons: [] })
     expect(db.answer.mock.calls.slice(-3).map(c => c[0])).toEqual(['a', 'b', 'c'])
+  })
+
+  it('sends measures and drops a refused one with the generic reason', async () => {
+    enqueue(ME, { kind: 'measure', op: 'upsert', id: 'm1', row: measureOf({ id: 'm1' }) })
+    enqueue(ME, { kind: 'measure', op: 'delete', id: 'm2' })
+    db.answer.mockImplementation(async (id: string) => (id === 'm1' ? pg('P0001', 'too_many_measures') : ok))
+    await expect(flushOutbox(ME)).resolves.toEqual({ sent: 1, left: 0, dropped: 1, reasons: ['refused'] })
   })
 })

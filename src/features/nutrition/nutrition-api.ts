@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { FoodLog, NutritionHistory, NutritionTarget, UserFood } from './types'
+import type { FoodLog, Measure, NutritionHistory, NutritionTarget, UserFood } from './types'
 
 export type NutritionErrorCode = 'day_closed' | 'too_many_items' | 'network'
 
@@ -26,7 +26,7 @@ export class NutritionError extends Error {
 
 // The triggers of 0009_nutrition_diary.sql raise their typed errors (P0001) with the code as the message.
 const KNOWN: readonly NutritionErrorCode[] = ['day_closed', 'too_many_items']
-const P0001_REFUSALS = ['day_closed', 'too_many_items', 'too_many_foods', 'item_immutable', 'import_forbidden']
+const P0001_REFUSALS = ['day_closed', 'too_many_items', 'too_many_foods', 'too_many_measures', 'item_immutable', 'import_forbidden']
 
 const messageOf = (e: unknown) => {
   const m = (e as { message?: unknown } | null)?.message
@@ -85,6 +85,10 @@ const toFood = (r: Row): UserFood => ({
   serving_g: numOrNull(r.serving_g), serving_label: (r.serving_label as string | null) ?? null, updated_at: r.updated_at as string
 })
 
+const toMeasure = (r: Row): Measure => ({
+  id: r.id as string, food_key: r.food_key as string, label: r.label as string, grams: num(r.grams), updated_at: r.updated_at as string
+})
+
 const toTarget = (r: Row): NutritionTarget => ({
   valid_from: r.valid_from as string, mode: r.mode as NutritionTarget['mode'],
   kcal: num(r.kcal), protein_g: num(r.protein_g), carbs_g: num(r.carbs_g), fat_g: num(r.fat_g)
@@ -124,6 +128,20 @@ export async function upsertFood(f: UserFood): Promise<void> {
 
 export async function deleteFood(id: string): Promise<void> {
   await run(supabase.from('user_foods').delete().eq('id', id) as never)
+}
+
+export async function fetchMeasures(): Promise<Measure[]> {
+  const rows = await run<Row[]>(supabase.from('food_measures').select('*').order('updated_at', { ascending: true }) as never)
+  return (rows ?? []).map(toMeasure)
+}
+
+export async function upsertMeasure(m: Measure): Promise<void> {
+  const row = { id: m.id, food_key: m.food_key, label: m.label, grams: m.grams, updated_at: m.updated_at }
+  await run(supabase.from('food_measures').upsert(row as never) as never)
+}
+
+export async function deleteMeasure(id: string): Promise<void> {
+  await run(supabase.from('food_measures').delete().eq('id', id) as never)
 }
 
 export async function fetchTargets(): Promise<NutritionTarget[]> {
