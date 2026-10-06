@@ -93,6 +93,7 @@ Para regenerar a tabela a partir do CSV:
    `id,nome,energia_kcal,proteina_g,carboidrato_g,lipideos_g,fibra_g` (valores por 100 g, com
    ponto ou vírgula decimal) e salve em `scripts/data/taco-4ed.csv`.
 3. Rode `node scripts/build-taco.mjs`. O script gera `src/features/nutrition/data/taco.json` e
-   para com erro se as calorias de algum item não baterem com os macros (a regra está no topo do
-   script).
-4. Confira com `npm test` e faça o commit do CSV e do JSON.
+   `taco-measures.json` (medidas caseiras da POF, a partir de `scripts/data/taco-pof-map.csv` e
+   `scripts/data/pof-medidas.csv`) e para com erro se as calorias de algum item não baterem com
+   os macros (a regra está no topo do script).
+4. Confira com `npm test` e faça o commit do CSV e dos JSON.

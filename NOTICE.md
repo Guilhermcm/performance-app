@@ -222,3 +222,12 @@ de Composição de Alimentos (TACO)*, 4ª edição, published by NEPA/Unicamp. T
 "É permitida a reprodução total ou parcial do material, desde que seja citada a fonte." Source:
 NEPA/UNICAMP. Tabela Brasileira de Composição de Alimentos (TACO). 4ª ed. Campinas, 2011.
 Provenance and checks are in `scripts/data/README.md`.
+
+### POF 2008-2009 (IBGE)
+
+The suggested household measures (`src/features/nutrition/data/taco-measures.json`), such as
+"colher de servir" or "concha" with their weight in grams, come from the *Tabela de Medidas
+Referidas para os Alimentos Consumidos no Brasil* of the *Pesquisa de Orçamentos Familiares
+2008-2009*, published by IBGE. The table is copied without changes to `scripts/data/pof-medidas.csv`,
+and `scripts/data/taco-pof-map.csv` pairs 112 TACO foods with their POF food and preparation.
+Source: Medidas: POF 2008-2009, IBGE. Provenance and checks are in `scripts/data/README.md`.
