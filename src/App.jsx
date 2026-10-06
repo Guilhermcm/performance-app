@@ -32,6 +32,7 @@ import { useProgress, startProgressSync } from './features/gamification/useProgr
 import { useSocial } from './features/social/useSocial.ts'
 import { useNutrition, startNutritionSync } from './features/nutrition/useNutrition.ts'
 import NutritionScreen from './features/nutrition/NutritionScreen.tsx'
+import NutritionHistoryScreen from './features/nutrition/HistoryScreen.tsx'
 import SocialScreen from './features/social/SocialScreen.tsx'
 import ChallengeDetail from './features/social/ChallengeDetail.tsx'
 import InviteScreen, { InviteRoute } from './features/social/InviteScreen.tsx'
@@ -214,6 +215,7 @@ function Shell() {
                 <Route path="/perfil" element={<ProfileScreen />} />
                 <Route path="/conquistas" element={<AchievementsScreen />} />
                 <Route path="/nutricao" element={<NutritionScreen />} />
+                <Route path="/nutricao/historico" element={<NutritionHistoryScreen />} />
                 <Route path="/social" element={<Navigate to="/social/ranking" replace />} />
                 <Route path="/social/desafios/:id" element={<ChallengeDetail />} />
                 <Route path="/social/:section" element={<SocialScreen />} />

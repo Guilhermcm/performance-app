@@ -61,6 +61,12 @@ export type NutritionDay = DayTotals & {
   xp?: number
 }
 
+// A span the pillar was on; ended_on is null while it still is, and started_on - 1 when it was
+// turned on and off the same day (covers no day).
+export type NutritionPeriod = { started_on: string; ended_on: string | null }
+
+// One Monday-start week touched by a get_nutrition_days range: its goal, the closed days on target
+// and whether the weekly goal bonus was paid.
 export type NutritionWeek = { start: string; target: number; on_target: number; target_hit: boolean }
 
 export type NutritionHistory = { target: NutritionTarget | null; days: NutritionDay[]; weeks: NutritionWeek[] }

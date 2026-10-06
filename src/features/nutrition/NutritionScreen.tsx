@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { CircleCheck, CircleDashed, CloudOff, Copy, RefreshCw, Scale, Target } from 'lucide-react'
+import { CalendarDays, CloudOff, Copy, RefreshCw, Target } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -13,7 +14,7 @@ import { fmtShortDay } from '../social/format'
 import { dayTotals } from './classify'
 import { shiftDay, todayIn } from './days'
 import { useNutrition } from './useNutrition'
-import { MEALS, fmtDecimal, fmtGrams, fmtKcal, fmtNumber, weekdayName } from './labels'
+import { MEALS, dayStatus, fmtDecimal, fmtGrams, fmtKcal, fmtNumber, weekdayName } from './labels'
 import NutritionInvite from './NutritionInvite'
 import NutritionSetup from './NutritionSetup'
 import MealCard from './MealCard'
@@ -43,6 +44,7 @@ function itemOfLog(l: FoodLog): FoodItem | null {
 // /nutricao: today or yesterday (the only days that can change, in the profile's time zone),
 // the kcal ring, the macros, the four meals and a summary of the days before.
 export default function NutritionScreen() {
+  const navigate = useNavigate()
   const profile = useProfile(s => s.profile)
   const online = useOnline()
   const status = useNutrition(s => s.status)
@@ -113,7 +115,12 @@ export default function NutritionScreen() {
     <>
       <Page>
         <header className="flex flex-col gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">{t('Nutrition')}</h1>
+          <div className="flex items-center justify-between gap-2">
+            <h1 className="text-2xl font-semibold tracking-tight">{t('Nutrition')}</h1>
+            <Button variant="ghost" className="-mr-2 h-11 gap-2 rounded-xl px-3" onClick={() => navigate('/nutricao/historico')}>
+              <CalendarDays aria-hidden className="size-4" />{t('History')}
+            </Button>
+          </div>
           <ToggleGroup type="single" value={which} aria-label={t('Day')} onValueChange={v => { if (v) setWhich(v as Which) }}
             className="grid w-full grid-cols-2 gap-1 rounded-2xl bg-secondary/60 p-1">
             {(['today', 'yesterday'] as const).map(w => (
@@ -238,14 +245,6 @@ function DaySummary({ totals, target, onSetTarget }: { totals: DayTotals; target
       </div>
     </section>
   )
-}
-
-// What a closed day reached, with an icon and a word: never by colour alone.
-function dayStatus(d: NutritionDay): { text: string; icon: typeof Target; on: boolean } {
-  if (d.balanced) return { text: t('Balanced macros'), icon: Scale, on: true }
-  if (d.on_target) return { text: t('On target'), icon: Target, on: true }
-  if (d.logged) return { text: t('Logged'), icon: CircleCheck, on: false }
-  return { text: t('Not enough logged'), icon: CircleDashed, on: false }
 }
 
 // Days that can no longer change: a read-only line each.

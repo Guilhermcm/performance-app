@@ -1,5 +1,6 @@
+import { CircleCheck, CircleDashed, Scale, Target, type LucideIcon } from 'lucide-react'
 import { dateLocale, t } from '../../lib/i18n.js'
-import type { ActivityLevel, Meal } from './types'
+import type { ActivityLevel, DayClass, Meal } from './types'
 
 // Meals in the order of the day, as the screen lists them.
 export const MEALS: readonly Meal[] = ['breakfast', 'lunch', 'dinner', 'snack']
@@ -36,3 +37,11 @@ const WEEKDAYS = [
 
 // The weekday of a calendar day (YYYY-MM-DD), read at noon so no time zone moves it.
 export const weekdayName = (iso: string): string => WEEKDAYS[new Date(iso + 'T12:00:00').getDay()]()
+
+// What a closed day reached, with an icon and a word: never by colour alone.
+export function dayStatus(d: DayClass): { text: string; icon: LucideIcon; on: boolean } {
+  if (d.balanced) return { text: t('Balanced macros'), icon: Scale, on: true }
+  if (d.on_target) return { text: t('On target'), icon: Target, on: true }
+  if (d.logged) return { text: t('Logged'), icon: CircleCheck, on: false }
+  return { text: t('Not enough logged'), icon: CircleDashed, on: false }
+}

@@ -93,6 +93,14 @@ describe('nutrition api', () => {
     expect(h.rpc).toHaveBeenCalledWith('get_nutrition_days', { p_from: '2026-09-21', p_to: '2026-10-05' })
   })
 
+  it('reads the own pillar periods, oldest first', async () => {
+    const c = chain({ data: [{ user_id: 'u', started_on: '2026-08-01', ended_on: '2026-08-31' }, { user_id: 'u', started_on: '2026-10-01', ended_on: null }], error: null })
+    h.from.mockReturnValue(c.proxy)
+    await expect(api.fetchPeriods()).resolves.toEqual([{ started_on: '2026-08-01', ended_on: '2026-08-31' }, { started_on: '2026-10-01', ended_on: null }])
+    expect(h.from).toHaveBeenCalledWith('nutrition_periods')
+    expect(c.calls).toContainEqual(['order', ['started_on', { ascending: true }]])
+  })
+
   it('turns server errors into typed codes and the rest into network', async () => {
     expect(api.toNutritionError({ message: 'day_closed' })).toBe('day_closed')
     expect(api.toNutritionError({ message: 'too_many_items' })).toBe('too_many_items')

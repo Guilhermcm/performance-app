@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { FoodLog, Measure, NutritionHistory, NutritionTarget, UserFood } from './types'
+import type { FoodLog, Measure, NutritionHistory, NutritionPeriod, NutritionTarget, UserFood } from './types'
 
 export type NutritionErrorCode = 'day_closed' | 'too_many_items' | 'network'
 
@@ -163,4 +163,11 @@ export async function fetchDays(from: string, to: string): Promise<NutritionHist
   if (res.error) fail(res.error)
   const d = res.data as Partial<NutritionHistory> | null
   return { target: d?.target ?? null, days: d?.days ?? [], weeks: d?.weeks ?? [] }
+}
+
+// The spans the pillar was on (0007_nutrition_base.sql), readable by their owner only. The first one
+// bounds the history calendar; a day outside every span was never judged.
+export async function fetchPeriods(): Promise<NutritionPeriod[]> {
+  const rows = await run<Row[]>(supabase.from('nutrition_periods').select('started_on, ended_on').order('started_on', { ascending: true }) as never)
+  return (rows ?? []).map(r => ({ started_on: r.started_on as string, ended_on: (r.ended_on as string | null) ?? null }))
 }

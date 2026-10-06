@@ -86,6 +86,12 @@ describe('NutritionScreen', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   })
 
+  it('opens the monthly history from the header', () => {
+    render(<NutritionScreen />)
+    fireEvent.click(screen.getByRole('button', { name: 'History' }))
+    expect(h.nav).toHaveBeenCalledWith('/nutricao/historico')
+  })
+
   it('offers to set a target on a day without one', () => {
     profile(BODY)
     useNutrition.setState({ targets: [] })
