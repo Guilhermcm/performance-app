@@ -155,7 +155,9 @@ export interface Database {
       }
       challenges: {
         Row: {
-          id: string; template: 'workouts_count' | 'weeks_on_target' | 'volume_total'; title: string
+          id: string
+          template: 'workouts_count' | 'weeks_on_target' | 'volume_total' | 'nutrition_days_on_target'
+          title: string
           mode: 'team' | 'solo'; target: number; starts_on: string; ends_on: string
           // null once the creator deleted their account; timezone is theirs, kept from then on.
           created_by: string | null; timezone: string | null
@@ -168,7 +170,7 @@ export interface Database {
       challenge_members: {
         Row: {
           challenge_id: string; user_id: string; invited_by: string | null; joined_at: string | null
-          share_volume: boolean; final: number | null; won: boolean | null
+          share_volume: boolean; share_nutrition: boolean; final: number | null; won: boolean | null
         }
         Insert: never
         Update: never
