@@ -1,5 +1,5 @@
 import { progressOf } from '../gamification/test-progress'
-import type { Challenge, FeedItem, Friend, FriendCard, LeaderboardRow } from './types'
+import type { Challenge, CheckinFeedItem, FeedItem, Friend, FriendCard, LeaderboardRow, SocialNotice, WorkoutFeedItem } from './types'
 
 export const ME = '00000000-0000-0000-0000-00000000000a'
 export const BIA = '00000000-0000-0000-0000-00000000000b'
@@ -34,3 +34,20 @@ export function challengeOf(over: Partial<Challenge> = {}): Challenge {
 
 export const feedItemOf = (id: number, over: Partial<FeedItem> = {}): FeedItem =>
   ({ id, at: '2026-10-07T18:30:00Z', day: '2026-10-07', user: { id: BIA, name: 'Bia', avatar_url: null }, sets: 18, prs: [], ...over })
+
+// A check-in of Bia's in the photo feed (get_checkin_feed), and a workout from before the cutover.
+export const checkinItemOf = (id: string, over: Partial<CheckinFeedItem> = {}): CheckinFeedItem => ({
+  type: 'checkin', key: `checkin:${id}`, at: '2026-10-10T12:00:00Z', day: '2026-10-10', user: { id: BIA, name: 'Bia', avatar_url: null },
+  activity: 'strength', title: 'Musculação · Push', caption: 'Peito em dia', duration_min: 55, visibility: 'friends',
+  photo_path: `${BIA}/${id}.jpg`, context: { week_count: 3, streak: 6 }, reactions: [], comments_count: 0, ...over
+})
+
+export const workoutItemOf = (id: number, over: Partial<WorkoutFeedItem> = {}): WorkoutFeedItem => ({
+  type: 'workout', key: `workout:${id}`, at: '2026-10-07T18:30:00Z', day: '2026-10-07', user: { id: BIA, name: 'Bia', avatar_url: null },
+  sets: 18, prs: [], ...over
+})
+
+export const noticeOf = (id: number, over: Partial<SocialNotice> = {}): SocialNotice => ({
+  id, kind: 'reaction', actor: { id: BIA, name: 'Bia', avatar_url: null }, checkin_id: 'c1', checkin_title: 'Musculação · Push',
+  challenge_id: null, challenge_title: null, created_at: '2026-10-10T11:00:00Z', read: false, ...over
+})

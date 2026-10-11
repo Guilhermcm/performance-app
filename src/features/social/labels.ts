@@ -20,6 +20,10 @@ export function socialErrorText(code: SocialErrorCode): string {
     case 'volume_opt_in_required': return t('To join, agree to share your volume.')
     case 'nutrition_opt_in_required': return t('To take part, agree to show how many days you were on target.')
     case 'nutrition_off': return t('Turn on the Nutrition pillar to take part in this challenge.')
+    case 'not_found': return t('This post is no longer available.')
+    case 'invalid_emoji': return t('This emoji doesn’t work here. Try another one.')
+    case 'invalid_comment': return t('A comment goes from 1 to 500 characters.')
+    case 'too_many_reactions': return t('You already left 10 reactions here. Remove one to add another.')
     case 'not_signed_in':
     case 'no_profile': return t('Sign in again to continue.')
     default: return t('Could not reach the server. Check your connection and try again.')

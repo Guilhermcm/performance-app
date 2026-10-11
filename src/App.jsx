@@ -225,7 +225,7 @@ function Shell() {
                 <Route path="/conquistas" element={<AchievementsScreen />} />
                 <Route path="/nutricao" element={<NutritionScreen />} />
                 <Route path="/nutricao/historico" element={<NutritionHistoryScreen />} />
-                <Route path="/social" element={<Navigate to="/social/ranking" replace />} />
+                <Route path="/social" element={<Navigate to="/social/feed" replace />} />
                 <Route path="/social/desafios/:id" element={<ChallengeDetail />} />
                 <Route path="/social/:section" element={<SocialScreen />} />
                 <Route path="/convite/:code" element={<InviteRoute />} />

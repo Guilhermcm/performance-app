@@ -2,11 +2,9 @@ import type { ReactElement, ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Apple, Camera, Users } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
-import { todayISO } from '../../lib/format.js'
 import { t } from '../../lib/i18n.js'
 import LegacyIcon from '../../components/Icon.jsx'
-import { useSocial } from '../social/useSocial'
-import { pendingInvites } from '../social/templates'
+import { useCheckins } from '../checkin/useCheckins'
 import { openCheckinCamera, useCheckinFlow } from '../checkin/open-checkin'
 
 // Icon.jsx is untyped JS; size and style are optional there (same cast as home/TodayCard.tsx).
@@ -30,7 +28,7 @@ type AppStore = { user: unknown; isGuest: () => boolean }
 function Tab({ active, glyph, label, count = 0, onClick }: { active: boolean; glyph: ReactNode; label: string; count?: number; onClick: () => void }) {
   return (
     <button className={active ? 'on' : ''} aria-current={active ? 'page' : undefined}
-      aria-label={count > 0 ? t('Social. Challenge invitations: {0}', count) : undefined} onClick={onClick}>
+      aria-label={count > 0 ? t('Social. Notices: {0}', count) : undefined} onClick={onClick}>
       <span className="relative">
         {glyph}
         {count > 0 && (
@@ -53,7 +51,8 @@ export default function TabBar() {
   const loc = useLocation()
   const user = useStore((s: AppStore) => s.user)
   const isGuest = useStore((s: AppStore) => s.isGuest())
-  const waiting = useSocial(s => pendingInvites(s.challenges.data, todayISO()))
+  // Unread notices plus challenge invites not answered yet (spec 4.4), an invite counted once.
+  const unread = useCheckins(s => s.unread)
   const checkingIn = useCheckinFlow(s => s.open)
   if (!user && !isGuest) return null
   const cur = loc.pathname.split('/')[1] || 'home'
@@ -69,7 +68,7 @@ export default function TabBar() {
       </button>
       <Tab active={on('nutrition')} label={t('Nutrition')} onClick={() => nav('/nutricao')}
         glyph={<Apple className="icn" width="1em" height="1em" strokeWidth={on('nutrition') ? 2 : 1.65} aria-hidden />} />
-      <Tab active={on('social')} label={t('Social')} count={waiting} onClick={() => nav('/social')}
+      <Tab active={on('social')} label={t('Social')} count={unread} onClick={() => nav('/social')}
         glyph={<Users className="icn" width="1em" height="1em" strokeWidth={on('social') ? 2 : 1.65} aria-hidden />} />
     </nav>
   )

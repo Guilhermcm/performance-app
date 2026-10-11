@@ -7,17 +7,16 @@ vi.mock('react-router-dom', () => ({ useNavigate: () => h.nav, useLocation: () =
 
 import TabBar from './TabBar'
 import { DEF, useStore } from '../../store/useStore.js'
-import { useSocial } from '../social/useSocial'
-import { challengeOf } from '../social/test-social'
+import { useCheckins } from '../checkin/useCheckins'
 import { useCheckinFlow, registerCheckinCamera } from '../checkin/open-checkin'
 
 beforeEach(() => {
   useStore.setState({ S: JSON.parse(JSON.stringify(DEF)), user: { id: 'u1' } })
-  useSocial.getState().reset()
+  useCheckins.setState({ unread: 0 })
   h.nav.mockClear()
   h.path = '/social/ranking'
 })
-afterEach(() => { cleanup(); vi.useRealTimers(); useStore.setState({ user: null }) })
+afterEach(() => { cleanup(); useStore.setState({ user: null }); useCheckins.setState({ unread: 0 }) })
 
 const tab = (name: RegExp) => screen.getByRole('button', { name })
 
@@ -89,20 +88,19 @@ describe('TabBar', () => {
     expect(h.nav).toHaveBeenCalledWith('/nutricao')
   })
 
-  it('counts challenge invitations on the social tab', () => {
-    vi.useFakeTimers({ toFake: ['Date'] })
-    vi.setSystemTime(new Date('2026-10-06T15:00:00Z'))
-    useSocial.setState({ challenges: { status: 'ready', data: [challengeOf({ me: { joined: false, won: null } })], stale: false, error: null } })
+  it('counts unread notices and pending invitations on the social tab', () => {
+    useCheckins.setState({ unread: 3 })
     render(<TabBar />)
-    expect(screen.getByRole('button', { name: 'Social. Challenge invitations: 1' })).toBeTruthy()
+    const social = screen.getByRole('button', { name: 'Social. Notices: 3' })
+    expect(social.textContent).toContain('3')
   })
 
-  it('does not count a nutrition invitation after its last day, while it is still active', () => {
-    vi.useFakeTimers({ toFake: ['Date'] })
-    vi.setSystemTime(new Date('2026-10-19T15:00:00Z'))
-    const invite = challengeOf({ template: 'nutrition_days_on_target', ends_on: '2026-10-18', me: { joined: false, won: null } })
-    useSocial.setState({ challenges: { status: 'ready', data: [invite], stale: false, error: null } })
-    render(<TabBar />)
+  it('shows no counter with nothing new, and 9+ past nine', () => {
+    const { unmount } = render(<TabBar />)
     expect(screen.getByRole('button', { name: 'Social' })).toBeTruthy()
+    unmount()
+    useCheckins.setState({ unread: 12 })
+    render(<TabBar />)
+    expect(screen.getByRole('button', { name: 'Social. Notices: 12' }).textContent).toContain('9+')
   })
 })
