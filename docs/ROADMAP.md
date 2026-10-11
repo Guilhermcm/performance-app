@@ -100,7 +100,7 @@ nenhum dado sensível exposto (testado por RLS), e completam um desafio.
 
 ---
 
-## Fase 1c — Check-in com foto e social
+## Fase 1c: Check-in com foto e social
 
 **Objetivo:** trocar o "começar treino" pelo check-in com foto, no estilo GymRats. O grupo segue o
 plano de cabeça e quer saber se cumpriu a semana; a foto dá vida ao feed e credibilidade aos
@@ -139,7 +139,7 @@ o merge logo em seguida.
 
 ---
 
-## Fase 1d — Plano com evidência
+## Fase 1d: Plano com evidência
 
 **Objetivo:** fazer do Plano o lugar onde mora o valor do treino: escolher e ajustar um bom plano,
 com base em evidência científica, sem precisar registrar séries.
@@ -220,10 +220,14 @@ perfil, diário rápido, pilar Nutrição na gamificação.
 - Import CSV (formato Plees e genérico).
 - Eventos: `sleep_logged`, `night_on_target`. XP no molde padrão. Desafio: `sleep_nights_on_target`.
 - Acende o eixo Sono no radar de pilares da Home.
-- Migrations: as do Sono começam na `0021`, porque a 1c ocupa a `0017` a `0020`. Os `create or
-  replace` de `award_xp`, `close_weeks`, `challenge_progress`, `my_progress_extras`,
-  `create_challenge` e `join_challenge` precisam carregar os ramos de treino da 1c (dia com
-  check-in, desafio `checkin_days`, carência de 2 dias), senão a migration do Sono os desfaz.
+- Migrations: as do Sono começam na `0021`, porque a 1c ocupa a `0017` a `0020`. Uma migration do
+  Sono que redefina (`create or replace`) qualquer função que a 1c redefiniu tem de partir do corpo
+  da 1c e carregar os ramos de treino (dia com check-in, desafio `checkin_days`, carência de 2
+  dias), senão os desfaz. A `0019` redefine `achievement_stats`, `award_xp`, `challenge_progress`,
+  `close_weeks`, `get_my_progress`, `my_progress_extras` e `progress_card`. A `0020` redefine de
+  novo `achievement_stats`, `award_xp` e `challenge_progress`, e também `challenge_grace`,
+  `checkins_guard`, `close_challenge`, `create_challenge`, `notify_checkin_social` e
+  `pillar_consistency`. O corpo mais recente de cada uma é o da última migration dessa lista.
 - Fora: rastreio por sensores/sonar (exige app nativo). Na spec, saíram também o botão
   "dormir/acordei" (registro só de manhã) e o import CSV.
 

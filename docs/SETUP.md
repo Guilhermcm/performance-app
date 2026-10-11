@@ -58,14 +58,19 @@ importa:
 2. Faça o merge do PR #4 logo em seguida, para o cliente novo ir ao ar.
 
 Não deixe um intervalo longo entre os dois. Depois do corte, `workout_completed`, `pr` e
-`weight_logged` deixam de pagar XP, e só os motivos do check-in pagam. Um cliente antigo que
-continue mandando treinos ao vivo entre o SQL e o deploy perde o XP do dia nessa janela. O
-`get_feed` e o `join_challenge` seguem funcionando para o cliente antigo.
+`weight_logged` deixam de pagar XP, e só os motivos do check-in pagam. Um cliente antigo não sabe
+fazer check-in. Depois do corte, um treino ao vivo que ele mande não conta como dia nenhum: não rende
+XP e não entra na sequência, nos desafios nem nas métricas. Quem treinar com o app antigo nessa
+janela só salva o dia postando, no app novo, um check-in para "ontem" no dia seguinte. Se o deploy
+não puder sair no mesmo dia, não rode o SQL. O `get_feed` e o `join_challenge` seguem funcionando
+para o cliente antigo.
 
 O que muda no banco quando a `0017` a `0020` rodam:
 
-- A data de corte é o dia em que o SQL roda (`app_settings.training_checkin_since`). Os dias
-  anteriores contam como treino legado (streak, desafios e métricas) sem pagar XP de novo.
+- A data de corte é o dia em que o SQL roda, em UTC (`current_date` do servidor, gravado em
+  `app_settings.training_checkin_since`). Rodando depois das 21h no horário de Brasília, ela já é a
+  data de amanhã, e está certo assim: o dia de hoje ainda conta como treino legado. Os dias
+  anteriores ao corte contam como treino legado (streak, desafios e métricas) sem pagar XP de novo.
 - Os desafios `workouts_count` e `weeks_on_target` que já existem passam a contar dias de treino e a
   fechar 2 dias depois de `ends_on` (carência de 2 dias).
 
@@ -86,15 +91,26 @@ Passo a passo:
 4. Políticas do Storage. A `0017` cria três políticas em `storage.objects` (inserir e apagar só na
    própria pasta; ler a própria pasta ou o que `can_see_checkin_path` libera). O SQL Editor roda como
    `postgres`, e em projetos atuais do Supabase isso basta. Se aparecer `must be owner of table
-   objects` (ou parecido), a tabela pertence a outro papel. Nesse caso:
-   - descubra o dono com `select tableowner from pg_tables where schemaname = 'storage' and tablename = 'objects';`
-     e rode só o trecho de Storage da `0017` com esse papel (`set role <dono>;` antes, `reset role;`
-     depois), ou
-   - crie as três políticas em Storage → Policies, no balde `checkins`, copiando as expressões da
-     `0017` (papel `authenticated`).
+   objects` (ou parecido), nada da `0017` ficou gravado: o SQL Editor roda cada consulta numa
+   transação só, e o erro desfaz a consulta inteira (com o arquivo único, desfaz a `0017` a `0020`).
+   Nesse caso:
+   1. Rode a `0017` sem o último bloco: na cópia que você cola no SQL Editor, apague do
+      `drop policy if exists checkins_photos_insert_own on storage.objects;` até o fim do arquivo
+      (os três `drop policy` e os três `create policy` em `storage.objects`).
+   2. Rode a `0018`, a `0019` e a `0020`, uma por consulta. O arquivo único não serve aqui, porque
+      traz a `0017` inteira.
+   3. Crie as três políticas em Storage → Policies, no balde `checkins`, para o papel
+      `authenticated`, com as expressões do bloco que você tirou da `0017`:
+      - `checkins_photos_insert_own`, INSERT, WITH CHECK: `bucket_id = 'checkins' and
+        (storage.foldername(name))[1] = auth.uid()::text and name ~ ('^' || auth.uid()::text ||
+        '/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|webp)$')`
+      - `checkins_photos_delete_own`, DELETE, USING: `bucket_id = 'checkins' and
+        (storage.foldername(name))[1] = auth.uid()::text`
+      - `checkins_photos_select`, SELECT, USING: `bucket_id = 'checkins' and
+        ((storage.foldername(name))[1] = auth.uid()::text or public.can_see_checkin_path(name))`
 
-   Depois confira com a consulta do passo 5. Sem as políticas, o envio de foto falha e o app mostra
-   o erro ao postar.
+   Depois confira com a consulta do passo 5. Sem as políticas, os check-ins ficam presos em
+   "Enviando…".
 5. Confira o resultado:
    - `select count(*) from pg_proc where proname = 'get_checkin_feed';` deve devolver `1`.
    - `select relrowsecurity from pg_class where relname = 'checkins';` deve devolver `true`.
@@ -104,10 +120,18 @@ Passo a passo:
      uma linha com `public = false`.
    - `select policyname from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname like 'checkins_photos%';`
      deve listar as três políticas do balde.
-   - `select value from app_settings where key = 'training_checkin_since';` deve mostrar a data de hoje.
-6. Se o app disser que não achou a função logo depois ("Could not find the function"), recarregue o
+   - `select value from app_settings where key = 'training_checkin_since';` deve mostrar a data de
+     hoje em UTC (depois das 21h no horário de Brasília, a de amanhã).
+   - `select column_default from information_schema.columns where table_name = 'profiles' and column_name = 'checkin_visibility';`
+     deve devolver `'friends'::text`.
+6. Feche os dias de treino de todo mundo uma vez: `select public.close_all_training_days();`. Sem
+   isso, os desafios `workouts_count` em andamento mostram 0 para quem ainda não abriu o app depois
+   do SQL, até o job das 05:45 UTC rodar. A função pode rodar de novo sem problema.
+7. Se o app disser que não achou a função logo depois ("Could not find the function"), recarregue o
    cache da API: `notify pgrst, 'reload schema';`.
-7. Faça o merge do PR #4 e o deploy do cliente novo.
+8. Faça o merge do PR #4 e o deploy do cliente novo. Depois do deploy, peça ao grupo para fechar e
+   abrir o app. Um app instalado que ficou aberto durante o deploy ainda roda o cliente antigo, e a
+   lista de desafios dele quebra ao receber um convite para um desafio "Dias de treino".
 
 Fotos órfãs. Excluir a conta pelo app apaga a pasta de fotos antes de remover a conta. Contas
 apagadas pelo painel do Supabase (Authentication → Users) deixam as fotos para trás, e uma foto cujo

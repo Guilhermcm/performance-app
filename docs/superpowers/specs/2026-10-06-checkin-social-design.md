@@ -147,8 +147,12 @@ lido. Sem push nesta fase.
 
 ### 4.6 Privacidade
 
-- Perfil: "Visibilidade padrão dos check-ins" (Amigos | Só eu). A coluna `share_activity` vira esse
-  padrão (`true` = Amigos).
+- Perfil: "Visibilidade padrão dos check-ins" (Amigos | Só eu), na coluna nova
+  `profiles.checkin_visibility` (`'friends'` ou `'private'`, padrão `'friends'`). Ela só define onde
+  o formulário do post começa; cada check-in guarda a própria visibilidade.
+- `share_activity` mantém o sentido de antes: os amigos veem meus treinos de antes dos check-ins, nos
+  itens antigos do feed (`get_feed` e o ramo legado de `get_checkin_feed`). No Perfil, vira um
+  interruptor pequeno, "Mostrar aos amigos meus treinos de antes dos check-ins".
 - Desfazer amizade corta na hora o acesso às fotos e aos posts.
 - Denúncia e moderação ficam fora (grupo de amigos); reavaliar ao abrir ao público.
 
@@ -265,9 +269,10 @@ create table public.hidden_checkins (
 );
 ```
 
-Perfil: `share_activity` passa a significar "visibilidade padrão Amigos"; a data de corte da fase
-fica numa tabela nova `app_settings` (chave e valor; só leitura para o cliente), na chave
-`training_checkin_since`, escrita pela migration.
+Perfil: coluna nova `checkin_visibility text not null default 'friends'` (`friends` ou `private`),
+a visibilidade padrão do formulário do check-in; `share_activity` continua decidindo só os treinos de
+antes do corte no feed. A data de corte da fase fica numa tabela nova `app_settings` (chave e
+valor; só leitura para o cliente), na chave `training_checkin_since`, escrita pela migration.
 
 ### 6.2 Acesso
 
@@ -401,6 +406,12 @@ Rulings do controlador durante a execução do plano. Onde divergem do texto aci
 - **O feed do desafio mostra como "Check-in privado" qualquer post que a pessoa não pode ver.** Vale
   para "Só eu" e para "Amigos" quando quem olha não é amigo de quem postou. O dia continua contando
   no placar.
+- **A visibilidade padrão do check-in é uma coluna própria.** `profiles.checkin_visibility`
+  (`friends` | `private`, padrão `friends`, sem cópia de `share_activity`) é o que o controle
+  "Visibilidade padrão dos check-ins" do Perfil edita e onde o formulário começa. `share_activity`
+  não muda de sentido: decide se os amigos veem os treinos de antes do corte, e ganhou um
+  interruptor próprio no Perfil. Reaproveitar `share_activity` como padrão publicaria o histórico
+  antigo de quem escolhesse Amigos (revisão final, Important 1 e Minor 8).
 - **A câmera abre no toque do botão do centro.** Se o aparelho não abrir a câmera, a galeria é a
   alternativa.
 - **Editar mora em "Meus treinos" e no próprio post.** Edita título, legenda, observação,

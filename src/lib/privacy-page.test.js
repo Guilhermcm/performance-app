@@ -3,6 +3,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
+import ptBR from '../locales/pt-BR.js'
 
 const html = readFileSync(fileURLToPath(new URL('../../public/privacidade.html', import.meta.url)), 'utf8')
 
@@ -128,6 +129,38 @@ describe('privacy policy page', () => {
     const en = visible.slice(visible.indexOf('Privacy Policy'))
     expect(pt).toContain('ainda não foram enviados ficam guardados no aparelho e sobem na próxima vez que a mesma conta entrar')
     expect(en).toContain('have not been sent yet stay saved on the device and go up the next time the same account signs in')
+  })
+
+  it('names the two Profile controls exactly as the app shows them, and not the removed switch', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    for (const key of ['Default check-in visibility', 'Show friends my workouts from before check-ins']) {
+      expect(pt, key).toContain(ptBR[key])
+      expect(en, key).toContain(key)
+    }
+    expect(visible).not.toContain('Compartilhar treinos e PRs com amigos')
+    expect(visible).not.toContain('Share workouts and PRs with friends')
+    // The old switch now covers only the workouts from before the check-ins, and not the check-ins.
+    expect(pt).toContain('Essa opção não muda seus check-ins')
+    expect(en).toContain('This switch does not change your check-ins')
+  })
+
+  it('says access ends at once for new requests and an open photo link lasts up to 1 hour, in both languages', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('o acesso acaba na hora para novos pedidos')
+    expect(pt).toContain('expira em até 1 hora')
+    expect(en).toContain('access ends right away for new requests')
+    expect(en).toContain('expires within 1 hour')
+    expect(pt).not.toContain('deixa de ver seus check-ins na hora')
+    expect(en).not.toContain('stops seeing your check-ins right away')
+  })
+
+  it('lists the routine name among what friends see on a check-in, in both languages', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('a foto, a atividade, o nome da rotina, o título')
+    expect(en).toContain('the photo, the activity, the routine name, the title')
   })
 
   it('uses no dash as a pause in its visible text', () => {
