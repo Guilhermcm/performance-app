@@ -1,7 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import fixture from '../../../supabase/tests/fixtures/xp-scenarios.json'
 import nutrition from '../../../supabase/tests/fixtures/nutrition-scenarios.json'
-import { nutritionWeekAwards, levelFor, replay, sessionXp, streakAfter, weekStartOf, WEEK_MAX, type XpEvent } from './xp'
+import training from '../../../supabase/tests/fixtures/training-scenarios.json'
+import {
+  nutritionWeekAwards, levelFor, replay, sessionXp, streakAfter, weekStartOf, WEEK_MAX, TRAINING_WEEK_MAX, type XpEvent
+} from './xp'
 
 describe('xp rules (client mirror)', () => {
   it.each(fixture.levels)('levelFor($xp)', l => {
@@ -44,5 +47,38 @@ describe('xp rules (client mirror)', () => {
     const awards = nutritionWeekAwards(days, w.target)
     expect(awards).toEqual(w.awards)
     expect(awards.reduce((n, a) => n + a.amount, 0)).toBe(w.total)
+  })
+
+  // The Treino pillar after the check-in cutover: the server's award_xp (0019, with the PR and
+  // weigh-in cutoff of 0020) runs the same file in supabase/tests/training-parity.test.ts.
+  it.each(training.weeks)('training: $name', s => {
+    const targets = s.targets as Record<string, number>
+    const awards = replay(s.events as XpEvent[], week => targets[week], s.since)
+    expect(awards).toEqual(s.awards)
+    expect(awards.reduce((n, a) => n + a.amount, 0)).toBe(s.total)
+  })
+
+  it('keeps the weekly max at 960 with the check-in reasons (spec 5.1)', () => {
+    expect(TRAINING_WEEK_MAX).toBe(960)
+  })
+
+  it('pays a live workout before the cutover only on a day no check-in paid', () => {
+    const events: XpEvent[] = [
+      { kind: 'training_day', on: '2026-09-07', ref: 'training:2026-09-07' },
+      { kind: 'workout_completed', on: '2026-09-07', ref: 'w1' },
+      { kind: 'workout_completed', on: '2026-09-08', ref: 'w2' },
+    ]
+    expect(replay(events, () => 3, '2026-09-10').map(a => a.reason))
+      .toEqual(['training_logged', 'training_day', 'workout'])
+  })
+
+  it('without a cutover, every event pays the way it did before check-ins', () => {
+    const events: XpEvent[] = [
+      { kind: 'workout_completed', on: '2026-09-07', ref: 'w1' },
+      { kind: 'pr', on: '2026-09-07', ref: 'w1:0025' },
+      { kind: 'weight_logged', on: '2026-09-07', ref: '2026-09-07' },
+    ]
+    expect(replay(events, () => 3).map(a => a.reason)).toEqual(['workout', 'pr', 'weight'])
+    expect(replay(events, () => 3, null).map(a => a.reason)).toEqual(['workout', 'pr', 'weight'])
   })
 })

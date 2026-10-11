@@ -33,6 +33,7 @@ import { useSocial } from './features/social/useSocial.ts'
 import { useNutrition, startNutritionSync } from './features/nutrition/useNutrition.ts'
 import { useCheckins, startCheckinSync } from './features/checkin/useCheckins.ts'
 import CheckinFlow from './features/checkin/CheckinFlow.tsx'
+import MyTrainings from './features/checkin/MyTrainings.tsx'
 import NutritionScreen from './features/nutrition/NutritionScreen.tsx'
 import NutritionHistoryScreen from './features/nutrition/HistoryScreen.tsx'
 import SocialScreen from './features/social/SocialScreen.tsx'
@@ -214,6 +215,7 @@ function Shell() {
                 {S.checkIn !== false && <Route path="/checkin" element={<CheckIn />} />}
                 <Route path="/plan" element={<Plan />} />
                 <Route path="/plan/r/:id" element={<RoutineEdit />} />
+                <Route path="/plan/treinos" element={<MyTrainings />} />
                 <Route path="/workout" element={<Workout />} />
                 <Route path="/stats" element={<Stats />} />
                 <Route path="/history" element={<History />} />

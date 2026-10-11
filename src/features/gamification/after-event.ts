@@ -1,6 +1,6 @@
 import { flush } from './events'
 import { useProgress } from './useProgress'
-import { WEIGHT_XP } from './xp'
+import { WEIGHT_XP, afterCutover } from './xp'
 import type { SyncResult } from './types'
 
 // Sends the queued events, then reads the progress. Confirmed only when nothing was left in the
@@ -11,8 +11,9 @@ export async function syncProgress(): Promise<SyncResult> {
   return { progress, confirmed: !!progress && left === 0 }
 }
 
-// XP a weigh-in on `day` is about to earn: the first one of today pays, later ones do not.
+// XP a weigh-in on `day` is about to earn: the first one of today pays, later ones do not. From the
+// check-in cutover on, weigh-ins pay nothing (spec 5.1: the day with a photo took their place).
 export function weighInXp(day: string): number {
   const p = useProgress.getState().progress
-  return p && p.today === day && !p.week.weighed_today ? WEIGHT_XP : 0
+  return p && p.today === day && !afterCutover(day, p.training_since) && !p.week.weighed_today ? WEIGHT_XP : 0
 }

@@ -38,12 +38,12 @@ afterEach(() => cleanup())
 
 describe('PillarRadar', () => {
   it('describes the chart in text', async () => {
-    expect(radarDescription(RADAR, ALL_ON, RELEASED)).toBe('Strength 82%, Nutrition 64%, Sleep coming soon, Habits coming soon')
+    expect(radarDescription(RADAR, ALL_ON, RELEASED)).toBe('Training 82%, Nutrition 64%, Sleep coming soon, Habits coming soon')
     render(<PillarRadar radar={RADAR} enabled={ALL_ON} released={RELEASED} />)
-    expect(screen.getByText('Strength 82%, Nutrition 64%, Sleep coming soon, Habits coming soon')).toBeTruthy()
+    expect(screen.getByText('Training 82%, Nutrition 64%, Sleep coming soon, Habits coming soon')).toBeTruthy()
     await setLang('pt-BR')
     try {
-      expect(radarDescription(RADAR, ALL_ON, RELEASED)).toBe('Força 82%, Nutrição 64%, Sono em breve, Hábitos em breve')
+      expect(radarDescription(RADAR, ALL_ON, RELEASED)).toBe('Treino 82%, Nutrição 64%, Sono em breve, Hábitos em breve')
     } finally {
       await setLang('en')
     }
@@ -60,7 +60,7 @@ describe('PillarRadar', () => {
     expect(tick(container, 'nutrition').querySelector('line')!.getAttribute('stroke-dasharray')).toBeTruthy()
     expect(tick(container, 'sleep').querySelector('line')!.getAttribute('stroke-dasharray')).toBeTruthy()
     expect(tick(container, 'strength').querySelector('line')!.getAttribute('stroke-dasharray')).toBeNull()
-    expect(radarDescription(RADAR, enabled, RELEASED)).toBe('Strength 82%, Nutrition: off, Sleep coming soon, Habits coming soon')
+    expect(radarDescription(RADAR, enabled, RELEASED)).toBe('Training 82%, Nutrition: off, Sleep coming soon, Habits coming soon')
 
     fireEvent.click(screen.getByRole('button', { name: 'Turn on Nutrition' }))
     expect(screen.getByTestId('nutrition-setup')).toBeTruthy()
@@ -76,7 +76,7 @@ describe('PillarRadar', () => {
     expect([vertex.getAttribute('cx'), vertex.getAttribute('cy')]).toEqual(centre(container))
     const other = container.querySelector('[data-vertex="nutrition"]')!
     expect([other.getAttribute('cx'), other.getAttribute('cy')]).not.toEqual(centre(container))
-    expect(radarDescription(radar, ALL_ON, RELEASED)).toBe('Strength: no weeks yet, Nutrition 50%, Sleep coming soon, Habits coming soon')
+    expect(radarDescription(radar, ALL_ON, RELEASED)).toBe('Training: no weeks yet, Nutrition 50%, Sleep coming soon, Habits coming soon')
   })
 
   it('draws the previous four weeks behind', () => {
@@ -96,8 +96,8 @@ describe('PillarRadar', () => {
     expect(within(sheet).getByRole('columnheader', { name: 'Last 4 weeks' })).toBeTruthy()
     expect(within(sheet).getByRole('columnheader', { name: '4 weeks before' })).toBeTruthy()
     const row = (name: string) => within(sheet).getByRole('row', { name: new RegExp('^' + name) })
-    expect(within(row('Strength')).getByText('82%')).toBeTruthy()
-    expect(within(row('Strength')).getByText('70%')).toBeTruthy()
+    expect(within(row('Training')).getByText('82%')).toBeTruthy()
+    expect(within(row('Training')).getByText('70%')).toBeTruthy()
     expect(within(row('Nutrition')).getByText('64%')).toBeTruthy()
     expect(within(row('Nutrition')).getByText('No weeks yet')).toBeTruthy()
     expect(within(row('Sleep')).getAllByText('Coming soon')).toHaveLength(2)

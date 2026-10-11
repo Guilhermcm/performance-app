@@ -2,26 +2,29 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { useProgress } from './useProgress'
 import { CelebrationOverlay } from './components/CelebrationOverlay'
-import { dayResultToast } from './celebrations'
+import { dayResultToast, trainingDayToast } from './celebrations'
 import { DAY_SEEN_KEY } from '../nutrition/storage-keys'
 import type { Celebration } from './types'
 
-// The last closed nutrition day already told, for the account signed in on this device.
+// The last closed nutrition day and the last closed Treino day already told, for the account
+// signed in on this device.
 const DAY_SEEN = DAY_SEEN_KEY
+const TRAINING_SEEN = 'perf_training_seen_v1'
 
-const readDaySeen = (userId: string): string | null | undefined => {
+const readSeen = (key: string, userId: string): string | null | undefined => {
   try {
-    const c = JSON.parse(localStorage.getItem(DAY_SEEN) || 'null')
+    const c = JSON.parse(localStorage.getItem(key) || 'null')
     return c && c.userId === userId ? (c.day as string | null) : undefined
   } catch { return undefined }
 }
-const writeDaySeen = (userId: string, day: string | null) => {
-  try { localStorage.setItem(DAY_SEEN, JSON.stringify({ userId, day })) } catch { /* storage full or blocked */ }
+const writeSeen = (key: string, userId: string, day: string | null) => {
+  try { localStorage.setItem(key, JSON.stringify({ userId, day })) } catch { /* storage full or blocked */ }
 }
 
 // Shows level-ups and badges the moment the store has some and nothing holds them (the
 // post-workout summary does, until its XP has counted). Taking them marks them as seen.
-// The result of a closed nutrition day is a toast instead, once per day, from the server's answer.
+// The result of a closed nutrition day, and the confirmation of a closed Treino day, are toasts
+// instead, once per day each, from the server's answer.
 export default function CelebrationHost() {
   const pending = useProgress(s => s.pending)
   const held = useProgress(s => s.held)
@@ -37,14 +40,17 @@ export default function CelebrationHost() {
 
   useEffect(() => {
     if (!progress || stale || !userId) return
-    const closed = progress.nutrition?.last_closed?.day ?? null
-    const seen = readDaySeen(userId)
-    // The first answer on this device only records where things stand.
-    if (seen === undefined) { writeDaySeen(userId, closed); return }
-    if (!closed || (seen && closed <= seen)) return
-    const r = dayResultToast(progress, seen)
-    if (r) toast(r.text)
-    writeDaySeen(userId, closed)
+    const tell = (key: string, closed: string | null, result: (seen: string | null) => { text: string } | null) => {
+      const seen = readSeen(key, userId)
+      // The first answer on this device only records where things stand.
+      if (seen === undefined) { writeSeen(key, userId, closed); return }
+      if (!closed || (seen && closed <= seen)) return
+      const r = result(seen)
+      if (r) toast(r.text)
+      writeSeen(key, userId, closed)
+    }
+    tell(DAY_SEEN, progress.nutrition?.last_closed?.day ?? null, seen => dayResultToast(progress, seen))
+    tell(TRAINING_SEEN, progress.training?.last_closed?.day ?? null, seen => trainingDayToast(progress, seen))
   }, [progress, stale, userId])
 
   if (!items?.length) return null

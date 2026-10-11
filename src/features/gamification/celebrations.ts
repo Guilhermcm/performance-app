@@ -1,4 +1,4 @@
-import { t } from '../../lib/i18n.js'
+import { dateLocale, t } from '../../lib/i18n.js'
 import { weekdayName } from '../nutrition/labels'
 import { ACHIEVEMENTS } from './achievements'
 import { fmtInt } from './format'
@@ -70,5 +70,16 @@ export function dayResultToast(p: Progress, lastShown: string | null): { text: s
   const text = d.on_target
     ? (d.xp > 0 ? t('{0} on target, +{1} XP', day, xp) : t('{0} on target', day))
     : (d.xp > 0 ? t('{0} logged, +{1} XP', day, xp) : t('{0} logged', day))
+  return { text, day: d.day }
+}
+
+// The last closed Treino day (spec 5.3): "Saturday workout confirmed, +210 XP" once it closes, two
+// days later. The weekday comes from Intl in the app language, so it reads in its own case
+// ("Treino de sábado confirmado"). Null when it was shown already or there is no closed day.
+export function trainingDayToast(p: Progress, lastShown: string | null): { text: string; day: string } | null {
+  const d = p.training?.last_closed
+  if (!d || (lastShown && d.day <= lastShown)) return null
+  const day = new Date(d.day + 'T12:00:00').toLocaleDateString(dateLocale(), { weekday: 'long' })
+  const text = d.xp > 0 ? t('{0} workout confirmed, +{1} XP', day, fmtInt(d.xp)) : t('{0} workout confirmed', day)
   return { text, day: d.day }
 }

@@ -28,7 +28,7 @@ export default function ProfileProgress() {
       <p className="mt-0.5 text-sm tabular-nums text-muted-foreground">{t('Total XP')}: {fmtInt(progress.total_xp)}</p>
       <LevelBar className="mt-3" to={progress.level} instant label={t('Overall level')} />
       {strength && (
-        <PillarBar label={t('Strength')} icon={Dumbbell} level={strength} iconClass="text-[var(--pillar-strength)]"
+        <PillarBar label={t('Training')} icon={Dumbbell} level={strength} iconClass="text-[var(--pillar-strength)]"
           track="bg-[color-mix(in_oklab,var(--pillar-strength)_18%,transparent)]" fill="bg-[var(--pillar-strength)]" />
       )}
       {nutrition && (

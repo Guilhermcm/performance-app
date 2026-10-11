@@ -60,6 +60,12 @@ describe('WorkoutXpSummary', () => {
     expect(screen.getByText('Achievement bonus')).toBeTruthy()
   })
 
+  it('says a workout after the check-in cutover earns its XP through the check-in', async () => {
+    await show({ preview: { lines: [], total: 0, viaCheckin: true }, settled: Promise.resolve({ progress: before, confirmed: true }) })
+    expect(screen.getByText('Workouts earn XP through the check-in, once the day closes.')).toBeTruthy()
+    expect(screen.queryByText('No XP this time. You already got the two extra workouts this week.')).toBeNull()
+  })
+
   it('says why a session paid nothing', async () => {
     await show({ preview: { lines: [], total: 0 }, settled: never() })
     expect(screen.getByText('No XP this time. You already got the two extra workouts this week.')).toBeTruthy()

@@ -1,0 +1,647 @@
+{
+  "weeks": [
+    {
+      "name": "T=3: a full detailed week with PRs and weigh-ins pays exactly 960",
+      "since": "2026-09-07",
+      "targets": {
+        "2026-09-07": 3
+      },
+      "events": [
+        {
+          "kind": "training_day",
+          "on": "2026-09-07",
+          "ref": "training:2026-09-07"
+        },
+        {
+          "kind": "training_detailed",
+          "on": "2026-09-07",
+          "ref": "training:2026-09-07"
+        },
+        {
+          "kind": "pr",
+          "on": "2026-09-07",
+          "ref": "c0:0025"
+        },
+        {
+          "kind": "weight_logged",
+          "on": "2026-09-07",
+          "ref": "2026-09-07"
+        },
+        {
+          "kind": "training_day",
+          "on": "2026-09-08",
+          "ref": "training:2026-09-08"
+        },
+        {
+          "kind": "training_detailed",
+          "on": "2026-09-08",
+          "ref": "training:2026-09-08"
+        },
+        {
+          "kind": "pr",
+          "on": "2026-09-08",
+          "ref": "c1:0025"
+        },
+        {
+          "kind": "weight_logged",
+          "on": "2026-09-08",
+          "ref": "2026-09-08"
+        },
+        {
+          "kind": "training_day",
+          "on": "2026-09-09",
+          "ref": "training:2026-09-09"
+        },
+        {
+          "kind": "training_detailed",
+          "on": "2026-09-09",
+          "ref": "training:2026-09-09"
+        },
+        {
+          "kind": "pr",
+          "on": "2026-09-09",
+          "ref": "c2:0025"
+        },
+        {
+          "kind": "weight_logged",
+          "on": "2026-09-09",
+          "ref": "2026-09-09"
+        },
+        {
+          "kind": "training_day",
+          "on": "2026-09-10",
+          "ref": "training:2026-09-10"
+        },
+        {
+          "kind": "training_detailed",
+          "on": "2026-09-10",
+          "ref": "training:2026-09-10"
+        },
+        {
+          "kind": "pr",
+          "on": "2026-09-10",
+          "ref": "c3:0025"
+        },
+        {
+          "kind": "weight_logged",
+          "on": "2026-09-10",
+          "ref": "2026-09-10"
+        },
+        {
+          "kind": "training_day",
+          "on": "2026-09-11",
+          "ref": "training:2026-09-11"
+        },
+        {
+          "kind": "training_detailed",
+          "on": "2026-09-11",
+          "ref": "training:2026-09-11"
+        },
+        {
+          "kind": "pr",
+          "on": "2026-09-11",
+          "ref": "c4:0025"
+        },
+        {
+          "kind": "weight_logged",
+          "on": "2026-09-11",
+          "ref": "2026-09-11"
+        },
+        {
+          "kind": "training_day",
+          "on": "2026-09-12",
+          "ref": "training:2026-09-12"
+        },
+        {
+          "kind": "training_detailed",
+          "on": "2026-09-12",
+          "ref": "training:2026-09-12"
+        },
+        {
+          "kind": "pr",
+          "on": "2026-09-12",
+          "ref": "c5:0025"
+        },
+        {
+          "kind": "weight_logged",
+          "on": "2026-09-12",
+          "ref": "2026-09-12"
+        },
+        {
+          "kind": "training_day",
+          "on": "2026-09-13",
+          "ref": "training:2026-09-13"
+        },
+        {
+          "kind": "training_detailed",
+          "on": "2026-09-13",
+          "ref": "training:2026-09-13"
+        },
+        {
+          "kind": "pr",
+          "on": "2026-09-13",
+          "ref": "c6:0025"
+        },
+        {
+          "kind": "weight_logged",
+          "on": "2026-09-13",
+          "ref": "2026-09-13"
+        }
+      ],
+      "awards": [
+        {
+          "reason": "training_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_day",
+          "amount": 200,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_detailed",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_day",
+          "amount": 200,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_detailed",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_day",
+          "amount": 200,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_week_target",
+          "amount": 150,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_detailed",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_day_extra",
+          "amount": 25,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_day_extra",
+          "amount": 25,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        }
+      ],
+      "total": 960
+    },
+    {
+      "name": "T=7: the seventh day takes the remainder",
+      "since": "2026-09-07",
+      "targets": {
+        "2026-09-07": 7
+      },
+      "events": [
+        {
+          "kind": "training_day",
+          "on": "2026-09-07",
+          "ref": "training:2026-09-07"
+        },
+        {
+          "kind": "training_day",
+          "on": "2026-09-08",
+          "ref": "training:2026-09-08"
+        },
+        {
+          "kind": "training_day",
+          "on": "2026-09-09",
+          "ref": "training:2026-09-09"
+        },
+        {
+          "kind": "training_day",
+          "on": "2026-09-10",
+          "ref": "training:2026-09-10"
+        },
+        {
+          "kind": "training_day",
+          "on": "2026-09-11",
+          "ref": "training:2026-09-11"
+        },
+        {
+          "kind": "training_day",
+          "on": "2026-09-12",
+          "ref": "training:2026-09-12"
+        },
+        {
+          "kind": "training_day",
+          "on": "2026-09-13",
+          "ref": "training:2026-09-13"
+        }
+      ],
+      "awards": [
+        {
+          "reason": "training_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_day",
+          "amount": 86,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_day",
+          "amount": 86,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_day",
+          "amount": 86,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_day",
+          "amount": 86,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_day",
+          "amount": 86,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_day",
+          "amount": 86,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_day",
+          "amount": 84,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_week_target",
+          "amount": 150,
+          "week": "2026-09-07"
+        }
+      ],
+      "total": 820
+    },
+    {
+      "name": "T=1: the first day meets the goal, then two extras",
+      "since": "2026-09-07",
+      "targets": {
+        "2026-09-07": 1
+      },
+      "events": [
+        {
+          "kind": "training_day",
+          "on": "2026-09-07",
+          "ref": "training:2026-09-07"
+        },
+        {
+          "kind": "training_day",
+          "on": "2026-09-08",
+          "ref": "training:2026-09-08"
+        },
+        {
+          "kind": "training_day",
+          "on": "2026-09-09",
+          "ref": "training:2026-09-09"
+        },
+        {
+          "kind": "training_day",
+          "on": "2026-09-10",
+          "ref": "training:2026-09-10"
+        }
+      ],
+      "awards": [
+        {
+          "reason": "training_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_day",
+          "amount": 600,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_week_target",
+          "amount": 150,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_day_extra",
+          "amount": 25,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_day_extra",
+          "amount": 25,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        }
+      ],
+      "total": 840
+    },
+    {
+      "name": "From the cutover on, live workouts, PRs and weigh-ins pay nothing and the week counts both kinds of day",
+      "since": "2026-09-09",
+      "targets": {
+        "2026-09-07": 3
+      },
+      "events": [
+        {
+          "kind": "workout_completed",
+          "on": "2026-09-07",
+          "ref": "w1"
+        },
+        {
+          "kind": "pr",
+          "on": "2026-09-07",
+          "ref": "w1:0025"
+        },
+        {
+          "kind": "weight_logged",
+          "on": "2026-09-07",
+          "ref": "2026-09-07"
+        },
+        {
+          "kind": "workout_completed",
+          "on": "2026-09-09",
+          "ref": "w2"
+        },
+        {
+          "kind": "pr",
+          "on": "2026-09-09",
+          "ref": "w2:0025"
+        },
+        {
+          "kind": "weight_logged",
+          "on": "2026-09-09",
+          "ref": "2026-09-09"
+        },
+        {
+          "kind": "training_day",
+          "on": "2026-09-09",
+          "ref": "training:2026-09-09"
+        },
+        {
+          "kind": "training_day",
+          "on": "2026-09-10",
+          "ref": "training:2026-09-10"
+        },
+        {
+          "kind": "workout_completed",
+          "on": "2026-09-11",
+          "ref": "w3"
+        },
+        {
+          "kind": "training_day",
+          "on": "2026-09-11",
+          "ref": "training:2026-09-11"
+        }
+      ],
+      "awards": [
+        {
+          "reason": "workout",
+          "amount": 200,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "pr",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "weight",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_day",
+          "amount": 200,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_day",
+          "amount": 200,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_week_target",
+          "amount": 150,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_day_extra",
+          "amount": 25,
+          "week": "2026-09-07"
+        }
+      ],
+      "total": 845
+    },
+    {
+      "name": "T=2: a repeated day pays once",
+      "since": "2026-09-07",
+      "targets": {
+        "2026-09-07": 2
+      },
+      "events": [
+        {
+          "kind": "training_day",
+          "on": "2026-09-07",
+          "ref": "training:2026-09-07"
+        },
+        {
+          "kind": "training_day",
+          "on": "2026-09-07",
+          "ref": "training:2026-09-07"
+        },
+        {
+          "kind": "training_detailed",
+          "on": "2026-09-07",
+          "ref": "training:2026-09-07"
+        },
+        {
+          "kind": "training_detailed",
+          "on": "2026-09-07",
+          "ref": "training:2026-09-07"
+        }
+      ],
+      "awards": [
+        {
+          "reason": "training_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_day",
+          "amount": 300,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_detailed",
+          "amount": 30,
+          "week": "2026-09-07"
+        }
+      ],
+      "total": 340
+    },
+    {
+      "name": "Detailed days pay three a week, counted per week",
+      "since": "2026-09-07",
+      "targets": {
+        "2026-09-07": 3,
+        "2026-09-14": 3
+      },
+      "events": [
+        {
+          "kind": "training_detailed",
+          "on": "2026-09-07",
+          "ref": "training:2026-09-07"
+        },
+        {
+          "kind": "training_detailed",
+          "on": "2026-09-08",
+          "ref": "training:2026-09-08"
+        },
+        {
+          "kind": "training_detailed",
+          "on": "2026-09-09",
+          "ref": "training:2026-09-09"
+        },
+        {
+          "kind": "training_detailed",
+          "on": "2026-09-10",
+          "ref": "training:2026-09-10"
+        },
+        {
+          "kind": "training_detailed",
+          "on": "2026-09-14",
+          "ref": "training:2026-09-14"
+        }
+      ],
+      "awards": [
+        {
+          "reason": "training_detailed",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_detailed",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_detailed",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "training_detailed",
+          "amount": 30,
+          "week": "2026-09-14"
+        }
+      ],
+      "total": 120
+    }
+  ]
+}

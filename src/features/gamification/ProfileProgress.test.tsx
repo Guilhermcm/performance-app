@@ -18,7 +18,7 @@ describe('ProfileProgress', () => {
     expect(container.innerHTML).toBe('')
   })
 
-  it('shows the overall level, the strength pillar with its icon and name, and the badges', () => {
+  it('shows the overall level, the Treino pillar with its icon and name, and the badges', () => {
     useProgress.setState({ status: 'ready', progress: progressOf(1110, {}, { pillars: { strength: { level: 5, into: 260, need: 300, xp: 960 } } }) })
     render(<ProfileProgress />)
     expect(screen.getByRole('heading', { name: 'Overall level' })).toBeTruthy()
@@ -26,7 +26,7 @@ describe('ProfileProgress', () => {
     expect(screen.getByText('Level 6')).toBeTruthy()
     expect(screen.getByText('Level 5')).toBeTruthy()
     expect(screen.getByText('Total XP: 1,110')).toBeTruthy()
-    expect(screen.getByRole('progressbar', { name: 'Strength' })).toBeTruthy()
+    expect(screen.getByRole('progressbar', { name: 'Training' })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /Achievements/ }))
     expect(h.nav).toHaveBeenCalledWith('/conquistas')
   })

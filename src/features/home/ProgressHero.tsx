@@ -87,7 +87,7 @@ export function ProgressHero() {
       )}
 
       <LevelBar className="relative mt-4" to={lv} instant label={t('Level {0}', lv.level)} />
-      {progress.total_xp === 0 && <p className="relative mt-3 text-sm text-muted-foreground">{t('Finish a workout to earn your first XP.')}</p>}
+      {progress.total_xp === 0 && <p className="relative mt-3 text-sm text-muted-foreground">{t('Check in to earn your first XP.')}</p>}
 
       <div className="relative mt-5 flex flex-col gap-2">
         <div className="flex items-baseline justify-between gap-3">
@@ -138,7 +138,7 @@ export function ProgressHero() {
 
 type SegmentKey = 'strength' | 'nutrition' | 'bonus'
 const SEGMENT: Record<SegmentKey, { label: () => string; fill: string }> = {
-  strength: { label: () => t('Strength'), fill: 'bg-[var(--pillar-strength)]' },
+  strength: { label: () => t('Training'), fill: 'bg-[var(--pillar-strength)]' },
   nutrition: { label: () => t('Nutrition'), fill: 'bg-pillar-nutrition' },
   // Badges and challenges belong to no pillar: a neutral tone.
   bonus: { label: () => t('Bonus'), fill: 'bg-muted-foreground/60' }

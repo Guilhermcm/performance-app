@@ -1,5 +1,5 @@
 import { achievementByCode } from './achievements'
-import { EXTRA_XP, PR_LIMIT, PR_XP, WEEK_TARGET_BONUS, WEIGHT_XP, sessionXp, weekStartOf, workoutAwards } from './xp'
+import { EXTRA_XP, PR_LIMIT, PR_XP, WEEK_TARGET_BONUS, WEIGHT_XP, afterCutover, sessionXp, weekStartOf, workoutAwards } from './xp'
 import type { Progress, XpLine, XpPreview } from './types'
 
 const sum = (lines: XpLine[]) => lines.reduce((n, l) => n + l.amount, 0)
@@ -7,7 +7,10 @@ const sum = (lines: XpLine[]) => lines.reduce((n, l) => n + l.amount, 0)
 // What finishing a workout on `occurredOn` with `prs` new records is about to pay, from the
 // progress the app already holds. Null when it cannot be known here: no progress yet, or a
 // session logged into another week (that week's counts are not on the phone).
+// From the check-in cutover on, the workout and its PRs pay nothing: the day is paid by its
+// check-in when it closes, two days later.
 export function previewWorkout(p: Progress | null, input: { occurredOn: string; prs: number }): XpPreview | null {
+  if (p && afterCutover(input.occurredOn, p.training_since)) return { lines: [], total: 0, viaCheckin: true }
   if (!p || weekStartOf(input.occurredOn) !== p.week.start) return null
   const w = p.week
   const lines: XpLine[] = []

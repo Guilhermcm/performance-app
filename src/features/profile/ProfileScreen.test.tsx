@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
 let P: Record<string, unknown>
@@ -125,18 +125,33 @@ describe('ProfileScreen', () => {
     expect(screen.getByRole('button', { name: /save/i })).toBeTruthy()   // still editing
   })
 
-  it('toggles sharing with friends', async () => {
+  it('sets the default visibility of check-ins: Friends or Only me', async () => {
     show()
-    fireEvent.click(screen.getByRole('switch', { name: /share/i }))
+    const group = screen.getByRole('radiogroup', { name: 'Default check-in visibility' })
+    const only = within(group).getByRole('radio', { name: 'Only me' })
+    const friends = within(group).getByRole('radio', { name: 'Friends' })
+    // share_activity false is Only me.
+    expect(only.getAttribute('aria-checked')).toBe('true')
+    expect(friends.getAttribute('aria-checked')).toBe('false')
+    fireEvent.click(friends)
     await waitFor(() => expect(h.save).toHaveBeenCalledWith({ share_activity: true }))
+    // Choosing what is already chosen saves nothing.
+    h.save.mockClear()
+    fireEvent.click(only)
+    expect(h.save).not.toHaveBeenCalled()
   })
 
-  it('focuses the sharing switch when sent there from the feed', async () => {
+  it('shows the Treino weekly target as training days per week', () => {
+    show()
+    expect(screen.getByText('Training days per week')).toBeTruthy()
+  })
+
+  it('focuses the default visibility when sent there from the feed', async () => {
     const scroll = vi.fn()
     Element.prototype.scrollIntoView = scroll
     render(<MemoryRouter initialEntries={[{ pathname: '/perfil', state: { focus: 'share_activity' } }]}><ProfileScreen /></MemoryRouter>)
-    const sw = screen.getByRole('switch', { name: /share/i })
-    await waitFor(() => expect(document.activeElement).toBe(sw))
+    const checked = screen.getByRole('radio', { name: 'Only me' })
+    await waitFor(() => expect(document.activeElement).toBe(checked))
     expect(scroll).toHaveBeenCalled()
   })
 

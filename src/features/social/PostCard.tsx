@@ -6,7 +6,7 @@ import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } f
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { t, tn } from '../../lib/i18n.js'
-import * as api from '../checkin/checkin-api'
+import { useCheckinPhoto } from '../checkin/photo-src'
 import { useCheckins } from '../checkin/useCheckins'
 import { toSocialError } from './social-api'
 import { socialErrorText } from './labels'
@@ -16,48 +16,8 @@ import { Reactions, reactTo } from './Reactions'
 import { QUICK_REACTION, checkinIdOf, postView, usePostView } from './post-state'
 import type { CheckinFeedItem } from './types'
 
-// Photo links for the cards on screen, asked for together: the cards of a page mount in the same
-// pass, so one request signs all their photos (checkin-api keeps each link for 55 minutes).
-let wanted = new Map<string, { ok: (url: string | null) => void; fail: (e: unknown) => void }[]>()
-let scheduled = false
-function linkFor(path: string): Promise<string | null> {
-  return new Promise((ok, fail) => {
-    wanted.set(path, [...(wanted.get(path) ?? []), { ok, fail }])
-    if (scheduled) return
-    scheduled = true
-    queueMicrotask(async () => {
-      const batch = wanted
-      wanted = new Map()
-      scheduled = false
-      try {
-        const urls = await api.signedUrls([...batch.keys()])
-        for (const [p, ws] of batch) ws.forEach(w => w.ok(urls[p] ?? null))
-      } catch (e) {
-        for (const ws of batch.values()) ws.forEach(w => w.fail(e))
-      }
-    })
-  })
-}
-
-// The photo of a post: from this phone while it waits to go up, else through a signed link. A link
-// the server does not give (the friendship ended) counts as a failure, like a network error.
-function usePhotoSrc(item: CheckinFeedItem) {
-  const [state, setState] = useState<{ url: string | null; failed: boolean }>({ url: null, failed: false })
-  const [attempt, setAttempt] = useState(0)
-  const { photo, photo_path: path } = item
-  useEffect(() => {
-    if (photo) {
-      const url = URL.createObjectURL(photo)
-      setState({ url, failed: false })
-      return () => URL.revokeObjectURL(url)
-    }
-    let live = true
-    setState({ url: null, failed: false })
-    linkFor(path).then(url => { if (live) setState({ url, failed: !url }) }, () => { if (live) setState({ url: null, failed: true }) })
-    return () => { live = false }
-  }, [photo, path, attempt])
-  return { ...state, fail: () => setState({ url: null, failed: true }), retry: () => { api.forgetSignedUrl(path); setAttempt(a => a + 1) } }
-}
+// The photo of a post: from this phone while it waits to go up, else through a signed link.
+const usePhotoSrc = (item: CheckinFeedItem) => useCheckinPhoto(item.photo, item.photo_path)
 
 // "Workout 3 this week · 6-week streak", worked out on the server (spec 4.1).
 function contextText(c: CheckinFeedItem['context']): string | null {

@@ -47,4 +47,11 @@ describe('weighInXp', () => {
     useProgress.setState({ progress: null })
     expect(weighInXp('2026-10-07')).toBe(0)
   })
+
+  it('is 0 from the check-in cutover on: weigh-ins no longer pay', () => {
+    useProgress.setState({ progress: progressOf(400, {}, { training_since: '2026-10-05' }) })
+    expect(weighInXp('2026-10-07')).toBe(0)
+    useProgress.setState({ progress: progressOf(400, {}, { training_since: '2026-10-08' }) })
+    expect(weighInXp('2026-10-07')).toBe(10)
+  })
 })
