@@ -275,4 +275,22 @@ describe('PostSkeleton', () => {
     expect(root.querySelector('.aspect-\\[4\\/5\\]')).toBeTruthy()
     expect(root.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThanOrEqual(5)
   })
+
+  it('lets me edit my own post, and only mine', async () => {
+    const own = checkinItemOf('c9', { user: { id: ME, name: 'Gui', avatar_url: null } })
+    useCheckins.setState({ mine: [{
+      id: 'c9', day: own.day, activity: 'strength', routine_id: null, routine_name: null, title: own.title, caption: own.caption, note: 'Mine only',
+      duration_min: null, visibility: 'friends', photo_path: `${ME}/c9.jpg`, detail: null
+    }] })
+    render(<PostCard item={own} onOpen={vi.fn()} />)
+    expect(screen.queryByRole('button', { name: 'Post options' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Edit check-in' }))
+    const sheet = screen.getByRole('dialog')
+    expect(within(sheet).getByRole('heading', { name: 'Edit check-in' })).toBeTruthy()
+    expect((within(sheet).getByLabelText('Private note') as HTMLTextAreaElement).value).toBe('Mine only')
+    cleanup()
+    render(<PostCard item={checkinItemOf('c1')} onOpen={vi.fn()} />)
+    expect(screen.queryByRole('button', { name: 'Edit check-in' })).toBeNull()
+    await settle()
+  })
 })

@@ -2293,4 +2293,9 @@ export default {
   "Delete this check-in?": "ลบเช็กอินนี้ไหม",
   "The photo goes too. If the day is still open, it stops counting.": "รูปจะถูกลบด้วย ถ้าวันนั้นยังไม่ปิด จะไม่นับอีก",
   "Check-in deleted.": "ลบเช็กอินแล้ว",
+  "Edit check-in": "แก้ไขเช็กอิน",
+  "Day, activity and photo stay as they are. To change them, delete the check-in and post it again.": "วัน กิจกรรม และรูปจะคงเดิม หากต้องการเปลี่ยน ให้ลบเช็กอินแล้วโพสต์ใหม่",
+  "Day, activity and photo": "วัน กิจกรรม และรูป",
+  "Check-in saved.": "บันทึกเช็กอินแล้ว",
+  "Could not save the check-in. Try again.": "บันทึกเช็กอินไม่ได้ ลองอีกครั้ง",
 }

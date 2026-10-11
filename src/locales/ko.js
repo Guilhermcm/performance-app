@@ -2282,4 +2282,9 @@ export default {
   "Delete this check-in?": "이 체크인을 삭제할까요?",
   "The photo goes too. If the day is still open, it stops counting.": "사진도 함께 삭제돼요. 아직 마감 전인 날이면 더 이상 인정되지 않아요.",
   "Check-in deleted.": "체크인을 삭제했어요.",
+  "Edit check-in": "체크인 수정",
+  "Day, activity and photo stay as they are. To change them, delete the check-in and post it again.": "날짜, 활동, 사진은 그대로예요. 바꾸려면 체크인을 삭제하고 다시 올리세요.",
+  "Day, activity and photo": "날짜, 활동, 사진",
+  "Check-in saved.": "체크인을 저장했어요.",
+  "Could not save the check-in. Try again.": "체크인을 저장하지 못했어요. 다시 시도하세요.",
 }

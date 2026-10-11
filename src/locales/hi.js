@@ -2282,4 +2282,9 @@ export default {
   "Delete this check-in?": "यह चेक-इन हटाएँ?",
   "The photo goes too. If the day is still open, it stops counting.": "फ़ोटो भी हट जाएगी। अगर दिन अभी खुला है, तो वह नहीं गिना जाएगा।",
   "Check-in deleted.": "चेक-इन हटाया गया।",
+  "Edit check-in": "चेक-इन बदलें",
+  "Day, activity and photo stay as they are. To change them, delete the check-in and post it again.": "दिन, गतिविधि और फ़ोटो वैसे ही रहते हैं। इन्हें बदलने के लिए चेक-इन हटाएँ और फिर से पोस्ट करें।",
+  "Day, activity and photo": "दिन, गतिविधि और फ़ोटो",
+  "Check-in saved.": "चेक-इन सेव हुआ।",
+  "Could not save the check-in. Try again.": "चेक-इन सेव नहीं हो सका। फिर से कोशिश करें।",
 }

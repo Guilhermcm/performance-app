@@ -1,12 +1,13 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { CloudUpload, EyeOff, ImageOff, Lock, MessageCircle, MoreHorizontal, RefreshCw } from 'lucide-react'
+import { CloudUpload, EyeOff, ImageOff, Lock, MessageCircle, MoreHorizontal, Pencil, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { t, tn } from '../../lib/i18n.js'
 import { useCheckinPhoto } from '../checkin/photo-src'
+import EditCheckinSheet from '../checkin/EditCheckinSheet'
 import { useCheckins } from '../checkin/useCheckins'
 import { toSocialError } from './social-api'
 import { socialErrorText } from './labels'
@@ -92,6 +93,7 @@ export function PostCard({ item, onOpen, onHide }: {
   const me = useCheckins(s => s.userId)
   const { comments_count } = usePostView(item)
   const [menu, setMenu] = useState(false)
+  const [editing, setEditing] = useState(false)
   const mine = item.user.id === me
   const pending = !!item.pending
   const context = contextText(item.context)
@@ -124,6 +126,12 @@ export function PostCard({ item, onOpen, onHide }: {
             <MoreHorizontal aria-hidden className="size-5" />
           </Button>
         )}
+        {/* My own post: edit what spec 3.2 lets change (title, caption, note, who sees it, detail). */}
+        {mine && (
+          <Button variant="ghost" size="icon" className="size-11 rounded-full" aria-label={t('Edit check-in')} aria-haspopup="dialog" onClick={() => setEditing(true)}>
+            <Pencil aria-hidden className="size-5" />
+          </Button>
+        )}
       </header>
       <Photo item={item} onDoubleTap={pending ? undefined : () => void reactTo(item, QUICK_REACTION)} />
       <div className="flex flex-col gap-2 px-3 pb-3 pt-2.5">
@@ -144,6 +152,7 @@ export function PostCard({ item, onOpen, onHide }: {
           </>
         )}
       </div>
+      {mine && <EditCheckinSheet open={editing} onOpenChange={setEditing} id={checkinIdOf(item)} day={item.day} />}
       <Drawer open={menu} onOpenChange={setMenu}>
         <DrawerContent className="pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <DrawerHeader className="text-left group-data-[vaul-drawer-direction=bottom]/drawer-content:text-left">

@@ -178,6 +178,16 @@ describe('My workouts', () => {
     expect(h.toast).toHaveBeenCalledWith('Check-in deleted.')
   })
 
+  it('edits a check-in from its day', () => {
+    const r = row('c3', '2026-10-09', { note: 'Easy' })
+    setup({ mine: [r] })
+    fireEvent.click(day(/9 October: 1 check-in$/))
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Edit check-in' }))
+    const edit = screen.getAllByRole('dialog').find(d => within(d).queryByRole('heading', { name: 'Edit check-in' }))!
+    expect((within(edit).getByLabelText('Title') as HTMLInputElement).value).toBe('Gym c3')
+    expect((within(edit).getByLabelText('Private note') as HTMLTextAreaElement).value).toBe('Easy')
+  })
+
   it('goes back to the Plan', () => {
     setup()
     fireEvent.click(screen.getByRole('button', { name: 'Back' }))

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, CloudOff, CloudUpload, Dumbbell, Lock, RefreshCw, Trash2, Users } from 'lucide-react'
+import { ArrowLeft, CloudOff, CloudUpload, Dumbbell, Lock, Pencil, RefreshCw, Trash2, Users } from 'lucide-react'
 import MonthCalendar, { type CalendarCell, type CalendarWeek } from '@/components/calendar/MonthCalendar'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
@@ -22,6 +22,7 @@ import { useCheckinPhoto } from './photo-src'
 import { workoutOfCheckin } from './ingest'
 import { activityLabel } from './activities'
 import { useWeekTraining } from './week'
+import EditCheckinSheet from './EditCheckinSheet'
 import type { CheckinDetail, CheckinRow } from './types'
 
 type AppStore = { S: Record<string, any> }
@@ -155,7 +156,10 @@ export default function MyTrainings() {
             <DrawerDescription>{countText(dayRows.length)}</DrawerDescription>
           </DrawerHeader>
           <div className="flex flex-col gap-4 overflow-y-auto px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-            {dayRows.map(r => <CheckinEntry key={r.id} row={r} />)}
+            {dayRows.map(r => <CheckinEntry key={r.id} row={r} onSaved={saved => {
+              // An older day is this screen's own copy from the server: it follows the edit too.
+              if (saved.day < windowStart) setFetched(f => (f[month] ? { ...f, [month]: f[month].map(x => (x.id === saved.id ? saved : x)) } : f))
+            }} />)}
           </div>
         </DrawerContent>
       </Drawer>
@@ -191,11 +195,12 @@ function DayPhoto({ row }: { row: MyCheckin }) {
 
 // One check-in of the day, as only its owner sees it: photo, title, what and how long, who sees it,
 // the caption, the private note and the detailed session, and the way to delete it.
-function CheckinEntry({ row }: { row: MyCheckin }) {
+function CheckinEntry({ row, onSaved }: { row: MyCheckin; onSaved: (row: CheckinRow) => void }) {
   const S = useStore((s: AppStore) => s.S)
   const remove = useCheckins(s => s.remove)
   const { url, failed, fail } = useCheckinPhoto(row.photo, row.photo_path)
   const [asking, setAsking] = useState(false)
+  const [editing, setEditing] = useState(false)
   const [busy, setBusy] = useState(false)
   const titleId = `checkin-${row.id}-title`
   const meta = [
@@ -265,10 +270,16 @@ function CheckinEntry({ row }: { row: MyCheckin }) {
             </div>
           </div>
         ) : (
-          <Button variant="ghost" className="h-11 gap-2 self-start rounded-xl px-3 text-muted-foreground hover:text-destructive" onClick={() => setAsking(true)}>
-            <Trash2 aria-hidden className="size-4" />{t('Delete check-in')}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" className="h-11 gap-2 rounded-xl px-3" onClick={() => setEditing(true)}>
+              <Pencil aria-hidden className="size-4" />{t('Edit check-in')}
+            </Button>
+            <Button variant="ghost" className="h-11 gap-2 rounded-xl px-3 text-muted-foreground hover:text-destructive" onClick={() => setAsking(true)}>
+              <Trash2 aria-hidden className="size-4" />{t('Delete check-in')}
+            </Button>
+          </div>
         )}
+        <EditCheckinSheet open={editing} onOpenChange={setEditing} id={row.id} day={row.day} row={row} onSaved={onSaved} />
       </div>
     </article>
   )

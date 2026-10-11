@@ -1663,6 +1663,11 @@ export const PT_BR_OVERRIDES = {
   "Delete this check-in?": "Apagar este check-in?",
   "The photo goes too. If the day is still open, it stops counting.": "A foto vai junto. Se o dia ainda estiver aberto, ele deixa de contar.",
   "Check-in deleted.": "Check-in apagado.",
+  "Edit check-in": "Editar check-in",
+  "Day, activity and photo stay as they are. To change them, delete the check-in and post it again.": "Dia, atividade e foto ficam como estão. Para trocar, apague o check-in e poste de novo.",
+  "Day, activity and photo": "Dia, atividade e foto",
+  "Check-in saved.": "Check-in salvo.",
+  "Could not save the check-in. Try again.": "Não deu para salvar o check-in. Tente de novo.",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

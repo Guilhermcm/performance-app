@@ -2282,4 +2282,9 @@ export default {
   "Delete this check-in?": "Bu check-in silinsin mi?",
   "The photo goes too. If the day is still open, it stops counting.": "Fotoğraf da silinir. Gün hâlâ açıksa artık sayılmaz.",
   "Check-in deleted.": "Check-in silindi.",
+  "Edit check-in": "Check-in’i düzenle",
+  "Day, activity and photo stay as they are. To change them, delete the check-in and post it again.": "Gün, aktivite ve fotoğraf olduğu gibi kalır. Değiştirmek için check-in’i silip yeniden paylaş.",
+  "Day, activity and photo": "Gün, aktivite ve fotoğraf",
+  "Check-in saved.": "Check-in kaydedildi.",
+  "Could not save the check-in. Try again.": "Check-in kaydedilemedi. Tekrar dene.",
 }

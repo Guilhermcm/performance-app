@@ -2306,4 +2306,9 @@ export default {
   "Delete this check-in?": "Видалити цей чек-ін?",
   "The photo goes too. If the day is still open, it stops counting.": "Фото теж видалиться. Якщо день ще відкритий, він перестане зараховуватися.",
   "Check-in deleted.": "Чек-ін видалено.",
+  "Edit check-in": "Змінити чек-ін",
+  "Day, activity and photo stay as they are. To change them, delete the check-in and post it again.": "День, активність і фото не змінюються. Щоб змінити їх, видаліть чек-ін і опублікуйте знову.",
+  "Day, activity and photo": "День, активність і фото",
+  "Check-in saved.": "Чек-ін збережено.",
+  "Could not save the check-in. Try again.": "Не вдалося зберегти чек-ін. Спробуйте ще раз.",
 }

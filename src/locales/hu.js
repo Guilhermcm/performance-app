@@ -2285,4 +2285,9 @@ export default {
   "Delete this check-in?": "Törlöd ezt a check-int?",
   "The photo goes too. If the day is still open, it stops counting.": "A fotó is törlődik. Ha a nap még nyitva van, már nem számít.",
   "Check-in deleted.": "Check-in törölve.",
+  "Edit check-in": "Check-in szerkesztése",
+  "Day, activity and photo stay as they are. To change them, delete the check-in and post it again.": "A nap, a tevékenység és a fotó nem változik. Ha módosítanád őket, töröld a check-int, és tedd közzé újra.",
+  "Day, activity and photo": "Nap, tevékenység és fotó",
+  "Check-in saved.": "Check-in mentve.",
+  "Could not save the check-in. Try again.": "Nem sikerült menteni a check-int. Próbáld újra.",
 }

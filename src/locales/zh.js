@@ -2282,4 +2282,9 @@ export default {
   "Delete this check-in?": "删除这次打卡？",
   "The photo goes too. If the day is still open, it stops counting.": "照片也会一起删除。如果当天还没结算，它将不再计入。",
   "Check-in deleted.": "打卡已删除。",
+  "Edit check-in": "编辑打卡",
+  "Day, activity and photo stay as they are. To change them, delete the check-in and post it again.": "日期、活动和照片保持不变。要修改它们，请删除这次打卡后重新发布。",
+  "Day, activity and photo": "日期、活动和照片",
+  "Check-in saved.": "打卡已保存。",
+  "Could not save the check-in. Try again.": "无法保存打卡，请重试。",
 }

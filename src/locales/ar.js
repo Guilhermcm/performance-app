@@ -2335,4 +2335,9 @@ export default {
   "Delete this check-in?": "حذف هذا التسجيل؟",
   "The photo goes too. If the day is still open, it stops counting.": "تُحذف الصورة أيضًا. إذا كان اليوم لا يزال مفتوحًا، فلن يُحتسب.",
   "Check-in deleted.": "تم حذف التسجيل.",
+  "Edit check-in": "تعديل التسجيل",
+  "Day, activity and photo stay as they are. To change them, delete the check-in and post it again.": "يبقى اليوم والنشاط والصورة كما هي. لتغييرها، احذف التسجيل وانشره من جديد.",
+  "Day, activity and photo": "اليوم والنشاط والصورة",
+  "Check-in saved.": "تم حفظ التسجيل.",
+  "Could not save the check-in. Try again.": "تعذّر حفظ التسجيل. حاول مرة أخرى.",
 }

@@ -2308,4 +2308,9 @@ export default {
   "Delete this check-in?": "Usunąć ten check-in?",
   "The photo goes too. If the day is still open, it stops counting.": "Zdjęcie też zostanie usunięte. Jeśli dzień jest jeszcze otwarty, przestanie się liczyć.",
   "Check-in deleted.": "Check-in usunięty.",
+  "Edit check-in": "Edytuj check-in",
+  "Day, activity and photo stay as they are. To change them, delete the check-in and post it again.": "Dzień, aktywność i zdjęcie zostają bez zmian. Aby je zmienić, usuń check-in i opublikuj go ponownie.",
+  "Day, activity and photo": "Dzień, aktywność i zdjęcie",
+  "Check-in saved.": "Check-in zapisany.",
+  "Could not save the check-in. Try again.": "Nie udało się zapisać check-inu. Spróbuj ponownie.",
 }
