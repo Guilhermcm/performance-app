@@ -17,9 +17,8 @@ import type { Challenge, ChallengeMode, NewChallenge } from '../../src/features/
 let db: PGlite
 const TODAY = '2026-10-05'
 const NUT = 'nutrition_days_on_target'
-// The training days template (0020) takes the rules of workouts_count; the client gains it as a
-// template of its own in a later task, so here the server's checkin_days is held to the client's
-// workouts_count rules.
+// The training days template (0020) takes the rules of workouts_count and is the one the client
+// creates (workouts_count stays only for challenges already running).
 const DAYS = 'checkin_days'
 
 // What the server says about a client problem.
@@ -90,7 +89,8 @@ describe('nutrition challenge rules, client and server', () => {
   })
 
   it('keeps the other templates as they were', async () => {
-    for (const template of TEMPLATES.filter(t => t !== NUT)) {
+    // The old templates stay on the server for challenges already running, so they are held too.
+    for (const template of (Object.keys(GRACE) as (keyof typeof GRACE)[]).filter(t => t !== NUT)) {
       const mode = template === 'weeks_on_target' ? 'solo' : 'team'
       const ends_on = addDays(TODAY, 13)
       const { max } = targetRange(template, TODAY, ends_on, mode, 1)
@@ -102,10 +102,10 @@ describe('nutrition challenge rules, client and server', () => {
 
 describe('training days challenge rules, client and server', () => {
   const asWorkouts = (over: Partial<NewChallenge>) =>
-    draft({ template: 'workouts_count', share_nutrition: false, ...over })
+    draft({ template: DAYS, share_nutrition: false, ...over })
   async function sameAsWorkouts(c: NewChallenge) {
     const problem = checkChallenge(c, TODAY)
-    expect(await serverSays(c, DAYS), JSON.stringify(c)).toBe(problem ? SERVER[problem] : 'ok')
+    expect(await serverSays(c), JSON.stringify(c)).toBe(problem ? SERVER[problem] : 'ok')
   }
 
   const shapes: [ChallengeMode, number, string[]][] = []
@@ -113,9 +113,9 @@ describe('training days challenge rules, client and server', () => {
     for (const days of [MIN_DAYS, 30, MAX_DAYS]) for (const invitees of [[B], [B, C]]) shapes.push([mode, days, invitees])
   }
 
-  it.each(shapes)('%s for %i days with %j: the goal range of workouts_count', async (mode, days, invitees) => {
+  it.each(shapes)('%s for %i days with %j: the goal range of checkin_days', async (mode, days, invitees) => {
     const ends_on = addDays(TODAY, days - 1)
-    const r = targetRange('workouts_count', TODAY, ends_on, mode, invitees.length)
+    const r = targetRange(DAYS, TODAY, ends_on, mode, invitees.length)
     for (const target of [r.min - 1, r.min, r.max, r.max + 1]) await sameAsWorkouts(asWorkouts({ mode, ends_on, invitees, target }))
   })
 
@@ -137,12 +137,12 @@ describe('training days challenge rules, client and server', () => {
 
 describe('when the result comes', () => {
   it('waits as many days as challenge_grace', async () => {
-    for (const template of TEMPLATES) {
+    // Every template the client knows, the old ones included.
+    for (const template of Object.keys(GRACE) as (keyof typeof GRACE)[]) {
       const [g] = await sql<{ n: number }>(db, 'select public.challenge_grace($1) as n', [template])
       expect(g.n, template).toBe(GRACE[template])
     }
-    const [g] = await sql<{ n: number }>(db, 'select public.challenge_grace($1) as n', [DAYS])
-    expect(g.n).toBe(GRACE.workouts_count)
+    expect(Object.keys(GRACE).sort()).toEqual([...TEMPLATES, 'workouts_count', 'volume_total'].sort())
   })
 
   it('closes on the day resultOn gives, in the creator time zone', async () => {

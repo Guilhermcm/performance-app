@@ -1,31 +1,38 @@
-import type { Challenge, ChallengeMode, ChallengeTemplate, NewChallenge } from './types'
+import type { Challenge, ChallengeMember, ChallengeMode, ChallengeTemplate, NewChallenge } from './types'
 
 // Challenge rules, the same ones public.create_challenge enforces (0004_social.sql, and
-// 0015_nutrition_challenge.sql for the nutrition template), so the form explains a problem before
-// the server refuses it. supabase/tests/challenge-rules-parity.test.ts runs both on the same cases.
+// 0015_nutrition_challenge.sql for the nutrition template, 0020_checkin_feed.sql for checkin_days), so
+// the form explains a problem before the server refuses it. supabase/tests/challenge-rules-parity.test.ts
+// runs both on the same cases.
 // Dates are local YYYY-MM-DD strings.
 
 export const MIN_DAYS = 7
 export const MAX_DAYS = 92
 export const MAX_INVITEES = 19
 export const DURATIONS = [7, 14, 30, 60, 90] as const
-export const TEMPLATES: readonly ChallengeTemplate[] = ['workouts_count', 'weeks_on_target', 'volume_total', 'nutrition_days_on_target']
+// What a person can create. workouts_count (now the same training days) and volume_total stay in
+// the types, MODES, GRACE and the detail screen for challenges that are already running.
+export const TEMPLATES: readonly ChallengeTemplate[] = ['checkin_days', 'weeks_on_target', 'nutrition_days_on_target']
 export const MODES: Record<ChallengeTemplate, readonly ChallengeMode[]> = {
+  checkin_days: ['team', 'solo'],
   workouts_count: ['team', 'solo'],
   weeks_on_target: ['solo'],
   volume_total: ['team', 'solo'],
   nutrition_days_on_target: ['team', 'solo']
 }
 export const TARGET_STEP: Record<ChallengeTemplate, number> = {
-  workouts_count: 1, weeks_on_target: 1, volume_total: 5, nutrition_days_on_target: 1
+  checkin_days: 1, workouts_count: 1, weeks_on_target: 1, volume_total: 5, nutrition_days_on_target: 1
 }
-const MAX_TARGET = { workouts_count: 500, volume_total: 5000 } as const
+const MAX_TARGET = { checkin_days: 500, workouts_count: 500, volume_total: 5000 } as const
 // public.challenge_grace: days past ends_on before a challenge closes. A nutrition day and a
 // training day are judged at the start of D+2 (0020_checkin_feed.sql), so the last day of a
 // challenge they pay needs two more. Volume comes from the workouts themselves.
 export const GRACE: Record<ChallengeTemplate, number> = {
-  workouts_count: 2, weeks_on_target: 2, volume_total: 0, nutrition_days_on_target: 2
+  checkin_days: 2, workouts_count: 2, weeks_on_target: 2, volume_total: 0, nutrition_days_on_target: 2
 }
+
+// The two templates that count training days (a day with a check-in, or an older workout).
+export const isTrainingDays = (template: ChallengeTemplate): boolean => template === 'checkin_days' || template === 'workouts_count'
 
 const DAY = 86_400_000
 const utc = (iso: string) => Date.parse(iso + 'T00:00:00Z')
@@ -56,7 +63,7 @@ export function suggestedTarget(template: ChallengeTemplate, mode: ChallengeMode
   const days = daysInclusive(startsOn, endsOn)
   const weeks = Math.max(1, Math.round(days / 7))
   const heads = mode === 'team' ? Math.max(1, people) : 1
-  const raw = template === 'workouts_count' ? weekly * weeks * heads
+  const raw = isTrainingDays(template) ? weekly * weeks * heads
     : template === 'weeks_on_target' ? weeksTouched(startsOn, endsOn) - 1
     : template === 'nutrition_days_on_target' ? Math.round((days * weekly) / 7) * heads
     : 5 * weeks * heads
@@ -84,6 +91,18 @@ export function checkChallenge(c: NewChallenge, today: string, { nutritionOn = f
     if (!c.share_nutrition) return 'nutrition'
   }
   return null
+}
+
+// The scoreboard: everyone who joined by progress, best first, people with the same number sharing a
+// position (1, 1, 3). The invited who have not joined come last, with no position.
+export function rankMembers(c: Pick<Challenge, 'members'>): { member: ChallengeMember; pos: number | null }[] {
+  const joined = c.members.filter(m => m.joined)
+  const score = (m: ChallengeMember) => m.progress ?? 0
+  const sorted = [...joined].sort((a, b) => score(b) - score(a))
+  return [
+    ...sorted.map(member => ({ member, pos: 1 + sorted.filter(o => score(o) > score(member)).length })),
+    ...c.members.filter(m => !m.joined).map(member => ({ member, pos: null }))
+  ]
 }
 
 // How far along, 0 to 1: the team's total, or my own progress in solo.

@@ -23,7 +23,9 @@ export type LeaderboardRow = Person & {
 }
 export type Leaderboard = { week_start: string; rows: LeaderboardRow[] }
 
-export type ChallengeTemplate = 'workouts_count' | 'weeks_on_target' | 'volume_total' | 'nutrition_days_on_target'
+// checkin_days is the one people create now; workouts_count (which counts the same training days) and
+// volume_total only live on in challenges made before it.
+export type ChallengeTemplate = 'checkin_days' | 'workouts_count' | 'weeks_on_target' | 'volume_total' | 'nutrition_days_on_target'
 export type ChallengeMode = 'team' | 'solo'
 export type ChallengeStatus = 'active' | 'won' | 'lost' | 'cancelled'
 export type ChallengeMember = Person & { me: boolean; joined: boolean; progress: number | null; won: boolean | null }

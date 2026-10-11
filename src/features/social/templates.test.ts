@@ -1,14 +1,14 @@
 import { describe, it, expect } from 'vitest'
 import {
-  GRACE, MODES, TEMPLATES, addDays, challengeShare, checkChallenge, daysInclusive, daysLeft, mondayOf, nextMonday,
-  canJoin, pendingInvites, resultOn, suggestedTarget, targetRange, weeksTouched
+  GRACE, MODES, TARGET_STEP, TEMPLATES, addDays, challengeShare, checkChallenge, daysInclusive, daysLeft, mondayOf, nextMonday,
+  canJoin, pendingInvites, rankMembers, resultOn, suggestedTarget, targetRange, weeksTouched
 } from './templates'
 import { challengeOf } from './test-social'
 import type { NewChallenge } from './types'
 
 const today = '2026-10-05'
 const draft = (over: Partial<NewChallenge> = {}): NewChallenge => ({
-  template: 'workouts_count', title: 'Outubro forte', mode: 'team', target: 6,
+  template: 'checkin_days', title: 'Outubro forte', mode: 'team', target: 6,
   starts_on: '2026-10-05', ends_on: '2026-10-18', invitees: ['b'], share_volume: false, share_nutrition: false, ...over
 })
 const NUT = 'nutrition_days_on_target' as const
@@ -60,13 +60,15 @@ describe('checkChallenge (mirror of create_challenge)', () => {
 describe('targets', () => {
   it('bounds weeks_on_target by the weeks the period touches', () => {
     expect(targetRange('weeks_on_target', '2026-10-05', '2026-11-03')).toEqual({ min: 1, max: 5 })
+    expect(targetRange('checkin_days', '2026-10-05', '2026-11-03')).toEqual({ min: 1, max: 500 })
     expect(targetRange('workouts_count', '2026-10-05', '2026-11-03')).toEqual({ min: 1, max: 500 })
     expect(targetRange('volume_total', '2026-10-05', '2026-11-03')).toEqual({ min: 1, max: 5000 })
   })
 
   it('suggests a goal from the weekly target, the period and the team', () => {
+    expect(suggestedTarget('checkin_days', 'team', '2026-10-05', '2026-11-03', 3, 2)).toBe(24)
+    expect(suggestedTarget('checkin_days', 'solo', '2026-10-05', '2026-11-03', 3, 2)).toBe(12)
     expect(suggestedTarget('workouts_count', 'team', '2026-10-05', '2026-11-03', 3, 2)).toBe(24)
-    expect(suggestedTarget('workouts_count', 'solo', '2026-10-05', '2026-11-03', 3, 2)).toBe(12)
     expect(suggestedTarget('weeks_on_target', 'solo', '2026-10-05', '2026-11-03', 3, 2)).toBe(4)
     expect(suggestedTarget('volume_total', 'team', '2026-10-05', '2026-11-03', 3, 2)).toBe(40)
   })
@@ -94,9 +96,42 @@ describe('progress helpers', () => {
     expect(canJoin(invite, '2026-10-19')).toBe(false)
   })
 
+  it('ranks the people who joined by progress, ties sharing a position, and leaves the invited last', () => {
+    const m = (id: string, progress: number | null, joined = true) => ({ id, name: id, avatar_url: null, me: id === 'me', joined, progress, won: null })
+    const ranked = rankMembers(challengeOf({ members: [m('a', 3), m('me', 5), m('b', 5), m('inv', null, false), m('z', 0)] }))
+    expect(ranked.map(r => [r.member.id, r.pos])).toEqual([['me', 1], ['b', 1], ['a', 3], ['z', 4], ['inv', null]])
+    expect(rankMembers(challengeOf({ members: [m('a', null), m('b', 2)] })).map(r => [r.member.id, r.pos])).toEqual([['b', 1], ['a', 2]])
+  })
+
   it('counts the last day as one day left', () => {
     expect(daysLeft(challengeOf(), '2026-10-18')).toBe(1)
     expect(daysLeft(challengeOf(), '2026-10-05')).toBe(14)
+  })
+})
+
+describe('checkin_days (training days)', () => {
+  it('is the template people create, for teams and for solo; the old ones are not offered', () => {
+    expect(TEMPLATES).toEqual(['checkin_days', 'weeks_on_target', 'nutrition_days_on_target'])
+    expect(TEMPLATES).not.toContain('workouts_count')
+    expect(TEMPLATES).not.toContain('volume_total')
+    expect(MODES.checkin_days).toEqual(['team', 'solo'])
+    // The old templates stay known, for the challenges already running.
+    expect(MODES.workouts_count).toEqual(['team', 'solo'])
+    expect(MODES.volume_total).toEqual(['team', 'solo'])
+  })
+
+  it('takes the goal range of workouts_count, as create_challenge does', () => {
+    expect(TARGET_STEP.checkin_days).toBe(1)
+    expect(checkChallenge(draft({ target: 1 }), today)).toBeNull()
+    expect(checkChallenge(draft({ target: 500 }), today)).toBeNull()
+    expect(checkChallenge(draft({ target: 501 }), today)).toBe('target')
+    expect(checkChallenge(draft({ target: 0 }), today)).toBe('target')
+    expect(checkChallenge(draft({ target: 2.5 }), today)).toBe('target')
+    expect(checkChallenge(draft({ mode: 'solo', target: 10 }), today)).toBeNull()
+  })
+
+  it('asks for neither opt-in nor the Nutrition pillar', () => {
+    expect(checkChallenge(draft({ share_volume: false, share_nutrition: false }), today, { nutritionOn: false })).toBeNull()
   })
 })
 
@@ -151,10 +186,11 @@ describe('nutrition_days_on_target', () => {
   })
 
   it('gives the result two days later for templates paid by closed days, as challenge_grace does', () => {
-    expect(GRACE).toEqual({ workouts_count: 2, weeks_on_target: 2, volume_total: 0, nutrition_days_on_target: 2 })
+    expect(GRACE).toEqual({ checkin_days: 2, workouts_count: 2, weeks_on_target: 2, volume_total: 0, nutrition_days_on_target: 2 })
     // ends_on 2026-10-18: its last day closes at the start of the 20th, the challenge on the 21st.
     expect(resultOn(challengeOf({ template: NUT }))).toBe('2026-10-21')
     expect(resultOn(challengeOf())).toBe('2026-10-21')
+    expect(resultOn(challengeOf({ template: 'checkin_days' }))).toBe('2026-10-21')
     expect(resultOn(challengeOf({ template: 'volume_total' }))).toBe('2026-10-19')
   })
 })

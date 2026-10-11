@@ -1,6 +1,7 @@
 import { Apple, Dumbbell, Target, Weight, type LucideIcon } from 'lucide-react'
 import { t, tn } from '../../lib/i18n.js'
 import { fmtDecimal } from './format'
+import { isTrainingDays } from './templates'
 import type { ChallengeMode, ChallengeTemplate, SocialErrorCode } from './types'
 
 // Every typed error of the social RPCs (Decision 4) as a sentence a person can act on.
@@ -32,8 +33,11 @@ export function socialErrorText(code: SocialErrorCode): string {
 
 // Functions, so each t() stays a literal scripts/check-source-strings.mjs can see and the text
 // follows the language picked at render time.
+const TRAINING_DAYS = { name: () => t('Training days'), rule: () => t('Days with a check-in in the period. Several on the same day count as one.'), icon: Dumbbell }
 export const TEMPLATE_TEXT: Record<ChallengeTemplate, { name: () => string; rule: () => string; icon: LucideIcon }> = {
-  workouts_count: { name: () => t('Workouts in the period'), rule: () => t('Every workout finished in the period counts.'), icon: Dumbbell },
+  checkin_days: TRAINING_DAYS,
+  // Made before the check-ins and counting the same days now, so it reads the same.
+  workouts_count: TRAINING_DAYS,
   weeks_on_target: { name: () => t('Weeks on target'), rule: () => t('Weeks in the period in which each person meets their own weekly goal.'), icon: Target },
   volume_total: { name: () => t('Total volume'), rule: () => t('Weight lifted in the period, in tonnes. Only people who agree share their volume.'), icon: Weight },
   nutrition_days_on_target: {
@@ -48,9 +52,9 @@ export const MODE_TEXT: Record<ChallengeMode, { name: () => string; detail: () =
   solo: { name: () => t('Solo'), detail: () => t('Each person has to reach the goal.') }
 }
 
-// "1 workout", "12 workouts", "3 weeks", "12.5 t", "21 days on target".
+// "1 training day", "12 training days", "3 weeks", "12.5 t", "21 days on target".
 export function amountText(template: ChallengeTemplate, n: number): string {
-  if (template === 'workouts_count') return n === 1 ? t('1 workout') : tn(n, '{0} workouts', n)
+  if (isTrainingDays(template)) return n === 1 ? t('1 training day') : tn(n, '{0} training days', n)
   if (template === 'weeks_on_target') return n === 1 ? t('1 week') : tn(n, '{0} weeks', n)
   if (template === 'nutrition_days_on_target') return n === 1 ? t('1 day on target') : tn(n, '{0} days on target', n)
   return t('{0} t', fmtDecimal(n))
@@ -58,7 +62,7 @@ export function amountText(template: ChallengeTemplate, n: number): string {
 
 // The name a new challenge gets until the person writes their own.
 export function autoTitle(template: ChallengeTemplate, target: number, days: number): string {
-  if (template === 'workouts_count') return t('{0} workouts in {1} days', target, days)
+  if (isTrainingDays(template)) return t('{0} training days in {1} days', target, days)
   if (template === 'weeks_on_target') return t('{0} weeks on target', target)
   if (template === 'nutrition_days_on_target') return t('{0} days on target in {1} days', target, days)
   return t('{0} t in {1} days', fmtDecimal(target), days)

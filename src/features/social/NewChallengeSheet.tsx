@@ -28,10 +28,12 @@ import type { ChallengeMode, ChallengeTemplate, NewChallenge } from './types'
 
 type Start = 'today' | 'monday'
 const NUTRITION: ChallengeTemplate = 'nutrition_days_on_target'
+const DEFAULT: ChallengeTemplate = 'checkin_days'
 
-// A challenge from a template with parameters, in one bottom sheet: what counts, format,
-// duration and start, goal (suggested until touched), who joins, the volume or nutrition opt-in and
-// a name that writes itself until edited. The same rules as the server decide whether it can be
+// A challenge from a template with parameters, in one bottom sheet: what counts (training days
+// first; the workouts and total volume templates are no longer offered), format, duration and
+// start, goal (suggested until touched), who joins, the nutrition opt-in and a name that writes
+// itself until edited. The same rules as the server decide whether it can be
 // sent. With the Nutrition pillar off, the nutrition template is listed off, with a way to turn the
 // pillar on (the same setup the Nutrition tab opens); once on, it is picked.
 export default function NewChallengeSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -41,14 +43,13 @@ export default function NewChallengeSheet({ open, onClose }: { open: boolean; on
   const nutritionOn = useProfile(s => s.profile?.nutrition_enabled ?? false)
   const weeklyDays = useProfile(s => s.profile?.nutrition_days_per_week ?? 5)
   const today = todayISO()
-  const [template, setTemplate] = useState<ChallengeTemplate>('workouts_count')
+  const [template, setTemplate] = useState<ChallengeTemplate>(DEFAULT)
   const [mode, setMode] = useState<ChallengeMode>('team')
   const [days, setDays] = useState<number>(30)
   const [start, setStart] = useState<Start>('today')
   const [picked, setPicked] = useState<string[]>([])
   const [target, setTarget] = useState<number | null>(null)
   const [title, setTitle] = useState<string | null>(null)
-  const [shareVolume, setShareVolume] = useState(false)
   const [shareNutrition, setShareNutrition] = useState(false)
   const [setupOpen, setSetupOpen] = useState(false)
   // Asked for the pillar from here: the nutrition template is picked once it is on.
@@ -57,8 +58,8 @@ export default function NewChallengeSheet({ open, onClose }: { open: boolean; on
 
   useEffect(() => {
     if (!open) return
-    setTemplate('workouts_count'); setMode('team'); setDays(30); setStart('today')
-    setPicked([]); setTarget(null); setTitle(null); setShareVolume(false); setShareNutrition(false)
+    setTemplate(DEFAULT); setMode('team'); setDays(30); setStart('today')
+    setPicked([]); setTarget(null); setTitle(null); setShareNutrition(false)
     setWantNutrition(false)
   }, [open])
   useEffect(() => {
@@ -77,13 +78,12 @@ export default function NewChallengeSheet({ open, onClose }: { open: boolean; on
   const name = title ?? autoTitle(template, goal, days)
   const draft: NewChallenge = {
     template, title: name, mode: effMode, target: goal, starts_on: startsOn, ends_on: endsOn,
-    invitees: picked, share_volume: shareVolume, share_nutrition: shareNutrition
+    invitees: picked, share_volume: false, share_nutrition: shareNutrition
   }
   const problem = checkChallenge(draft, today, { nutritionOn })
   // Why the button is off, shown before anyone taps it.
   const hint = problem === 'title' ? t('Give the challenge a name.')
     : problem === 'invitees' ? (friends.length === 0 ? t('Add a friend to create challenges.') : t('Pick at least one friend.'))
-    : problem === 'volume' ? t('Agree to share your volume to create this challenge.')
     : problem === 'nutrition_off' ? t('Turn on the Nutrition pillar to create this challenge.')
     : problem === 'nutrition' ? t('Agree to show your days on target to create this challenge.')
     : ''
@@ -157,16 +157,6 @@ export default function NewChallengeSheet({ open, onClose }: { open: boolean; on
               })}
             </div>
           </Field>
-
-          {template === 'volume_total' && (
-            <div className="flex items-start gap-3 rounded-2xl border border-border p-3">
-              <label htmlFor="share-volume" className="flex-1 cursor-pointer">
-                <span className="block text-[15px] font-medium">{t('Share my volume in this challenge')}</span>
-                <span className="block text-xs leading-snug text-muted-foreground">{t('People in this challenge see how many tonnes you lift. Never the load of each exercise.')}</span>
-              </label>
-              <Switch id="share-volume" checked={shareVolume} onCheckedChange={setShareVolume} />
-            </div>
-          )}
 
           {template === NUTRITION && (
             <div className="flex items-start gap-3 rounded-2xl border border-border p-3">

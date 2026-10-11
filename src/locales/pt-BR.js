@@ -1627,6 +1627,18 @@ export const PT_BR_OVERRIDES = {
   "{0}: 1 reaction": "{0}: 1 reação",
   "{0}: {1} reactions": "{0}: {1} reações",
   "{0}. See who reacted": "{0}. Ver quem reagiu",
+  "Training days": "Dias de treino",
+  "Days with a check-in in the period. Several on the same day count as one.": "Dias do período com check-in. Vários no mesmo dia contam como um.",
+  "1 training day": "1 dia de treino",
+  "{0} training days": "{0} dias de treino",
+  "{0} training days in {1} days": "{0} dias de treino em {1} dias",
+  "Scoreboard": "Placar",
+  "Position {0}": "Posição {0}",
+  "Position {0} of {1}": "Posição {0} de {1}",
+  "Check-ins": "Check-ins",
+  "Private check-in": "Check-in privado",
+  "No check-ins yet": "Nenhum check-in ainda",
+  "Check-ins from people in this challenge show up here.": "Os check-ins de quem está no desafio aparecem aqui.",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }
