@@ -30,7 +30,7 @@ combinada a partir de outubro de 2026: **1c → 1d → 3 → 4 → 5 → 6** (a 
 | 0 | Fundação | G | — | concluída |
 | 1a | Gamificação individual | M | 0 | concluída |
 | 1b | Social | M | 1a | concluída |
-| 1c | Check-in com foto e social | M | 1b | em execução, pausada: 3 de 11 tarefas (banco de check-ins, social e XP) ([spec](superpowers/specs/2026-10-06-checkin-social-design.md), [plano](superpowers/plans/2026-10-06-fase-1c-checkin.md)) |
+| 1c | Check-in com foto e social | M | 1b | concluída no código, aguarda SQL 0017-0020 em produção e merge do PR #4 ([spec](superpowers/specs/2026-10-06-checkin-social-design.md), [plano](superpowers/plans/2026-10-06-fase-1c-checkin.md)) |
 | 1d | Plano com evidência | M | 1c | a especificar |
 | 2 | Nutrição | G | 1a | concluída (2a e 2b) |
 | 3 | Sono | P | 1a | especificada, execução adiada ([spec](superpowers/specs/2026-10-06-fase-3-sono-design.md)) |
@@ -126,6 +126,17 @@ desafios.
 offline), veem e reagem aos posts uma da outra, completam um desafio de dias de treino, e a
 observação privada e a foto "Só eu" nunca aparecem para a outra conta (testado por RLS).
 
+**Status:** concluída no código, aguarda SQL 0017-0020 em produção e merge do PR #4. O roteiro de
+lançamento está em [docs/SETUP.md](SETUP.md): rodar `supabase/release/0017-0020_checkin.sql` e fazer
+o merge logo em seguida.
+
+**Pendências (depois do lançamento)**
+- Variante leve da foto (miniatura) para "Meus treinos" e para a Home: hoje as duas telas carregam
+  a foto inteira, de uns 400 KB.
+- Smoke manual da câmera no iPhone (Safari e app instalado) e no Android.
+- Fase 1d: normalizar a unidade dos pesos do detalhe antes de lê-los para o progresso dos
+  exercícios (o detalhe guarda a unidade de exibição, kg ou lb).
+
 ---
 
 ## Fase 1d — Plano com evidência
@@ -209,6 +220,10 @@ perfil, diário rápido, pilar Nutrição na gamificação.
 - Import CSV (formato Plees e genérico).
 - Eventos: `sleep_logged`, `night_on_target`. XP no molde padrão. Desafio: `sleep_nights_on_target`.
 - Acende o eixo Sono no radar de pilares da Home.
+- Migrations: as do Sono começam na `0021`, porque a 1c ocupa a `0017` a `0020`. Os `create or
+  replace` de `award_xp`, `close_weeks`, `challenge_progress`, `my_progress_extras`,
+  `create_challenge` e `join_challenge` precisam carregar os ramos de treino da 1c (dia com
+  check-in, desafio `checkin_days`, carência de 2 dias), senão a migration do Sono os desfaz.
 - Fora: rastreio por sensores/sonar (exige app nativo). Na spec, saíram também o botão
   "dormir/acordei" (registro só de manhã) e o import CSV.
 

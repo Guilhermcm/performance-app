@@ -385,3 +385,35 @@ Vira a Fase 1d do roadmap, "Plano com evidência": catálogo curado de programas
 da pessoa contra as recomendações, com sugestões, e progresso dos exercícios para quem detalha.
 As referências científicas aparecem num ícone ⓘ ao lado de cada recomendação, nunca no texto.
 Brainstorm próprio depois desta spec aprovada.
+
+## 13. Decisões do plano
+
+Rulings do controlador durante a execução do plano. Onde divergem do texto acima, valem estas.
+
+**Mudam o comportamento do produto**
+- **PR e pesagem deixam de pagar XP depois do corte.** O pilar Treino rende no máximo 960 XP por
+  semana, como na tabela do §5.1, que troca o PR (90) e a pesagem (70) por detalhado (90) e foto
+  (70). As conquistas de PR continuam. Quem pesava para ganhar XP perde os 70 por semana; dá para
+  reverter numa migration futura.
+- **Carência de 2 dias nos desafios de treino.** `checkin_days`, `workouts_count` e
+  `weeks_on_target` fecham em `ends_on + 2`. Os desafios `workouts_count` e `weeks_on_target` que já
+  existiam passam a fechar 2 dias depois e a contar dias de treino.
+- **O feed do desafio mostra como "Check-in privado" qualquer post que a pessoa não pode ver.** Vale
+  para "Só eu" e para "Amigos" quando quem olha não é amigo de quem postou. O dia continua contando
+  no placar.
+- **A câmera abre no toque do botão do centro.** Se o aparelho não abrir a câmera, a galeria é a
+  alternativa.
+- **Editar mora em "Meus treinos" e no próprio post.** Edita título, legenda, observação,
+  visibilidade e detalhe; dia, atividade e foto continuam imutáveis. A duração não é editável.
+
+**Decisões técnicas**
+- Migrations `0017` a `0020`, publicadas num arquivo único (`supabase/release/0017-0020_checkin.sql`)
+  que o SETUP manda rodar antes do merge. As migrations do Sono passam a começar na `0021`.
+- Data de corte: o dia em que a `0019` roda (`app_settings.training_checkin_since`). Antes dela,
+  `workout_completed` conta como dia de treino sem pagar XP de novo. Depois, não paga XP de dia.
+- A foto aceita a política de Storage mais estrita: o dono lê a própria pasta, o caminho tem de ser
+  `<user_id>/<checkin_id>.jpg|webp` e o balde aceita só JPEG e WebP de até 600 KiB.
+- O detalhe do treino guarda os pesos na unidade de exibição (kg ou lb). O servidor não lê os pesos;
+  a Fase 1d normaliza a unidade antes de usá-los no progresso dos exercícios.
+- Fotos usadas como miniatura nas listas são a foto inteira (~400 KB). Uma variante leve fica para
+  depois do lançamento.
