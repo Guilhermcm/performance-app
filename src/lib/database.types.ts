@@ -11,7 +11,7 @@ export interface Database {
           goal: 'hypertrophy' | 'strength' | 'fat_loss' | 'conditioning' | null
           level: 'beginner' | 'intermediate' | 'advanced' | null; days_per_week: number
           equipment: string[]; unit: 'kg' | 'lb'; locale: 'pt-BR' | 'en'; timezone: string
-          share_activity: boolean; created_at: string; updated_at: string
+          share_activity: boolean; checkin_visibility: 'friends' | 'private'; created_at: string; updated_at: string
           activity_level: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active' | null
           nutrition_pace: 'gentle' | 'standard'; nutrition_enabled: boolean; nutrition_days_per_week: number
         }

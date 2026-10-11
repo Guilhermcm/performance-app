@@ -2287,4 +2287,5 @@ export default {
   "Day, activity and photo": "दिन, गतिविधि और फ़ोटो",
   "Check-in saved.": "चेक-इन सेव हुआ।",
   "Could not save the check-in. Try again.": "चेक-इन सेव नहीं हो सका। फिर से कोशिश करें।",
+  "Show friends my workouts from before check-ins": "दोस्तों को चेक-इन से पहले के मेरे वर्कआउट दिखाएँ",
 }

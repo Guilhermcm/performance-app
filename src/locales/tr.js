@@ -2287,4 +2287,5 @@ export default {
   "Day, activity and photo": "Gün, aktivite ve fotoğraf",
   "Check-in saved.": "Check-in kaydedildi.",
   "Could not save the check-in. Try again.": "Check-in kaydedilemedi. Tekrar dene.",
+  "Show friends my workouts from before check-ins": "Check-in öncesi antrenmanlarımı arkadaşlarıma göster",
 }

@@ -99,7 +99,7 @@ function Panel() {
   const [caption, setCaption] = useState('')
   const [note, setNote] = useState('')
   const [yesterday, setYesterday] = useState(false)
-  const [visibility, setVisibility] = useState<CheckinVisibility>(() => (profile?.share_activity === false ? 'private' : 'friends'))
+  const [visibility, setVisibility] = useState<CheckinVisibility>(() => (profile?.checkin_visibility === 'private' ? 'private' : 'friends'))
   const [detail, setDetail] = useState<CheckinDetail | null>(opts.detail ?? null)
   const [detailOpen, setDetailOpen] = useState(false)
   const [busy, setBusy] = useState(false)

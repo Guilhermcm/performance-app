@@ -2290,4 +2290,5 @@ export default {
   "Day, activity and photo": "Nap, tevékenység és fotó",
   "Check-in saved.": "Check-in mentve.",
   "Could not save the check-in. Try again.": "Nem sikerült menteni a check-int. Próbáld újra.",
+  "Show friends my workouts from before check-ins": "A check-inek előtti edzéseim mutatása a barátoknak",
 }

@@ -16,6 +16,7 @@ import { useStore } from '../../store/useStore.js'
 import { todayISO } from '../../lib/format.js'
 import { useCheckins, type MyCheckin } from '../checkin/useCheckins'
 import { useProfile } from '../profile/useProfile'
+import { useProgress } from '../gamification/useProgress'
 import { TodayCard } from './TodayCard'
 
 const routines = [{ id: 'r1', name: 'Push', emoji: null, ex: [{ id: '0025' }] }]
@@ -156,6 +157,32 @@ describe('TodayCard with check-ins', () => {
     const wednesday = screen.getAllByRole('button').find(b => b.getAttribute('aria-label')?.startsWith('Wednesday 7'))!
     expect(wednesday.getAttribute('data-state')).toBe('done')
     expect(wednesday.getAttribute('aria-label')).toBe('Wednesday 7, Done')
+  })
+
+  // A day counts on the server by its check-in, or before the cutover by a workout (legacy day): a
+  // live workout after the cutover without a check-in is not a done day (final review, Minor 6).
+  const dayButton = (label: string) => screen.getAllByRole('button').find(b => b.getAttribute('aria-label')?.startsWith(label))!
+
+  it('does not mark a day with only a live workout as done', () => {
+    setS({ workouts: [{ id: 'w7', d: '2026-10-07', entries: [] }, { id: 'w5', d: '2026-10-05', entries: [] }] })
+    signedIn([row({ id: 'c8', day: '2026-10-08' })])
+    render(<TodayCard />)
+    expect(dayButton('Wednesday 7').getAttribute('data-state')).not.toBe('done')
+    expect(dayButton('Monday 5').getAttribute('data-state')).not.toBe('done')
+    expect(dayButton('Thursday 8').getAttribute('data-state')).toBe('done')
+  })
+
+  it('still marks a workout from before the cutover as done, as the server counts it', () => {
+    setS({ workouts: [{ id: 'w7', d: '2026-10-07', entries: [] }, { id: 'w5', d: '2026-10-05', entries: [] }] })
+    signedIn()
+    useProgress.setState({ progress: { training_since: '2026-10-06' } as never })
+    try {
+      render(<TodayCard />)
+      expect(dayButton('Monday 5').getAttribute('data-state')).toBe('done')
+      expect(dayButton('Wednesday 7').getAttribute('data-state')).not.toBe('done')
+    } finally {
+      useProgress.setState({ progress: null })
+    }
   })
 
   it('still resumes a workout in progress', () => {

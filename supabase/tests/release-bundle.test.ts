@@ -75,6 +75,10 @@ describe('release bundle 0017-0020', () => {
       `select (select count(*) from public.activity_events where user_id = $1)::int
             + (select count(*) from public.challenges where created_by = $1)::int as n`, [U])
     expect(kept.rows[0].n).toBe(2)
+    // An existing profile starts its check-ins on Friends and keeps its old sharing choice as it was.
+    const profile = await db.query<{ checkin_visibility: string; share_activity: boolean }>(
+      'select checkin_visibility, share_activity from public.profiles where id = $1', [U])
+    expect(profile.rows).toEqual([{ checkin_visibility: 'friends', share_activity: false }])
     await db.close()
   })
 })

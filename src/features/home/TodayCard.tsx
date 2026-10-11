@@ -15,6 +15,7 @@ import { openCheckinCamera, type OpenCheckinOptions } from '../checkin/open-chec
 import { useCheckinPhoto } from '../checkin/photo-src'
 import { detailOfWorkout } from '../checkin/ingest'
 import { useProfile } from '../profile/useProfile'
+import { useProgress } from '../gamification/useProgress'
 import { useToday } from '../nutrition/use-today'
 
 type HomeStore = { S: Record<string, any> }
@@ -41,6 +42,8 @@ export function TodayCard() {
   // The check-in store is bound once a signed-in account has its profile (App.jsx).
   const checkins = useCheckins(s => (s.userId ? s.mine : null))
   const tz = useProfile(s => s.profile?.timezone)
+  // The check-in cutover, once the progress has loaded: before it, a workout made the day count.
+  const since = useProgress(s => s.progress?.training_since ?? null)
   const zoned = useToday(tz)
 
   // "Today" is the profile's day for check-ins, the device's for the legacy row.
@@ -63,7 +66,11 @@ export function TodayCard() {
   wkEnd.setDate(wkStart.getDate() + 6)
   const month = (d: Date) => d.toLocaleDateString(dateLocale(), { month: 'short' })
   const wkLabel = weekOffset === 0 ? t('This week') : `${wkStart.getDate()} ${month(wkStart)} – ${wkEnd.getDate()} ${month(wkEnd)}`
-  const doneDays = new Set<string>([...S.workouts.map((w: any) => w.d), ...(checkins ?? []).map(c => c.day)])
+  // Done is what the server counts. With check-ins, that is a day with one, or a workout before the
+  // cutover (a legacy day); a live workout after it, without a check-in, does not count.
+  const doneDays = new Set<string>(checkins
+    ? [...checkins.map(c => c.day), ...(since ? S.workouts.map((w: any) => w.d).filter((d: string) => d < since) : [])]
+    : S.workouts.map((w: any) => w.d))
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(wkStart)
     d.setDate(wkStart.getDate() + i)

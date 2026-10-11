@@ -1668,6 +1668,7 @@ export const PT_BR_OVERRIDES = {
   "Day, activity and photo": "Dia, atividade e foto",
   "Check-in saved.": "Check-in salvo.",
   "Could not save the check-in. Try again.": "Não deu para salvar o check-in. Tente de novo.",
+  "Show friends my workouts from before check-ins": "Mostrar aos amigos meus treinos de antes dos check-ins",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

@@ -2340,4 +2340,5 @@ export default {
   "Day, activity and photo": "اليوم والنشاط والصورة",
   "Check-in saved.": "تم حفظ التسجيل.",
   "Could not save the check-in. Try again.": "تعذّر حفظ التسجيل. حاول مرة أخرى.",
+  "Show friends my workouts from before check-ins": "إظهار تماريني التي سبقت التسجيلات للأصدقاء",
 }

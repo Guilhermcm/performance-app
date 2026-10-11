@@ -60,7 +60,8 @@ export default function ProfileScreen() {
   const [busy, setBusy] = useState(false)
   const [leaving, setLeaving] = useState(false)
   const [setupOpen, setSetupOpen] = useState(false)
-  // The feed sends people here to check their sharing: bring the chosen visibility into view and focus it.
+  // A link here with focus 'share_activity' (the old feed's sharing banner) brings the switch for the
+  // old workouts into view and focuses it.
   const focus = (useLocation().state as { focus?: string } | null)?.focus
   const ready = !!profile
   useEffect(() => {
@@ -153,6 +154,11 @@ export default function ProfileScreen() {
     try { await save({ share_activity: on }) } catch { toast(t('Could not save. Your previous values were kept.')) }
   }
 
+  const setVisibility = async (to: Profile['checkin_visibility']) => {
+    if (profile.checkin_visibility === to) return
+    try { await save({ checkin_visibility: to }) } catch { toast(t('Could not save. Your previous values were kept.')) }
+  }
+
   const leave = async (force = false) => {
     setLeaving(true)
     try {
@@ -231,18 +237,28 @@ export default function ProfileScreen() {
         <NutritionCard profile={profile} onToggle={toggleNutrition} onEdit={() => setSetupOpen(true)} />
         <NutritionSetup open={setupOpen} onOpenChange={setSetupOpen} />
 
-        {/* share_activity is the default visibility of a new check-in (spec 4.6): true is Friends. */}
+        {/* checkin_visibility is where a new check-in's form starts (spec 4.6); each post picks its own. */}
         <section data-slot="card" aria-labelledby="sec-visibility" className="flex flex-col gap-3 rounded-2xl border border-border bg-card px-5 pb-5 pt-4">
           <div className="flex flex-col gap-0.5">
             <h2 id="sec-visibility" className="text-[15px] font-semibold leading-snug">{t('Default check-in visibility')}</h2>
             <p id="sec-visibility-hint" className="text-sm leading-snug text-muted-foreground">{t('You can change it on each check-in. Private notes and loads stay with you.')}</p>
           </div>
           <div role="radiogroup" aria-labelledby="sec-visibility" aria-describedby="sec-visibility-hint" className="grid grid-cols-2 gap-2">
-            <Choice id={profile.share_activity ? 'share_activity' : undefined} on={profile.share_activity}
-              onClick={() => { if (!profile.share_activity) void toggleShare(true) }} icon={<Users aria-hidden className="size-4" />}>{t('Friends')}</Choice>
-            <Choice id={profile.share_activity ? undefined : 'share_activity'} on={!profile.share_activity}
-              onClick={() => { if (profile.share_activity) void toggleShare(false) }} icon={<Lock aria-hidden className="size-4" />}>{t('Only me')}</Choice>
+            <Choice on={profile.checkin_visibility !== 'private'}
+              onClick={() => void setVisibility('friends')} icon={<Users aria-hidden className="size-4" />}>{t('Friends')}</Choice>
+            <Choice on={profile.checkin_visibility === 'private'}
+              onClick={() => void setVisibility('private')} icon={<Lock aria-hidden className="size-4" />}>{t('Only me')}</Choice>
           </div>
+        </section>
+
+        {/* share_activity keeps its first meaning: friends see the workouts from before the check-ins,
+            as the old feed items (get_feed, and the legacy branch of get_checkin_feed). */}
+        <section data-slot="card" className="flex items-center gap-4 rounded-2xl border border-border bg-card py-2 pl-5 pr-4">
+          <label htmlFor="share_activity" className="flex min-h-12 flex-1 cursor-pointer flex-col justify-center gap-0.5 py-2 text-left">
+            <span className="text-sm font-medium leading-snug">{t('Show friends my workouts from before check-ins')}</span>
+            <span className="text-sm leading-snug text-muted-foreground">{t('Weight, diet and loads stay private.')}</span>
+          </label>
+          <Switch id="share_activity" className="relative after:absolute after:-inset-3" checked={profile.share_activity} onCheckedChange={toggleShare} />
         </section>
 
         <Button variant="outline" className="mt-3 h-12 gap-2 rounded-xl text-base" disabled={leaving} onClick={() => leave()}>
@@ -349,9 +365,9 @@ function NutritionCard({ profile, onToggle, onEdit }: { profile: Profile; onTogg
 }
 
 // One of the two visibilities: a radio with an icon and a word, never colour alone.
-function Choice({ id, on, onClick, icon, children }: { id?: string; on: boolean; onClick: () => void; icon: ReactNode; children: ReactNode }) {
+function Choice({ on, onClick, icon, children }: { on: boolean; onClick: () => void; icon: ReactNode; children: ReactNode }) {
   return (
-    <button id={id} type="button" role="radio" aria-checked={on} onClick={onClick}
+    <button type="button" role="radio" aria-checked={on} onClick={onClick}
       className={cn('flex min-h-12 items-center justify-center gap-2 rounded-2xl border px-3 text-[15px] font-medium outline-none transition-colors duration-150 focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-reduce:transition-none',
         on ? 'border-primary bg-primary/10 text-foreground' : 'border-border bg-card text-muted-foreground')}>
       {icon}{children}

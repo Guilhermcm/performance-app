@@ -30,9 +30,9 @@ const radio = (name: string) => screen.getByRole('radio', { name })
 const titleField = () => screen.getByLabelText('Title') as HTMLInputElement
 const settle = () => act(async () => { await Promise.resolve(); await Promise.resolve(); await Promise.resolve() })
 
-function setup({ week = { 6: ['r1', 'r2'] } as Record<number, string[]>, share = true, workouts = [] as unknown[] } = {}) {
+function setup({ week = { 6: ['r1', 'r2'] } as Record<number, string[]>, visibility = 'friends', share = false, workouts = [] as unknown[] } = {}) {
   useStore.setState({ S: { ...JSON.parse(JSON.stringify(DEF)), unit: 'kg', routines: [PUSH, LEGS], week, dayPlan: {}, workouts, exWeights: {} }, user: { id: ME } })
-  useProfile.setState({ profile: { id: ME, timezone: 'America/Sao_Paulo', share_activity: share } as never })
+  useProfile.setState({ profile: { id: ME, timezone: 'America/Sao_Paulo', checkin_visibility: visibility, share_activity: share } as never })
   render(<CheckinFlow />)
 }
 const open = (opts?: Parameters<typeof openCheckin>[0]) => act(() => openCheckin(opts))
@@ -171,8 +171,18 @@ describe('the check-in panel', () => {
     expect(post.mock.calls[0][0].day).toBe('2026-10-09')
   })
 
-  it('starts on the profile’s default visibility', async () => {
+  it('starts on Friends by default, with the old workouts sharing off', async () => {
     setup({ share: false })
+    open(); pickPhoto()
+    expect(radio('Friends').getAttribute('aria-checked')).toBe('true')
+    expect(radio('Only me').getAttribute('aria-checked')).toBe('false')
+    fireEvent.click(postButton()!)
+    await settle()
+    expect(post.mock.calls[0][0].visibility).toBe('friends')
+  })
+
+  it('starts on Only me when the profile says private, whatever share_activity says', async () => {
+    setup({ visibility: 'private', share: true })
     open(); pickPhoto()
     expect(radio('Only me').getAttribute('aria-checked')).toBe('true')
     expect(radio('Friends').getAttribute('aria-checked')).toBe('false')

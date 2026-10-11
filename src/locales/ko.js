@@ -2287,4 +2287,5 @@ export default {
   "Day, activity and photo": "날짜, 활동, 사진",
   "Check-in saved.": "체크인을 저장했어요.",
   "Could not save the check-in. Try again.": "체크인을 저장하지 못했어요. 다시 시도하세요.",
+  "Show friends my workouts from before check-ins": "체크인 이전 운동을 친구에게 보여주기",
 }

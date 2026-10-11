@@ -2287,4 +2287,5 @@ export default {
   "Day, activity and photo": "Dia, atividade e foto",
   "Check-in saved.": "Check-in guardado.",
   "Could not save the check-in. Try again.": "Não foi possível guardar o check-in. Tenta de novo.",
+  "Show friends my workouts from before check-ins": "Mostrar aos amigos os meus treinos de antes dos check-ins",
 }

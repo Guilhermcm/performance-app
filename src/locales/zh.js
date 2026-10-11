@@ -2287,4 +2287,5 @@ export default {
   "Day, activity and photo": "日期、活动和照片",
   "Check-in saved.": "打卡已保存。",
   "Could not save the check-in. Try again.": "无法保存打卡，请重试。",
+  "Show friends my workouts from before check-ins": "向好友显示打卡之前的训练",
 }

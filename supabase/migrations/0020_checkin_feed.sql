@@ -15,10 +15,22 @@
 --   achievement_stats    a legacy workout on a day its check-in paid is not counted again (Minor 2).
 --   checkins_guard       refuses a closed day and locks per person and day (Minor 4 and 5).
 --   notify_checkin_social  no new reaction notice while one from the same person is unread (Minor 6).
+--   checkin_visibility   new profile column: where the post form starts (spec 4.6). share_activity
+--                        keeps its first meaning, friends see my workouts from before the cutover.
 --
 -- Every redefined body is its latest one (challenge_progress, award_xp, achievement_stats: 0019;
 -- create_challenge, close_challenge: 0015; checkins_guard: 0017; notify_checkin_social: 0018) with
 -- only the parts above changed. No signature changes.
+
+-- Default check-in visibility --------------------------------------------------------------------
+-- Where a new check-in's form starts; each post still picks its own. Friends by default (spec 1),
+-- not copied from share_activity: that one stays the consent for the old workout items in the
+-- feed (get_feed, and the legacy branch of get_checkin_feed below). The owner writes it through the
+-- table grant and profiles_update_own of 0001, like share_activity.
+
+alter table public.profiles
+  add column checkin_visibility text not null default 'friends'
+    check (checkin_visibility in ('friends', 'private'));
 
 -- Training days challenge ------------------------------------------------------------------------
 
