@@ -47,7 +47,8 @@ export default function ChallengeFeed({ id }: { id: string }) {
     try {
       const page = await fetchChallengeFeed(id, s.next)
       if (current.current !== id) return
-      setS(p => ({ ...p, items: [...p.items, ...page.items], next: page.next }))
+      // The cursor should not repeat a post, but one that arrives twice shows once.
+      setS(p => ({ ...p, items: [...p.items, ...page.items.filter(i => !p.items.some(x => x.key === i.key))], next: page.next }))
     } catch (e) {
       if (current.current === id) toast.error(socialErrorText(toSocialError(e).code))
     } finally {

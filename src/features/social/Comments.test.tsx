@@ -97,6 +97,25 @@ describe('CommentsSheet', () => {
     expect(postView(item).comments_count).toBe(1)
   })
 
+  it('keeps both comments deleted when two deletes finish out of order', async () => {
+    const item = checkinItemOf('c1', { comments_count: 3 })
+    api.fetchCheckin.mockResolvedValue(viewOf({ comments: [
+      commentOf(1, { user: ana, body: 'Um', can_delete: true }), commentOf(2, { user: ana, body: 'Dois', can_delete: true }), commentOf(3, { user: caio, body: 'Três' })
+    ] }))
+    const done: Array<() => void> = []
+    api.deleteComment.mockImplementation(() => new Promise<void>(r => { done.push(r) }))
+    render(<CommentsSheet id="c1" item={item} onClose={vi.fn()} />)
+    await settle()
+    const [first, second] = screen.getAllByRole('button', { name: 'Delete comment' })
+    fireEvent.click(first); fireEvent.click(second)
+    await act(async () => { done[0]() })
+    await act(async () => { done[1]() })
+    expect(screen.queryByText('Um')).toBeNull()
+    expect(screen.queryByText('Dois')).toBeNull()
+    expect(screen.getByText('Três')).toBeTruthy()
+    expect(postView(item).comments_count).toBe(1)
+  })
+
   it('on my own post, deletes anyone’s comment', async () => {
     api.fetchCheckin.mockResolvedValue(viewOf({ user: ana, comments: [commentOf(1, { user: caio, body: 'Bora!', can_delete: true })] }))
     render(<CommentsSheet id="c1" onClose={vi.fn()} />)

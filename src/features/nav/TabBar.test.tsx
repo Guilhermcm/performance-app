@@ -48,6 +48,16 @@ describe('TabBar', () => {
     } finally { registerCheckinCamera(null) }
   })
 
+  it('has no check-in button without a signed-in account, since the panel is not mounted for it', () => {
+    useStore.setState({ user: null })
+    localStorage.setItem('gym_guest', '1')
+    try {
+      render(<TabBar />)
+      expect(screen.queryByRole('button', { name: /^Check-in$/ })).toBeNull()
+      expect(screen.getAllByRole('button').map(b => b.textContent)).toEqual(['Home', 'Plan', 'Nutrition', 'Social'])
+    } finally { localStorage.removeItem('gym_guest') }
+  })
+
   it('no longer turns into Resume during a workout: the Plan has it', () => {
     useStore.setState({ S: { ...useStore.getState().S, active: { id: 'a', name: 'Push', entries: [], cur: 0 } } })
     render(<TabBar />)

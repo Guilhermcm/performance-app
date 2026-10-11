@@ -24,6 +24,8 @@ vi.mock('./ingest', () => ingest)
 import { useCheckins, droppedMessages, startCheckinSync, type CheckinInput } from './useCheckins'
 import { flushCheckins, memoryOutboxBackend, pendingCheckins, setCheckinOutboxBackend } from './outbox'
 import { useProfile } from '../profile/useProfile'
+import { useCheckinFlow } from './open-checkin'
+import { usePostOverlay } from '../social/post-state'
 import type { Profile } from '../profile/types'
 import type { CheckinRow } from './types'
 import type { CheckinFeedItem, SocialNotice } from '../social/types'
@@ -353,6 +355,14 @@ describe('accounts', () => {
     S().reset()
     expect(S()).toMatchObject({ userId: null, mine: [], today: [], feed: [], notices: [], unread: 0, dropped: [] })
     expect((await pendingCheckins(ME)).map(o => o.id)).toEqual([id])
+  })
+
+  it('reset also closes the check-in panel and drops my reactions overlay, so the next account starts clean', () => {
+    useCheckinFlow.setState({ open: true, seq: 3, opts: { routineId: 'r1', fromWorkout: 'w1' }, photo: new File([new Uint8Array(4)], 'a.jpg') })
+    usePostOverlay.setState({ by: { 'checkin:c1': { reactions: [{ emoji: '💪', count: 1, mine: true }], comments_count: 0, from: '[]' } } })
+    S().reset()
+    expect(useCheckinFlow.getState()).toMatchObject({ open: false, opts: {}, photo: null })
+    expect(usePostOverlay.getState().by).toEqual({})
   })
 
   it('still loads my check-ins when sending the queue throws', async () => {

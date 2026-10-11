@@ -10,6 +10,7 @@ import { t } from '../../lib/i18n.js'
 import { todayISO } from '../../lib/format.js'
 import { useProgress } from '../gamification/useProgress'
 import { useProfile } from '../profile/useProfile'
+import { useCheckins } from '../checkin/useCheckins'
 import NutritionSetup from '../nutrition/NutritionSetup'
 import { joinChallenge, leaveChallenge, toSocialError } from './social-api'
 import { useSocial } from './useSocial'
@@ -51,6 +52,8 @@ export default function ChallengeDetail() {
       toast.success(done)
       await useSocial.getState().load('challenges')
       void useProgress.getState().refresh()
+      // The accepted (or declined) invite stops counting on the Social tab.
+      void useCheckins.getState().loadNotices()
       after?.()
     } catch (e) {
       toast.error(socialErrorText(toSocialError(e).code))

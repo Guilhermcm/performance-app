@@ -131,10 +131,11 @@ function Panel() {
     if (file) setCheckinPhoto(file)
   }
   const dropPhoto = () => setCheckinPhoto(null)
+  // The select is locked for a live workout, whose detail is its own; so this only runs without one.
   const changeRoutine = (id: string) => {
     setRoutineId(id)
     // The sets of one routine say nothing about another.
-    if (!live) setDetail(null)
+    setDetail(null)
   }
 
   const submit = async () => {
@@ -201,7 +202,7 @@ function Panel() {
             {strength && routines.length > 0 && (
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="checkin-routine" className="text-sm font-semibold">{t('Routine')}</label>
-                <select id="checkin-routine" value={routineId} onChange={e => changeRoutine(e.target.value)}
+                <select id="checkin-routine" value={routineId} disabled={!!live} onChange={e => changeRoutine(e.target.value)}
                   className="h-12 w-full rounded-md border border-input bg-transparent px-3 text-[15px] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30">
                   <option value="">{t('No routine')}</option>
                   {order.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}

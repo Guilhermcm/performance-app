@@ -30,9 +30,12 @@ export default function FeedPanel() {
   const next = useCheckins(s => s.feedNext)
   const status = useCheckins(s => s.feedStatus)
   const stale = useCheckins(s => s.feedStale)
+  const userId = useCheckins(s => s.userId)
   const [busy, setBusy] = useState(false)
   const [open, setOpen] = useState<CheckinFeedItem | null>(null)
-  useEffect(() => { void useCheckins.getState().loadFeed() }, [])
+  // On a cold start this panel mounts before the store is bound to the account (App.jsx), so it asks
+  // again once there is one.
+  useEffect(() => { if (userId) void useCheckins.getState().loadFeed() }, [userId])
   const empty = feed.length === 0
 
   const more = async () => {

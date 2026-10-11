@@ -62,10 +62,13 @@ export default function TabBar() {
     <nav id="tabbar">
       <Tab active={on('home')} glyph={<Icon name="house" />} label={t('Home')} onClick={() => nav('/home')} />
       <Tab active={on('plan')} glyph={<Icon name="calendar" />} label={t('Plan')} onClick={() => nav('/plan')} />
-      <button className={'start' + (checkingIn ? ' on' : '')} aria-haspopup="dialog" onClick={() => openCheckinCamera()}>
-        <span className="cir"><Camera className="icn" width="1em" height="1em" strokeWidth={2} aria-hidden /></span>
-        <span>{t('Check-in')}</span>
-      </button>
+      {/* The panel is mounted for a signed-in account only (App.jsx): for a guest there is nothing to open. */}
+      {!!user && (
+        <button className={'start' + (checkingIn ? ' on' : '')} aria-haspopup="dialog" onClick={() => openCheckinCamera()}>
+          <span className="cir"><Camera className="icn" width="1em" height="1em" strokeWidth={2} aria-hidden /></span>
+          <span>{t('Check-in')}</span>
+        </button>
+      )}
       <Tab active={on('nutrition')} label={t('Nutrition')} onClick={() => nav('/nutricao')}
         glyph={<Apple className="icn" width="1em" height="1em" strokeWidth={on('nutrition') ? 2 : 1.65} aria-hidden />} />
       <Tab active={on('social')} label={t('Social')} count={unread} onClick={() => nav('/social')}

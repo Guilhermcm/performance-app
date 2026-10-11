@@ -5,7 +5,7 @@ import { render, screen, fireEvent, cleanup, act, within, waitFor } from '@testi
 const h = vi.hoisted(() => ({ toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }) }))
 vi.mock('sonner', () => ({ toast: h.toast }))
 vi.mock('@/components/ui/drawer', () => import('./test-drawer'))
-const api = vi.hoisted(() => ({ signedUrls: vi.fn(), react: vi.fn(), fetchCheckin: vi.fn() }))
+const api = vi.hoisted(() => ({ signedUrls: vi.fn(), forgetSignedUrl: vi.fn(), react: vi.fn(), fetchCheckin: vi.fn() }))
 vi.mock('../checkin/checkin-api', async orig => ({ ...(await orig<typeof import('../checkin/checkin-api')>()), ...api }))
 
 import { PostCard, PostSkeleton } from './PostCard'
@@ -29,6 +29,7 @@ beforeEach(() => {
   useCheckins.setState({ userId: ME, hide })
   api.signedUrls.mockReset().mockImplementation(async (paths: string[]) => Object.fromEntries(paths.map(p => [p, 'https://cdn.test/' + p])))
   api.react.mockReset().mockResolvedValue(undefined)
+  api.forgetSignedUrl.mockReset()
   hide.mockReset().mockResolvedValue(undefined)
   h.toast.mockReset(); h.toast.success.mockReset(); h.toast.error.mockReset()
 })
@@ -84,6 +85,19 @@ describe('PostCard', () => {
     expect(screen.getByRole('img', { name: 'Photo by Bia: Musculação · Push' })).toBeTruthy()
   })
 
+  it('asks for a new link when a photo that had one fails to show, not the cached one', async () => {
+    render(<PostCard item={checkinItemOf('c1')} onOpen={vi.fn()} />)
+    await settle()
+    fireEvent.error(screen.getByRole('img', { name: 'Photo by Bia: Musculação · Push' }))
+    expect(screen.getByText('Couldn’t load the photo.')).toBeTruthy()
+    expect(api.forgetSignedUrl).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+    expect(api.forgetSignedUrl).toHaveBeenCalledWith(`${BIA}/c1.jpg`)
+    await settle()
+    expect(api.signedUrls).toHaveBeenCalledTimes(2)
+    expect(screen.getByRole('img', { name: 'Photo by Bia: Musculação · Push' })).toBeTruthy()
+  })
+
   it('marks my own private post with a lock and the words, and offers no hide on it', () => {
     render(<PostCard item={checkinItemOf('c1', { user: { id: ME, name: 'Ana', avatar_url: null }, visibility: 'private' })} onOpen={vi.fn()} />)
     const lock = screen.getByText('Only me')
@@ -104,6 +118,25 @@ describe('PostCard', () => {
     await settle()
     expect(api.react).toHaveBeenLastCalledWith('c1', '💪', false)
     expect(screen.queryByRole('button', { name: /^💪: 1 reaction/ })).toBeNull()
+  })
+
+  it('ignores a second toggle of an emoji while its request is out, so a failure puts back the right state', async () => {
+    let fail!: (e: unknown) => void
+    api.react.mockReturnValueOnce(new Promise((_, no) => { fail = no }))
+    render(<PostCard item={checkinItemOf('c1')} onOpen={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: 'React with 💪' }))
+    expect(screen.getByRole('button', { name: '💪: 1 reaction. See who reacted' })).toBeTruthy()
+    fireEvent.click(photo()); fireEvent.click(photo())
+    await settle()
+    expect(api.react).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('button', { name: '💪: 1 reaction. See who reacted' })).toBeTruthy()
+    await act(async () => { fail(new SocialError('network')) })
+    expect(screen.queryByRole('button', { name: /^💪: 1 reaction/ })).toBeNull()
+    // Once it has settled, the emoji can be toggled again.
+    fireEvent.click(screen.getByRole('button', { name: 'React with 💪' }))
+    await settle()
+    expect(api.react).toHaveBeenCalledTimes(2)
+    expect(api.react).toHaveBeenLastCalledWith('c1', '💪', true)
   })
 
   it('has a 💪 button that does what the double tap does', async () => {

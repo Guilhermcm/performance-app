@@ -95,6 +95,17 @@ describe('ChallengeFeed', () => {
     expect(screen.queryByRole('button', { name: 'Load more' })).toBeNull()
   })
 
+  it('does not repeat a post the next page sends again', async () => {
+    const next = { before: '2026-10-10T12:00:00Z', before_key: 'checkin:p1' }
+    api.fetchChallengeFeed.mockResolvedValueOnce(page([post('p1')], next)).mockResolvedValueOnce(page([post('p1'), post('p2', { title: 'Corrida' })]))
+    render(<ChallengeFeed id="c1" />)
+    await settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Load more' }))
+    await settle()
+    expect(screen.getAllByRole('article')).toHaveLength(2)
+    expect(screen.getAllByRole('heading').map(h => h.textContent)).toEqual(['Musculação · Push', 'Corrida'])
+  })
+
   it('has a starting point when nobody checked in yet', async () => {
     api.fetchChallengeFeed.mockResolvedValue(page([]))
     render(<ChallengeFeed id="c1" />)

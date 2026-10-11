@@ -19,6 +19,7 @@ vi.mock('../nutrition/NutritionSetup', async () => {
 import ChallengeDetail from './ChallengeDetail'
 import { useSocial } from './useSocial'
 import { useProfile } from '../profile/useProfile'
+import { useCheckins } from '../checkin/useCheckins'
 import { SocialError } from './social-api'
 import { addDays } from './templates'
 import { fmtShortDay } from './format'
@@ -195,6 +196,19 @@ describe('ChallengeDetail', () => {
     expect(h.join).toHaveBeenCalledWith('c1', { shareVolume: false, shareNutrition: false })
     expect(load).toHaveBeenCalledWith('challenges')
     expect(h.refresh).toHaveBeenCalled()
+  })
+
+  it('refreshes the Social tab counter after joining, so the accepted invite stops counting', async () => {
+    const loadNotices = vi.fn(async () => {})
+    const real = useCheckins.getState().loadNotices
+    useCheckins.setState({ loadNotices })
+    try {
+      show([invited()])
+      render(<ChallengeDetail />)
+      fireEvent.click(screen.getByRole('button', { name: 'Join challenge' }))
+      await waitFor(() => expect(h.toast.success).toHaveBeenCalledWith('You joined the challenge'))
+      expect(loadNotices).toHaveBeenCalled()
+    } finally { useCheckins.setState({ loadNotices: real }) }
   })
 
   it('lets an invited person decline', async () => {

@@ -22,13 +22,21 @@ const GROUPS: { key: string; label: () => string; emojis: string[] }[] = [
 const MAX_BYTES = 16
 const PICTOGRAPH = /\p{Extended_Pictographic}|\p{Regional_Indicator}|⃣/u
 
+// One emoji as a pattern, for browsers without Intl.Segmenter (Firefox before 125): a flag, a keycap,
+// or a pictograph with its skin tone and variation marks, joined to others by ZWJ, with tag marks.
+const MARKS = '[\\u{1F3FB}-\\u{1F3FF}\\uFE0E\\uFE0F]*'
+const ONE_EMOJI = new RegExp(
+  `^(?:\\p{Regional_Indicator}{2}|[#*0-9]\\uFE0F?\\u20E3|\\p{Extended_Pictographic}${MARKS}(?:\\u200D\\p{Extended_Pictographic}${MARKS})*[\\u{E0020}-\\u{E007F}]*)$`, 'u')
+
 // Whether a pasted text is one emoji the server takes: one grapheme (a skin tone, a flag or a
 // keycap is still one), that is an emoji, and fits in 16 bytes.
 export function emojiProblem(text: string): null | 'not_one' | 'too_long' {
   const s = text.trim()
   if (!s) return 'not_one'
-  const parts = [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(s)]
-  if (parts.length !== 1 || !PICTOGRAPH.test(s)) return 'not_one'
+  const one = typeof Intl.Segmenter === 'function'
+    ? [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(s)].length === 1 && PICTOGRAPH.test(s)
+    : ONE_EMOJI.test(s)
+  if (!one) return 'not_one'
   return new TextEncoder().encode(s).length > MAX_BYTES ? 'too_long' : null
 }
 

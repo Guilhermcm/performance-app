@@ -6,6 +6,8 @@ import * as api from './checkin-api'
 import { enqueueCheckin, flushCheckins, pendingCheckins, type CheckinOp } from './outbox'
 import { preparePhoto } from './photo'
 import { dropCheckinWorkout } from './ingest'
+import { useCheckinFlow } from './open-checkin'
+import { usePostOverlay } from '../social/post-state'
 import { useProfile } from '../profile/useProfile'
 import { shiftDay, todayIn } from '../nutrition/days'
 import type { CheckinActivity, CheckinDetail, CheckinRow, CheckinVisibility } from './types'
@@ -443,7 +445,8 @@ export const useCheckins = create<CheckinStore>((set, get) => {
 
     dismissDropped() { set({ dropped: [] }) },
 
-    // Sign-out: the store and its saved copy go; the queue stays on the device for its owner.
+    // Sign-out: the store and its saved copy go; the queue stays on the device for its owner. So do the
+    // panel (its photo and options) and my reactions laid over the feed: the next account starts clean.
     reset() {
       generation++
       refreshing = null
@@ -451,6 +454,8 @@ export const useCheckins = create<CheckinStore>((set, get) => {
       settled = []
       base = emptyBase()
       drop()
+      useCheckinFlow.setState({ open: false, opts: {}, photo: null })
+      usePostOverlay.setState({ by: {} })
       set(initial())
     }
   }

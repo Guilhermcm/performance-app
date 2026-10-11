@@ -261,6 +261,23 @@ describe('the check-in panel', () => {
     expect(S.workouts[0]).toMatchObject({ id: 'live', checkinId: 'c1' })
   })
 
+  it('from a live workout the routine is locked, so the detail never names another routine', () => {
+    const live = { id: 'live', d: '2026-10-10', start: NOW.getTime() - 50 * 60000, end: NOW.getTime(), routineIds: ['r1'], routineId: 'r1', name: 'Push', prs: [],
+      entries: [{ id: BENCH, rid: 'r1', target: PUSH.ex[0], sets: [{ w: 40, r: 8, done: true }] }] }
+    setup({ week: {}, workouts: [live] })
+    open({ routineId: 'r1', detail: { entries: [{ id: BENCH, sets: [{ w: 40, r: 8, done: true as const }] }] }, fromWorkout: 'live' })
+    pickPhoto()
+    const routine = screen.getByLabelText('Routine') as HTMLSelectElement
+    expect(routine.disabled).toBe(true)
+    expect(routine.value).toBe('r1')
+  })
+
+  it('without a live workout the routine can still be changed', () => {
+    setup()
+    open(); pickPhoto()
+    expect((screen.getByLabelText('Routine') as HTMLSelectElement).disabled).toBe(false)
+  })
+
   it('leaving without a photo creates nothing, and runs what was waiting for the panel to close', () => {
     setup()
     const after = vi.fn()

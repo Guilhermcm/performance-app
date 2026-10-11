@@ -96,6 +96,9 @@ export async function signedUrls(paths: string[]): Promise<Record<string, string
 // Sign-out: links are per session.
 export function clearSignedUrls(): void { links.clear() }
 
+// A link that failed to show (the friendship ended, the file moved) is not reused: the next ask signs again.
+export function forgetSignedUrl(path: string): void { links.delete(path) }
+
 type Answer<T> = PromiseLike<{ data: T | null; error: unknown }>
 async function write<T>(q: Answer<T>): Promise<T | null> {
   let res: { data: T | null; error: unknown }

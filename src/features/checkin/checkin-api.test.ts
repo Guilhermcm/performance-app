@@ -149,6 +149,15 @@ describe('signed links', () => {
     expect(h.bucket.createSignedUrls).toHaveBeenCalledTimes(2)
   })
 
+  it('forgets one link on forgetSignedUrl, so the next ask signs that path again', async () => {
+    h.bucket.createSignedUrls.mockImplementation(async (paths: string[]) => answer(paths))
+    await api.signedUrls(['a/1.jpg', 'b/2.jpg'])
+    api.forgetSignedUrl('a/1.jpg')
+    await api.signedUrls(['a/1.jpg', 'b/2.jpg'])
+    expect(h.bucket.createSignedUrls).toHaveBeenCalledTimes(2)
+    expect(h.bucket.createSignedUrls).toHaveBeenLastCalledWith(['a/1.jpg'], 3600)
+  })
+
   it('throws when the request fails', async () => {
     h.bucket.createSignedUrls.mockResolvedValue({ data: null, error: { message: 'Failed to fetch' } })
     await expect(api.signedUrls(['a/1.jpg'])).rejects.toMatchObject({ code: 'network' })

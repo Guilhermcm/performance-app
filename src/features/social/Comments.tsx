@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, type FormEvent } from 'react'
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { toast } from 'sonner'
 import { LoaderCircle, Send, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -40,13 +40,17 @@ function Body({ id, item }: { id: string; item?: CheckinFeedItem }) {
   const [error, setError] = useState<SocialErrorCode | null>(null)
   const [comments, setComments] = useState<CheckinComment[]>([])
   const [attempt, setAttempt] = useState(0)
+  // The list as it is now, for a change that lands after an await: two quick deletes would each
+  // filter the list they saw when they started, and the second would bring the first one back.
+  const latest = useRef<CheckinComment[]>([])
+  const show = (next: CheckinComment[]) => { latest.current = next; setComments(next) }
 
   useEffect(() => {
     let live = true
     api.fetchCheckin(id).then(v => {
       if (!live) return
       setView(v)
-      setComments(v.comments)
+      show(v.comments)
       if (item) patchPost(item, { comments_count: v.comments.length, reactions: v.reactions.map(({ emoji, count, mine }) => ({ emoji, count, mine })) })
     }, e => { if (live) setError(toSocialError(e).code) })
     return () => { live = false }
@@ -54,14 +58,14 @@ function Body({ id, item }: { id: string; item?: CheckinFeedItem }) {
   }, [id, attempt])
 
   const changed = (next: CheckinComment[]) => {
-    setComments(next)
+    show(next)
     if (item) patchPost(item, { comments_count: next.length })
   }
 
   const remove = async (c: CheckinComment) => {
     try {
       await api.deleteComment(c.id)
-      changed(comments.filter(x => x.id !== c.id))
+      changed(latest.current.filter(x => x.id !== c.id))
     } catch (e) {
       toast.error(socialErrorText(toSocialError(e).code))
     }
@@ -123,7 +127,7 @@ function Body({ id, item }: { id: string; item?: CheckinFeedItem }) {
           </>
         )}
       </div>
-      {view && !error && <Composer id={id} onSent={c => changed([...comments, c])} />}
+      {view && !error && <Composer id={id} onSent={c => changed([...latest.current, c])} />}
     </>
   )
 }

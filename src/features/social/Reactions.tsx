@@ -17,9 +17,16 @@ import type { CheckinFeedItem, Person, SocialErrorCode } from './types'
 export const reactionName = (emoji: string, count: number): string =>
   count === 1 ? t('{0}: 1 reaction', emoji) : tn(count, '{0}: {1} reactions', emoji, count)
 
+// Toggles whose request is still out. A second one of the same emoji waits for the first: two
+// requests could reach the server in either order, and a failure of the first would be undone on
+// top of the second.
+const inFlight = new Set<string>()
+
 // Turns my reaction with this emoji on or off, on screen at once. An 11th different emoji is stopped
 // here, before the server would refuse it; a refusal puts the reaction back as it was.
 export async function reactTo(item: CheckinFeedItem, emoji: string): Promise<boolean> {
+  const lock = `${item.key}|${emoji}`
+  if (inFlight.has(lock)) return false
   const { reactions } = postView(item)
   const on = !reactions.find(g => g.emoji === emoji)?.mine
   if (on && mineCount(reactions) >= MAX_REACTIONS) {
@@ -27,6 +34,7 @@ export async function reactTo(item: CheckinFeedItem, emoji: string): Promise<boo
     return false
   }
   patchPost(item, { reactions: toggleReaction(reactions, emoji) })
+  inFlight.add(lock)
   try {
     await api.react(checkinIdOf(item), emoji, on)
     return true
@@ -34,6 +42,8 @@ export async function reactTo(item: CheckinFeedItem, emoji: string): Promise<boo
     patchPost(item, { reactions: toggleReaction(postView(item).reactions, emoji) })
     toast.error(socialErrorText(toSocialError(e).code))
     return false
+  } finally {
+    inFlight.delete(lock)
   }
 }
 

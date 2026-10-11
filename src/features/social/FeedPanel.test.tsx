@@ -34,6 +34,15 @@ describe('FeedPanel', () => {
     expect(loadFeed).toHaveBeenCalledWith()
   })
 
+  it('loads the feed once the account is bound, when the panel mounted before it was', () => {
+    useCheckins.setState({ userId: null })
+    feed({})
+    render(<FeedPanel />)
+    loadFeed.mockClear()
+    act(() => { useCheckins.setState({ userId: ME }) })
+    expect(loadFeed).toHaveBeenCalledWith()
+  })
+
   it('shows check-ins as posts and old workouts as they were', async () => {
     feed({ feed: [checkinItemOf('c1', { comments_count: 2 }), workoutItemOf(5, { prs: ['zz-custom'] })] })
     render(<FeedPanel />)

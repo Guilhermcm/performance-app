@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { describe, it, expect, vi, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup, within } from '@testing-library/react'
 
 import { EmojiPicker, QUICK_EMOJIS, emojiProblem } from './EmojiPicker'
@@ -22,6 +22,31 @@ describe('emojiProblem', () => {
 
   it('refuses an emoji over the 16 bytes the server keeps', () => {
     expect(emojiProblem('👨‍👩‍👧‍👦')).toBe('too_long')
+  })
+})
+
+describe('emojiProblem without Intl.Segmenter (Firefox before 125)', () => {
+  beforeEach(() => { vi.stubGlobal('Intl', { ...Intl, Segmenter: undefined }) })
+  afterEach(() => { vi.unstubAllGlobals() })
+
+  it('still takes exactly one emoji, skin tones, flags, keycaps and joined sequences included', () => {
+    expect((Intl as { Segmenter?: unknown }).Segmenter).toBeUndefined()
+    for (const e of ['💪', '🦄', '👍🏽', '🇧🇷', '❤️', '1️⃣', '🏳️‍🌈', ' 🔥 ']) expect(emojiProblem(e)).toBeNull()
+  })
+
+  it('still refuses text, two emojis and nothing', () => {
+    for (const e of ['', 'a', 'ok', '1', '💪💪', '💪a', 'kkk', '🇧🇷🇧🇷', '👍🏽👍🏽']) expect(emojiProblem(e)).toBe('not_one')
+  })
+
+  it('still refuses an emoji over the 16 bytes the server keeps', () => {
+    expect(emojiProblem('👨‍👩‍👧‍👦')).toBe('too_long')
+  })
+
+  it('accepts a pasted emoji in the picker', () => {
+    const onPick = vi.fn()
+    render(<EmojiPicker onPick={onPick} />)
+    paste('🦄')
+    expect(onPick).toHaveBeenCalledWith('🦄')
   })
 })
 

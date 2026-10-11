@@ -56,7 +56,7 @@ function usePhotoSrc(item: CheckinFeedItem) {
     linkFor(path).then(url => { if (live) setState({ url, failed: !url }) }, () => { if (live) setState({ url: null, failed: true }) })
     return () => { live = false }
   }, [photo, path, attempt])
-  return { ...state, fail: () => setState({ url: null, failed: true }), retry: () => setAttempt(a => a + 1) }
+  return { ...state, fail: () => setState({ url: null, failed: true }), retry: () => { api.forgetSignedUrl(path); setAttempt(a => a + 1) } }
 }
 
 // "Workout 3 this week · 6-week streak", worked out on the server (spec 4.1).
