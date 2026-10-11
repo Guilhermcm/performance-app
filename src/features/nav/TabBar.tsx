@@ -7,7 +7,7 @@ import { t } from '../../lib/i18n.js'
 import LegacyIcon from '../../components/Icon.jsx'
 import { useSocial } from '../social/useSocial'
 import { pendingInvites } from '../social/templates'
-import { openCheckin, useCheckinFlow } from '../checkin/open-checkin'
+import { openCheckinCamera, useCheckinFlow } from '../checkin/open-checkin'
 
 // Icon.jsx is untyped JS; size and style are optional there (same cast as home/TodayCard.tsx).
 const Icon = LegacyIcon as unknown as (p: { name: string }) => ReactElement
@@ -46,7 +46,8 @@ function Tab({ active, glyph, label, count = 0, onClick }: { active: boolean; gl
 
 // Home, Plan, Check-in, Nutrition and Social (phase 1c, spec 2). Keeps the legacy #tabbar markup and
 // classes, so the glass, safe area and the raised center button stay as they are. The center opens
-// the photo check-in; a live workout in progress is resumed from the Plan (and the Home card).
+// the photo check-in and the rear camera in the same tap; a live workout in progress is resumed from
+// the Plan (and the Home card).
 export default function TabBar() {
   const nav = useNavigate()
   const loc = useLocation()
@@ -62,7 +63,7 @@ export default function TabBar() {
     <nav id="tabbar">
       <Tab active={on('home')} glyph={<Icon name="house" />} label={t('Home')} onClick={() => nav('/home')} />
       <Tab active={on('plan')} glyph={<Icon name="calendar" />} label={t('Plan')} onClick={() => nav('/plan')} />
-      <button className={'start' + (checkingIn ? ' on' : '')} aria-haspopup="dialog" onClick={() => openCheckin()}>
+      <button className={'start' + (checkingIn ? ' on' : '')} aria-haspopup="dialog" onClick={() => openCheckinCamera()}>
         <span className="cir"><Camera className="icn" width="1em" height="1em" strokeWidth={2} aria-hidden /></span>
         <span>{t('Check-in')}</span>
       </button>

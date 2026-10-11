@@ -13,13 +13,13 @@ import { useStore } from '../../store/useStore.js'
 import { useProfile } from '../profile/useProfile'
 import { shiftDay, todayIn } from '../nutrition/days'
 import { ACTIVITIES, activityLabel } from './activities'
-import { closeCheckin, useCheckinFlow } from './open-checkin'
+import { closeCheckin, registerCheckinCamera, setCheckinPhoto, useCheckinFlow } from './open-checkin'
 import { droppedMessages, useCheckins, type CheckinInput } from './useCheckins'
 import { ingestCheckin, linkWorkout } from './ingest'
 import DetailSheet from './DetailSheet'
 import type { CheckinActivity, CheckinDetail, CheckinVisibility } from './types'
 
-export { openCheckin, closeCheckin, useCheckinFlow } from './open-checkin'
+export { openCheckin, openCheckinCamera, closeCheckin, useCheckinFlow } from './open-checkin'
 export type { OpenCheckinOptions, CheckinDetail } from './open-checkin'
 
 export const TITLE_MAX = 60
@@ -54,13 +54,26 @@ export default function CheckinFlow() {
     useCheckins.getState().dismissDropped()
   }, [dropped])
 
+  // The rear camera the center tap opens (openCheckinCamera). It is on the page before the tap and
+  // outside the panel, and only that tap uses it, so it is hidden from assistive technology; the
+  // panel has its own labelled "Take photo".
+  const shot = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (file && useCheckinFlow.getState().open) setCheckinPhoto(file)
+  }
+
   return (
-    <Drawer open={open} onOpenChange={o => { if (!o) closeCheckin() }}>
-      <DrawerContent className="h-[96dvh] max-h-[96dvh]">
-        {/* A new opening is a new form. */}
-        <Panel key={seq} />
-      </DrawerContent>
-    </Drawer>
+    <>
+      <input ref={registerCheckinCamera} type="file" accept="image/*" capture="environment" tabIndex={-1} aria-hidden="true"
+        className="sr-only" onChange={shot} />
+      <Drawer open={open} onOpenChange={o => { if (!o) closeCheckin() }}>
+        <DrawerContent className="h-[96dvh] max-h-[96dvh]">
+          {/* A new opening is a new form. */}
+          <Panel key={seq} />
+        </DrawerContent>
+      </Drawer>
+    </>
   )
 }
 
@@ -74,7 +87,7 @@ function Panel() {
   const live = opts.fromWorkout ? (S.workouts ?? []).find(w => w.id === opts.fromWorkout) ?? null : null
   const known = (id: string | null | undefined) => (id && routines.some(r => r.id === id) ? id : '')
 
-  const [photo, setPhoto] = useState<File | null>(null)
+  const photo = useCheckinFlow(s => s.photo)
   const [preview, setPreview] = useState<string | null>(null)
   const [activity, setActivity] = useState<CheckinActivity | null>(() =>
     (opts.routineId || live || todays.length ? 'strength' : null))
@@ -92,7 +105,12 @@ function Panel() {
   const [detailOpen, setDetailOpen] = useState(false)
   const [busy, setBusy] = useState(false)
 
-  useEffect(() => () => { if (preview) URL.revokeObjectURL?.(preview) }, [preview])
+  useEffect(() => {
+    if (!photo || typeof URL.createObjectURL !== 'function') { setPreview(null); return }
+    const url = URL.createObjectURL(photo)
+    setPreview(url)
+    return () => URL.revokeObjectURL?.(url)
+  }, [photo])
 
   const routine = routines.find(r => r.id === routineId) ?? null
   const strength = activity === 'strength'
@@ -110,11 +128,9 @@ function Panel() {
   const pick = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     e.target.value = ''
-    if (!file) return
-    setPhoto(file)
-    setPreview(typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : null)
+    if (file) setCheckinPhoto(file)
   }
-  const dropPhoto = () => { setPhoto(null); setPreview(null) }
+  const dropPhoto = () => setCheckinPhoto(null)
   const changeRoutine = (id: string) => {
     setRoutineId(id)
     // The sets of one routine say nothing about another.

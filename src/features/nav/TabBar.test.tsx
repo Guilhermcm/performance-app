@@ -9,7 +9,7 @@ import TabBar from './TabBar'
 import { DEF, useStore } from '../../store/useStore.js'
 import { useSocial } from '../social/useSocial'
 import { challengeOf } from '../social/test-social'
-import { useCheckinFlow } from '../checkin/open-checkin'
+import { useCheckinFlow, registerCheckinCamera } from '../checkin/open-checkin'
 
 beforeEach(() => {
   useStore.setState({ S: JSON.parse(JSON.stringify(DEF)), user: { id: 'u1' } })
@@ -30,6 +30,23 @@ describe('TabBar', () => {
     fireEvent.click(center)
     expect(useCheckinFlow.getState()).toMatchObject({ open: true, opts: {} })
     expect(h.nav).not.toHaveBeenCalled()
+  })
+
+  it('opens the rear camera in the same tap, through the input already on the page', () => {
+    const camera = document.createElement('input')
+    camera.type = 'file'
+    camera.setAttribute('capture', 'environment')
+    // Whether the panel was asked to open by the time the camera was.
+    const click = vi.fn(() => useCheckinFlow.getState().open)
+    camera.click = click
+    registerCheckinCamera(camera)
+    try {
+      useCheckinFlow.setState({ open: false, opts: {} })
+      render(<TabBar />)
+      fireEvent.click(tab(/^Check-in$/))
+      expect(click).toHaveBeenCalledTimes(1)
+      expect(click.mock.results[0].value).toBe(true)
+    } finally { registerCheckinCamera(null) }
   })
 
   it('no longer turns into Resume during a workout: the Plan has it', () => {

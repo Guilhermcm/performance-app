@@ -6,7 +6,7 @@ const h = vi.hoisted(() => ({ toast: Object.assign(vi.fn(), { success: vi.fn(), 
 vi.mock('sonner', () => ({ toast: h.toast }))
 vi.mock('@/components/ui/drawer', () => import('../social/test-drawer'))
 
-import CheckinFlow, { openCheckin, closeCheckin, useCheckinFlow, suggestTitle } from './CheckinFlow'
+import CheckinFlow, { openCheckin, openCheckinCamera, closeCheckin, useCheckinFlow, suggestTitle } from './CheckinFlow'
 import { useCheckins, type CheckinInput } from './useCheckins'
 import { PhotoError } from './photo'
 import { useProfile } from '../profile/useProfile'
@@ -67,6 +67,30 @@ describe('the check-in panel', () => {
     pickPhoto()
     expect(titleField()).toBeTruthy()
     expect(postButton()!.disabled).toBe(false)
+  })
+
+  it('keeps a rear camera input on the page, which the center tap clicks, and its photo moves on to the post', () => {
+    setup()
+    const camera = document.querySelector('input[type="file"][capture="environment"]') as HTMLInputElement
+    expect(camera).toBeTruthy()
+    expect(camera.getAttribute('accept')).toBe('image/*')
+    const click = vi.spyOn(camera, 'click').mockImplementation(() => {})
+    act(() => openCheckinCamera())
+    expect(click).toHaveBeenCalledTimes(1)
+    expect(useCheckinFlow.getState().open).toBe(true)
+    fireEvent.change(camera, { target: { files: [photo()] } })
+    expect(titleField()).toBeTruthy()
+  })
+
+  it('when the camera is cancelled, the photo step offers the camera and the gallery', () => {
+    setup()
+    const camera = document.querySelector('input[type="file"][capture="environment"]') as HTMLInputElement
+    vi.spyOn(camera, 'click').mockImplementation(() => {})
+    act(() => openCheckinCamera())
+    // Nothing was picked: no change event.
+    expect(postButton()).toBeNull()
+    expect((screen.getByLabelText('Take photo') as HTMLInputElement).getAttribute('capture')).toBe('environment')
+    expect((screen.getByLabelText('Choose from gallery') as HTMLInputElement).hasAttribute('capture')).toBe(false)
   })
 
   it('on a day with routines, picks strength training and the first routine, with the others as options', () => {

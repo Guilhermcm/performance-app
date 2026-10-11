@@ -17,6 +17,10 @@ vi.mock('./photo', async orig => ({ ...(await orig<typeof import('./photo')>()),
 // The real queue, wrapped so a test can make a run throw.
 vi.mock('./outbox', async orig => { const m = await orig<typeof import('./outbox')>(); return { ...m, flushCheckins: vi.fn(m.flushCheckins) } })
 
+// The history session a check-in wrote (ingest.ts has its own tests): only whether it is asked to go.
+const ingest = vi.hoisted(() => ({ dropCheckinWorkout: vi.fn() }))
+vi.mock('./ingest', () => ingest)
+
 import { useCheckins, droppedMessages, startCheckinSync, type CheckinInput } from './useCheckins'
 import { flushCheckins, memoryOutboxBackend, pendingCheckins, setCheckinOutboxBackend } from './outbox'
 import { useProfile } from '../profile/useProfile'
@@ -82,6 +86,7 @@ beforeEach(() => {
   calls.length = 0
   server.clear()
   Object.values(api).forEach(f => f.mockReset())
+  ingest.dropCheckinWorkout.mockReset()
   vi.mocked(flushCheckins).mockClear()
   online()
   api.hasCheckin.mockResolvedValue(false)
@@ -218,6 +223,20 @@ describe('edit and remove', () => {
     expect(S().mine[0].pending).toBeFalsy()
   })
 
+  it('a post dropped by the server takes its history session with it; a refused edit does not', async () => {
+    server.set('s1', serverRow('s1'))
+    await bound()
+    offline()
+    const id = await S().post(inputOf({ day: YESTERDAY, title: 'Treino de ontem' }))
+    online()
+    api.upsertCheckin.mockRejectedValue(refusal('day_closed'))
+    api.updateCheckin.mockRejectedValue(refusal('item_immutable'))
+    await S().edit('s1', { title: 'Outro' })
+    await S().flush(); await settle()
+    expect(S().dropped.map(d => d.reason).sort()).toEqual(['day_closed', 'edit_refused'])
+    expect(ingest.dropCheckinWorkout.mock.calls).toEqual([[id]])
+  })
+
   it('a refused edit of a post that is up says so once, with one short generic notice', async () => {
     server.set('s1', serverRow('s1'))
     server.set('s2', serverRow('s2'))
@@ -246,6 +265,14 @@ describe('edit and remove', () => {
     await S().flush(); await settle()
     expect(calls).toEqual([`upload ${id}`, `upsert ${id}`])
     expect(api.upsertCheckin.mock.calls[0][0].title).toBe('Depois')
+  })
+
+  it('removing a check-in takes its history session at once', async () => {
+    server.set('s1', serverRow('s1'))
+    await bound()
+    offline()
+    await S().remove('s1')
+    expect(ingest.dropCheckinWorkout).toHaveBeenCalledWith('s1')
   })
 
   it('removing takes the photo, then the row, and the post leaves mine and the feed at once', async () => {

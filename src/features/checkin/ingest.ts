@@ -9,6 +9,8 @@ import { beatsWeight } from '../../lib/exercises.js'
 import { hasCompletedWork, isWarmupRow } from '../../lib/workout-model.js'
 import { insertChronological } from '../../lib/backfill.js'
 import { stampWorkout } from '../../lib/sync-merge.js'
+import { deleteWorkout } from '../../lib/session-edit.js'
+import { emit } from '../gamification/events'
 import type { CheckinDetail } from './types'
 
 type Cfg = { id: string; sets?: number; reps?: number; weight?: number; mode?: string }
@@ -117,7 +119,9 @@ export function checkinWorkout(S: AppState, input: CheckinWorkoutInput): Workout
 }
 
 // Writes that session into S.workouts, in date order, in place of an earlier one of the same
-// check-in (an edit of its detail), and moves the confirmed working weights it beats.
+// check-in (an edit of its detail), and moves the confirmed working weights it beats. Its PRs go to
+// gamification as the end of a live workout sends them (sheets.jsx): one `pr` event per exercise,
+// keyed `<session id>:<exercise>`, so sending them again for the same check-in is a no-op.
 export function ingestCheckin(input: CheckinWorkoutInput): Workout {
   const w = stampWorkout(checkinWorkout(useStore.getState().S, input)) as Workout
   useStore.getState().update((s: Required<AppState>) => {
@@ -128,7 +132,26 @@ export function ingestCheckin(input: CheckinWorkoutInput): Workout {
       if (mx > 0 && beatsWeight(e.id, mx, s.exWeights[e.id]?.w || 0)) s.exWeights[e.id] = { w: mx, d: w.d }
     }
   })
+  for (const ex of new Set(w.prs)) emit('pr', { ex }, `${w.id}:${ex}`, w.d)
   return w
+}
+
+// A check-in deleted, or a post the server refused for good: the session it wrote leaves the
+// history the way a deleted workout does (lib/session-edit.js deleteWorkout), its kept weights
+// with it. A live workout linked to it is a workout of its own and stays, without the link.
+export function dropCheckinWorkout(checkinId: string): void {
+  const S = useStore.getState().S as AppState
+  const own = (S.workouts ?? []).some(w => w.id === checkinId)
+  const linked = (S.workouts ?? []).some(w => w.checkinId === checkinId)
+  if (!own && !linked) return
+  useStore.getState().update((s: Required<AppState>) => {
+    if (own) deleteWorkout(s, checkinId)
+    for (const w of s.workouts) {
+      if (w.checkinId !== checkinId) continue
+      delete w.checkinId
+      stampWorkout(w)
+    }
+  })
 }
 
 // A check-in posted at the end of a live workout: that workout is already the session in the

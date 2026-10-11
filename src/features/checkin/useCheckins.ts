@@ -5,6 +5,7 @@ import { t } from '../../lib/i18n.js'
 import * as api from './checkin-api'
 import { enqueueCheckin, flushCheckins, pendingCheckins, type CheckinOp } from './outbox'
 import { preparePhoto } from './photo'
+import { dropCheckinWorkout } from './ingest'
 import { useProfile } from '../profile/useProfile'
 import { shiftDay, todayIn } from '../nutrition/days'
 import type { CheckinActivity, CheckinDetail, CheckinRow, CheckinVisibility } from './types'
@@ -341,6 +342,8 @@ export const useCheckins = create<CheckinStore>((set, get) => {
       const cur = get().mine.find(r => r.id === id) ?? given
       const ext = cur ? extOf(cur.photo_path) : undefined
       await enqueueCheckin(userId, { kind: 'checkin_delete', id, ...(ext ? { ext } : {}) })
+      // Its session goes from the history at once, like the post from the screen.
+      dropCheckinWorkout(id)
       await compose()
       void get().flush().catch(() => {})
     },
@@ -370,6 +373,8 @@ export const useCheckins = create<CheckinStore>((set, get) => {
           add.push({ id, reason: why, title: op.row.title ?? '' })
         }
         if (add.length) set(s => ({ dropped: [...s.dropped, ...add] }))
+        // A post that never went up leaves no session behind in the history.
+        for (const d of add) if (d.reason !== 'edit_refused') dropCheckinWorkout(d.id)
       }
       await compose()
       if (sent.length) persist()

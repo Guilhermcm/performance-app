@@ -1,7 +1,10 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+vi.mock('../gamification/events', () => ({ emit: vi.fn(), flush: vi.fn(async () => ({ sent: 0, left: 0 })) }))
+
 import { DEF, useStore } from '../../store/useStore.js'
-import { checkinWorkout, detailOf, detailOfWorkout, draftFor, ingestCheckin, linkWorkout, workoutOfCheckin } from './ingest'
+import { emit } from '../gamification/events'
+import { checkinWorkout, detailOf, detailOfWorkout, draftFor, dropCheckinWorkout, ingestCheckin, linkWorkout, workoutOfCheckin } from './ingest'
 import type { CheckinDetail } from './types'
 
 const BENCH = '0025', ROW = '0027', RUN = 'treadmill'
@@ -20,6 +23,7 @@ const past = (id: string, d: string, sets: { w: number; r: number; done: boolean
 const stateWith = (over: Record<string, unknown> = {}) => ({ ...clone(DEF), routines: [clone(PUSH)], workouts: [], exWeights: {}, ...over })
 
 beforeEach(() => {
+  vi.mocked(emit).mockClear()
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(new Date('2026-10-10T18:00:00'))
   useStore.setState({ S: stateWith(), user: null })
@@ -120,5 +124,58 @@ describe('the session a detailed check-in writes', () => {
     expect(S.workouts).toHaveLength(1)
     expect(workoutOfCheckin(S, 'c7')!.id).toBe('live')
     expect(workoutOfCheckin(S, 'nope')).toBeNull()
+  })
+})
+
+describe('when the check-in goes', () => {
+  const detail: CheckinDetail = { entries: [{ id: BENCH, sets: [done(45, 8)] as { w: number; r: number; done: true }[] }] }
+
+  it('its own session leaves the history, and the kept weight it set goes back', () => {
+    useStore.setState({ S: stateWith({ workouts: [past('w1', '2026-10-03', [done(42.5, 8)])], exWeights: { [BENCH]: { w: 42.5, d: '2026-10-03' } } }) })
+    ingestCheckin({ id: 'c1', day: '2026-10-10', routineId: 'r1', name: 'Push', durationMin: 50, detail })
+    expect(useStore.getState().S.exWeights[BENCH]).toEqual({ w: 45, d: '2026-10-10' })
+    dropCheckinWorkout('c1')
+    const S = useStore.getState().S
+    expect(S.workouts.map((w: { id: string }) => w.id)).toEqual(['w1'])
+    expect(S.exWeights[BENCH]).toEqual({ w: 42.5, d: '2026-10-03' })
+  })
+
+  it('a live workout linked to it stays, without the link', () => {
+    useStore.setState({ S: stateWith({ workouts: [past('live', '2026-10-10', [done(40, 8)])] }) })
+    linkWorkout('live', 'c7')
+    dropCheckinWorkout('c7')
+    const S = useStore.getState().S
+    expect(S.workouts.map((w: { id: string }) => w.id)).toEqual(['live'])
+    expect(S.workouts[0].checkinId).toBeUndefined()
+    expect(S.workouts[0]._ts).toBeGreaterThan(0)
+  })
+
+  it('does nothing for a check-in with no session', () => {
+    useStore.setState({ S: stateWith({ workouts: [past('w1', '2026-10-03', [done(42.5, 8)])] }) })
+    const before = useStore.getState().S
+    dropCheckinWorkout('c9')
+    expect(useStore.getState().S).toBe(before)
+  })
+})
+
+describe('PRs of a detailed check-in', () => {
+  it('send the same pr events as the end of a live workout, keyed by the check-in', () => {
+    useStore.setState({ S: stateWith({ workouts: [past('w1', '2026-10-03', [done(42.5, 8)])] }) })
+    const detail: CheckinDetail = { entries: [
+      { id: BENCH, sets: [done(45, 8)] as { w: number; r: number; done: true }[] },
+      { id: ROW, sets: [done(30, 10)] as { w: number; r: number; done: true }[] }
+    ] }
+    ingestCheckin({ id: 'c1', day: '2026-10-09', routineId: 'r1', name: 'Push', durationMin: 50, detail })
+    expect(vi.mocked(emit).mock.calls).toEqual([
+      ['pr', { ex: BENCH }, `c1:${BENCH}`, '2026-10-09'],
+      ['pr', { ex: ROW }, `c1:${ROW}`, '2026-10-09']
+    ])
+  })
+
+  it('send none without a new best', () => {
+    useStore.setState({ S: stateWith({ workouts: [past('w1', '2026-10-03', [done(60, 5)])] }) })
+    ingestCheckin({ id: 'c1', day: '2026-10-10', routineId: 'r1', name: 'Push', durationMin: 50,
+      detail: { entries: [{ id: BENCH, sets: [done(45, 8)] as { w: number; r: number; done: true }[] }] } })
+    expect(emit).not.toHaveBeenCalled()
   })
 })
