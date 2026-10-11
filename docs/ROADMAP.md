@@ -12,7 +12,9 @@ gamificação de consistência com amigos.
 ## Visão geral
 
 ```
-Fase 0  Fundação ──► Fase 1a  Gamificação individual ──► Fase 1b  Social
+Fase 0  Fundação ──► Fase 1a  Gamificação individual ──► Fase 1b  Social ──► Fase 1c  Check-in com foto
+                                   │                                              │
+                                   │                                              └──► Fase 1d  Plano com evidência
                                    │
                                    ├──► Fase 2  Nutrição ─┐
                                    ├──► Fase 3  Sono ─────┼──► Fase 5  Painel de performance
@@ -20,14 +22,16 @@ Fase 0  Fundação ──► Fase 1a  Gamificação individual ──► Fase 1b
                                                                               └──► Fase 6  Foco
 ```
 
-Fases 2, 3 e 4 dependem só da 1a e podem ser feitas em qualquer ordem. A ordem abaixo é a
-recomendada (impacto em performance física primeiro).
+Fases 2, 3 e 4 dependem só da 1a e podem ser feitas em qualquer ordem. Ordem de execução
+combinada a partir de outubro de 2026: **1c → 1d → 3 → 4 → 5 → 6** (a 2 está concluída).
 
 | Fase | Nome | Tamanho | Depende de | Status |
 |---|---|---|---|---|
 | 0 | Fundação | G | — | concluída |
 | 1a | Gamificação individual | M | 0 | concluída |
 | 1b | Social | M | 1a | concluída |
+| 1c | Check-in com foto e social | M | 1b | concluída no código, aguarda SQL 0017-0020 em produção e merge do PR #4 ([spec](superpowers/specs/2026-10-06-checkin-social-design.md), [plano](superpowers/plans/2026-10-06-fase-1c-checkin.md)) |
+| 1d | Plano com evidência | M | 1c | a especificar |
 | 2 | Nutrição | G | 1a | concluída (2a e 2b) |
 | 3 | Sono | P | 1a | especificada, execução adiada ([spec](superpowers/specs/2026-10-06-fase-3-sono-design.md)) |
 | 4 | Hábitos + trackers | M | 1a | a especificar |
@@ -96,6 +100,81 @@ nenhum dado sensível exposto (testado por RLS), e completam um desafio.
 
 ---
 
+## Fase 1c: Check-in com foto e social
+
+**Objetivo:** trocar o "começar treino" pelo check-in com foto, no estilo GymRats. O grupo segue o
+plano de cabeça e quer saber se cumpriu a semana; a foto dá vida ao feed e credibilidade aos
+desafios.
+
+**Spec:** [2026-10-06-checkin-social-design.md](superpowers/specs/2026-10-06-checkin-social-design.md).
+
+**Entregas**
+- Barra: Início · Plano · **◉ Check-in** · Nutrição · Social; o botão do meio abre a câmera.
+- Check-in com foto obrigatória (câmera ou galeria, sem metadados), qualquer atividade conta igual,
+  título e legenda personalizáveis, observação privada, "Amigos" ou "Só eu", hoje ou ontem,
+  "Detalhar treino" opcional (carga e repetições), fila offline com a foto.
+- Feed de check-ins dos amigos com reações (qualquer emoji) e comentários; avisos no app.
+- Desafio "Dias de treino"; placar e feed do desafio.
+- Pilar Força vira **Treino**: meta de dias com check-in por semana, XP no molde de 960, fechamento
+  em D+2; histórico antigo conta como dias de treino.
+- Treino ao vivo sai do centro e fica no Plano ("Treinar com o app"), terminando no check-in.
+- Home com o cartão "Hoje"; Plano com "Meus treinos" (calendário com fotos).
+- Fotos no Supabase Storage em balde privado, links temporários, exclusão junto com o check-in e a
+  conta.
+
+**Pronto quando:** duas contas reais fazem check-in pelo celular (iPhone e Android, inclusive
+offline), veem e reagem aos posts uma da outra, completam um desafio de dias de treino, e a
+observação privada e a foto "Só eu" nunca aparecem para a outra conta (testado por RLS).
+
+**Status:** concluída no código, aguarda SQL 0017-0020 em produção e merge do PR #4. O roteiro de
+lançamento está em [docs/SETUP.md](SETUP.md): rodar `supabase/release/0017-0020_checkin.sql` e fazer
+o merge logo em seguida.
+
+**Pendências (depois do lançamento)**
+- Variante leve da foto (miniatura) para "Meus treinos" e para a Home: hoje as duas telas carregam
+  a foto inteira, de uns 400 KB.
+- Smoke manual da câmera no iPhone (Safari e app instalado) e no Android.
+- Fase 1d: normalizar a unidade dos pesos do detalhe antes de lê-los para o progresso dos
+  exercícios (o detalhe guarda a unidade de exibição, kg ou lb).
+
+---
+
+## Fase 1d: Plano com evidência
+
+**Objetivo:** fazer do Plano o lugar onde mora o valor do treino: escolher e ajustar um bom plano,
+com base em evidência científica, sem precisar registrar séries.
+
+**Escopo previsto**
+- **Catálogo curado de programas** (6 a 10 na primeira versão: hipertrofia 3x, 4x e 5x, força,
+  iniciante, halteres, em casa, treino curto). Cada programa diz para quem é, o que esperar e por
+  que é montado assim (volume por músculo, frequência, faixas de repetição, descanso). Escolher
+  vira o seu plano, já distribuído na semana, e depois é ajustável.
+- **Análise do plano da pessoa:** séries por músculo por semana contra a faixa recomendada,
+  frequência de cada músculo, equilíbrio (empurrar e puxar, quadríceps e posterior), tempo estimado
+  por treino, alertas (músculo esquecido, exercício repetido demais) e sugestões aplicáveis com um
+  toque. Funciona sem histórico: lê o plano.
+- **Progresso dos exercícios** para quem usa "Detalhar treino": evolução de carga e "suba a carga"
+  ao bater as repetições. Quem não detalha não vê essa parte.
+- **Referências em ⓘ, nunca no texto.** O texto da tela diz a recomendação em linguagem simples
+  ("10 a 20 séries por semana"); um ícone ⓘ ao lado abre, por toque (não por passar o mouse, que
+  não existe no celular), um balão pequeno ancorado acima do ícone com a fonte: autores, ano,
+  título curto, uma linha do que o estudo achou e o link (DOI). Em tela estreita o balão vira uma
+  folha que sobe de baixo. O botão tem rótulo acessível ("Ver fonte") e alvo de 44 px; o balão
+  fecha ao tocar fora ou no X e devolve o foco ao ícone. As referências ficam num catálogo único
+  no código (id → citação), e cada recomendação aponta para ids, para não repetir citação nem
+  deixar texto solto sem fonte.
+- **Revisão do conteúdo:** os programas e as citações são propostos no brainstorm e conferidos por
+  alguém do grupo antes de entrar.
+
+**Fora:** gerador automático de plano, periodização em blocos e deload como recurso próprio (podem
+aparecer como característica de um programa do catálogo), coach com IA.
+
+**Pronto quando:** alguém escolhe um programa do catálogo e ele vira o plano da semana; a análise
+mostra volume e frequência por músculo do plano atual com pelo menos uma sugestão aplicada; toda
+recomendação com número tem um ⓘ com fonte verificável.
+
+---
+
 ## Fase 2 — Nutrição
 
 **Objetivo:** trocar o app de dieta que o grupo já usa: meta de calorias e macros derivada do
@@ -141,6 +220,14 @@ perfil, diário rápido, pilar Nutrição na gamificação.
 - Import CSV (formato Plees e genérico).
 - Eventos: `sleep_logged`, `night_on_target`. XP no molde padrão. Desafio: `sleep_nights_on_target`.
 - Acende o eixo Sono no radar de pilares da Home.
+- Migrations: as do Sono começam na `0021`, porque a 1c ocupa a `0017` a `0020`. Uma migration do
+  Sono que redefina (`create or replace`) qualquer função que a 1c redefiniu tem de partir do corpo
+  da 1c e carregar os ramos de treino (dia com check-in, desafio `checkin_days`, carência de 2
+  dias), senão os desfaz. A `0019` redefine `achievement_stats`, `award_xp`, `challenge_progress`,
+  `close_weeks`, `get_my_progress`, `my_progress_extras` e `progress_card`. A `0020` redefine de
+  novo `achievement_stats`, `award_xp` e `challenge_progress`, e também `challenge_grace`,
+  `checkins_guard`, `close_challenge`, `create_challenge`, `notify_checkin_social` e
+  `pillar_consistency`. O corpo mais recente de cada uma é o da última migration dessa lista.
 - Fora: rastreio por sensores/sonar (exige app nativo). Na spec, saíram também o botão
   "dormir/acordei" (registro só de manhã) e o import CSV.
 

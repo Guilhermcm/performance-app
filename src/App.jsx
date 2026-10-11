@@ -12,7 +12,7 @@ import { initBackButton } from './lib/back.js'
 import { useWakeLock } from './lib/wakelock.js'
 import { installViewportGuard } from './lib/viewport-guard.js'
 import { installChipDrag } from './lib/hchips.js'
-import { exitWorkoutEdit, startFlow } from './sheets.jsx'
+import { exitWorkoutEdit } from './sheets.jsx'
 import Icon from './components/Icon.jsx'
 import TabBar from './components/TabBar.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
@@ -31,6 +31,9 @@ import { useProfile } from './features/profile/useProfile.ts'
 import { useProgress, startProgressSync } from './features/gamification/useProgress.ts'
 import { useSocial } from './features/social/useSocial.ts'
 import { useNutrition, startNutritionSync } from './features/nutrition/useNutrition.ts'
+import { useCheckins, startCheckinSync } from './features/checkin/useCheckins.ts'
+import CheckinFlow from './features/checkin/CheckinFlow.tsx'
+import MyTrainings from './features/checkin/MyTrainings.tsx'
 import NutritionScreen from './features/nutrition/NutritionScreen.tsx'
 import NutritionHistoryScreen from './features/nutrition/HistoryScreen.tsx'
 import SocialScreen from './features/social/SocialScreen.tsx'
@@ -150,7 +153,7 @@ function Shell() {
 
   // The profile in memory belongs to whoever is signed in; signing out drops it.
   useEffect(() => {
-    if (!user) { useProfile.getState().reset(); useProgress.getState().reset(); useSocial.getState().reset(); useNutrition.getState().reset() }
+    if (!user) { useProfile.getState().reset(); useProgress.getState().reset(); useSocial.getState().reset(); useNutrition.getState().reset(); useCheckins.getState().reset() }
   }, [user?.id])
   // No tab bar while the profile loads or the onboarding is on screen (a guest has no profile).
   const profileReady = useProfile(s => s.status === 'ready' && !s.onboarding) || !user
@@ -171,6 +174,13 @@ function Shell() {
     if (!user || !profileReady) return
     void useNutrition.getState().bind(user.id)
     return startNutritionSync()
+  }, [user?.id, profileReady])
+  // Check-ins: my recent ones and the notices at once, the photo queue sent, and again on focus
+  // and reconnect. The feed loads when the Social tab asks for it.
+  useEffect(() => {
+    if (!user || !profileReady) return
+    void useCheckins.getState().bind(user.id)
+    return startCheckinSync()
   }, [user?.id, profileReady])
 
   const authed = user || isGuest
@@ -205,6 +215,7 @@ function Shell() {
                 {S.checkIn !== false && <Route path="/checkin" element={<CheckIn />} />}
                 <Route path="/plan" element={<Plan />} />
                 <Route path="/plan/r/:id" element={<RoutineEdit />} />
+                <Route path="/plan/treinos" element={<MyTrainings />} />
                 <Route path="/workout" element={<Workout />} />
                 <Route path="/stats" element={<Stats />} />
                 <Route path="/history" element={<History />} />
@@ -216,7 +227,7 @@ function Shell() {
                 <Route path="/conquistas" element={<AchievementsScreen />} />
                 <Route path="/nutricao" element={<NutritionScreen />} />
                 <Route path="/nutricao/historico" element={<NutritionHistoryScreen />} />
-                <Route path="/social" element={<Navigate to="/social/ranking" replace />} />
+                <Route path="/social" element={<Navigate to="/social/feed" replace />} />
                 <Route path="/social/desafios/:id" element={<ChallengeDetail />} />
                 <Route path="/social/:section" element={<SocialScreen />} />
                 <Route path="/convite/:code" element={<InviteRoute />} />
@@ -231,7 +242,10 @@ function Shell() {
       {user && profileReady && <SyncIndicator />}
       {user && profileReady && <CelebrationHost />}
       {user && profileReady && <PendingInviteHost />}
-      {profileReady && <TabBar onStart={startFlow} />}
+      {/* The photo check-in: a full-screen panel with no route, opened from the tab bar's center,
+          Home, the Plan and the end of a live workout (features/checkin/open-checkin.ts). */}
+      {user && profileReady && <CheckinFlow />}
+      {profileReady && <TabBar />}
       <RestTimer />
       <Modals />
       <Toast />

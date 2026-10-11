@@ -12,13 +12,20 @@ vi.mock('./RankingPanel', () => ({ default: () => <p>ranking panel</p> }))
 vi.mock('./ChallengesPanel', () => ({ default: () => <p>challenges panel</p> }))
 vi.mock('./FeedPanel', () => ({ default: () => <p>feed panel</p> }))
 vi.mock('./FriendsPanel', () => ({ default: () => <p>friends panel</p> }))
+vi.mock('./NoticesList', () => ({ NoticesButton: () => <button type="button">notices button</button> }))
 
 import SocialScreen from './SocialScreen'
 import { useSocial } from './useSocial'
+import { useCheckins } from '../checkin/useCheckins'
 import { challengeOf } from './test-social'
 
-beforeEach(() => { useSocial.getState().reset(); h.nav.mockClear(); h.section = 'ranking' })
-afterEach(() => { cleanup(); vi.useRealTimers() })
+const loadNotices = vi.fn(async () => {})
+const real = { loadNotices: useCheckins.getState().loadNotices }
+beforeEach(() => {
+  useSocial.getState().reset(); h.nav.mockClear(); h.section = 'ranking'
+  loadNotices.mockClear(); useCheckins.setState({ loadNotices })
+})
+afterEach(() => { cleanup(); vi.useRealTimers(); useCheckins.setState(real) })
 
 describe('SocialScreen', () => {
   it('shows the section from the route and switches without piling up history', () => {
@@ -29,10 +36,22 @@ describe('SocialScreen', () => {
     expect(h.nav).toHaveBeenCalledWith('/social/amigos', { replace: true })
   })
 
-  it('sends an unknown section to the ranking', () => {
+  it('puts the feed first and sends an unknown section to it', () => {
+    h.section = 'feed'
+    const { unmount } = render(<SocialScreen />)
+    const tabs = screen.getByRole('navigation', { name: 'Social' })
+    expect([...tabs.querySelectorAll('button')].map(b => b.textContent)).toEqual(['Feed', 'Ranking', 'Challenges', 'Friends'])
+    expect(screen.getByText('feed panel')).toBeTruthy()
+    unmount()
     h.section = 'nope'
     render(<SocialScreen />)
-    expect(screen.getByText('redirect /social/ranking')).toBeTruthy()
+    expect(screen.getByText('redirect /social/feed')).toBeTruthy()
+  })
+
+  it('has the notices at the top and refreshes them on arrival', () => {
+    render(<SocialScreen />)
+    expect(screen.getByRole('button', { name: 'notices button' })).toBeTruthy()
+    expect(loadNotices).toHaveBeenCalledTimes(1)
   })
 
   it('marks challenge invitations waiting for an answer', () => {

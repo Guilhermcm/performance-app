@@ -1,5 +1,7 @@
+// @vitest-environment happy-dom
 import { describe, it, expect } from 'vitest'
-import { celebrationsSince, completeMarker, dayResultToast, markerOf } from './celebrations'
+import { celebrationsSince, completeMarker, dayResultToast, markerOf, trainingDayToast } from './celebrations'
+import { setLang } from '../../lib/i18n.js'
 import { progressOf } from './test-progress'
 import { levelFor } from './xp'
 import type { NutritionProgress, Progress } from './types'
@@ -102,5 +104,33 @@ describe('dayResultToast', () => {
     expect(dayResultToast(closed({}), '2026-10-03')).toBeNull()
     expect(dayResultToast(closed({ logged: false, on_target: false, xp: 0 }), null)).toBeNull()
     expect(dayResultToast(withNutrition(90), null)).toBeNull()
+  })
+})
+
+describe('trainingDayToast', () => {
+  // 2026-10-03 is a Saturday. The Treino day closes at D+2, so the toast names its weekday.
+  const closed = (xp: number, day = '2026-10-03') =>
+    progressOf(700, {}, { training: { confirms_on: '2026-10-07', last_closed: { day, detailed: false, xp } } })
+
+  it('confirms the training day by its weekday, with the XP it paid', () => {
+    expect(trainingDayToast(closed(210), '2026-10-02')).toEqual({ text: 'Saturday workout confirmed, +210 XP', day: '2026-10-03' })
+    expect(trainingDayToast(closed(0), null)?.text).toBe('Saturday workout confirmed')
+  })
+
+  it('reads naturally in Brazilian Portuguese', async () => {
+    await setLang('pt-BR')
+    try {
+      expect(trainingDayToast(closed(210), null)?.text).toBe('Treino de sábado confirmado, +210 XP')
+      expect(trainingDayToast(closed(0), null)?.text).toBe('Treino de sábado confirmado')
+    } finally {
+      await setLang('en')
+    }
+  })
+
+  it('stays quiet for a day already shown or without a closed day', () => {
+    expect(trainingDayToast(closed(210), '2026-10-03')).toBeNull()
+    expect(trainingDayToast(closed(210), '2026-10-04')).toBeNull()
+    expect(trainingDayToast(progressOf(700), null)).toBeNull()
+    expect(trainingDayToast(progressOf(700, {}, { training: { confirms_on: '2026-10-07', last_closed: null } }), null)).toBeNull()
   })
 })

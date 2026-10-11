@@ -230,9 +230,9 @@ describe('closing a nutrition challenge', () => {
     expect(await bonus(B)).toEqual([])
   })
 
-  it('still closes the other templates the day after ends_on', async () => {
-    const id = await createChallenge(db, A, { ends_on: '2026-10-11' })
-    await rows(db, B, 'select public.join_challenge($1, false)', [id])
+  it('still closes a volume challenge the day after ends_on', async () => {
+    const id = await createChallenge(db, A, { template: 'volume_total', ends_on: '2026-10-11', share_volume: true })
+    await rows(db, B, 'select public.join_challenge($1, true)', [id])
     await setClock(db, '2026-10-12T15:00:00Z')
     await list(A)
     expect(await statusOf(id)).toBe('lost')

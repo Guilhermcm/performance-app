@@ -10,13 +10,15 @@ import { t } from '../../lib/i18n.js'
 import { todayISO } from '../../lib/format.js'
 import { useProgress } from '../gamification/useProgress'
 import { useProfile } from '../profile/useProfile'
+import { useCheckins } from '../checkin/useCheckins'
 import NutritionSetup from '../nutrition/NutritionSetup'
 import { joinChallenge, leaveChallenge, toSocialError } from './social-api'
 import { useSocial } from './useSocial'
 import { MODE_TEXT, TEMPLATE_TEXT, amountText, nutritionOptInText, socialErrorText } from './labels'
-import { canJoin, challengeShare, resultOn } from './templates'
+import { canJoin, challengeShare, isTrainingDays, rankMembers, resultOn } from './templates'
 import { fmtShortDay } from './format'
 import { statusLine } from './ChallengesPanel'
+import ChallengeFeed from './ChallengeFeed'
 import { PersonAvatar } from './components/PersonAvatar'
 import { EmptyState, ErrorState, StaleNote } from './components/states'
 import { ACCENT_TEXT } from '../gamification/components/accent'
@@ -26,7 +28,9 @@ import type { Challenge } from './types'
 // the one action that fits: join or decline an invitation, leave (after a confirmation), or the
 // result once it ended. After the last day there is no action at all. A nutrition challenge counts
 // closed days only (up to the day before yesterday) and gives its result later; joining it asks for
-// the opt-in, and with the pillar off the join button opens the pillar's setup instead.
+// the opt-in, and with the pillar off the join button opens the pillar's setup instead. A training
+// days challenge (checkin_days, and workouts_count made before it) counts closed days too, shows a
+// ranked scoreboard with my position, and the check-ins of its members below.
 export default function ChallengeDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -48,6 +52,8 @@ export default function ChallengeDetail() {
       toast.success(done)
       await useSocial.getState().load('challenges')
       void useProgress.getState().refresh()
+      // The accepted (or declined) invite stops counting on the Social tab.
+      void useCheckins.getState().loadNotices()
       after?.()
     } catch (e) {
       toast.error(socialErrorText(toSocialError(e).code))
@@ -86,6 +92,12 @@ export default function ChallengeDetail() {
   const joinable = canJoin(c, today)
   const needsVolume = joinable && c.template === 'volume_total'
   const nutrition = c.template === 'nutrition_days_on_target'
+  const training = isTrainingDays(c.template)
+  // Both count closed days only, and the result comes after the last of them closes.
+  const closedDays = nutrition || training
+  const ranking = rankMembers(c)
+  const joinedCount = ranking.filter(r => r.pos !== null).length
+  const myPos = ranking.find(r => r.member.me)?.pos ?? null
   const needsNutrition = joinable && nutrition
   const blocked = (needsVolume && !shareVolume) || (needsNutrition && !shareNutrition)
   const optIn = nutritionOptInText()
@@ -101,7 +113,7 @@ export default function ChallengeDetail() {
       </p>
       {res.stale && <div className="mt-2"><StaleNote stale /></div>}
       <p className="mt-3 text-sm leading-snug text-muted-foreground text-pretty">{tx.rule()} {MODE_TEXT[c.mode].detail()}</p>
-      {nutrition && c.status === 'active' && (
+      {closedDays && c.status === 'active' && (
         <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted-foreground">
           {/* Nothing is counted before the first day. */}
           {today >= c.starts_on && <span>{t('Counting up to the day before yesterday')}</span>}
@@ -123,14 +135,23 @@ export default function ChallengeDetail() {
             <div className="h-full rounded-full bg-primary transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
               style={{ width: `${challengeShare(c) * 100}%` }} />
           </div>
+          {training && myPos !== null && joinedCount > 1 && (
+            <p className="mt-3 text-sm font-medium tabular-nums">{t('Position {0} of {1}', myPos, joinedCount)}</p>
+          )}
         </section>
       )}
 
-      <section aria-label={t('Members')} className="mt-6">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">{t('Members')}</h2>
+      <section aria-label={training ? t('Scoreboard') : t('Members')} className="mt-6">
+        <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">{training ? t('Scoreboard') : t('Members')}</h2>
         <ul className="mt-2 flex list-none flex-col gap-2 p-0">
-          {c.members.map(m => (
+          {(training ? ranking : c.members.map(member => ({ member, pos: null }))).map(({ member: m, pos }) => (
             <li key={m.id} className={cn('flex min-h-14 items-center gap-3 rounded-2xl px-3 py-2', m.me ? 'bg-primary/10' : 'bg-card')}>
+              {training && (
+                <span aria-label={pos !== null ? t('Position {0}', pos) : undefined} role={pos !== null ? 'img' : undefined}
+                  className="w-5 shrink-0 text-center font-mono text-sm font-semibold tabular-nums text-muted-foreground">
+                  {pos !== null ? pos : ''}
+                </span>
+              )}
               <PersonAvatar name={m.name} src={m.avatar_url} className="size-9" />
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-2 text-[15px] font-medium">
@@ -156,6 +177,13 @@ export default function ChallengeDetail() {
           ))}
         </ul>
       </section>
+
+      {training && !invited && (
+        <section aria-labelledby="challenge-checkins" className="mt-8">
+          <h2 id="challenge-checkins" className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">{t('Check-ins')}</h2>
+          <ChallengeFeed id={c.id} />
+        </section>
+      )}
 
       {/* Past ends_on the server refuses join and leave (challenge_closed) even while a nutrition
           challenge stays active for its grace days, so no action is offered: only status and result. */}

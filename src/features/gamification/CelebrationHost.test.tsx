@@ -75,4 +75,20 @@ describe('CelebrationHost', () => {
     expect(h.toast).not.toHaveBeenCalled()
     expect(JSON.parse(localStorage.getItem(SEEN)!)).toEqual({ userId: 'u1', day: '2026-10-03' })
   })
+
+  it('confirms a newly closed training day once, apart from nutrition', () => {
+    const TRAINING = 'perf_training_seen_v1'
+    const trained = (day: string, xp = 210) => progressOf(700, {}, { training: { confirms_on: '2026-10-09', last_closed: { day, detailed: true, xp } } })
+    // First load on this device: recorded, no toast.
+    ready(trained('2026-10-02'))
+    render(<CelebrationHost />)
+    expect(h.toast).not.toHaveBeenCalled()
+    expect(JSON.parse(localStorage.getItem(TRAINING)!)).toEqual({ userId: 'u1', day: '2026-10-02' })
+    act(() => ready(trained('2026-10-03')))
+    expect(h.toast).toHaveBeenCalledTimes(1)
+    expect(h.toast).toHaveBeenCalledWith('Saturday workout confirmed, +210 XP')
+    act(() => ready(trained('2026-10-03')))
+    expect(h.toast).toHaveBeenCalledTimes(1)
+    expect(localStorage.getItem(SEEN)).toBe(JSON.stringify({ userId: 'u1', day: null }))
+  })
 })

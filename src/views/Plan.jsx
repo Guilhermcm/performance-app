@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { DAYN, weekOrder, weekStartOf, uid, exCount, routineCount } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
-import { dayAssignSheet, dayAddRoutineSheet, starterPlanSheet, planToolsSheet, confirmSheet } from '../sheets.jsx'
+import { dayAssignSheet, dayAddRoutineSheet, starterPlanSheet, planToolsSheet, confirmSheet, startFlow } from '../sheets.jsx'
 import Icon from '../components/Icon.jsx'
 import { Button } from '../components/ui.jsx'
 import SwipeToDelete from '../components/SwipeToDelete.jsx'
@@ -12,6 +12,9 @@ import { glyphOf, DEFAULT_GLYPH } from '../lib/glyphs.js'
 import { DEMO } from '../lib/demo.js'
 import { MOBILE } from '../lib/mobile.js'
 import { coachAvailable } from '../lib/coach.js'
+import { openCheckinCamera } from '../features/checkin/open-checkin'
+import { useCheckins } from '../features/checkin/useCheckins'
+import { useWeekTraining } from '../features/checkin/week'
 
 export default function Plan() {
   const nav = useNavigate()
@@ -20,6 +23,9 @@ export default function Plan() {
   const config = useStore(s => s.config)
   const coachMode = useStore(s => s.coachLocal?.mode)
   const user = useStore(s => s.user)
+  // Check-ins need a signed-in account (the store is bound once its profile is in, App.jsx).
+  const canCheckIn = !!useCheckins(s => s.userId)
+  const week = useWeekTraining()
 
   /* The Coach's only entry point in the app. Its screens have existed since the UI landed and
      nothing linked to them, so the feature was reachable only by typing the URL — enabled,
@@ -75,6 +81,34 @@ export default function Plan() {
       <Icon name="chevronRight" className="coach-cta-chev" />
     </button>}
 
+    {/* My workouts (phase 1c, spec 5.3): the calendar of check-ins, with this week's training days
+        toward the Treino goal, counted on this phone before the server confirms them. */}
+    {week && <div className="list" style={{ marginBottom: 14 }}>
+      <div className="item" data-testid="my-workouts" {...tappable(() => nav('/plan/treinos'))}>
+        <span className="lrow-i"><Icon name="camera" /></span>
+        <div className="grow" style={{ minWidth: 0 }}>
+          <div className="tt">{t('My workouts')}</div>
+          <div className="ss">{t('{0} of {1} days this week', week.days, week.target)}</div>
+        </div>
+        <Icon name="chevronRight" className="chev" />
+      </div>
+    </div>}
+
+    {/* The tab bar's center is the check-in now (phase 1c), so a workout in progress, or an edit
+        of a saved one, is picked up here. */}
+    {S.active && <div className="list" style={{ marginBottom: 14 }}>
+      <div className="item">
+        <span className="lrow-i"><Icon name={S.active.editingWorkoutId ? 'pencil' : 'timer'} /></span>
+        <div className="grow" style={{ minWidth: 0 }}>
+          <div className="tt">{S.active.editingWorkoutId ? t('Editing a saved workout') : t('Workout in progress')}</div>
+          <div className="ss">{S.active.name}</div>
+        </div>
+        <Button size="sm" variant="tinted" style={{ width: 'auto', flex: 'none' }} onClick={() => nav('/workout')}>
+          {S.active.editingWorkoutId ? t('Edit workout') : t('Resume workout')}
+        </Button>
+      </div>
+    </div>}
+
     <div className="cols"><div>
       <h4 className="sec">{t('Week schedule')}</h4>
       <div className="list" style={{ display: 'flex', flexDirection: 'column' }}>
@@ -115,7 +149,19 @@ export default function Plan() {
       {S.routines.length ? <div className="list">{S.routines.map((r, i) => <SwipeToDelete key={r.id} className="item"
         deleteLabel={t('Delete routine')} onDelete={() => confirmDelete(r)} {...tappable(() => nav('/plan/r/' + r.id))}>
         <span className="lrow-i"><Icon name={glyphOf(r.emoji)} /></span>
-        <div className="grow"><div className="tt">{r.name}</div><div className="ss">{exCount(r.ex.length)}</div></div>
+        <div className="grow" style={{ minWidth: 0 }}>
+          <div className="tt">{r.name}</div><div className="ss">{exCount(r.ex.length)}</div>
+          {/* The plan comes first (phase 1c): a check-in with this routine, or the live workout as
+              the second way. One live workout at a time: a running one is resumed above. */}
+          {(canCheckIn || !S.active) && <div className="row" style={{ gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+            {canCheckIn && <Button size="sm" variant="tinted" icon="camera" style={{ width: 'auto', minHeight: 44 }}
+              aria-label={t('Post a check-in') + ': ' + r.name}
+              onClick={ev => { ev.stopPropagation(); openCheckinCamera({ routineId: r.id }) }}>{t('Post a check-in')}</Button>}
+            {!S.active && <Button size="sm" variant="plain" icon="play" style={{ width: 'auto', minHeight: 44 }}
+              aria-label={t('Train with the app') + ': ' + r.name}
+              onClick={ev => { ev.stopPropagation(); startFlow([r.id]) }}>{t('Train with the app')}</Button>}
+          </div>}
+        </div>
         {/* The order of this list is the order of `S.routines`, and every other screen reads the
             same array — the Start screen, the day-assignment sheets, the routine pickers. So
             moving a routine here moves it everywhere, which is what the request asked for (#142). */}
@@ -131,6 +177,10 @@ export default function Plan() {
         <div className="empty"><div className="ico"><Icon name="clipboard" /></div>{t('No routines yet.')}<br />{t('Create one or load the starter plan.')}</div>
         <Button icon="sparkles" onClick={starterPlanSheet}>{t('Load starter plan')}</Button>
       </>}
+      {/* A freestyle session, or several routines at once, start from the workout screen. */}
+      {!S.active && <div style={{ display: 'flex', justifyContent: 'center', marginTop: 10 }}>
+        <Button size="sm" variant="plain" icon="reset" style={{ width: 'auto', minHeight: 44 }} onClick={() => nav('/workout')}>{t('Choose a different workout')}</Button>
+      </div>}
     </div></div>
   </>
 }

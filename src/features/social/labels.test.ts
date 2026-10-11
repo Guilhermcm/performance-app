@@ -22,11 +22,17 @@ describe('social labels', () => {
     expect(TEMPLATE_TEXT.volume_total.name()).toBe('Total volume')
     expect(MODE_TEXT.solo.name()).toBe('Solo')
     expect(TEMPLATE_TEXT.nutrition_days_on_target.name()).toBe('Days on nutrition target')
+    expect(TEMPLATE_TEXT.checkin_days.name()).toBe('Training days')
+    // A challenge made before the check-ins counts training days now, so it reads the same.
+    expect(TEMPLATE_TEXT.workouts_count.name()).toBe('Training days')
+    expect(TEMPLATE_TEXT.workouts_count.rule()).toBe(TEMPLATE_TEXT.checkin_days.rule())
   })
 
   it('writes amounts in the unit of each template', () => {
-    expect(amountText('workouts_count', 1)).toBe('1 workout')
-    expect(amountText('workouts_count', 12)).toBe('12 workouts')
+    expect(amountText('checkin_days', 1)).toBe('1 training day')
+    expect(amountText('checkin_days', 12)).toBe('12 training days')
+    expect(amountText('workouts_count', 1)).toBe('1 training day')
+    expect(amountText('workouts_count', 12)).toBe('12 training days')
     expect(amountText('weeks_on_target', 1)).toBe('1 week')
     expect(amountText('weeks_on_target', 3)).toBe('3 weeks')
     expect(amountText('volume_total', 12.5)).toBe('12.5 t')
@@ -35,7 +41,8 @@ describe('social labels', () => {
   })
 
   it('names a challenge from its shape', () => {
-    expect(autoTitle('workouts_count', 12, 30)).toBe('12 workouts in 30 days')
+    expect(autoTitle('checkin_days', 12, 30)).toBe('12 training days in 30 days')
+    expect(autoTitle('workouts_count', 12, 30)).toBe('12 training days in 30 days')
     expect(autoTitle('weeks_on_target', 4, 30)).toBe('4 weeks on target')
     expect(autoTitle('volume_total', 40, 30)).toBe('40 t in 30 days')
     expect(autoTitle('nutrition_days_on_target', 21, 30)).toBe('21 days on target in 30 days')

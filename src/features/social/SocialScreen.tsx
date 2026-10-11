@@ -1,37 +1,45 @@
-import type { ComponentType } from 'react'
+import { useEffect, type ComponentType } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
-import { Activity, Swords, Trophy, Users, type LucideIcon } from 'lucide-react'
+import { Images, Swords, Trophy, Users, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { t } from '../../lib/i18n.js'
 import { todayISO } from '../../lib/format.js'
 import { useSocial } from './useSocial'
+import { useCheckins } from '../checkin/useCheckins'
 import { pendingInvites } from './templates'
 import RankingPanel from './RankingPanel'
 import ChallengesPanel from './ChallengesPanel'
 import FeedPanel from './FeedPanel'
 import FriendsPanel from './FriendsPanel'
+import { NoticesButton } from './NoticesList'
 
-type Section = 'ranking' | 'desafios' | 'feed' | 'amigos'
+type Section = 'feed' | 'ranking' | 'desafios' | 'amigos'
+// The feed comes first (spec 4.1): Social opens on it.
 const SECTIONS: { key: Section; label: () => string; icon: LucideIcon }[] = [
+  { key: 'feed', label: () => t('Feed'), icon: Images },
   { key: 'ranking', label: () => t('Ranking'), icon: Trophy },
   { key: 'desafios', label: () => t('Challenges'), icon: Swords },
-  { key: 'feed', label: () => t('Feed'), icon: Activity },
   { key: 'amigos', label: () => t('Friends'), icon: Users }
 ]
 const PANELS: Record<Section, ComponentType> = { ranking: RankingPanel, desafios: ChallengesPanel, feed: FeedPanel, amigos: FriendsPanel }
 
-// The social tab: one header, four sections. Switching sections replaces the history entry, so
-// Back leaves the social area instead of walking through its sections.
+// The social tab: one header with the notices, four sections. Switching sections replaces the
+// history entry, so Back leaves the social area instead of walking through its sections.
 export default function SocialScreen() {
   const { section } = useParams()
   const navigate = useNavigate()
   const waiting = useSocial(s => pendingInvites(s.challenges.data, todayISO()))
-  if (!section || !(section in PANELS)) return <Navigate to="/social/ranking" replace />
+  // Fresh notices on arrival; the store keeps the last ones meanwhile.
+  useEffect(() => { void useCheckins.getState().loadNotices() }, [])
+  if (!section || !(section in PANELS)) return <Navigate to="/social/feed" replace />
   const Panel = PANELS[section as Section]
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-4 pb-6 font-sans text-foreground">
-      <h1 className="text-2xl font-semibold tracking-tight">{t('Social')}</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold tracking-tight">{t('Social')}</h1>
+        <NoticesButton />
+      </div>
       <nav aria-label={t('Social')} className="grid grid-cols-4 gap-1 rounded-2xl bg-secondary/60 p-1">
         {SECTIONS.map(s => {
           const on = s.key === section

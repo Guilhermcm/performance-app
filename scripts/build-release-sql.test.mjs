@@ -1,14 +1,37 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { OUT, buildReleaseSql, releaseFiles } from './build-release-sql.mjs'
+import { RELEASES, buildReleaseSql, releaseFiles } from './build-release-sql.mjs'
 
-describe('release SQL bundle', () => {
-  it('holds migrations 0007 to 0016, in order', () => {
-    expect(releaseFiles().map(f => f.slice(0, 4))).toEqual(
+const byName = name => RELEASES.find(r => r.name === name)
+
+describe('release SQL bundles', () => {
+  it('has the named ranges, in order', () => {
+    expect(RELEASES.map(r => r.name)).toEqual(['0007-0016_nutrition', '0017-0020_checkin'])
+  })
+
+  it('0007-0016_nutrition holds migrations 0007 to 0016, in order', () => {
+    expect(releaseFiles(byName('0007-0016_nutrition')).map(f => f.slice(0, 4))).toEqual(
       ['0007', '0008', '0009', '0010', '0011', '0012', '0013', '0014', '0015', '0016'])
   })
 
-  it('the committed file matches the migrations (run node scripts/build-release-sql.mjs)', () => {
-    expect(readFileSync(OUT, 'utf8')).toBe(buildReleaseSql())
+  it('0017-0020_checkin holds migrations 0017 to 0020, in order', () => {
+    expect(releaseFiles(byName('0017-0020_checkin')).map(f => f.slice(0, 4))).toEqual(
+      ['0017', '0018', '0019', '0020'])
   })
+
+  it('the check-in header says it is for a database that already has 0001 to 0016', () => {
+    const sql = buildReleaseSql(byName('0017-0020_checkin'))
+    expect(sql.split('\n').slice(0, 5).join('\n')).toContain('already has 0001 to 0016')
+  })
+
+  it('the nutrition header keeps saying 0001 to 0006', () => {
+    expect(buildReleaseSql(byName('0007-0016_nutrition')))
+      .toContain('on a database that already has 0001 to 0006.')
+  })
+
+  for (const release of RELEASES) {
+    it(`${release.name}: the committed file matches the migrations (run node scripts/build-release-sql.mjs)`, () => {
+      expect(readFileSync(release.out, 'utf8')).toBe(buildReleaseSql(release))
+    })
+  }
 })

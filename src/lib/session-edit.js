@@ -231,7 +231,22 @@ export function deleteEditedWorkout(state) {
   const current = editedRecord(state)
   state.active = null
   if (!current) return false
+  removeWorkout(state, current)
+  return true
+}
+
+/**
+ * The same removal by id, with no editor involved: a check-in deleted, or refused by the server,
+ * takes the session it wrote with it (features/checkin/ingest.ts). False when no workout has the id.
+ */
+export function deleteWorkout(state, id) {
+  const current = id == null ? null : list(state.workouts).find(w => w?.id === id)
+  if (!current) return false
+  removeWorkout(state, current)
+  return true
+}
+
+function removeWorkout(state, current) {
   state.workouts = state.workouts.filter(w => w !== current)
   lowerKeptWeights(state, [...new Set(list(current.entries).map(e => e?.id).filter(id => id != null))], current, null)
-  return true
 }

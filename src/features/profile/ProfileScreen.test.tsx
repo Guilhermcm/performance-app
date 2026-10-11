@@ -1,10 +1,10 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 
 let P: Record<string, unknown>
-const BASE = { id: 'u1', display_name: 'Ana', avatar_url: null, birth_date: null, sex: null, height_cm: 165, weight_kg: 62, goal: 'strength', level: 'beginner', days_per_week: 3, equipment: [], unit: 'kg', locale: 'pt-BR', timezone: 'America/Sao_Paulo', share_activity: false, created_at: '', updated_at: '',
+const BASE = { id: 'u1', display_name: 'Ana', avatar_url: null, birth_date: null, sex: null, height_cm: 165, weight_kg: 62, goal: 'strength', level: 'beginner', days_per_week: 3, equipment: [], unit: 'kg', locale: 'pt-BR', timezone: 'America/Sao_Paulo', share_activity: false, checkin_visibility: 'friends', created_at: '', updated_at: '',
   nutrition_enabled: false, activity_level: null, nutrition_pace: 'standard', nutrition_days_per_week: 5 }
 P = BASE
 const h = vi.hoisted(() => ({
@@ -125,18 +125,52 @@ describe('ProfileScreen', () => {
     expect(screen.getByRole('button', { name: /save/i })).toBeTruthy()   // still editing
   })
 
-  it('toggles sharing with friends', async () => {
+  it('sets the default visibility of check-ins: Friends or Only me', async () => {
     show()
-    fireEvent.click(screen.getByRole('switch', { name: /share/i }))
-    await waitFor(() => expect(h.save).toHaveBeenCalledWith({ share_activity: true }))
+    const group = screen.getByRole('radiogroup', { name: 'Default check-in visibility' })
+    const only = within(group).getByRole('radio', { name: 'Only me' })
+    const friends = within(group).getByRole('radio', { name: 'Friends' })
+    // checkin_visibility friends, with share_activity off: the two are separate.
+    expect(friends.getAttribute('aria-checked')).toBe('true')
+    expect(only.getAttribute('aria-checked')).toBe('false')
+    fireEvent.click(only)
+    await waitFor(() => expect(h.save).toHaveBeenCalledWith({ checkin_visibility: 'private' }))
+    // Choosing what is already chosen saves nothing.
+    h.save.mockClear()
+    fireEvent.click(friends)
+    expect(h.save).not.toHaveBeenCalled()
   })
 
-  it('focuses the sharing switch when sent there from the feed', async () => {
+  it('starts the control on Only me when the profile says private, and goes back to Friends', async () => {
+    P = { ...BASE, checkin_visibility: 'private', share_activity: true }
+    show()
+    const group = screen.getByRole('radiogroup', { name: 'Default check-in visibility' })
+    expect(within(group).getByRole('radio', { name: 'Only me' }).getAttribute('aria-checked')).toBe('true')
+    fireEvent.click(within(group).getByRole('radio', { name: 'Friends' }))
+    await waitFor(() => expect(h.save).toHaveBeenCalledWith({ checkin_visibility: 'friends' }))
+    expect(h.save).not.toHaveBeenCalledWith(expect.objectContaining({ share_activity: expect.anything() }))
+  })
+
+  it('keeps a separate switch for showing friends the workouts from before the check-ins', async () => {
+    show()
+    const toggle = screen.getByRole('switch', { name: /Show friends my workouts from before check-ins/ })
+    expect(toggle.getAttribute('aria-checked')).toBe('false')
+    fireEvent.click(toggle)
+    await waitFor(() => expect(h.save).toHaveBeenCalledWith({ share_activity: true }))
+    expect(h.save).not.toHaveBeenCalledWith(expect.objectContaining({ checkin_visibility: expect.anything() }))
+  })
+
+  it('shows the Treino weekly target as training days per week', () => {
+    show()
+    expect(screen.getByText('Training days per week')).toBeTruthy()
+  })
+
+  it('focuses the old workouts switch when sent there with focus share_activity', async () => {
     const scroll = vi.fn()
     Element.prototype.scrollIntoView = scroll
     render(<MemoryRouter initialEntries={[{ pathname: '/perfil', state: { focus: 'share_activity' } }]}><ProfileScreen /></MemoryRouter>)
-    const sw = screen.getByRole('switch', { name: /share/i })
-    await waitFor(() => expect(document.activeElement).toBe(sw))
+    const toggle = screen.getByRole('switch', { name: /Show friends my workouts from before check-ins/ })
+    await waitFor(() => expect(document.activeElement).toBe(toggle))
     expect(scroll).toHaveBeenCalled()
   })
 

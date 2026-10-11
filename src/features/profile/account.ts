@@ -1,6 +1,9 @@
 import { supabase } from '@/lib/supabase'
 import { toBackendError } from '@/lib/backend'
 import { useStore } from '../../store/useStore.js'
+import { clearSignedUrls, removeAllPhotos } from '../checkin/checkin-api'
+import { clearCheckinOutbox } from '../checkin/outbox'
+import { useCheckins } from '../checkin/useCheckins'
 import { clearEventQueue } from '../gamification/events'
 import { useProgress } from '../gamification/useProgress'
 import { clearPendingInvite } from '../social/pending-invite'
@@ -25,7 +28,14 @@ type ForgetStore = { forgetAccount(): Promise<void> }
 // sync marks, the profile, progress and social caches, the event queue and a pending invite.
 // The session ends with it, so the app falls back to the sign-in screen. Nothing local is touched
 // when the server call fails: the account still exists and the person can try again.
+// The check-in photos go first, while the session can still reach its folder (spec 6.3). A failure
+// there does not stop the deletion; the SETUP has the query that finds photos left behind.
 export async function deleteMyAccount(): Promise<void> {
+  let userId: string | null = null
+  try { userId = (await supabase.auth.getSession()).data.session?.user.id ?? null } catch { /* no session */ }
+  if (userId) {
+    try { await removeAllPhotos(userId) } catch { /* left for the SETUP clean-up */ }
+  }
   const { error, status } = await supabase.rpc('delete_my_account')
   if (error) {
     const e = toBackendError(error, status)
@@ -37,4 +47,8 @@ export async function deleteMyAccount(): Promise<void> {
   useProfile.getState().reset()
   useProgress.getState().reset()
   useSocial.getState().reset()
+  // The check-ins waiting on this phone belong to an account that no longer exists.
+  if (userId) await clearCheckinOutbox(userId).catch(() => {})
+  useCheckins.getState().reset()
+  clearSignedUrls()
 }

@@ -3,6 +3,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
+import ptBR from '../locales/pt-BR.js'
 
 const html = readFileSync(fileURLToPath(new URL('../../public/privacidade.html', import.meta.url)), 'utf8')
 
@@ -21,8 +22,8 @@ describe('privacy policy page', () => {
 
   it('has the English version and the update date', () => {
     expect(html).toContain('id="en"')
-    expect(visible).toContain('Última atualização: 6 de outubro de 2026')
-    expect(visible).toContain('Last updated: October 6, 2026')
+    expect(visible).toContain('Última atualização: 11 de outubro de 2026')
+    expect(visible).toContain('Last updated: October 11, 2026')
   })
 
   it('covers the nutrition pillar and Open Food Facts in both languages', () => {
@@ -65,6 +66,59 @@ describe('privacy policy page', () => {
     expect(en).toContain('how many days you were on target')
   })
 
+  it('covers check-in photos in Storage, visibility and metadata removal in both languages', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('Check-ins com foto')
+    expect(pt).toContain('Supabase Storage')
+    expect(pt).toContain('balde privado')
+    expect(pt).toContain('link temporário de 1 hora')
+    expect(pt).toContain('Amigos ou Só eu')
+    expect(pt).toContain('Check-in privado')
+    expect(pt).toContain('remove os metadados')
+    expect(pt).toContain('localização')
+    expect(en).toContain('Photo check-ins')
+    expect(en).toContain('Supabase Storage')
+    expect(en).toContain('private bucket')
+    expect(en).toContain('temporary 1-hour link')
+    expect(en).toContain('Friends or Only me')
+    expect(en).toContain('Private check-in')
+    expect(en).toContain('removes the metadata')
+    expect(en).toContain('location')
+  })
+
+  it('says the private note and the workout detail never leave the account, in both languages', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('Só você vê a observação privada e o detalhe do treino')
+    expect(pt).toContain('nunca saem da sua conta')
+    expect(en).toContain('Only you see the private note and the workout detail')
+    expect(en).toContain('never leave your account')
+  })
+
+  it('says reactions and comments follow who can see the post, in both languages', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('As reações e os comentários ficam visíveis para quem pode ver o check-in')
+    expect(en).toContain('Reactions and comments are visible to whoever can see the check-in')
+  })
+
+  it('says photos are deleted with the check-in and with the account, in both languages', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('Ao apagar um check-in, a foto some do Supabase Storage junto com ele')
+    expect(pt).toContain('Antes de excluir a conta, o app apaga todas as suas fotos do Storage')
+    expect(en).toContain('When you delete a check-in, the photo is removed from Supabase Storage with it')
+    expect(en).toContain('Before deleting the account, the app deletes all your photos from Storage')
+  })
+
+  it('says unsent check-ins and photos stay on the device until they go up, in both languages', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('check-ins e fotos que ainda não foram enviados')
+    expect(en).toContain('check-ins and photos that have not been sent yet')
+  })
+
   it('points to the self-service account deletion in both languages', () => {
     expect(visible).toContain('Perfil &gt; Excluir minha conta')
     expect(visible).toContain('Profile &gt; Delete my account')
@@ -75,6 +129,38 @@ describe('privacy policy page', () => {
     const en = visible.slice(visible.indexOf('Privacy Policy'))
     expect(pt).toContain('ainda não foram enviados ficam guardados no aparelho e sobem na próxima vez que a mesma conta entrar')
     expect(en).toContain('have not been sent yet stay saved on the device and go up the next time the same account signs in')
+  })
+
+  it('names the two Profile controls exactly as the app shows them, and not the removed switch', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    for (const key of ['Default check-in visibility', 'Show friends my workouts from before check-ins']) {
+      expect(pt, key).toContain(ptBR[key])
+      expect(en, key).toContain(key)
+    }
+    expect(visible).not.toContain('Compartilhar treinos e PRs com amigos')
+    expect(visible).not.toContain('Share workouts and PRs with friends')
+    // The old switch now covers only the workouts from before the check-ins, and not the check-ins.
+    expect(pt).toContain('Essa opção não muda seus check-ins')
+    expect(en).toContain('This switch does not change your check-ins')
+  })
+
+  it('says access ends at once for new requests and an open photo link lasts up to 1 hour, in both languages', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('o acesso acaba na hora para novos pedidos')
+    expect(pt).toContain('expira em até 1 hora')
+    expect(en).toContain('access ends right away for new requests')
+    expect(en).toContain('expires within 1 hour')
+    expect(pt).not.toContain('deixa de ver seus check-ins na hora')
+    expect(en).not.toContain('stops seeing your check-ins right away')
+  })
+
+  it('lists the routine name among what friends see on a check-in, in both languages', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('a foto, a atividade, o nome da rotina, o título')
+    expect(en).toContain('the photo, the activity, the routine name, the title')
   })
 
   it('uses no dash as a pause in its visible text', () => {

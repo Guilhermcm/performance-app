@@ -60,7 +60,7 @@ describe('ProgressHero', () => {
   it('invites the first workout when there is no XP yet', () => {
     ready(progressOf(0, { workouts: 0 }))
     render(<ProgressHero />)
-    expect(screen.getByText('Finish a workout to earn your first XP.')).toBeTruthy()
+    expect(screen.getByText('Check in to earn your first XP.')).toBeTruthy()
   })
 
   it('splits the week bar into strength, nutrition and bonus, each with its name', () => {
@@ -72,7 +72,7 @@ describe('ProgressHero', () => {
     expect(seg('nutrition').style.width).toBe(`${(170 / 1920) * 100}%`)
     expect(seg('bonus').style.width).toBe(`${(50 / 1920) * 100}%`)
     const legend = screen.getByRole('list', { name: 'XP this week by pillar' })
-    expect(within(legend).getByText('Strength')).toBeTruthy()
+    expect(within(legend).getByText('Training')).toBeTruthy()
     expect(within(legend).getByText('Nutrition')).toBeTruthy()
     expect(within(legend).getByText('Bonus')).toBeTruthy()
     expect(within(legend).getByText('170')).toBeTruthy()

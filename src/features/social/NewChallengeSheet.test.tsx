@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, cleanup, waitFor, act } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, waitFor, act, within } from '@testing-library/react'
 
 const h = vi.hoisted(() => ({ nav: vi.fn(), createChallenge: vi.fn(), toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }) }))
 vi.mock('react-router-dom', () => ({ useNavigate: () => h.nav }))
@@ -40,19 +40,32 @@ beforeEach(() => {
 afterEach(() => { cleanup(); useSocial.setState({ load: realLoad }); useProfile.setState({ profile: null }) })
 
 describe('NewChallengeSheet', () => {
+  it('opens on Training days and offers neither workouts nor total volume', () => {
+    render(<NewChallengeSheet open onClose={onClose} />)
+    const options = within(screen.getByRole('radiogroup', { name: 'What counts' })).getAllByRole('radio')
+    expect(options.map(o => o.textContent)).toEqual([
+      expect.stringContaining('Training days'), expect.stringContaining('Weeks on target'), expect.stringContaining('Days on nutrition target')
+    ])
+    expect(screen.getByRole('radio', { name: /Training days/ }).getAttribute('aria-checked')).toBe('true')
+    expect(screen.getByText('Days with a check-in in the period. Several on the same day count as one.')).toBeTruthy()
+    expect(screen.queryByRole('radio', { name: /Workouts in the period/ })).toBeNull()
+    expect(screen.queryByRole('radio', { name: /Total volume/ })).toBeNull()
+    expect(screen.queryByRole('switch', { name: /volume/ })).toBeNull()
+  })
+
   it('suggests a goal and a name from what is picked', () => {
     render(<NewChallengeSheet open onClose={onClose} />)
-    // 3 workouts a week (no progress yet) × 4 weeks, only me so far.
-    expect(screen.getByText('12 workouts')).toBeTruthy()
-    expect((screen.getByLabelText('Challenge name') as HTMLInputElement).value).toBe('12 workouts in 30 days')
+    // 3 training days a week (no progress yet) × 4 weeks, only me so far.
+    expect(screen.getByText('12 training days')).toBeTruthy()
+    expect((screen.getByLabelText('Challenge name') as HTMLInputElement).value).toBe('12 training days in 30 days')
     expect(screen.getByText('Pick at least one friend.')).toBeTruthy()
     expect(create().disabled).toBe(true)
     fireEvent.click(screen.getByRole('checkbox', { name: /Bia/ }))
-    expect(screen.getByText('24 workouts')).toBeTruthy()
+    expect(screen.getByText('24 training days')).toBeTruthy()
     expect(create().disabled).toBe(false)
     fireEvent.click(screen.getByRole('button', { name: 'More' }))
-    expect(screen.getByText('25 workouts')).toBeTruthy()
-    expect((screen.getByLabelText('Challenge name') as HTMLInputElement).value).toBe('25 workouts in 30 days')
+    expect(screen.getByText('25 training days')).toBeTruthy()
+    expect((screen.getByLabelText('Challenge name') as HTMLInputElement).value).toBe('25 training days in 30 days')
   })
 
   it('keeps weeks on target solo', () => {
@@ -60,17 +73,6 @@ describe('NewChallengeSheet', () => {
     fireEvent.click(screen.getByRole('radio', { name: /Weeks on target/ }))
     expect((screen.getByRole('radio', { name: 'Team' }) as HTMLButtonElement).disabled).toBe(true)
     expect(screen.getByText('Only solo for this goal: each person has their own weekly goal.')).toBeTruthy()
-  })
-
-  it('asks for the volume opt-in before creating a volume challenge', () => {
-    render(<NewChallengeSheet open onClose={onClose} />)
-    fireEvent.click(screen.getByRole('radio', { name: /Total volume/ }))
-    fireEvent.click(screen.getByRole('checkbox', { name: /Bia/ }))
-    expect(screen.getByText('Agree to share your volume to create this challenge.')).toBeTruthy()
-    expect(create().disabled).toBe(true)
-    fireEvent.click(screen.getByRole('switch'))
-    expect(screen.queryByText('Agree to share your volume to create this challenge.')).toBeNull()
-    expect(create().disabled).toBe(false)
   })
 
   it('asks for a name when it is cleared', () => {
@@ -97,7 +99,7 @@ describe('NewChallengeSheet', () => {
     await waitFor(() => expect(h.nav).toHaveBeenCalledWith('/social/desafios/c9'))
     const today = todayISO()
     expect(h.createChallenge).toHaveBeenCalledWith({
-      template: 'workouts_count', title: '24 workouts in 30 days', mode: 'team', target: 24,
+      template: 'checkin_days', title: '24 training days in 30 days', mode: 'team', target: 24,
       starts_on: today, ends_on: addDays(today, 29), invitees: [BIA], share_volume: false, share_nutrition: false
     })
     expect(onClose).toHaveBeenCalled()

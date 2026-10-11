@@ -27,6 +27,16 @@ describe('previewWorkout', () => {
       .toContainEqual({ kind: 'pr', amount: 30, count: 1 })
   })
 
+  it('predicts no workout or PR XP from the check-in cutover on: the day is paid by its check-in', () => {
+    const since = { training_since: '2026-10-05' }
+    expect(previewWorkout(progressOf(400, {}, since), { occurredOn: today, prs: 2 }))
+      .toEqual({ lines: [], total: 0, viaCheckin: true })
+    // A day before the cutover still pays as before.
+    expect(previewWorkout(progressOf(400, {}, { training_since: '2026-10-08' }), { occurredOn: today, prs: 1 })?.total).toBe(230)
+    // A server without the cutover setting: the old rules.
+    expect(previewWorkout(progressOf(400, {}, { training_since: null }), { occurredOn: today, prs: 0 })?.total).toBe(200)
+  })
+
   it('gives up on another week or without progress', () => {
     expect(previewWorkout(progressOf(400), { occurredOn: '2026-10-02', prs: 0 })).toBeNull()
     expect(previewWorkout(null, { occurredOn: today, prs: 0 })).toBeNull()

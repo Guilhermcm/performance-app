@@ -86,7 +86,9 @@ export default function WorkoutXpSummary({ before, preview, settled }: Props) {
           <p className="text-sm leading-snug text-muted-foreground">{t('This workout counts toward a past week. Its XP shows up once it syncs.')}</p>
         ) : null
       ) : total === 0 ? (
-        <p className="text-sm leading-snug text-muted-foreground">{t('No XP this time. You already got the two extra workouts this week.')}</p>
+        <p className="text-sm leading-snug text-muted-foreground">
+          {preview?.viaCheckin ? t('Workouts earn XP through the check-in, once the day closes.') : t('No XP this time. You already got the two extra workouts this week.')}
+        </p>
       ) : (
         <>
           <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">

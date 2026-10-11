@@ -1,4 +1,4 @@
-import { t } from '../../lib/i18n.js'
+import { t, tn } from '../../lib/i18n.js'
 import type { AchievementCode } from './achievements'
 
 type Text = { title: () => string; detail: () => string }
@@ -6,12 +6,14 @@ type Text = { title: () => string; detail: () => string }
 // Functions, so each t() call stays a literal that scripts/check-source-strings.mjs can see and the
 // text follows the language chosen at render time.
 export const ACHIEVEMENT_TEXT: Record<AchievementCode, Text> = {
-  first_workout: { title: () => t('First workout'), detail: () => t('Finish your first workout.') },
-  workouts_10: { title: () => t('{0} workouts', 10), detail: () => t('Finish {0} workouts.', 10) },
-  workouts_50: { title: () => t('{0} workouts', 50), detail: () => t('Finish {0} workouts.', 50) },
-  workouts_100: { title: () => t('{0} workouts', 100), detail: () => t('Finish {0} workouts.', 100) },
-  workouts_250: { title: () => t('{0} workouts', 250), detail: () => t('Finish {0} workouts.', 250) },
-  workouts_500: { title: () => t('{0} workouts', 500), detail: () => t('Finish {0} workouts.', 500) },
+  // Since check-ins (spec 5.1) these count training days: days with a check-in, or with a workout
+  // finished before the cutover.
+  first_workout: { title: () => t('First workout'), detail: () => t('Log your first training day.') },
+  workouts_10: { title: () => tn(10, '{0} training days', 10), detail: () => tn(10, 'Log {0} training days.', 10) },
+  workouts_50: { title: () => tn(50, '{0} training days', 50), detail: () => tn(50, 'Log {0} training days.', 50) },
+  workouts_100: { title: () => tn(100, '{0} training days', 100), detail: () => tn(100, 'Log {0} training days.', 100) },
+  workouts_250: { title: () => tn(250, '{0} training days', 250), detail: () => tn(250, 'Log {0} training days.', 250) },
+  workouts_500: { title: () => tn(500, '{0} training days', 500), detail: () => tn(500, 'Log {0} training days.', 500) },
   first_pr: { title: () => t('First PR'), detail: () => t('Beat your best weight on an exercise.') },
   prs_10: { title: () => t('{0} PRs', 10), detail: () => t('Set {0} personal records.', 10) },
   prs_50: { title: () => t('{0} PRs', 50), detail: () => t('Set {0} personal records.', 50) },

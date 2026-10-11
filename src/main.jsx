@@ -13,6 +13,7 @@ import { cleanAuthParams } from './features/auth/auth.ts'
 import { startEventSync, clearEventQueue } from './features/gamification/events.ts'
 import { clearNutritionLocal } from './features/nutrition/sign-out.ts'
 import { clearPendingInvite } from './features/social/pending-invite.ts'
+import { clearSignedUrls } from './features/checkin/checkin-api.ts'
 
 // The store's /api/* calls are answered from Supabase, not an HTTP server of our own.
 setTransport(backend)
@@ -22,8 +23,10 @@ supabase.auth.getSession().finally(() => cleanAuthParams())
 
 // Gamification events wait in a local queue and go out whenever there is a session and a network.
 // A sign-out clears them: the next person on this phone must not inherit someone else's XP.
+// The check-in queue stays (it is per account and goes up when that account is back); only the
+// photo links of the session go.
 startEventSync()
-supabase.auth.onAuthStateChange(event => { if (event === 'SIGNED_OUT') { clearEventQueue(); clearNutritionLocal(); clearPendingInvite() } })
+supabase.auth.onAuthStateChange(event => { if (event === 'SIGNED_OUT') { clearEventQueue(); clearNutritionLocal(); clearPendingInvite(); clearSignedUrls() } })
 
 // App.jsx restores per-route scroll itself; the browser's own attempt races it.
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual'

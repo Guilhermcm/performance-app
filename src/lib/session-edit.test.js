@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { editCompletedSession, saveWorkoutEdit, editLeftEmpty, deleteEditedWorkout, editChangesNothing } from './session-edit.js'
+import { editCompletedSession, saveWorkoutEdit, editLeftEmpty, deleteEditedWorkout, deleteWorkout, editChangesNothing } from './session-edit.js'
 import { mergeStates } from './sync-merge.js'
 import { entryExcluded, lastEntryFor } from './history.js'
 
@@ -355,5 +355,27 @@ describe('editChangesNothing', () => {
     gone.workouts = []
     expect(editChangesNothing(gone)).toBe(false)
     expect(editChangesNothing({ active: null, workouts: [] })).toBe(false)
+  })
+})
+
+// The same removal without the editor: a check-in deleted, or refused by the server, takes the
+// session it wrote with it (features/checkin/ingest.ts).
+describe('deleteWorkout', () => {
+  it('removes the workout by id and lowers the kept weight it carried', () => {
+    const state = fixture()
+    state.workouts[0].entries = [entry(1000)]
+    state.workouts.push({ id: 'earlier', d: '2026-08-20', start: 0, end: 1, entries: [entry(95)], prs: [] })
+    state.exWeights = { '0025': { w: 1000, d: '2026-09-01' } }
+    expect(deleteWorkout(state, 'workout')).toBe(true)
+    expect(state.workouts.map(w => w.id)).toEqual(['earlier'])
+    expect(state.exWeights['0025']).toEqual({ w: 95, d: '2026-08-20' })
+  })
+
+  it('leaves the editor and everything else alone, and says when there was nothing to remove', () => {
+    const state = fixture()
+    state.active = { id: 'live', entries: [] }
+    expect(deleteWorkout(state, 'nope')).toBe(false)
+    expect(state.workouts).toHaveLength(1)
+    expect(state.active).toEqual({ id: 'live', entries: [] })
   })
 })

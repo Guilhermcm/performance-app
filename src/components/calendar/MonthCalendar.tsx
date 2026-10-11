@@ -18,6 +18,9 @@ export type CalendarCell = {
   selectable?: boolean
   // Today: aria-current="date".
   current?: boolean
+  // A picture laid behind the day (a check-in photo in "Meus treinos"), decorative: the number
+  // sits on it in a chip and `accessibleText` still says what the day holds.
+  media?: ReactNode
 }
 
 // A Monday-to-Sunday row; a null cell is a day of another month, left blank. The summary sits
@@ -142,7 +145,13 @@ export default function MonthCalendar({
 
 function Day({ cell, className, onSelect }: { cell: CalendarCell; className?: string; onSelect: (day: string) => void }) {
   const number = Number(cell.day.slice(8))
-  const body = (
+  const media = cell.media != null
+  const body = media ? (
+    <>
+      <span aria-hidden className="absolute inset-0 [&>img]:size-full [&>img]:object-cover">{cell.media}</span>
+      <span className="relative rounded-md bg-black/55 px-1 py-0.5 font-mono text-xs leading-none text-white tabular-nums">{number}</span>
+    </>
+  ) : (
     <>
       <span className="font-mono text-sm leading-none tabular-nums">{number}</span>
       <span aria-hidden className="grid h-4 place-items-center">{cell.icon}</span>
@@ -150,15 +159,16 @@ function Day({ cell, className, onSelect }: { cell: CalendarCell; className?: st
   )
   const shape = cn(
     'flex min-h-12 w-full flex-col items-center justify-center gap-1 rounded-xl py-1',
+    media && 'relative overflow-hidden',
     cell.current && 'font-semibold',
     className
   )
   if (cell.selectable === false) {
-    return <div role="img" aria-label={cell.accessibleText} data-state={cell.state} className={shape}>{body}</div>
+    return <div role="img" aria-label={cell.accessibleText} data-state={cell.state} data-media={media || undefined} className={shape}>{body}</div>
   }
   return (
     <button type="button" aria-label={cell.accessibleText} aria-current={cell.current ? 'date' : undefined} data-state={cell.state}
-      onClick={() => onSelect(cell.day)}
+      data-media={media || undefined} onClick={() => onSelect(cell.day)}
       className={cn(shape, 'outline-none transition-colors duration-150 hover:bg-secondary/60 focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-reduce:transition-none')}>
       {body}
     </button>

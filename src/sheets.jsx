@@ -16,6 +16,9 @@ import { useProgress } from './features/gamification/useProgress.ts'
 import { previewWorkout } from './features/gamification/preview.ts'
 import { syncProgress, weighInXp } from './features/gamification/after-event.ts'
 import { onWeighIn } from './features/nutrition/weigh-in.ts'
+import { useCheckins } from './features/checkin/useCheckins.ts'
+import { openCheckin } from './features/checkin/open-checkin.ts'
+import { detailOfWorkout } from './features/checkin/ingest.ts'
 import WorkoutXpSummary from './features/gamification/WorkoutXpSummary.tsx'
 import { buildStarterPlan, starterPlanDays, starterPlanOptions } from './lib/starter.js'
 import Media, { Thumb } from './components/Media.jsx'
@@ -2718,5 +2721,13 @@ function doFinishWorkout() {
   useStore.getState().autoBackupNow()
   useUI.getState().stopRest()
   beep(snd(), 880, 0.15); beep(snd(), 1100, 0.15, 0.18); beep(snd(), 1320, 0.3, 0.36)
-  ui().openSheet(close => <FinishSummary w={shown} prs={prs} e1prs={e1prs} xp={xp} close={close} />, { kind: 'center', locked: true })
+  const summary = () => ui().openSheet(close => <FinishSummary w={shown} prs={prs} e1prs={e1prs} xp={xp} close={close} />, { kind: 'center', locked: true })
+  // The day counts with a check-in (spec 3.6): a live session of a signed-in account ends in the
+  // check-in, with its routine and sets filled in, asking for the photo. The workout is already in
+  // the history; the check-in links to it. The summary follows once the panel closes, posted or not.
+  if (!past && useCheckins.getState().userId) {
+    openCheckin({ routineId: shown.routineId ?? undefined, detail: detailOfWorkout(shown) ?? undefined, fromWorkout: shown.id, onClose: summary })
+    return
+  }
+  summary()
 }

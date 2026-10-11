@@ -58,7 +58,7 @@ describe('activity_events', () => {
 
   it('keeps the kind catalogue read-only for clients', async () => {
     const kinds = await asUser(db, A, () => db.query('select * from event_kinds'))
-    expect(kinds.rows).toHaveLength(6)
+    expect(kinds.rows).toHaveLength(8)   // 3 workout kinds, 3 nutrition, 2 training (1c)
     await expect(asUser(db, A, () => db.query(`insert into event_kinds values ('sleep', 'sleep_logged')`))).rejects.toThrow(/row-level security/)
   })
 

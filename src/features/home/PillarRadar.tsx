@@ -25,13 +25,14 @@ type Props = {
 }
 
 const PILLAR: Record<PillarKey, { name: () => string; icon: ComponentType<{ className?: string; 'aria-hidden'?: boolean }> }> = {
-  strength: { name: () => t('Strength'), icon: Dumbbell },
+  // The strength pillar is called Treino since phase 1c; its key stays `strength`.
+  strength: { name: () => t('Training'), icon: Dumbbell },
   nutrition: { name: () => t('Nutrition'), icon: Apple },
   sleep: { name: () => t('Sleep'), icon: Moon },
   habits: { name: () => t('Habits'), icon: ListChecks }
 }
 
-// What the lock offers, per pillar that can be off. Strength is always on.
+// What the lock offers, per pillar that can be off. Training is always on.
 const TURN_ON: Partial<Record<PillarKey, () => string>> = {
   nutrition: () => t('Turn on Nutrition')
 }
@@ -59,7 +60,7 @@ export function axisState(pillar: PillarKey, enabled: Enabled, released: readonl
 const share = (v: number | null | undefined) => (v == null || !Number.isFinite(v) ? null : Math.min(1, Math.max(0, v)))
 const pct = (v: number) => new Intl.NumberFormat(dateLocale(), { style: 'percent', maximumFractionDigits: 0 }).format(v)
 
-// The chart in words, for screen readers: "Strength 82%, Nutrition 64%, Sleep coming soon, ...".
+// The chart in words, for screen readers: "Training 82%, Nutrition 64%, Sleep coming soon, ...".
 export function radarDescription(radar: Props['radar'], enabled: Enabled, released: readonly PillarKey[]): string {
   return AXES.map(p => {
     const name = PILLAR[p].name()

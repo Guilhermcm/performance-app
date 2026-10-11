@@ -23,9 +23,14 @@ describe('achievement labels', () => {
   })
 
   it('puts the threshold in the counted badges', () => {
-    expect(ACHIEVEMENT_TEXT.workouts_50.title()).toBe('50 workouts')
+    expect(ACHIEVEMENT_TEXT.workouts_50.title()).toBe('50 training days')
     expect(ACHIEVEMENT_TEXT.streak_12.detail()).toBe('Meet your weekly goal 12 weeks in a row.')
     expect(ACHIEVEMENT_TEXT.level_25.title()).toBe('Level 25')
+  })
+
+  it('counts training days, not finished workouts, since check-ins (spec 5.1)', () => {
+    expect(ACHIEVEMENT_TEXT.first_workout.detail()).toBe('Log your first training day.')
+    expect(ACHIEVEMENT_TEXT.workouts_100.detail()).toBe('Log 100 training days.')
   })
 
   it('never falls back to the raw code', () => {

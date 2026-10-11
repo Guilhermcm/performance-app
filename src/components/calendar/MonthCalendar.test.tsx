@@ -44,6 +44,18 @@ describe('MonthCalendar', () => {
     expect(screen.getByRole('img', { name: '2026-10-02: Off' })).toBeTruthy()
   })
 
+  it('lays a picture behind a day, keeping its number and its name', () => {
+    const photo = <img data-testid="day-photo" src="https://photos/a.jpg" alt="" />
+    const w: CalendarWeek[] = [{ start: '2026-10-05', cells: ['05', '06', '07', '08', '09', '10', '11'].map(d =>
+      cellOf(`2026-10-${d}`, d === '07' ? { media: photo, accessibleText: '2026-10-07: 1 check-in' } : {})) }]
+    render(<MonthCalendar {...base} weeks={w} />)
+    const day = screen.getByRole('button', { name: '2026-10-07: 1 check-in' })
+    expect(within(day).getByTestId('day-photo')).toBeTruthy()
+    expect(day.getAttribute('data-media')).toBe('true')
+    expect(day.textContent).toContain('7')
+    expect(screen.getByRole('button', { name: '2026-10-08: Done' }).getAttribute('data-media')).toBeNull()
+  })
+
   it('puts the week summary under its row', () => {
     render(<MonthCalendar {...base} />)
     expect(screen.getByText('3/5 on target')).toBeTruthy()
