@@ -1529,6 +1529,16 @@ export const PT_BR_OVERRIDES = {
   "Turn on the Nutrition pillar to join": "Ative o pilar Nutrição para participar",
   "Counting up to the day before yesterday": "Contando até anteontem",
   "Result on {0}": "Resultado sai em {0}",
+  "Strength training": "Musculação",
+  "Running": "Corrida",
+  "Cycling": "Bike",
+  "Swimming": "Natação",
+  "Walking": "Caminhada",
+  "Sport": "Esporte",
+  "Class": "Aula",
+  "Other activity": "Outro",
+  "Check-in “{0}” was not posted because its day has closed.": "O check-in “{0}” não foi postado porque o dia já fechou.",
+  "The server refused a check-in, so it was not posted.": "O servidor recusou um check-in, e ele não foi postado.",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

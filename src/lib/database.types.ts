@@ -156,7 +156,7 @@ export interface Database {
       challenges: {
         Row: {
           id: string
-          template: 'workouts_count' | 'weeks_on_target' | 'volume_total' | 'nutrition_days_on_target'
+          template: 'workouts_count' | 'weeks_on_target' | 'volume_total' | 'nutrition_days_on_target' | 'checkin_days'
           title: string
           mode: 'team' | 'solo'; target: number; starts_on: string; ends_on: string
           // null once the creator deleted their account; timezone is theirs, kept from then on.
@@ -176,6 +176,66 @@ export interface Database {
         Update: never
         Relationships: []
       }
+      checkins: {
+        Row: {
+          id: string; user_id: string; day: string
+          activity: 'strength' | 'run' | 'bike' | 'swim' | 'walk' | 'sport' | 'class' | 'other'
+          routine_id: string | null; routine_name: string | null; title: string; caption: string | null
+          // Private: only the owner reads it (RLS); the functions friends call never return it.
+          note: string | null; duration_min: number | null; visibility: 'friends' | 'private'
+          photo_path: string; detail: Json | null; created_at: string; updated_at: string
+        }
+        Insert: {
+          id: string; day: string
+          activity: 'strength' | 'run' | 'bike' | 'swim' | 'walk' | 'sport' | 'class' | 'other'
+          title: string; visibility: 'friends' | 'private'; photo_path: string; user_id?: string
+          routine_id?: string | null; routine_name?: string | null; caption?: string | null
+          note?: string | null; duration_min?: number | null; detail?: Json | null
+          created_at?: string; updated_at?: string
+        }
+        // Day, activity and photo never change (checkins_guard raises item_immutable).
+        Update: Partial<Omit<Database['public']['Tables']['checkins']['Insert'], 'id' | 'user_id' | 'day' | 'activity' | 'photo_path'>>
+        Relationships: []
+      }
+      hidden_checkins: {
+        Row: { user_id: string; checkin_id: string }
+        Insert: { checkin_id: string; user_id?: string }
+        Update: never
+        Relationships: []
+      }
+      app_settings: {
+        Row: { key: string; value: Json }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      checkin_reactions: {
+        Row: { checkin_id: string; user_id: string; emoji: string; created_at: string }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      checkin_comments: {
+        Row: { id: number; checkin_id: string; user_id: string; body: string; created_at: string }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      social_notices: {
+        Row: {
+          id: number; user_id: string; actor_id: string; kind: 'reaction' | 'comment' | 'challenge_invite'
+          checkin_id: string | null; challenge_id: string | null; created_at: string; read_at: string | null
+        }
+        Insert: never
+        Update: { read_at?: string | null }
+        Relationships: []
+      }
+      training_days: {
+        Row: { user_id: string; day: string; checked: boolean; detailed: boolean; legacy: boolean; closed_at: string }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: {
@@ -189,6 +249,40 @@ export interface Database {
       }
       delete_my_account: {
         Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      // The check-in feed and its pages (0020_checkin_feed.sql); shapes in features/social/types.ts.
+      get_checkin_feed: {
+        Args: { p_before?: string | null; p_before_key?: string | null }
+        Returns: Json
+      }
+      get_challenge_feed: {
+        Args: { p_id: string; p_before?: string | null; p_before_key?: string | null }
+        Returns: Json
+      }
+      // 0018_checkin_social.sql
+      get_checkin: {
+        Args: { p_id: string }
+        Returns: Json
+      }
+      react_checkin: {
+        Args: { p_id: string; p_emoji: string; p_on: boolean }
+        Returns: undefined
+      }
+      comment_checkin: {
+        Args: { p_id: string; p_body: string }
+        Returns: number
+      }
+      delete_comment: {
+        Args: { p_id: number }
+        Returns: undefined
+      }
+      get_notices: {
+        Args: { p_limit?: number }
+        Returns: Json
+      }
+      mark_notices_read: {
+        Args: { p_upto: number }
         Returns: undefined
       }
     }
