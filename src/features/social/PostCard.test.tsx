@@ -5,14 +5,14 @@ import { render, screen, fireEvent, cleanup, act, within, waitFor } from '@testi
 const h = vi.hoisted(() => ({ toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }) }))
 vi.mock('sonner', () => ({ toast: h.toast }))
 vi.mock('@/components/ui/drawer', () => import('./test-drawer'))
-const api = vi.hoisted(() => ({ signedUrls: vi.fn(), react: vi.fn() }))
+const api = vi.hoisted(() => ({ signedUrls: vi.fn(), react: vi.fn(), fetchCheckin: vi.fn() }))
 vi.mock('../checkin/checkin-api', async orig => ({ ...(await orig<typeof import('../checkin/checkin-api')>()), ...api }))
 
 import { PostCard, PostSkeleton } from './PostCard'
 import { usePostOverlay } from './post-state'
 import { useCheckins } from '../checkin/useCheckins'
 import { SocialError } from './social-api'
-import { BIA, ME, checkinItemOf } from './test-social'
+import { BIA, CAIO, ME, checkinItemOf } from './test-social'
 import type { ReactionGroup } from './types'
 import { setLang } from '../../lib/i18n.js'
 
@@ -47,9 +47,8 @@ describe('PostCard', () => {
     const img = screen.getByRole('img', { name: 'Photo by Bia: Musculação · Push' }) as HTMLImageElement
     expect(img.src).toBe(`https://cdn.test/${BIA}/c1.jpg`)
     expect(api.signedUrls).toHaveBeenCalledWith([`${BIA}/c1.jpg`])
-    const fire = screen.getByRole('button', { name: '🔥: 3 reactions' })
-    expect(fire.getAttribute('aria-pressed')).toBe('false')
-    expect(screen.getByRole('button', { name: '💪: 1 reaction' }).getAttribute('aria-pressed')).toBe('true')
+    expect(screen.getByRole('button', { name: '🔥: 3 reactions. See who reacted' }).getAttribute('aria-haspopup')).toBe('dialog')
+    expect(screen.getByRole('button', { name: '💪: 1 reaction. See who reacted' })).toBeTruthy()
     expect(screen.getByRole('button', { name: '2 comments' })).toBeTruthy()
   })
 
@@ -67,7 +66,7 @@ describe('PostCard', () => {
       render(<PostCard item={checkinItemOf('c1', { comments_count: 1, reactions: [{ emoji: '🔥', count: 2, mine: false }] })} onOpen={vi.fn()} />)
       expect(screen.getByText('3º treino da semana · Sequência de 6 semanas')).toBeTruthy()
       expect(screen.getByRole('button', { name: '1 comentário' })).toBeTruthy()
-      expect(screen.getByRole('button', { name: '🔥: 2 reações' })).toBeTruthy()
+      expect(screen.getByRole('button', { name: '🔥: 2 reações. Ver quem reagiu' })).toBeTruthy()
       expect(screen.getByRole('button', { name: 'Reagir com 💪' })).toBeTruthy()
       expect(screen.getByText('há 2 h')).toBeTruthy()
       await settle()
@@ -100,11 +99,11 @@ describe('PostCard', () => {
     fireEvent.click(photo())
     await settle()
     expect(api.react).toHaveBeenLastCalledWith('c1', '💪', true)
-    expect(screen.getByRole('button', { name: '💪: 1 reaction' }).getAttribute('aria-pressed')).toBe('true')
+    expect(screen.getByRole('button', { name: '💪: 1 reaction. See who reacted' })).toBeTruthy()
     fireEvent.click(photo()); fireEvent.click(photo())
     await settle()
     expect(api.react).toHaveBeenLastCalledWith('c1', '💪', false)
-    expect(screen.queryByRole('button', { name: '💪: 1 reaction' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^💪: 1 reaction/ })).toBeNull()
   })
 
   it('has a 💪 button that does what the double tap does', async () => {
@@ -114,16 +113,64 @@ describe('PostCard', () => {
     expect(api.react).toHaveBeenCalledWith('c1', '💪', true)
   })
 
-  it('adds to a group of others and takes my reaction back', async () => {
-    const item = checkinItemOf('c1', { reactions: [{ emoji: '🔥', count: 2, mine: false }] })
+  it('opens who reacted from a group, where my reaction can go on and off', async () => {
+    const item = checkinItemOf('c1', { reactions: [{ emoji: '🔥', count: 2, mine: false }, { emoji: '💪', count: 2, mine: true }] })
+    api.fetchCheckin.mockResolvedValue({
+      id: 'c1', comments: [],
+      reactions: [
+        { emoji: '🔥', count: 2, mine: false, users: [{ id: BIA, name: 'Bia', avatar_url: null }, { id: CAIO, name: 'Caio', avatar_url: null }] },
+        { emoji: '💪', count: 2, mine: true, users: [{ id: ME, name: 'Ana', avatar_url: null }, { id: BIA, name: 'Bia', avatar_url: null }] }
+      ]
+    })
     render(<PostCard item={item} onOpen={vi.fn()} />)
-    fireEvent.click(screen.getByRole('button', { name: '🔥: 2 reactions' }))
+    fireEvent.click(screen.getByRole('button', { name: '🔥: 2 reactions. See who reacted' }))
+    expect(api.react).not.toHaveBeenCalled()
+    expect(api.fetchCheckin).toHaveBeenCalledWith('c1')
     await settle()
-    expect(api.react).toHaveBeenCalledWith('c1', '🔥', true)
-    fireEvent.click(screen.getByRole('button', { name: '🔥: 3 reactions' }))
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText('Who reacted')).toBeTruthy()
+    const rows = () => within(within(dialog).getByRole('list', { name: 'Who reacted' })).getAllByRole('listitem')
+    expect(rows().map(r => r.querySelector('[data-slot="who"]')?.textContent)).toEqual(['Bia, Caio', 'You, Bia'])
+    const fire = within(dialog).getByRole('button', { name: 'React with 🔥' })
+    const flex = within(dialog).getByRole('button', { name: 'React with 💪' })
+    expect(fire.getAttribute('aria-pressed')).toBe('false')
+    expect(flex.getAttribute('aria-pressed')).toBe('true')
+
+    fireEvent.click(fire)
     await settle()
-    expect(api.react).toHaveBeenLastCalledWith('c1', '🔥', false)
-    expect(screen.getByRole('button', { name: '🔥: 2 reactions' })).toBeTruthy()
+    expect(api.react).toHaveBeenLastCalledWith('c1', '🔥', true)
+    expect(rows()[0].querySelector('[data-slot="who"]')?.textContent).toBe('You, Bia, Caio')
+    expect(screen.getByRole('button', { name: '🔥: 3 reactions. See who reacted' })).toBeTruthy()
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'React with 💪' }))
+    await settle()
+    expect(api.react).toHaveBeenLastCalledWith('c1', '💪', false)
+    expect(rows()[1].querySelector('[data-slot="who"]')?.textContent).toBe('Bia')
+    expect(screen.getByRole('button', { name: '💪: 1 reaction. See who reacted' })).toBeTruthy()
+  })
+
+  it('takes my only reaction back from the list, and the group leaves', async () => {
+    const item = checkinItemOf('c1', { reactions: [{ emoji: '😮', count: 1, mine: true }] })
+    api.fetchCheckin.mockResolvedValue({ id: 'c1', comments: [], reactions: [{ emoji: '😮', count: 1, mine: true, users: [{ id: ME, name: 'Ana', avatar_url: null }] }] })
+    render(<PostCard item={item} onOpen={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: '😮: 1 reaction. See who reacted' }))
+    await settle()
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'React with 😮' }))
+    await settle()
+    expect(api.react).toHaveBeenCalledWith('c1', '😮', false)
+    expect(screen.queryByRole('button', { name: /^😮/ })).toBeNull()
+    expect(within(screen.getByRole('dialog')).queryByRole('listitem')).toBeNull()
+  })
+
+  it('says when who reacted cannot be loaded and tries again', async () => {
+    api.fetchCheckin.mockRejectedValueOnce(new SocialError('network'))
+      .mockResolvedValue({ id: 'c1', comments: [], reactions: [{ emoji: '🔥', count: 1, mine: false, users: [{ id: BIA, name: 'Bia', avatar_url: null }] }] })
+    render(<PostCard item={checkinItemOf('c1', { reactions: [{ emoji: '🔥', count: 1, mine: false }] })} onOpen={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: '🔥: 1 reaction. See who reacted' }))
+    await settle()
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Try again' }))
+    await settle()
+    expect(within(screen.getByRole('dialog')).getByText('Bia')).toBeTruthy()
   })
 
   it('reacts with any emoji from the picker', async () => {
@@ -135,7 +182,7 @@ describe('PostCard', () => {
     await settle()
     expect(api.react).toHaveBeenCalledWith('c1', '🦄', true)
     expect(screen.queryByRole('dialog')).toBeNull()
-    expect(screen.getByRole('button', { name: '🦄: 1 reaction' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: '🦄: 1 reaction. See who reacted' })).toBeTruthy()
   })
 
   it('blocks an 11th different emoji before it reaches the server', async () => {
@@ -153,7 +200,7 @@ describe('PostCard', () => {
     render(<PostCard item={checkinItemOf('c1')} onOpen={vi.fn()} />)
     fireEvent.click(screen.getByRole('button', { name: 'React with 💪' }))
     await settle()
-    expect(screen.queryByRole('button', { name: '💪: 1 reaction' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^💪: 1 reaction/ })).toBeNull()
     expect(h.toast.error).toHaveBeenCalledWith('This post is no longer available.')
   })
 

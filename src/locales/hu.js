@@ -2248,4 +2248,5 @@ export default {
   "{0}-week streak": "{0} hetes sorozat",
   "{0}: 1 reaction": "{0}: 1 reakció",
   "{0}: {1} reactions": "{0}: {1} reakció",
+  "{0}. See who reacted": "{0}. Ki reagált?",
 }

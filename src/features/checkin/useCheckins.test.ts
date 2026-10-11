@@ -445,7 +445,7 @@ describe('notices', () => {
     // c1 has its unread notice; c2's notice was read (or is older than the list) and still waits.
     api.fetchPendingInvites.mockResolvedValue(['c1', 'c2'])
     await bound()
-    expect(api.fetchPendingInvites).toHaveBeenCalledWith(ME)
+    expect(api.fetchPendingInvites).toHaveBeenCalledWith(ME, TODAY)
     expect(S().notices).toHaveLength(4)
     expect(S().unread).toBe(4)
   })

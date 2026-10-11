@@ -2245,4 +2245,5 @@ export default {
   "{0}-week streak": "Série de {0} semaines",
   "{0}: 1 reaction": "{0} : 1 réaction",
   "{0}: {1} reactions": "{0} : {1} réactions",
+  "{0}. See who reacted": "{0}. Voir qui a réagi",
 }

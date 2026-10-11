@@ -2245,4 +2245,5 @@ export default {
   "{0}-week streak": "{0}주 연속",
   "{0}: 1 reaction": "{0}: 반응 1개",
   "{0}: {1} reactions": "{0}: 반응 {1}개",
+  "{0}. See who reacted": "{0}. 반응한 사람 보기",
 }

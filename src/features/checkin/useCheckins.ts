@@ -414,7 +414,7 @@ export const useCheckins = create<CheckinStore>((set, get) => {
       if (!userId) return
       const gen = generation
       try {
-        const [n, invites] = await Promise.all([api.fetchNotices(), api.fetchPendingInvites(userId)])
+        const [n, invites] = await Promise.all([api.fetchNotices(), api.fetchPendingInvites(userId, today())])
         if (gen !== generation) return
         setNotices({ items: n?.items ?? [], unread: n?.unread ?? 0 }, invites)
         persist()

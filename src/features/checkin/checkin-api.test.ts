@@ -231,13 +231,28 @@ describe('check-in rows', () => {
     await expect(api.hideCheckin(ID)).resolves.toBeUndefined()
   })
 
-  it('lists the challenges I am invited to and have not joined', async () => {
-    const c = chain({ data: [{ challenge_id: 'c1' }, { challenge_id: 'c2' }], error: null }); h.from.mockReturnValue(c.proxy)
-    await expect(api.fetchPendingInvites(ME)).resolves.toEqual(['c1', 'c2'])
+  it('lists the challenges I am invited to and have not joined, while they can still be joined', async () => {
+    const c = chain({ data: [
+      { challenge_id: 'c1', challenges: { ends_on: '2026-10-18', status: 'active' } },
+      { challenge_id: 'c2', challenges: { ends_on: '2026-10-10', status: 'active' } }
+    ], error: null }); h.from.mockReturnValue(c.proxy)
+    await expect(api.fetchPendingInvites(ME, '2026-10-10')).resolves.toEqual(['c1', 'c2'])
     expect(h.from).toHaveBeenCalledWith('challenge_members')
+    expect(arg(c, 'select')).toEqual(['challenge_id, challenges!inner(ends_on, status)'])
     expect(c.calls).toContainEqual(['eq', ['user_id', ME]])
     expect(c.calls).toContainEqual(['is', ['joined_at', null]])
     expect(c.calls).toContainEqual(['not', ['invited_by', 'is', null]])
+    expect(c.calls).toContainEqual(['eq', ['challenges.status', 'active']])
+    expect(c.calls).toContainEqual(['gte', ['challenges.ends_on', '2026-10-10']])
+  })
+
+  it('leaves out an invite whose challenge ended before today or is no longer active', async () => {
+    h.from.mockReturnValue(chain({ data: [
+      { challenge_id: 'old', challenges: { ends_on: '2026-10-09', status: 'active' } },
+      { challenge_id: 'gone', challenges: { ends_on: '2026-10-20', status: 'cancelled' } },
+      { challenge_id: 'ok', challenges: { ends_on: '2026-10-20', status: 'active' } }
+    ], error: null }).proxy)
+    await expect(api.fetchPendingInvites(ME, '2026-10-10')).resolves.toEqual(['ok'])
   })
 })
 

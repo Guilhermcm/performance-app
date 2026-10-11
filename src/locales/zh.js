@@ -2245,4 +2245,5 @@ export default {
   "{0}-week streak": "连续 {0} 周",
   "{0}: 1 reaction": "{0}：1 个回应",
   "{0}: {1} reactions": "{0}：{1} 个回应",
+  "{0}. See who reacted": "{0}。查看谁回应了",
 }

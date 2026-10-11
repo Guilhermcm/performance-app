@@ -2298,4 +2298,5 @@ export default {
   "{0}-week streak": "سلسلة {0} أسابيع",
   "{0}: 1 reaction": "{0}: تفاعل واحد",
   "{0}: {1} reactions": "{0}: {1} تفاعلات",
+  "{0}. See who reacted": "{0}. عرض من تفاعل",
 }

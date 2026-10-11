@@ -189,11 +189,16 @@ export async function hideCheckin(id: string): Promise<void> {
 }
 
 // Challenges I am invited to and have not joined yet: the row create_challenge adds per invitee.
-// RLS shows the other members too, hence the filter on user_id.
-export async function fetchPendingInvites(userId: string): Promise<string[]> {
-  const rows = await read<{ challenge_id: string }[]>(supabase.from('challenge_members').select('challenge_id')
-    .eq('user_id', userId).is('joined_at', null).not('invited_by', 'is', null) as never)
-  return (rows ?? []).map(r => r.challenge_id)
+// RLS shows the other members too, hence the filter on user_id. Only invites that can still be
+// accepted count (the rule of templates.ts canJoin): the challenge is active and `today` (the
+// profile's local date) is not past its ends_on. The rows are checked again here in case the
+// embedded filter does not apply.
+export async function fetchPendingInvites(userId: string, today: string): Promise<string[]> {
+  type Row = { challenge_id: string; challenges: { ends_on: string; status: string } | null }
+  const rows = await read<Row[]>(supabase.from('challenge_members').select('challenge_id, challenges!inner(ends_on, status)')
+    .eq('user_id', userId).is('joined_at', null).not('invited_by', 'is', null)
+    .eq('challenges.status', 'active').gte('challenges.ends_on', today) as never)
+  return (rows ?? []).filter(r => r.challenges?.status === 'active' && r.challenges.ends_on >= today).map(r => r.challenge_id)
 }
 
 type RpcAnswer = { data: unknown; error: unknown }

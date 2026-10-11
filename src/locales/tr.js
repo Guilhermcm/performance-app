@@ -2245,4 +2245,5 @@ export default {
   "{0}-week streak": "{0} haftalık seri",
   "{0}: 1 reaction": "{0}: 1 tepki",
   "{0}: {1} reactions": "{0}: {1} tepki",
+  "{0}. See who reacted": "{0}. Kimlerin tepki verdiğini gör",
 }
