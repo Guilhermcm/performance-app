@@ -37,7 +37,7 @@ const tabs = () => [...host.querySelectorAll('#tabbar button')]
 
 describe('the tab bar across a store write', () => {
   it('keeps the very same buttons instead of rebuilding them every tick', () => {
-    act(() => { root.render(<TabBar onStart={() => {}} />) })
+    act(() => { root.render(<TabBar />) })
     const before = tabs()
     expect(before).toHaveLength(5)
 
@@ -50,13 +50,15 @@ describe('the tab bar across a store write', () => {
   })
 
   it('still lights the tab for the route it is on, and follows a change of state', () => {
-    act(() => { root.render(<TabBar onStart={() => {}} />) })
+    act(() => { root.render(<TabBar />) })
     expect(tabs()[0].className).toBe('on')
     expect(tabs()[1].className).toBe('')
     expect(tabs()[2].className).toBe('start')
 
+    // A workout in progress no longer changes the center button: it is the check-in, and the
+    // Plan is where the session is resumed.
     act(() => { useStore.getState().update(s => { s.active = { id: 'a', entries: [], cur: 0 } }, false) })
-    expect(tabs()[2].className).toBe('start rec')
+    expect(tabs()[2].className).toBe('start')
     expect(tabs()[0].className).toBe('on')
   })
 })

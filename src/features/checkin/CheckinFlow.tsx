@@ -1,0 +1,333 @@
+import { useEffect, useId, useState, type ChangeEvent, type ReactNode } from 'react'
+import { toast } from 'sonner'
+import { Camera, Check, ImageIcon, LoaderCircle, Lock, Users } from 'lucide-react'
+import { Button, buttonVariants } from '@/components/ui/button'
+import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
+import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
+import { cn } from '@/lib/utils'
+import { t } from '../../lib/i18n.js'
+import { exCount } from '../../lib/format.js'
+import { effectiveRoutines } from '../../lib/history.js'
+import { useStore } from '../../store/useStore.js'
+import { useProfile } from '../profile/useProfile'
+import { shiftDay, todayIn } from '../nutrition/days'
+import { ACTIVITIES, activityLabel } from './activities'
+import { closeCheckin, useCheckinFlow } from './open-checkin'
+import { droppedMessages, useCheckins, type CheckinInput } from './useCheckins'
+import { ingestCheckin, linkWorkout } from './ingest'
+import DetailSheet from './DetailSheet'
+import type { CheckinActivity, CheckinDetail, CheckinVisibility } from './types'
+
+export { openCheckin, closeCheckin, useCheckinFlow } from './open-checkin'
+export type { OpenCheckinOptions, CheckinDetail } from './open-checkin'
+
+export const TITLE_MAX = 60
+export const TEXT_MAX = 500
+const DURATION_MAX = 600
+
+type Routine = { id: string; name: string; ex: unknown[] }
+type LiveWorkout = { id: string; name?: string; routineId?: string | null; start?: number; end?: number }
+type AppStore = { S: { routines: Routine[]; workouts?: LiveWorkout[] } & Record<string, unknown> }
+
+// "Musculação · Push · 55 min": the activity, the routine for strength training, and the duration
+// when there is one. Cut to the title's limit.
+export function suggestTitle(activity: CheckinActivity | null, routineName: string | null, durationMin: number | null): string {
+  if (!activity) return ''
+  const parts = [activityLabel(activity)]
+  if (activity === 'strength' && routineName) parts.push(routineName)
+  if (durationMin) parts.push(t('{0} min', durationMin))
+  return parts.join(' · ').slice(0, TITLE_MAX)
+}
+
+// The full-screen check-in (spec 3.1), with no route of its own: opened by openCheckin from the tab
+// bar, Home, the Plan and the end of a live workout. Mounted once for a signed-in account (App.jsx),
+// it also says once what the server refused from the queue.
+export default function CheckinFlow() {
+  const open = useCheckinFlow(s => s.open)
+  const seq = useCheckinFlow(s => s.seq)
+  const dropped = useCheckins(s => s.dropped)
+
+  useEffect(() => {
+    if (!dropped.length) return
+    for (const m of droppedMessages(dropped)) toast(m)
+    useCheckins.getState().dismissDropped()
+  }, [dropped])
+
+  return (
+    <Drawer open={open} onOpenChange={o => { if (!o) closeCheckin() }}>
+      <DrawerContent className="h-[96dvh] max-h-[96dvh]">
+        {/* A new opening is a new form. */}
+        <Panel key={seq} />
+      </DrawerContent>
+    </Drawer>
+  )
+}
+
+function Panel() {
+  const opts = useCheckinFlow(s => s.opts)
+  const S = useStore((s: AppStore) => s.S)
+  const profile = useProfile(s => s.profile)
+  const today = todayIn(profile?.timezone)
+  const routines = S.routines ?? []
+  const todays = effectiveRoutines(S, today) as Routine[]
+  const live = opts.fromWorkout ? (S.workouts ?? []).find(w => w.id === opts.fromWorkout) ?? null : null
+  const known = (id: string | null | undefined) => (id && routines.some(r => r.id === id) ? id : '')
+
+  const [photo, setPhoto] = useState<File | null>(null)
+  const [preview, setPreview] = useState<string | null>(null)
+  const [activity, setActivity] = useState<CheckinActivity | null>(() =>
+    (opts.routineId || live || todays.length ? 'strength' : null))
+  const [routineId, setRoutineId] = useState(() => known(opts.routineId) || known(live?.routineId) || (todays[0]?.id ?? ''))
+  const [title, setTitle] = useState<string | null>(null)
+  const [duration, setDuration] = useState(() => {
+    const min = live?.start && live?.end ? Math.round((live.end - live.start) / 60000) : 0
+    return min >= 1 && min <= DURATION_MAX ? String(min) : ''
+  })
+  const [caption, setCaption] = useState('')
+  const [note, setNote] = useState('')
+  const [yesterday, setYesterday] = useState(false)
+  const [visibility, setVisibility] = useState<CheckinVisibility>(() => (profile?.share_activity === false ? 'private' : 'friends'))
+  const [detail, setDetail] = useState<CheckinDetail | null>(opts.detail ?? null)
+  const [detailOpen, setDetailOpen] = useState(false)
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => () => { if (preview) URL.revokeObjectURL?.(preview) }, [preview])
+
+  const routine = routines.find(r => r.id === routineId) ?? null
+  const strength = activity === 'strength'
+  const routineName = strength ? routine?.name ?? (live && !routineId ? live.name ?? null : null) : null
+  const day = yesterday ? shiftDay(today, -1) : today
+  const durationMin = duration ? Number(duration) : null
+  const durationOk = durationMin === null || (durationMin >= 1 && durationMin <= DURATION_MAX)
+  const name = title ?? suggestTitle(activity, routineName, durationOk ? durationMin : null)
+  // A detail belongs to strength training with a routine, or to the live workout it came from.
+  const detailable = strength && (!!routine || !!live)
+  const hint = !activity ? t('Pick an activity.') : !name.trim() ? t('Give it a title.') : ''
+  const ready = !!photo && !hint && durationOk && !busy
+  const order = [...todays, ...routines.filter(r => !todays.some(x => x.id === r.id))]
+
+  const pick = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setPhoto(file)
+    setPreview(typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : null)
+  }
+  const dropPhoto = () => { setPhoto(null); setPreview(null) }
+  const changeRoutine = (id: string) => {
+    setRoutineId(id)
+    // The sets of one routine say nothing about another.
+    if (!live) setDetail(null)
+  }
+
+  const submit = async () => {
+    if (!photo || !activity || !ready) return
+    setBusy(true)
+    const sent = detailable ? detail : null
+    const input: CheckinInput = {
+      day, activity, routineId: strength && routine ? routine.id : null, routineName, title: name.trim(),
+      caption, note, durationMin, visibility, photo, detail: sent
+    }
+    try {
+      const id = await useCheckins.getState().post(input)
+      // The live workout already is the session in the history; a detail given here becomes one.
+      if (live) linkWorkout(live.id, id)
+      else if (sent) ingestCheckin({ id, day, routineId: input.routineId ?? null, name: routineName ?? input.title, durationMin, detail: sent })
+      toast.success(t('Check-in posted.'))
+      closeCheckin()
+    } catch (e) {
+      const code = (e as { code?: string } | null)?.code
+      if (code === 'photo_unreadable' || code === 'photo_too_large') {
+        toast.error(code === 'photo_unreadable' ? t('Couldn’t open this photo. Try the camera.') : t('This photo is too big. Try another one.'))
+        dropPhoto()
+      } else {
+        toast.error(t('Could not post the check-in. Try again.'))
+      }
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <>
+      <DrawerHeader className="text-left group-data-[vaul-drawer-direction=bottom]/drawer-content:text-left">
+        <DrawerTitle className="text-xl">{t('New check-in')}</DrawerTitle>
+        <DrawerDescription>{t('Take a photo to check in.')}</DrawerDescription>
+      </DrawerHeader>
+
+      {!photo ? (
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+          <span aria-hidden className="mb-3 grid size-24 place-items-center rounded-full bg-secondary text-foreground">
+            <Camera className="size-10" strokeWidth={1.5} />
+          </span>
+          <PhotoInput label={t('Take photo')} icon={<Camera aria-hidden className="size-5" />} camera primary onChange={pick} />
+          <PhotoInput label={t('Choose from gallery')} icon={<ImageIcon aria-hidden className="size-5" />} onChange={pick} />
+        </div>
+      ) : (
+        <>
+          <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-4 pb-4">
+            <div className="flex items-end gap-4">
+              <div className="aspect-[4/5] w-32 shrink-0 overflow-hidden rounded-2xl bg-secondary">
+                {preview && <img src={preview} alt={t('Check-in photo')} className="size-full object-cover" />}
+              </div>
+              <PhotoInput label={t('Change photo')} icon={<ImageIcon aria-hidden className="size-4" />} small onChange={pick} />
+            </div>
+
+            <Group label={t('Activity')}>
+              <div role="radiogroup" aria-label={t('Activity')} className="flex flex-wrap gap-2">
+                {ACTIVITIES.map(a => (
+                  <Chip key={a} on={a === activity} onClick={() => setActivity(a)}>{activityLabel(a)}</Chip>
+                ))}
+              </div>
+            </Group>
+
+            {strength && routines.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="checkin-routine" className="text-sm font-semibold">{t('Routine')}</label>
+                <select id="checkin-routine" value={routineId} onChange={e => changeRoutine(e.target.value)}
+                  className="h-12 w-full rounded-md border border-input bg-transparent px-3 text-[15px] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30">
+                  <option value="">{t('No routine')}</option>
+                  {order.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                </select>
+              </div>
+            )}
+
+            <Counted id="checkin-title" label={t('Title')} value={name} max={TITLE_MAX} onChange={v => setTitle(v)} />
+
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="checkin-duration" className="text-sm font-semibold">{t('Duration (min)')}</label>
+              <Input id="checkin-duration" value={duration} inputMode="numeric" autoComplete="off"
+                aria-invalid={durationOk ? undefined : true} aria-describedby={durationOk ? undefined : 'checkin-duration-note'}
+                onChange={e => setDuration(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                className="h-12 w-32 font-mono text-[15px] tabular-nums" />
+              {!durationOk && <p id="checkin-duration-note" className="text-xs text-destructive">{t('Duration goes from 1 to 600 minutes.')}</p>}
+            </div>
+
+            <Counted id="checkin-caption" label={t('Caption')} value={caption} max={TEXT_MAX} multiline onChange={setCaption} />
+            <Counted id="checkin-note" label={t('Private note')} hint={t('Only you see this.')} value={note} max={TEXT_MAX} multiline onChange={setNote} />
+
+            {detailable && (
+              live ? (
+                <div className="flex items-center gap-3 rounded-2xl bg-card p-3">
+                  <Check aria-hidden className="size-5 shrink-0 text-[var(--green)]" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[15px] font-medium">{t('From the workout you logged in the app')}</p>
+                    {detail && <p className="text-xs text-muted-foreground">{exCount(detail.entries.length)}</p>}
+                  </div>
+                </div>
+              ) : detail ? (
+                <div className="flex items-center gap-3 rounded-2xl bg-card p-3">
+                  <Check aria-hidden className="size-5 shrink-0 text-[var(--green)]" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[15px] font-medium">{t('Workout detailed')}</p>
+                    <p className="text-xs text-muted-foreground">{exCount(detail.entries.length)}</p>
+                  </div>
+                  <Button variant="outline" className="h-11 rounded-xl" onClick={() => setDetailOpen(true)}>{t('Edit')}</Button>
+                </div>
+              ) : (
+                <Button variant="secondary" className="h-12 rounded-2xl text-[15px]" onClick={() => setDetailOpen(true)}>{t('Detail workout')}</Button>
+              )
+            )}
+
+            <div className="flex items-center gap-3 rounded-2xl border border-border p-3">
+              <div className="flex-1">
+                <label htmlFor="checkin-yesterday" className="block cursor-pointer text-[15px] font-medium">{t('Was it yesterday?')}</label>
+                <p id="checkin-yesterday-note" className="text-xs text-muted-foreground">
+                  {yesterday ? t('It counts for yesterday.') : t('It counts for today.')}
+                </p>
+              </div>
+              <Switch id="checkin-yesterday" className="relative after:absolute after:-inset-3" checked={yesterday}
+                aria-describedby="checkin-yesterday-note" onCheckedChange={setYesterday} />
+            </div>
+
+            <Group label={t('Who sees it')}>
+              <div role="radiogroup" aria-label={t('Who sees it')} className="grid grid-cols-2 gap-2">
+                <Choice on={visibility === 'friends'} onClick={() => setVisibility('friends')} icon={<Users aria-hidden className="size-4" />}>{t('Friends')}</Choice>
+                <Choice on={visibility === 'private'} onClick={() => setVisibility('private')} icon={<Lock aria-hidden className="size-4" />}>{t('Only me')}</Choice>
+              </div>
+            </Group>
+          </div>
+
+          <DrawerFooter className="border-t border-border pb-[calc(1rem+env(safe-area-inset-bottom))]">
+            <p aria-live="polite" className="text-center text-sm text-muted-foreground empty:hidden">{hint}</p>
+            <Button className="h-12 gap-2 rounded-2xl text-[15px] font-semibold" disabled={!ready} aria-busy={busy} onClick={submit}>
+              {busy && <LoaderCircle aria-hidden className="size-5 animate-spin motion-reduce:animate-none" />}{t('Post')}
+            </Button>
+          </DrawerFooter>
+
+          {detailable && !live && (
+            <DetailSheet open={detailOpen} onOpenChange={setDetailOpen} routineId={routineId || null} initial={detail} onConfirm={setDetail} />
+          )}
+        </>
+      )}
+    </>
+  )
+}
+
+// A file input inside its label: the label is what is tapped, so the picker opens natively (the
+// iPhone PWA needs a real tap on the input), and the input's name is the label's text.
+function PhotoInput({ label, icon, camera, primary, small, onChange }:
+  { label: string; icon: ReactNode; camera?: boolean; primary?: boolean; small?: boolean; onChange: (e: ChangeEvent<HTMLInputElement>) => void }) {
+  return (
+    <label className={cn(buttonVariants({ variant: primary ? 'default' : small ? 'outline' : 'secondary' }),
+      'cursor-pointer focus-within:ring-[3px] focus-within:ring-ring/50',
+      small ? 'h-11 rounded-xl' : 'h-14 w-full max-w-sm gap-2 rounded-2xl text-base font-semibold')}>
+      <input type="file" accept="image/*" {...(camera ? { capture: 'environment' as const } : {})} className="sr-only" onChange={onChange} />
+      {icon}{label}
+    </label>
+  )
+}
+
+function Group({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <fieldset className="flex flex-col gap-2">
+      <legend className="mb-2 text-sm font-semibold">{label}</legend>
+      {children}
+    </fieldset>
+  )
+}
+
+function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: ReactNode }) {
+  return (
+    <button type="button" role="radio" aria-checked={on} onClick={onClick}
+      className={cn('min-h-11 rounded-full border px-4 text-sm font-medium outline-none transition-colors duration-150 focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-reduce:transition-none',
+        on ? 'border-primary bg-primary/15 text-foreground' : 'border-border bg-card text-muted-foreground')}>
+      {children}
+    </button>
+  )
+}
+
+function Choice({ on, onClick, icon, children }: { on: boolean; onClick: () => void; icon: ReactNode; children: ReactNode }) {
+  return (
+    <button type="button" role="radio" aria-checked={on} onClick={onClick}
+      className={cn('flex min-h-12 items-center justify-center gap-2 rounded-2xl border px-3 text-[15px] font-medium outline-none transition-colors duration-150 focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-reduce:transition-none',
+        on ? 'border-primary bg-primary/10 text-foreground' : 'border-border bg-card text-muted-foreground')}>
+      {icon}{children}
+      {on && <Check aria-hidden className="size-4" />}
+    </button>
+  )
+}
+
+// A text field with its limit and a counter; typing past the limit stops at it.
+function Counted({ id, label, hint, value, max, multiline, onChange }:
+  { id: string; label: string; hint?: string; value: string; max: number; multiline?: boolean; onChange: (v: string) => void }) {
+  const countId = useId()
+  const described = hint ? `${id}-hint ${countId}` : countId
+  const set = (v: string) => onChange(v.slice(0, max))
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-baseline justify-between gap-3">
+        <label htmlFor={id} className="text-sm font-semibold">{label}</label>
+        <span id={countId} className="font-mono text-xs tabular-nums text-muted-foreground">{`${value.length}/${max}`}</span>
+      </div>
+      {hint && <p id={`${id}-hint`} className="-mt-1 text-xs text-muted-foreground">{hint}</p>}
+      {multiline ? (
+        <textarea id={id} value={value} maxLength={max} rows={3} aria-describedby={described} onChange={e => set(e.target.value)}
+          className="min-h-20 w-full rounded-md border border-input bg-transparent px-3 py-2 text-[15px] shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30" />
+      ) : (
+        <Input id={id} value={value} maxLength={max} autoComplete="off" aria-describedby={described} onChange={e => set(e.target.value)} className="h-12 text-[15px]" />
+      )}
+    </div>
+  )
+}

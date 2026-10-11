@@ -218,6 +218,22 @@ describe('edit and remove', () => {
     expect(S().mine[0].pending).toBeFalsy()
   })
 
+  it('a refused edit of a post that is up says so once, with one short generic notice', async () => {
+    server.set('s1', serverRow('s1'))
+    server.set('s2', serverRow('s2'))
+    await bound()
+    api.updateCheckin.mockRejectedValue(Object.assign(new Error('new row violates check constraint'), { code: '23514' }))
+    await S().edit('s1', { title: 'Um' })
+    await S().edit('s2', { title: 'Dois' })
+    await S().flush(); await settle()
+    expect(S().dropped.map(d => [d.id, d.reason])).toEqual([['s1', 'edit_refused'], ['s2', 'edit_refused']])
+    expect(droppedMessages(S().dropped)).toEqual(['Couldn’t save a change to a check-in.'])
+    // The server's copy shows again.
+    expect(S().mine.find(r => r.id === 's1')).toMatchObject({ title: 'Corrida' })
+    // Beside a refused post, each keeps its own line.
+    expect(droppedMessages([...S().dropped, { id: 'x', reason: 'refused', title: 'Três' }])).toHaveLength(2)
+  })
+
   it('editing a post still waiting to go up keeps its photo in the queue', async () => {
     await bound()
     offline()

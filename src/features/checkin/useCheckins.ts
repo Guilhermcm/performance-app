@@ -36,8 +36,9 @@ export type CheckinInput = {
 // What an edit may change; day, activity and photo stay as they are.
 export type CheckinPatch = Partial<Pick<CheckinRow, 'title' | 'caption' | 'note' | 'duration_min' | 'visibility' | 'detail' | 'routine_id' | 'routine_name'>>
 
-// A post the server refused for good and that left the queue: a closed day, or anything else.
-export type Dropped = { id: string; reason: 'day_closed' | 'refused'; title: string }
+// What the server refused for good and left the queue: a post of a closed day, any other post, or
+// an edit of a post that is already up (its server copy shows again).
+export type Dropped = { id: string; reason: 'day_closed' | 'refused' | 'edit_refused'; title: string }
 
 type Status = 'idle' | 'loading' | 'ready' | 'error'
 
@@ -363,9 +364,10 @@ export const useCheckins = create<CheckinStore>((set, get) => {
         const add: Dropped[] = []
         for (const { id, reason } of r.refused) {
           const op = tried.get(id)
-          // Only a post that never went up is news; a refused edit leaves the server's copy as it was.
-          if (!op?.photo || known.has(id)) continue
-          add.push({ id, reason: reason === 'day_closed' ? 'day_closed' : 'refused', title: op.row?.title ?? '' })
+          if (!op?.row || known.has(id)) continue
+          // A refused edit leaves the server's copy as it was, which shows again; it still gets a word.
+          const why: Dropped['reason'] = !op.photo ? 'edit_refused' : reason === 'day_closed' ? 'day_closed' : 'refused'
+          add.push({ id, reason: why, title: op.row.title ?? '' })
         }
         if (add.length) set(s => ({ dropped: [...s.dropped, ...add] }))
       }
@@ -449,10 +451,12 @@ export const useCheckins = create<CheckinStore>((set, get) => {
   }
 })
 
-// The notices for refused posts: one per post of a closed day, and one for all the others.
+// The notices for what was refused: one per post of a closed day, one for all the other posts, and
+// one for all the refused edits.
 export function droppedMessages(dropped: Dropped[]): string[] {
   const out = dropped.filter(d => d.reason === 'day_closed').map(d => t('Check-in “{0}” was not posted because its day has closed.', d.title))
-  if (dropped.some(d => d.reason !== 'day_closed')) out.push(t('The server refused a check-in, so it was not posted.'))
+  if (dropped.some(d => d.reason === 'refused')) out.push(t('The server refused a check-in, so it was not posted.'))
+  if (dropped.some(d => d.reason === 'edit_refused')) out.push(t('Couldn’t save a change to a check-in.'))
   return out
 }
 

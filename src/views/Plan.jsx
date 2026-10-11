@@ -75,6 +75,21 @@ export default function Plan() {
       <Icon name="chevronRight" className="coach-cta-chev" />
     </button>}
 
+    {/* The tab bar's center is the check-in now (phase 1c), so a workout in progress, or an edit
+        of a saved one, is picked up here. */}
+    {S.active && <div className="list" style={{ marginBottom: 14 }}>
+      <div className="item">
+        <span className="lrow-i"><Icon name={S.active.editingWorkoutId ? 'pencil' : 'timer'} /></span>
+        <div className="grow" style={{ minWidth: 0 }}>
+          <div className="tt">{S.active.editingWorkoutId ? t('Editing a saved workout') : t('Workout in progress')}</div>
+          <div className="ss">{S.active.name}</div>
+        </div>
+        <Button size="sm" variant="tinted" style={{ width: 'auto', flex: 'none' }} onClick={() => nav('/workout')}>
+          {S.active.editingWorkoutId ? t('Edit workout') : t('Resume workout')}
+        </Button>
+      </div>
+    </div>}
+
     <div className="cols"><div>
       <h4 className="sec">{t('Week schedule')}</h4>
       <div className="list" style={{ display: 'flex', flexDirection: 'column' }}>
