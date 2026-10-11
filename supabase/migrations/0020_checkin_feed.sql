@@ -675,3 +675,44 @@ revoke all on function public.get_checkin_feed(timestamptz, text),
   public.get_challenge_feed(uuid, timestamptz, text) from public, anon;
 grant execute on function public.get_checkin_feed(timestamptz, text),
   public.get_challenge_feed(uuid, timestamptz, text) to authenticated;
+
+-- Pillar radar --------------------------------------------------------------------------------------
+-- 0012's, with the Treino (strength) weeks closing like the nutrition ones: a week is closed once its
+-- Sunday closed at D+2 (week_start + 6 <= local_today - 2), so on Monday last week is not in yet.
+-- Training days pay when they close, so a week judged earlier would miss its weekend. The active
+-- weeks and the nutrition branch are unchanged.
+
+create or replace function public.pillar_consistency(p_user uuid, p_pillar public.pillar, p_offset int) returns numeric
+language plpgsql stable security definer set search_path = public as $$
+declare
+  v_last  date;
+  v_first date;
+  v_weeks date[];
+  v_xp    bigint;
+begin
+  if p_pillar = 'strength' then
+    v_last := public.week_start_of(public.local_today(p_user) - 8);
+    select least(
+      (select public.week_start_of(min(occurred_on)) from public.activity_events where user_id = p_user),
+      (select public.week_start_of((created_at at time zone coalesce(timezone, 'America/Sao_Paulo'))::date)
+         from public.profiles where id = p_user)
+    ) into v_first;
+  elsif p_pillar = 'nutrition' then
+    v_last := public.week_start_of(public.local_today(p_user) - 8);
+  else
+    return null;
+  end if;
+  v_last := v_last - 28 * p_offset;
+
+  select array_agg(w::date) into v_weeks
+    from generate_series(v_last - 21, v_last, interval '7 days') w
+   where case when p_pillar = 'strength' then w::date >= v_first
+              else public.nutrition_week_active(p_user, w::date) end;
+  if v_weeks is null then return null; end if;
+
+  select coalesce(sum(amount), 0) into v_xp from public.xp_ledger
+   where user_id = p_user and pillar = p_pillar and week_start = any(v_weeks);
+  return least(1, round(v_xp::numeric / (960 * cardinality(v_weeks)), 4));
+end $$;
+
+revoke all on function public.pillar_consistency(uuid, public.pillar, int) from public, anon, authenticated;

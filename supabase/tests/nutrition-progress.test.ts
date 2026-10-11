@@ -155,8 +155,8 @@ describe('my progress extras', () => {
   })
 
   it('computes the radar over closed weeks', async () => {
-    // Wednesday 04/11. Closed strength weeks: 26/10 back to 05/10 (current), 28/09 back to 07/09
-    // (previous). Closed nutrition weeks: the same, since Sunday 01/11 closed on Tuesday.
+    // Wednesday 04/11. Closed weeks, for both pillars since Sunday 01/11 closed on Tuesday: 26/10
+    // back to 05/10 (current), 28/09 back to 07/09 (previous).
     await at('2026-11-04')
     // A: created on 19/10, two active strength weeks in the window: (960 + 480) / 1920.
     await createdOn(A, '2026-10-19')
@@ -185,13 +185,18 @@ describe('my progress extras', () => {
       strength: { current: 0.5, previous: 0.25 },
       nutrition: { current: null, previous: 1 }
     })
-    // Nutrition weeks close two days later than strength ones: on Monday 09/11 the week of 02/11
-    // counts for strength and not yet for nutrition.
+    // Strength (Treino) weeks close like nutrition ones since phase 1c (0020): on Monday 09/11 the
+    // week of 02/11 counts for neither, on Tuesday 10/11, once its Sunday closed, for both.
     await at('2026-11-09')
-    const [{ s, x }] = await sql(db,
-      `select public.pillar_consistency($1, 'strength', 0) as s, public.pillar_consistency($1, 'nutrition', 0) as x`, [A])
-    expect(Number(s)).toBe(0.8125)       // (960 + 480 + 900) / (3 * 960)
+    const consistency = async () => (await sql(db,
+      `select public.pillar_consistency($1, 'strength', 0) as s, public.pillar_consistency($1, 'nutrition', 0) as x`, [A]))[0]
+    let { s, x } = await consistency()
+    expect(Number(s)).toBe(0.75)         // (960 + 480) / (2 * 960)
     expect(Number(x)).toBe(0.5)
+    await at('2026-11-10')
+    ;({ s, x } = await consistency())
+    expect(Number(s)).toBe(0.8125)       // (960 + 480 + 900) / (3 * 960)
+    expect(Number(x)).toBe(0.25)         // 480 / (2 * 960): the week of 02/11 earned nothing
   })
 
   it('keeps a single progress_card closed to clients', async () => {
