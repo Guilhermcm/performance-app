@@ -210,7 +210,7 @@ describe('notices', () => {
   it('marks only the own notices as read, up to the given id', async () => {
     const id = await addCheckin(db, A)
     await react(B, id, '💪')
-    await react(B, id, '🔥')
+    await comment(B, id, 'Boa')
     const bid = await addCheckin(db, B)
     await react(A, bid, '💪')
     const [newer, older] = (await notices(A)).items
@@ -233,7 +233,8 @@ describe('notices', () => {
 
   it('caps the list at the limit, newest first', async () => {
     const id = await addCheckin(db, A)
-    for (const e of EMOJIS.slice(0, 5)) await react(B, id, e)
+    // Comments, since a second reaction of Bia's waits for the first notice to be read (0020).
+    for (const body of ['1', '2', '3', '4', '5']) await comment(B, id, body)
     const n = await notices(A, 3)
     expect(n.items.length).toBe(3)
     expect(n.unread).toBe(5)

@@ -150,10 +150,11 @@ describe('nutrition_days_on_target', () => {
     expect(checkChallenge(draft(), today, { nutritionOn: false })).toBeNull()
   })
 
-  it('gives the result two days later than the others, as challenge_grace does', () => {
-    expect(GRACE).toEqual({ workouts_count: 0, weeks_on_target: 0, volume_total: 0, nutrition_days_on_target: 2 })
+  it('gives the result two days later for templates paid by closed days, as challenge_grace does', () => {
+    expect(GRACE).toEqual({ workouts_count: 2, weeks_on_target: 2, volume_total: 0, nutrition_days_on_target: 2 })
     // ends_on 2026-10-18: its last day closes at the start of the 20th, the challenge on the 21st.
     expect(resultOn(challengeOf({ template: NUT }))).toBe('2026-10-21')
-    expect(resultOn(challengeOf())).toBe('2026-10-19')
+    expect(resultOn(challengeOf())).toBe('2026-10-21')
+    expect(resultOn(challengeOf({ template: 'volume_total' }))).toBe('2026-10-19')
   })
 })

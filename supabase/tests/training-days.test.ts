@@ -200,10 +200,10 @@ describe('training XP', () => {
     expect(await days()).toEqual([{ day: '2026-10-05', checked: true, detailed: true, legacy: false }])
   })
 
-  it('after the cutover, a workout alone pays no day; a PR still pays', async () => {
+  it('after the cutover, a workout alone pays no day (and a PR no XP, 0020)', async () => {
     await event(db, A, 'workout_completed', '2026-10-05', 's1')
     await event(db, A, 'pr', '2026-10-05', 's1:bench')
-    expect((await pillar()).map(r => [r.reason, r.amount])).toEqual([['pr', 30]])
+    expect(await pillar()).toEqual([])
     await setClock(db, '2026-10-07T15:00:00Z')
     expect(await close()).toBe(0)
     expect(await days()).toEqual([])

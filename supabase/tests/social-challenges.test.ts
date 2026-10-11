@@ -154,7 +154,7 @@ describe('join and leave', () => {
 })
 
 describe('progress', () => {
-  it('counts the workouts of people who joined, inside the period', async () => {
+  it('counts the training days of people who joined, inside the period', async () => {
     const id = await createChallenge(db, A, { invitees: [B, C] })
     await join(B, id)
     await event(db, A, 'workout_completed', '2026-10-05', 'a1')
@@ -163,6 +163,9 @@ describe('progress', () => {
     await event(db, B, 'workout_completed', '2026-10-04', 'before')
     await event(db, B, 'workout_completed', '2026-10-19', 'after')
     await event(db, C, 'workout_completed', '2026-10-06', 'c1')
+    // Workouts count as (legacy) training days once their days close, at D+2 (0020).
+    await setClock(db, '2026-10-20T15:00:00Z')
+    for (const uid of [A, B, C]) await sql(db, 'select public.close_training_days($1)', [uid])
     const [c] = await list(A)
     expect(progressByName(c)).toEqual({ Ana: 2, Bia: 1, Caio: null })
     expect(c.total).toBe(3)

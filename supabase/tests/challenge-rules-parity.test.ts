@@ -10,13 +10,17 @@ import {
 import type { Challenge, ChallengeMode, NewChallenge } from '../../src/features/social/types'
 
 // The challenge rules of the client (src/features/social/templates.ts) against create_challenge
-// (0015_nutrition_challenge.sql) on the same cases: what the form accepts the server accepts, and
-// what the form refuses the server refuses with the matching error. Ana creates, today is Monday
-// 2026-10-05 in her time zone, Bia and Caio are her friends.
+// (0015_nutrition_challenge.sql, 0020_checkin_feed.sql) on the same cases: what the form accepts the
+// server accepts, and what the form refuses the server refuses with the matching error. Ana creates,
+// today is Monday 2026-10-05 in her time zone, Bia and Caio are her friends.
 
 let db: PGlite
 const TODAY = '2026-10-05'
 const NUT = 'nutrition_days_on_target'
+// The training days template (0020) takes the rules of workouts_count; the client gains it as a
+// template of its own in a later task, so here the server's checkin_days is held to the client's
+// workouts_count rules.
+const DAYS = 'checkin_days'
 
 // What the server says about a client problem.
 const SERVER: Record<ChallengeProblem, string> = {
@@ -24,13 +28,13 @@ const SERVER: Record<ChallengeProblem, string> = {
   invitees: 'invalid_challenge', volume: 'volume_opt_in_required', nutrition: 'nutrition_opt_in_required', nutrition_off: 'nutrition_off'
 }
 
-async function serverSays(c: NewChallenge): Promise<string> {
+async function serverSays(c: NewChallenge, template: string = c.template): Promise<string> {
   try {
     await one(db, A,
       `select public.create_challenge(p_template => $1, p_title => $2, p_mode => $3, p_target => $4::numeric,
               p_starts_on => $5::date, p_ends_on => $6::date, p_invitees => $7::uuid[],
               p_share_volume => $8, p_share_nutrition => $9) as v`,
-      [c.template, c.title, c.mode, c.target, c.starts_on, c.ends_on, '{' + c.invitees.join(',') + '}', c.share_volume, c.share_nutrition])
+      [template, c.title, c.mode, c.target, c.starts_on, c.ends_on, '{' + c.invitees.join(',') + '}', c.share_volume, c.share_nutrition])
     return 'ok'
   } catch (e) {
     return (e as Error).message
@@ -96,12 +100,49 @@ describe('nutrition challenge rules, client and server', () => {
   })
 })
 
+describe('training days challenge rules, client and server', () => {
+  const asWorkouts = (over: Partial<NewChallenge>) =>
+    draft({ template: 'workouts_count', share_nutrition: false, ...over })
+  async function sameAsWorkouts(c: NewChallenge) {
+    const problem = checkChallenge(c, TODAY)
+    expect(await serverSays(c, DAYS), JSON.stringify(c)).toBe(problem ? SERVER[problem] : 'ok')
+  }
+
+  const shapes: [ChallengeMode, number, string[]][] = []
+  for (const mode of ['team', 'solo'] as const) {
+    for (const days of [MIN_DAYS, 30, MAX_DAYS]) for (const invitees of [[B], [B, C]]) shapes.push([mode, days, invitees])
+  }
+
+  it.each(shapes)('%s for %i days with %j: the goal range of workouts_count', async (mode, days, invitees) => {
+    const ends_on = addDays(TODAY, days - 1)
+    const r = targetRange('workouts_count', TODAY, ends_on, mode, invitees.length)
+    for (const target of [r.min - 1, r.min, r.max, r.max + 1]) await sameAsWorkouts(asWorkouts({ mode, ends_on, invitees, target }))
+  })
+
+  it('agrees on the title, the period, whole goals and the people', async () => {
+    await sameAsWorkouts(asWorkouts({ title: ' ' }))
+    await sameAsWorkouts(asWorkouts({ title: 'x'.repeat(61) }))
+    await sameAsWorkouts(asWorkouts({ ends_on: addDays(TODAY, MIN_DAYS - 2) }))
+    await sameAsWorkouts(asWorkouts({ ends_on: addDays(TODAY, MAX_DAYS) }))
+    await sameAsWorkouts(asWorkouts({ starts_on: addDays(TODAY, -1) }))
+    await sameAsWorkouts(asWorkouts({ starts_on: addDays(TODAY, 31), ends_on: addDays(TODAY, 40) }))
+    await sameAsWorkouts(asWorkouts({ target: 2.5 }))
+    await sameAsWorkouts(asWorkouts({ invitees: [] }))
+    // No opt-in and no pillar: nutrition off and nothing shared is fine.
+    await enableNutrition(db, A, false)
+    await sameAsWorkouts(asWorkouts({}))
+    await enableNutrition(db, A)
+  })
+})
+
 describe('when the result comes', () => {
   it('waits as many days as challenge_grace', async () => {
     for (const template of TEMPLATES) {
       const [g] = await sql<{ n: number }>(db, 'select public.challenge_grace($1) as n', [template])
       expect(g.n, template).toBe(GRACE[template])
     }
+    const [g] = await sql<{ n: number }>(db, 'select public.challenge_grace($1) as n', [DAYS])
+    expect(g.n).toBe(GRACE.workouts_count)
   })
 
   it('closes on the day resultOn gives, in the creator time zone', async () => {

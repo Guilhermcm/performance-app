@@ -20,10 +20,11 @@ export const TARGET_STEP: Record<ChallengeTemplate, number> = {
   workouts_count: 1, weeks_on_target: 1, volume_total: 5, nutrition_days_on_target: 1
 }
 const MAX_TARGET = { workouts_count: 500, volume_total: 5000 } as const
-// public.challenge_grace: days past ends_on before a challenge closes. A nutrition day is judged
-// at the start of D+2, so the last day of a nutrition challenge needs two more.
+// public.challenge_grace: days past ends_on before a challenge closes. A nutrition day and a
+// training day are judged at the start of D+2 (0020_checkin_feed.sql), so the last day of a
+// challenge they pay needs two more. Volume comes from the workouts themselves.
 export const GRACE: Record<ChallengeTemplate, number> = {
-  workouts_count: 0, weeks_on_target: 0, volume_total: 0, nutrition_days_on_target: 2
+  workouts_count: 2, weeks_on_target: 2, volume_total: 0, nutrition_days_on_target: 2
 }
 
 const DAY = 86_400_000

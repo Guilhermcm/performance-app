@@ -97,10 +97,10 @@ describe('delete_my_account', () => {
     const [c] = await list(B)
     expect(c).toMatchObject({ id, status: 'active', created_by: null, me: { joined: true } })
     expect(c.members.map((m: any) => m.name)).toEqual(['Bia', 'Caio'])
-    expect(c.total).toBe(1)
+    expect(c.total).toBe(0)   // training days count once closed
 
-    // 18 Oct, 16:00 UTC: already the 19th in Tokyo, still the 18th in São Paulo.
-    await setClock(db, '2026-10-18T16:00:00Z')
+    // 20 Oct, 16:00 UTC: already the 21st in Tokyo (ends_on + 3), still the 20th in São Paulo.
+    await setClock(db, '2026-10-20T16:00:00Z')
     await event(db, C, 'workout_completed', '2026-10-07', 'c1')
     expect((await list(C))[0]).toMatchObject({ id, status: 'won', total: 2, me: { won: true } })
     expect((await ledger(db, B)).filter(r => r.reason === 'challenge:' + id).map(r => r.amount)).toEqual([300])
@@ -111,7 +111,7 @@ describe('delete_my_account', () => {
     await join(B, id)
     await remove(A)
     expect((await list(B))[0]).toMatchObject({ id, status: 'active' })
-    await setClock(db, '2026-10-19T15:00:00Z')
+    await setClock(db, '2026-10-21T15:00:00Z')
     expect((await list(B))[0]).toMatchObject({ id, status: 'cancelled' })
     expect((await ledger(db, B)).filter(r => r.reason.startsWith('challenge:'))).toEqual([])
   })
@@ -133,7 +133,7 @@ describe('delete_my_account', () => {
     const [c] = await list(B)
     expect(c.members.map((m: any) => m.name)).toEqual(['Bia', 'Caio'])
     await event(db, C, 'workout_completed', '2026-10-07', 'c1')
-    await setClock(db, '2026-10-19T15:00:00Z')
+    await setClock(db, '2026-10-21T15:00:00Z')
     expect((await list(B))[0]).toMatchObject({ id, status: 'won', total: 2 })
   })
 

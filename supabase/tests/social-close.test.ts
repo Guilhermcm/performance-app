@@ -9,7 +9,8 @@ const list = (uid: string) => one<any[]>(db, uid, 'select public.get_challenges(
 const join = (uid: string, id: string) => rows(db, uid, 'select public.join_challenge($1, false)', [id])
 const bonus = async (uid: string) => (await ledger(db, uid)).filter(r => r.reason.startsWith('challenge:')).map(r => r.amount)
 const statusOf = async (id: string) => (await sql<{ status: string }>(db, 'select status from public.challenges where id = $1', [id]))[0].status
-const afterEnd = () => setClock(db, '2026-10-19T15:00:00Z')   // ends_on 2026-10-18
+// ends_on 2026-10-18; a training challenge waits two days for its last days to close (0020).
+const afterEnd = () => setClock(db, '2026-10-21T15:00:00Z')
 
 // Ana 2 workouts, Bia 1, inside the period.
 async function trainBoth() {
@@ -103,14 +104,14 @@ describe('closing a challenge', () => {
     expect(await bonus(A)).toEqual([])
   })
 
-  it('waits for the day after the end in the creator time zone', async () => {
+  it('waits two days past the end in the creator time zone', async () => {
     const id = await createChallenge(db, A, { target: 1 })
     await join(B, id)
     await trainBoth()
-    await setClock(db, '2026-10-19T02:30:00Z')   // still Sunday 18 in São Paulo
+    await setClock(db, '2026-10-21T02:30:00Z')   // still Tuesday 20 in São Paulo
     await list(A)
     expect(await statusOf(id)).toBe('active')
-    await setClock(db, '2026-10-19T03:30:00Z')   // Monday 19, 00:30 in São Paulo
+    await setClock(db, '2026-10-21T03:30:00Z')   // Wednesday 21, 00:30 in São Paulo
     await list(A)
     expect(await statusOf(id)).toBe('won')
   })
@@ -141,7 +142,7 @@ describe('closing a challenge', () => {
       await join(B, id)
     }
     await event(db, A, 'workout_completed', '2026-10-05', 'a1')
-    await setClock(db, '2026-10-12T15:00:00Z')
+    await setClock(db, '2026-10-14T15:00:00Z')
     await list(A)
     const reasons = (await ledger(db, A)).map(r => r.reason)
     expect(reasons.filter(r => r.startsWith('challenge:'))).toHaveLength(5)
