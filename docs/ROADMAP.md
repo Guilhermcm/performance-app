@@ -33,7 +33,7 @@ combinada a partir de outubro de 2026: **1c → 1d → 3 → 4 → 5 → 6** (a 
 | 1c | Check-in com foto e social | M | 1b | concluída, em produção desde 2026-10-11 ([spec](superpowers/specs/2026-10-06-checkin-social-design.md), [plano](superpowers/plans/2026-10-06-fase-1c-checkin.md)) |
 | 1d | Plano com evidência | M | 1c | spec em revisão ([spec](superpowers/specs/2026-10-12-fase-1d-plano-evidencia-design.md)) |
 | 2 | Nutrição | G | 1a | concluída (2a e 2b) |
-| 3 | Sono | P | 1a | especificada, execução adiada ([spec](superpowers/specs/2026-10-06-fase-3-sono-design.md)) |
+| 3 | Sono | P | 1a | especificada e ajustada à 1c, falta o plano ([spec](superpowers/specs/2026-10-06-fase-3-sono-design.md)) |
 | 4 | Hábitos + trackers | M | 1a | a especificar |
 | 5 | Painel de performance | M | 2, 3, 4 | a especificar |
 | 6 | Foco (ActivityWatch) | P | 1a | a especificar |
