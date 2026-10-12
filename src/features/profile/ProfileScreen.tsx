@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Check, CodeXml, Lock, LogOut, Pencil, ShieldCheck, Users } from 'lucide-react'
+import { ArrowLeft, Check, ChevronRight, CodeXml, Lock, LogOut, Pencil, ShieldCheck, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -16,6 +16,10 @@ import { useNutrition } from '../nutrition/useNutrition'
 import { refreshAutoTarget } from '../nutrition/auto-target'
 import { todayIn } from '../nutrition/days'
 import { ACTIVITY_LABEL, fmtGrams, fmtKcal } from '../nutrition/labels'
+import SleepSetup from '../sleep/SleepSetup'
+import { useSleep } from '../sleep/useSleep'
+import { useLocalNow } from '../sleep/use-local-now'
+import { fmtClock, fmtDuration } from '../sleep/time'
 import DeleteAccount from './DeleteAccount'
 import { useProfile } from './useProfile'
 import { validateProfileInput } from './profile-api'
@@ -60,6 +64,8 @@ export default function ProfileScreen() {
   const [busy, setBusy] = useState(false)
   const [leaving, setLeaving] = useState(false)
   const [setupOpen, setSetupOpen] = useState(false)
+  const [sleepSetupOpen, setSleepSetupOpen] = useState(false)
+  const [sleepAsk, setSleepAsk] = useState(false)
   // A link here with focus 'share_activity' (the old feed's sharing banner) brings the switch for the
   // old workouts into view and focuses it.
   const focus = (useLocation().state as { focus?: string } | null)?.focus
@@ -150,6 +156,18 @@ export default function ProfileScreen() {
     try { await save({ nutrition_enabled: false }) } catch { toast(t('Could not save. Your previous values were kept.')) }
   }
 
+  // Turning Sleep on goes through the setup; turning it off asks first. Nights and goals stay saved.
+  const toggleSleep = (on: boolean) => {
+    if (on) { setSleepSetupOpen(true); return }
+    setSleepAsk(true)
+  }
+  const turnOffSleep = async () => {
+    try {
+      await save({ sleep_enabled: false })
+      setSleepAsk(false)
+    } catch { toast(t('Could not save. Your previous values were kept.')) }
+  }
+
   const toggleShare = async (on: boolean) => {
     try { await save({ share_activity: on }) } catch { toast(t('Could not save. Your previous values were kept.')) }
   }
@@ -236,6 +254,10 @@ export default function ProfileScreen() {
 
         <NutritionCard profile={profile} onToggle={toggleNutrition} onEdit={() => setSetupOpen(true)} />
         <NutritionSetup open={setupOpen} onOpenChange={setSetupOpen} />
+
+        <SleepCard profile={profile} asking={sleepAsk} onToggle={toggleSleep} onEdit={() => setSleepSetupOpen(true)}
+          onCancelOff={() => setSleepAsk(false)} onConfirmOff={() => void turnOffSleep()} />
+        <SleepSetup open={sleepSetupOpen} onOpenChange={setSleepSetupOpen} />
 
         {/* checkin_visibility is where a new check-in's form starts (spec 4.6); each post picks its own. */}
         <section data-slot="card" aria-labelledby="sec-visibility" className="flex flex-col gap-3 rounded-2xl border border-border bg-card px-5 pb-5 pt-4">
@@ -358,6 +380,71 @@ function NutritionCard({ profile, onToggle, onEdit }: { profile: Profile; onTogg
       ) : (
         <p className="pb-1 text-sm leading-snug text-muted-foreground">
           {t('Get a daily calorie and protein target based on your profile. Days on target earn XP, like workouts do.')}
+        </p>
+      )}
+    </section>
+  )
+}
+
+// Perfil > Sono: the pillar's switch and, once on, the goal in force, the bedtime and the nights on
+// target per week, edited through the setup sheet. Turning it off asks first.
+function SleepCard({ profile, asking, onToggle, onEdit, onCancelOff, onConfirmOff }: {
+  profile: Profile; asking: boolean; onToggle: (on: boolean) => void; onEdit: () => void; onCancelOff: () => void; onConfirmOff: () => void
+}) {
+  const navigate = useNavigate()
+  const { today } = useLocalNow(profile.timezone)
+  const target = useSleep(s => s.targetOn(today))
+  const on = profile.sleep_enabled
+  const title = t('Sleep')
+  const row = (label: string, value: ReactNode) => (
+    <div key={label} className="flex min-h-11 items-center justify-between gap-4 py-2 text-[15px]">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="text-right font-medium tabular-nums">{value ?? '—'}</dd>
+    </div>
+  )
+  return (
+    <section data-slot="card" aria-labelledby="sec-sleep" className="rounded-2xl border border-border bg-card px-5 pb-4 pt-3">
+      <div className="flex min-h-11 items-center justify-between gap-3">
+        <h2 id="sec-sleep" className="text-[15px] font-semibold">{title}</h2>
+        <div className="flex items-center gap-1">
+          {on && (
+            <Button variant="ghost" className="h-11 gap-2 rounded-full px-3 text-muted-foreground hover:text-foreground"
+              aria-label={t('Edit') + ': ' + title} onClick={onEdit}>
+              <Pencil className="size-4" />{t('Edit')}
+            </Button>
+          )}
+          <Switch id="sleep_enabled" aria-labelledby="sec-sleep" className="relative after:absolute after:-inset-3"
+            checked={on} onCheckedChange={onToggle} />
+        </div>
+      </div>
+      {on ? (
+        <>
+          <dl className="divide-y divide-border">
+            {row(t('Sleep goal'), target && <span className="font-mono">{fmtDuration(target.goal_min)}</span>)}
+            {row(t('Bedtime'), target && <span className="font-mono">{fmtClock(target.bed_target)}</span>)}
+            {row(t('Nights on target per week'), <span className="font-mono">{profile.sleep_nights_per_week}</span>)}
+          </dl>
+          {asking ? (
+            <div role="alertdialog" aria-labelledby="sleep-off-question" aria-describedby="sleep-off-hint" className="mt-2 flex flex-col gap-3 rounded-2xl bg-secondary/70 p-4">
+              <div className="flex flex-col gap-1">
+                <p id="sleep-off-question" className="text-[15px] font-semibold leading-snug">{t('Turn off Sleep?')}</p>
+                <p id="sleep-off-hint" className="text-sm leading-snug text-muted-foreground">{t('Your nights and goals stay saved. You can turn it back on any time.')}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant="outline" className="h-12 rounded-xl" onClick={onCancelOff}>{t('Cancel')}</Button>
+                <Button variant="destructive" className="h-12 rounded-xl" onClick={onConfirmOff}>{t('Turn off')}</Button>
+              </div>
+            </div>
+          ) : (
+            <Button variant="ghost" className="-mx-3 mt-1 h-11 w-[calc(100%+1.5rem)] justify-between rounded-xl px-3 text-[15px]"
+              onClick={() => navigate('/sono')}>
+              {t('Open Sleep')}<ChevronRight aria-hidden className="size-4" />
+            </Button>
+          )}
+        </>
+      ) : (
+        <p className="pb-1 text-sm leading-snug text-muted-foreground">
+          {t('Set how long you want to sleep and when you go to bed. Nights that hit both earn XP, like workouts do.')}
         </p>
       )}
     </section>

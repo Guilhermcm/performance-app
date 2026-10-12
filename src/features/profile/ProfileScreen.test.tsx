@@ -1,11 +1,12 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 
 let P: Record<string, unknown>
 const BASE = { id: 'u1', display_name: 'Ana', avatar_url: null, birth_date: null, sex: null, height_cm: 165, weight_kg: 62, goal: 'strength', level: 'beginner', days_per_week: 3, equipment: [], unit: 'kg', locale: 'pt-BR', timezone: 'America/Sao_Paulo', share_activity: false, checkin_visibility: 'friends', created_at: '', updated_at: '',
-  nutrition_enabled: false, activity_level: null, nutrition_pace: 'standard', nutrition_days_per_week: 5 }
+  nutrition_enabled: false, activity_level: null, nutrition_pace: 'standard', nutrition_days_per_week: 5,
+  sleep_enabled: false, sleep_nights_per_week: 5 }
 P = BASE
 const h = vi.hoisted(() => ({
   save: vi.fn(async (p: any) => ({ ...P, ...p })),
@@ -30,10 +31,21 @@ vi.mock('../nutrition/NutritionSetup', () => ({
   default: ({ open }: { open: boolean }) => (open ? <div role="dialog" aria-label="Nutrition setup" /> : null)
 }))
 
+vi.mock('../sleep/SleepSetup', () => ({
+  default: ({ open }: { open: boolean }) => (open ? <div role="dialog" aria-label="Sleep setup" /> : null)
+}))
+
 import ProfileScreen, { SOURCE_URL } from './ProfileScreen'
 import { useNutrition } from '../nutrition/useNutrition'
+import { useSleep } from '../sleep/useSleep'
 
-const show = () => render(<MemoryRouter><ProfileScreen /></MemoryRouter>)
+const show = () => render(
+  <MemoryRouter>
+    <ProfileScreen />
+    <LocationProbe />
+  </MemoryRouter>
+)
+function LocationProbe() { return <output data-testid="path">{useLocation().pathname}</output> }
 
 beforeEach(() => {
   Object.values(h).forEach(f => typeof f === 'function' && (f as any).mockClear())
@@ -248,5 +260,75 @@ describe('ProfileScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => expect(h.save).toHaveBeenCalled())
     expect(h.refreshAutoTarget).not.toHaveBeenCalled()
+  })
+  describe('Sleep card', () => {
+    const goal = { valid_from: '2026-01-01', goal_min: 480, bed_target: '23:00' }
+    afterEach(() => { useSleep.setState({ targets: [] }) })
+
+    it('opens the sleep setup from the switch while the pillar is off', () => {
+      show()
+      expect(screen.getByRole('heading', { name: 'Sleep' })).toBeTruthy()
+      expect(screen.queryByRole('button', { name: 'Open Sleep' })).toBeNull()
+      fireEvent.click(screen.getByRole('switch', { name: 'Sleep' }))
+      expect(screen.getByRole('dialog', { name: 'Sleep setup' })).toBeTruthy()
+      expect(h.save).not.toHaveBeenCalled()
+    })
+
+    it('shows the goal, the bedtime and the nights, and edits them through the setup', () => {
+      P = { ...BASE, sleep_enabled: true, sleep_nights_per_week: 4 }
+      useSleep.setState({ targets: [goal] })
+      show()
+      const card = within(screen.getByRole('heading', { name: 'Sleep' }).closest('section')!)
+      expect(card.getByText('8h')).toBeTruthy()
+      expect(card.getByText(/^23:00/)).toBeTruthy()
+      expect(card.getByText('4')).toBeTruthy()
+      fireEvent.click(screen.getByRole('button', { name: 'Edit: Sleep' }))
+      expect(screen.getByRole('dialog', { name: 'Sleep setup' })).toBeTruthy()
+    })
+
+    it('asks before turning the pillar off, and keeps it on if the person cancels', () => {
+      P = { ...BASE, sleep_enabled: true }
+      useSleep.setState({ targets: [goal] })
+      show()
+      fireEvent.click(screen.getByRole('switch', { name: 'Sleep' }))
+      expect(screen.getByRole('alertdialog', { name: 'Turn off Sleep?' })).toBeTruthy()
+      expect(h.save).not.toHaveBeenCalled()
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+      expect(screen.queryByRole('alertdialog')).toBeNull()
+      expect(h.save).not.toHaveBeenCalled()
+      expect(screen.getByRole('switch', { name: 'Sleep' }).getAttribute('aria-checked')).toBe('true')
+    })
+
+    it('turns it off on confirmation and leaves the data alone', async () => {
+      P = { ...BASE, sleep_enabled: true }
+      useSleep.setState({ targets: [goal] })
+      const spies = ['setTarget', 'saveNight', 'removeNight', 'reset'] as const
+      const before = useSleep.getState()
+      const calls = spies.map(k => vi.spyOn(before, k))
+      show()
+      fireEvent.click(screen.getByRole('switch', { name: 'Sleep' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Turn off' }))
+      await waitFor(() => expect(h.save).toHaveBeenCalledWith({ sleep_enabled: false }))
+      expect(h.save).toHaveBeenCalledTimes(1)
+      expect(screen.queryByRole('alertdialog')).toBeNull()
+      calls.forEach(c => expect(c).not.toHaveBeenCalled())
+      expect(useSleep.getState().targets).toEqual([goal])
+    })
+
+    it('says so when turning it off fails', async () => {
+      P = { ...BASE, sleep_enabled: true }
+      h.save.mockRejectedValueOnce(new Error('offline'))
+      show()
+      fireEvent.click(screen.getByRole('switch', { name: 'Sleep' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Turn off' }))
+      await waitFor(() => expect(h.toast).toHaveBeenCalledWith('Could not save. Your previous values were kept.'))
+    })
+
+    it('opens the Sleep screen from the card once the pillar is on', () => {
+      P = { ...BASE, sleep_enabled: true }
+      show()
+      fireEvent.click(screen.getByRole('button', { name: 'Open Sleep' }))
+      expect(screen.getByTestId('path').textContent).toBe('/sono')
+    })
   })
 })
