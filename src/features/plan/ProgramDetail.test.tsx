@@ -93,7 +93,7 @@ describe('ProgramDetail', () => {
     expect(applyProgram).toHaveBeenCalledWith(expect.anything(), 'ppl', 0)
     expect(S().program).toMatchObject({ id: 'ppl', variant: 0, dismissed: false })
     expect(S().routines.map((r: AnyState) => r.name)).toEqual(['Mine', 'PPL · Push', 'PPL · Pull', 'PPL · Legs'])
-    expect(h.nav).toHaveBeenCalledWith('/plan')
+    expect(h.nav).toHaveBeenCalledWith('/plan', { replace: true })
     expect(h.toast).toHaveBeenCalledWith('Program applied', expect.objectContaining({ action: expect.objectContaining({ label: 'Undo' }) }))
   })
 

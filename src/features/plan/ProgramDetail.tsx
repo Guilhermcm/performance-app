@@ -49,7 +49,7 @@ function Detail({ id }: { id: ProgramId }) {
   const confirm = () => {
     setPreview(false)
     startProgram(id, variant)
-    navigate('/plan')
+    navigate('/plan', { replace: true })
   }
 
   return (

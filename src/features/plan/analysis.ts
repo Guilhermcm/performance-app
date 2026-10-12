@@ -4,8 +4,8 @@
 // the main muscle of an exercise counts 1 set and any other muscle it trains counts 0.5
 // (musclesOf is untouched, its 0.4 weight is for the muscle maps), and a weekday counts for a
 // group from 2 fractional sets on.
-import { EXIDX } from '@/lib/exercises.js'
-import { musclesOf } from '@/lib/muscles.js'
+import { EXIDX, isCardio } from '@/lib/exercises.js'
+import { hasExplicitMuscleMetadata, musclesOf } from '@/lib/muscles.js'
 import { RANGES, type AnalysisProfile } from './goal'
 import { estimateMinutes, type TimedRoutine } from './time'
 
@@ -48,7 +48,8 @@ export type PlanAnalysis = {
 type PlanExercise = { id?: string; sets?: number; restSec?: number }
 type PlanRoutine = TimedRoutine & { id: string; ex: ReadonlyArray<PlanExercise> }
 export type PlanInput = {
-  week?: Partial<Record<number, ReadonlyArray<string>>> | null
+  // a day may still hold one routine id as a plain string (the legacy shape, see Plan.jsx)
+  week?: Partial<Record<number, string | ReadonlyArray<string>>> | null
   routines?: ReadonlyArray<PlanRoutine> | null
   customEx?: ReadonlyArray<{ id?: string }> | null
 }
@@ -87,7 +88,7 @@ export function analyzePlan(S: PlanInput, profile: AnalysisProfile): PlanAnalysi
   for (let day = 0; day < 7; day++) {
     const dayTotal = {} as Record<Group, number>
     GROUPS.forEach(g => { dayTotal[g] = 0 })
-    for (const routineId of S.week?.[day] ?? []) {
+    for (const routineId of ([] as string[]).concat((S.week?.[day] as string | string[] | undefined) || [])) {
       const routine = routines.get(routineId)
       if (!routine) continue // an id in the schedule whose routine was deleted
       if (!minutes.some(m => m.routineId === routine.id)) minutes.push({ routineId: routine.id, minutes: estimateMinutes(routine) })
@@ -98,7 +99,11 @@ export function analyzePlan(S: PlanInput, profile: AnalysisProfile): PlanAnalysi
         days.add(day)
         exerciseDays.set(e.id, days)
         const exercise = exerciseOf(e.id)
-        if (Object.keys(musclesOf(exercise) as object).length === 0) {
+        // A custom exercise that names no muscle only has its body part to go by; that guess stays
+        // out of the volume. Cardio trains no muscle group worth a bar, it only takes time.
+        const isCustom = customs.has(e.id) || (exercise as { custom?: boolean } | undefined)?.custom === true
+        if (isCardio(exercise)) continue
+        if (Object.keys(musclesOf(exercise) as object).length === 0 || (isCustom && !hasExplicitMuscleMetadata(exercise))) {
           if (!unknown.includes(e.id)) unknown.push(e.id)
           continue
         }

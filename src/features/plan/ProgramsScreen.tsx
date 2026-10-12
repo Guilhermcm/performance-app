@@ -32,6 +32,8 @@ export function useSuggestion() {
 export default function ProgramsScreen() {
   const navigate = useNavigate()
   const suggestion = useSuggestion()
+  // Back to wherever the person came from (Settings, Home, the Plan); /plan when this is the first entry.
+  const goBack = () => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/plan'))
   const [goal, setGoal] = useState<'all' | AnalysisProfile>('all')
   const [days, setDays] = useState('all')
   const shown = PROGRAM_IDS.filter(id => (goal === 'all' || PROGRAMS[id].goals.includes(goal))
@@ -41,7 +43,7 @@ export default function ProgramsScreen() {
     <div className="mx-auto flex w-full max-w-md flex-col gap-5 pb-6 font-sans text-foreground">
       <header className="flex flex-col">
         <div className="-ml-2 flex h-11 items-center">
-          <Button variant="ghost" size="icon" className="size-11 rounded-full" aria-label={t('Back')} onClick={() => navigate('/plan')}>
+          <Button variant="ghost" size="icon" className="size-11 rounded-full" aria-label={t('Back')} onClick={goBack}>
             <ArrowLeft aria-hidden className="size-5 rtl:rotate-180" />
           </Button>
         </div>
@@ -72,11 +74,15 @@ export default function ProgramsScreen() {
             <ToggleGroupItem key={d} value={String(d)} variant="outline" aria-label={t('{0} days a week', d)} className={cn(CHIP, 'min-w-11 font-mono tabular-nums')}>{d}</ToggleGroupItem>
           ))}
         </ToggleGroup>
-        {shown.length
-          ? <ul className="flex list-none flex-col gap-2">{shown.map(id => (
-              <li key={id}><ProgramCard id={id} variant={id === suggestion.id ? suggestion.variant : 0} onOpen={() => navigate(`/plan/programas/${id}`)} /></li>
-            ))}</ul>
-          : <p className="py-6 text-center text-sm text-muted-foreground">{t('No program matches these filters.')}</p>}
+        {shown.length > 0 && (
+          <ul className="flex list-none flex-col gap-2">{shown.map(id => (
+            <li key={id}><ProgramCard id={id} variant={id === suggestion.id ? suggestion.variant : 0} onOpen={() => navigate(`/plan/programas/${id}`)} /></li>
+          ))}</ul>
+        )}
+        {/* always mounted, so a screen reader announces the text when the filters empty the list */}
+        <div role="status">
+          {shown.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">{t('No program matches these filters.')}</p>}
+        </div>
       </section>
     </div>
   )

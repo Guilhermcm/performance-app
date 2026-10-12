@@ -3,6 +3,7 @@ import { analyzePlan, BIG_GROUPS, GROUP_OF, type Alert, type Group } from './ana
 import { estimateMinutes } from './time'
 import { EXIDX } from '@/lib/exercises.js'
 import { musclesOf } from '@/lib/muscles.js'
+import { isCardio } from '@/lib/exercises.js'
 
 type Ex = { id: string; sets: number; reps?: number; restSec?: number }
 type Routine = { id: string; name: string; ex: Ex[] }
@@ -36,6 +37,15 @@ describe('analyzePlan volume', () => {
     const secondary = Object.entries(weights).filter(([slug, w]) => w !== 1 && groupOf[slug])
     expect(secondary.length).toBeGreaterThan(0)
     for (const [slug] of secondary) expect(a.groups[groupOf[slug]!].sets).toBe(1.5)
+  })
+
+  it('reads a legacy scalar week day as a one-routine day', () => {
+    const S = plan({}, [routine('push', [{ id: 'c-chest', sets: 3 }])], [CHEST])
+    ;(S.week as Record<number, unknown>)[1] = 'push'
+    const a = analyzePlan(S as never, 'hypertrophy')
+    expect(a.empty).toBe(false)
+    expect(a.groups.chest).toMatchObject({ sets: 3, days: 1 })
+    expect(a.minutes.map(m => m.routineId)).toEqual(['push'])
   })
 
   it('counts a routine in two weekdays twice, with days = 2', () => {
@@ -218,6 +228,41 @@ describe('analyzePlan unknown and empty', () => {
     expect(a.groups.chest.sets).toBe(3)
     // it still takes time in the routine
     expect(a.minutes[0].minutes).toBe(estimateMinutes(S.routines[0]))
+  })
+
+  it('sends a custom exercise with a body part but no muscle metadata to unknown', () => {
+    // what the custom exercise form saves: a body part, no muscle chips
+    const full = { id: 'c-full', n: 'Sandbag carry', bp: 'full body', custom: true }
+    const legs = { id: 'c-legs', n: 'Sled push', bp: 'upper legs', custom: true }
+    expect(Object.keys(musclesOf(full)).length).toBeGreaterThan(0) // the body-part fallback exists
+    const S = plan({ 1: ['a'] }, [routine('a', [{ id: 'c-full', sets: 4 }, { id: 'c-legs', sets: 4 }, { id: 'c-chest', sets: 3 }])], [full, legs, CHEST])
+    const a = analyzePlan(S, 'hypertrophy')
+    expect(a.unknown).toEqual(['c-full', 'c-legs'])
+    expect(a.groups.chest.sets).toBe(3)
+    for (const g of ['back', 'quads', 'hamstrings', 'glutes', 'abs'] as const) expect(a.groups[g].sets).toBe(0)
+  })
+
+  it('keeps a custom exercise that names its muscles in the volume', () => {
+    const S = plan({ 1: ['a'] }, [routine('a', [{ id: 'c-named', sets: 4 }])], [{ id: 'c-named', n: 'Named', bp: 'upper legs', custom: true, primaries: ['quadriceps'] }])
+    const a = analyzePlan(S, 'hypertrophy')
+    expect(a.unknown).toEqual([])
+    expect(a.groups.quads.sets).toBe(4)
+  })
+
+  it('leaves cardio out of volume and frequency but keeps it in the minutes', () => {
+    expect(isCardio('2138')).toBe(true)
+    const bike = routine('bike', [{ id: '2138', sets: 3 }])
+    const cardioCustom = { id: 'c-run', n: 'Run', bp: 'cardio', custom: true, primaries: ['quadriceps'] }
+    const run = routine('run', [{ id: 'c-run', sets: 4 }])
+    const a = analyzePlan(plan({ 1: ['bike'], 3: ['run'] }, [bike, run], [cardioCustom]), 'hypertrophy')
+    for (const g of Object.values(a.groups)) expect(g).toMatchObject({ sets: 0, days: 0 })
+    expect(a.unknown).toEqual([])
+    expect(a.empty).toBe(false)
+    expect(a.minutes).toEqual([
+      { routineId: 'bike', minutes: estimateMinutes(bike) },
+      { routineId: 'run', minutes: estimateMinutes(run) },
+    ])
+    expect(a.balance).toEqual({ push: 0, pull: 0, quads: 0, hamstrings: 0 })
   })
 
   it('treats an exercise id found nowhere as unknown', () => {

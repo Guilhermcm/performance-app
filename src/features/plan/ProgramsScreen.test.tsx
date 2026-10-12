@@ -88,9 +88,25 @@ describe('ProgramsScreen', () => {
     expect(screen.getByText('For hypertrophy, 3 days')).toBeTruthy()
   })
 
-  it('has a labelled way back to the Plan', () => {
+  it('goes back in history when there is some', () => {
+    window.history.replaceState({ idx: 2 }, '')
+    render(<ProgramsScreen />)
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    expect(nav).toHaveBeenCalledWith(-1)
+  })
+
+  it('falls back to the Plan when the screen is the first entry', () => {
+    window.history.replaceState({ idx: 0 }, '')
     render(<ProgramsScreen />)
     fireEvent.click(screen.getByRole('button', { name: 'Back' }))
     expect(nav).toHaveBeenCalledWith('/plan')
+  })
+
+  it('announces an empty filter result', () => {
+    render(<ProgramsScreen />)
+    fireEvent.click(screen.getByRole('radio', { name: '2 days a week' }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Strength' }))
+    const status = screen.getByRole('status')
+    expect(status.textContent).toContain('No program matches these filters.')
   })
 })
