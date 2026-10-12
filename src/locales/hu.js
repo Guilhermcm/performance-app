@@ -1941,6 +1941,7 @@ export default {
   "Nothing logged yet.": "Még semmi.",
   "Offline. What you log stays on this phone and syncs when you reconnect.": "Offline. Amit rögzítesz, ezen a telefonon marad, és újracsatlakozáskor szinkronizálódik.",
   "Some items from days that already closed were not saved.": "Néhány tétel a már lezárt napokról nem lett mentve.",
+  "Some nights from days that already closed were not saved.": "Néhány éjszaka a már lezárt napokról nem lett mentve.",
   "Some items could not be saved.": "Néhány tételt nem sikerült menteni.",
   "Could not load your food diary.": "Nem sikerült betölteni az étkezési naplót.",
   "Earlier days": "Korábbi napok",

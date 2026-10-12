@@ -1960,6 +1960,7 @@ export default {
   "Nothing logged yet.": "Na razie nic.",
   "Offline. What you log stays on this phone and syncs when you reconnect.": "Offline. To, co zapiszesz, zostaje na tym telefonie i zsynchronizuje się po połączeniu.",
   "Some items from days that already closed were not saved.": "Niektóre pozycje z zamkniętych już dni nie zostały zapisane.",
+  "Some nights from days that already closed were not saved.": "Niektóre noce z zamkniętych już dni nie zostały zapisane.",
   "Some items could not be saved.": "Nie udało się zapisać niektórych pozycji.",
   "Could not load your food diary.": "Nie udało się wczytać dziennika posiłków.",
   "Earlier days": "Wcześniejsze dni",

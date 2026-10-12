@@ -1938,6 +1938,7 @@ export default {
   "Nothing logged yet.": "还没有记录。",
   "Offline. What you log stays on this phone and syncs when you reconnect.": "离线。记录会保存在这部手机上，联网后同步。",
   "Some items from days that already closed were not saved.": "已结算日期的部分条目没有保存。",
+  "Some nights from days that already closed were not saved.": "已结算日期的部分睡眠记录没有保存。",
   "Some items could not be saved.": "部分条目无法保存。",
   "Could not load your food diary.": "无法加载饮食日记。",
   "Earlier days": "前几天",

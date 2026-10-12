@@ -1991,6 +1991,7 @@ export default {
   "Nothing logged yet.": "لا شيء بعد.",
   "Offline. What you log stays on this phone and syncs when you reconnect.": "غير متصل. ما تسجله يبقى على هذا الهاتف ويُزامن عند عودة الاتصال.",
   "Some items from days that already closed were not saved.": "لم تُحفظ بعض العناصر من أيام أُغلقت بالفعل.",
+  "Some nights from days that already closed were not saved.": "لم تُحفظ بعض الليالي من أيام أُغلقت بالفعل.",
   "Some items could not be saved.": "تعذر حفظ بعض العناصر.",
   "Could not load your food diary.": "تعذر تحميل مذكرة الطعام.",
   "Earlier days": "أيام سابقة",

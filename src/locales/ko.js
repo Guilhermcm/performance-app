@@ -1938,6 +1938,7 @@ export default {
   "Nothing logged yet.": "아직 기록이 없어요.",
   "Offline. What you log stays on this phone and syncs when you reconnect.": "오프라인이에요. 기록은 이 휴대폰에 저장되고 다시 연결되면 동기화돼요.",
   "Some items from days that already closed were not saved.": "이미 마감된 날의 일부 항목은 저장되지 않았어요.",
+  "Some nights from days that already closed were not saved.": "이미 마감된 날의 일부 밤 기록은 저장되지 않았어요.",
   "Some items could not be saved.": "일부 항목을 저장하지 못했어요.",
   "Could not load your food diary.": "식단 기록을 불러오지 못했어요.",
   "Earlier days": "지난 날",

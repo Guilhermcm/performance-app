@@ -1938,6 +1938,7 @@ export default {
   "Nothing logged yet.": "अभी कुछ नहीं।",
   "Offline. What you log stays on this phone and syncs when you reconnect.": "ऑफ़लाइन। आप जो दर्ज करेंगे वह इसी फ़ोन पर रहेगा और कनेक्शन लौटने पर सिंक होगा।",
   "Some items from days that already closed were not saved.": "पहले से बंद दिनों के कुछ आइटम सेव नहीं हुए।",
+  "Some nights from days that already closed were not saved.": "पहले से बंद दिनों की कुछ रातें सेव नहीं हुईं।",
   "Some items could not be saved.": "कुछ आइटम सेव नहीं हो सके।",
   "Could not load your food diary.": "आपकी फ़ूड डायरी लोड नहीं हो सकी।",
   "Earlier days": "पिछले दिन",

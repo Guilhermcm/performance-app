@@ -1949,6 +1949,7 @@ export default {
   "Nothing logged yet.": "ยังไม่มีรายการ",
   "Offline. What you log stays on this phone and syncs when you reconnect.": "ออฟไลน์ สิ่งที่บันทึกจะอยู่ในเครื่องนี้และซิงก์เมื่อกลับมาออนไลน์",
   "Some items from days that already closed were not saved.": "บางรายการของวันที่ปิดไปแล้วไม่ได้บันทึก",
+  "Some nights from days that already closed were not saved.": "บางคืนของวันที่ปิดไปแล้วไม่ได้บันทึก",
   "Some items could not be saved.": "บางรายการบันทึกไม่ได้",
   "Could not load your food diary.": "โหลดบันทึกอาหารไม่ได้",
   "Earlier days": "วันก่อนหน้า",

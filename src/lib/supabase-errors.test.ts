@@ -26,6 +26,12 @@ describe('classify', () => {
     expect(classify({ message: 'too_many_measures' })).toMatchObject({ code: 'network', refused: true, reason: 'refused' })
   })
 
+  it('refuses a closed sleep night with its own reason', () => {
+    expect(classify({ code: 'P0001', message: 'night_closed' })).toMatchObject({ code: 'night_closed', refused: true, reason: 'night_closed', sqlstate: 'P0001' })
+    expect(classify({ message: 'night_closed' })).toMatchObject({ code: 'night_closed', refused: true, reason: 'night_closed' })
+    expect(new NutritionError('night_closed').reason).toBe('night_closed')
+  })
+
   it('refuses check, unique, FK (23xxx) and data exception (22xxx) violations', () => {
     expect(classify({ code: '23514', message: 'check violation' })).toMatchObject({ refused: true, sqlstate: '23514' })
     expect(classify({ code: '23505', message: 'dup' }).refused).toBe(true)

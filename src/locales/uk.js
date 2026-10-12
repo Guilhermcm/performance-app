@@ -1953,6 +1953,7 @@ export default {
   "Nothing logged yet.": "Поки нічого.",
   "Offline. What you log stays on this phone and syncs when you reconnect.": "Немає мережі. Записи зберігаються на телефоні й синхронізуються, коли зв'язок повернеться.",
   "Some items from days that already closed were not saved.": "Деякі записи за вже закриті дні не збереглися.",
+  "Some nights from days that already closed were not saved.": "Деякі ночі за вже закриті дні не збереглися.",
   "Some items could not be saved.": "Деякі записи не вдалося зберегти.",
   "Could not load your food diary.": "Не вдалося завантажити щоденник харчування.",
   "Earlier days": "Попередні дні",

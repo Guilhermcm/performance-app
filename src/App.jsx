@@ -31,6 +31,7 @@ import { useProfile } from './features/profile/useProfile.ts'
 import { useProgress, startProgressSync } from './features/gamification/useProgress.ts'
 import { useSocial } from './features/social/useSocial.ts'
 import { useNutrition, startNutritionSync } from './features/nutrition/useNutrition.ts'
+import { useSleep, startSleepSync } from './features/sleep/useSleep.ts'
 import { useCheckins, startCheckinSync } from './features/checkin/useCheckins.ts'
 import CheckinFlow from './features/checkin/CheckinFlow.tsx'
 import MyTrainings from './features/checkin/MyTrainings.tsx'
@@ -156,7 +157,7 @@ function Shell() {
 
   // The profile in memory belongs to whoever is signed in; signing out drops it.
   useEffect(() => {
-    if (!user) { useProfile.getState().reset(); useProgress.getState().reset(); useSocial.getState().reset(); useNutrition.getState().reset(); useCheckins.getState().reset() }
+    if (!user) { useProfile.getState().reset(); useProgress.getState().reset(); useSocial.getState().reset(); useNutrition.getState().reset(); useSleep.getState().reset(); useCheckins.getState().reset() }
   }, [user?.id])
   // No tab bar while the profile loads or the onboarding is on screen (a guest has no profile).
   const profileReady = useProfile(s => s.status === 'ready' && !s.onboarding) || !user
@@ -177,6 +178,12 @@ function Shell() {
     if (!user || !profileReady) return
     void useNutrition.getState().bind(user.id)
     return startNutritionSync()
+  }, [user?.id, profileReady])
+  // Sleep: same shape as the diary (saved copy, queued nights sent, pull on focus and reconnect).
+  useEffect(() => {
+    if (!user || !profileReady) return
+    void useSleep.getState().bind(user.id)
+    return startSleepSync()
   }, [user?.id, profileReady])
   // Check-ins: my recent ones and the notices at once, the photo queue sent, and again on focus
   // and reconnect. The feed loads when the Social tab asks for it.

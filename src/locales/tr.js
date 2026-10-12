@@ -1938,6 +1938,7 @@ export default {
   "Nothing logged yet.": "Henüz bir şey yok.",
   "Offline. What you log stays on this phone and syncs when you reconnect.": "Çevrimdışı. Kaydettiklerin bu telefonda kalır, bağlantı gelince eşitlenir.",
   "Some items from days that already closed were not saved.": "Kapanmış günlere ait bazı kayıtlar kaydedilmedi.",
+  "Some nights from days that already closed were not saved.": "Kapanmış günlere ait bazı geceler kaydedilmedi.",
   "Some items could not be saved.": "Bazı kayıtlar kaydedilemedi.",
   "Could not load your food diary.": "Beslenme günlüğün yüklenemedi.",
   "Earlier days": "Önceki günler",

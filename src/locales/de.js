@@ -1958,6 +1958,7 @@ export default {
   "Nothing logged yet.": "Noch nichts eingetragen.",
   "Offline. What you log stays on this phone and syncs when you reconnect.": "Offline. Was du einträgst, bleibt auf diesem Gerät und wird beim Wiederverbinden synchronisiert.",
   "Some items from days that already closed were not saved.": "Einige Einträge von bereits abgeschlossenen Tagen wurden nicht gespeichert.",
+  "Some nights from days that already closed were not saved.": "Einige Nächte von bereits abgeschlossenen Tagen wurden nicht gespeichert.",
   "Some items could not be saved.": "Einige Einträge konnten nicht gespeichert werden.",
   "Could not load your food diary.": "Dein Ernährungstagebuch konnte nicht geladen werden.",
   "Earlier days": "Frühere Tage",

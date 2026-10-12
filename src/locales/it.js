@@ -1938,6 +1938,7 @@ export default {
   "Nothing logged yet.": "Ancora niente.",
   "Offline. What you log stays on this phone and syncs when you reconnect.": "Offline. Quello che registri resta su questo telefono e si sincronizza quando torni online.",
   "Some items from days that already closed were not saved.": "Alcune voci di giorni già chiusi non sono state salvate.",
+  "Some nights from days that already closed were not saved.": "Alcune notti di giorni già chiusi non sono state salvate.",
   "Some items could not be saved.": "Non è stato possibile salvare alcune voci.",
   "Could not load your food diary.": "Impossibile caricare il tuo diario alimentare.",
   "Earlier days": "Giorni precedenti",

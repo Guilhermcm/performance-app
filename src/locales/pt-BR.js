@@ -1327,6 +1327,7 @@ export const PT_BR_OVERRIDES = {
   "Nothing logged yet.": "Nada registrado ainda.",
   "Offline. What you log stays on this phone and syncs when you reconnect.": "Sem conexão. O que você registrar fica neste aparelho e sincroniza quando a conexão voltar.",
   "Some items from days that already closed were not saved.": "Alguns itens de dias já fechados não foram salvos.",
+  "Some nights from days that already closed were not saved.": "Algumas noites de dias já fechados não foram salvas.",
   "Some items could not be saved.": "Alguns itens não puderam ser salvos.",
   "Could not load your food diary.": "Não foi possível carregar seu diário alimentar.",
   "Earlier days": "Dias anteriores",
