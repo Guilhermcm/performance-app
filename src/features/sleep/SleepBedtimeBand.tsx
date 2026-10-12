@@ -111,7 +111,7 @@ export default function SleepBedtimeBand({ series, today, bedTarget }: Props) {
               <span aria-hidden className="h-0.5 w-4 rounded-full bg-foreground/70" />{t('Bedtime target')}
             </li>
             <li className="flex items-center gap-1.5">
-              <span aria-hidden className="size-3 rounded-[3px] bg-pillar-sleep/15" />{`± ${fmtGap(BED_SLACK_MIN)}`}
+              <span aria-hidden className="size-3 rounded-[3px] bg-pillar-sleep/12" />{`± ${fmtGap(BED_SLACK_MIN)}`}
             </li>
           </ul>
         </>

@@ -52,6 +52,13 @@ describe('privacy policy page', () => {
     expect(en).toContain('how many nights you were on target')
   })
 
+  it('lists the nutrition and sleep challenge counts under consent (art. 7, I), in both languages', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('nos desafios, o volume e as contagens de dias no alvo da Nutrição e de noites no alvo do Sono, depende do seu consentimento (art. 7º, I)')
+    expect(en).toContain('in challenges, volume and the counts of Nutrition days on target and Sleep nights on target, depends on your consent (art. 7, I)')
+  })
+
   it('covers the nutrition pillar and Open Food Facts in both languages', () => {
     const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
     const en = visible.slice(visible.indexOf('Privacy Policy'))

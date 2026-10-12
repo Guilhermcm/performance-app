@@ -70,14 +70,3 @@ export async function fetchPeriods(): Promise<SleepPeriod[]> {
   const rows = await run<Row[]>(supabase.from('sleep_periods').select('started_on, ended_on').order('started_on', { ascending: true }) as never)
   return (rows ?? []).map(r => ({ started_on: r.started_on as string, ended_on: (r.ended_on as string | null) ?? null }))
 }
-
-export type SleepErrorCode = 'night_closed' | 'invalid_duration' | 'network' | 'refused'
-
-// What a screen tells the person: a closed night, a duration out of range (the check of sleep_logs,
-// 23514), another refusal for good, or "try again".
-export function toSleepError(e: unknown): SleepErrorCode {
-  const err = classify(e)
-  if (err.code === 'night_closed') return 'night_closed'
-  if (err.sqlstate === '23514') return 'invalid_duration'
-  return err.refused ? 'refused' : 'network'
-}

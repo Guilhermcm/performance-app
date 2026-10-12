@@ -42,7 +42,7 @@ function viewOf(c: Celebration): View {
     }
   }
   if (c.kind === 'week_target') {
-    const w = WEEK_TARGET[c.pillar] ?? WEEK_TARGET.nutrition
+    const w = WEEK_TARGET[c.pillar]
     return {
       eyebrow: t('Weekly goal met'), title: w.title(), detail: w.detail(), xp: WEEK_TARGET_BONUS,
       icon: <span className={cn('grid size-20 place-items-center rounded-3xl', w.tone)}><CalendarCheck className="size-10" strokeWidth={1.75} /></span>

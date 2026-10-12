@@ -57,6 +57,16 @@ describe('createLocalOutbox', () => {
     expect(send).not.toHaveBeenCalled()
   })
 
+  it('forgets one account and keeps the others', () => {
+    box.enqueue(ME, { id: 'a', v: 1 })
+    box.enqueue(OTHER, { id: 'b', v: 1 })
+    box.forget(ME)
+    expect(box.pending(ME)).toEqual([])
+    expect(box.pending(OTHER)).toEqual([{ id: 'b', v: 1 }])
+    box.forget(OTHER)
+    expect(localStorage.getItem(KEY)).toBeNull()
+  })
+
   it('keeps one queue per account', async () => {
     box.enqueue(ME, { id: 'a', v: 1 })
     box.enqueue(OTHER, { id: 'z', v: 1 })

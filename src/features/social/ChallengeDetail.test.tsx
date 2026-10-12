@@ -471,7 +471,7 @@ describe('ChallengeDetail', () => {
       render(<ChallengeDetail />)
       const join = screen.getByRole('button', { name: 'Join challenge' }) as HTMLButtonElement
       expect(join.disabled).toBe(true)
-      expect(screen.getByText('They see only that number, never your times, how long you slept or your notes.')).toBeTruthy()
+      expect(screen.getByText('They see only that number, never your times, how long you slept, its quality or your notes.')).toBeTruthy()
       expect(screen.getAllByRole('switch')).toHaveLength(1)
       fireEvent.click(screen.getByRole('switch', { name: /^Show participants how many nights I was on target/ }))
       expect(join.disabled).toBe(false)

@@ -1,5 +1,7 @@
-import { describe, it, expect } from 'vitest'
-import { amountText, autoTitle, socialErrorText, MODE_TEXT, TEMPLATE_TEXT } from './labels'
+// @vitest-environment happy-dom
+import { describe, it, expect, afterEach } from 'vitest'
+import { setLang } from '../../lib/i18n.js'
+import { amountText, autoTitle, sleepOptInText, socialErrorText, MODE_TEXT, TEMPLATE_TEXT } from './labels'
 import type { SocialErrorCode } from './types'
 
 const CODES: SocialErrorCode[] = [
@@ -27,7 +29,7 @@ describe('social labels', () => {
     expect(TEMPLATE_TEXT.checkin_days.name()).toBe('Training days')
     expect(TEMPLATE_TEXT.sleep_nights_on_target.name()).toBe('Nights on sleep target')
     expect(TEMPLATE_TEXT.sleep_nights_on_target.rule()).toBe(
-      'Nights in the period that each person hits their sleep target. Others only see how many, never your times or how long you slept.')
+      'Nights in the period that each person hits their sleep target. Others only see how many, never your times, how long you slept, its quality or your notes.')
     // A challenge made before the check-ins counts training days now, so it reads the same.
     expect(TEMPLATE_TEXT.workouts_count.name()).toBe('Training days')
     expect(TEMPLATE_TEXT.workouts_count.rule()).toBe(TEMPLATE_TEXT.checkin_days.rule())
@@ -53,7 +55,20 @@ describe('social labels', () => {
     expect(autoTitle('weeks_on_target', 4, 30)).toBe('4 weeks on target')
     expect(autoTitle('volume_total', 40, 30)).toBe('40 t in 30 days')
     expect(autoTitle('nutrition_days_on_target', 21, 30)).toBe('21 days on target in 30 days')
+    expect(autoTitle('nutrition_days_on_target', 1, 7)).toBe('1 day on target in 7 days')
     expect(autoTitle('sleep_nights_on_target', 21, 30)).toBe('21 nights on target in 30 days')
     expect(autoTitle('sleep_nights_on_target', 1, 7)).toBe('1 night on target in 7 days')
+  })
+})
+
+describe('sleep opt-in copy in pt-BR', () => {
+  afterEach(async () => { await setLang('en') })
+
+  it('names quality and calls the notes observações, as the privacy page does', async () => {
+    await setLang('pt-BR')
+    expect(sleepOptInText().detail).toBe(
+      'Eles veem só esse número, nunca seus horários, quanto você dormiu, a qualidade do sono ou suas observações.')
+    expect(TEMPLATE_TEXT.sleep_nights_on_target.rule()).toContain('a qualidade do sono ou suas observações.')
+    expect(autoTitle('nutrition_days_on_target', 1, 7)).toBe('1 dia no alvo em 7 dias')
   })
 })

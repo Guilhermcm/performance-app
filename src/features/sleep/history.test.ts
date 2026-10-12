@@ -59,7 +59,7 @@ describe('buildSleepMonth', () => {
 
   it('calls a night logged with no goal in force just logged', () => {
     const weeks = buildSleepMonth('2026-10', [nightOf({ night: '2026-10-01', on_target: false, target: null, bed_diff_min: null })], {}, SINCE_SEPT, TARGETS, TODAY)
-    expect(cell(weeks, '2026-10-01')).toMatchObject({ state: 'logged', label: 'Logged' })
+    expect(cell(weeks, '2026-10-01')).toMatchObject({ state: 'logged', label: 'Logged night' })
   })
 
   it('marks today as current and does not let a day to come be picked', () => {

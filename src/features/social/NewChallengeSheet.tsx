@@ -87,7 +87,8 @@ export default function NewChallengeSheet({ open, onClose }: { open: boolean; on
   const name = title ?? autoTitle(template, goal, days)
   const draft: NewChallenge = {
     template, title: name, mode: effMode, target: goal, starts_on: startsOn, ends_on: endsOn,
-    invitees: picked, share_volume: false, share_nutrition: shareNutrition, share_sleep: template === SLEEP && shareSleep
+    invitees: picked, share_volume: false, share_nutrition: template === NUTRITION && shareNutrition,
+    share_sleep: template === SLEEP && shareSleep
   }
   const problem = checkChallenge(draft, today, { nutritionOn, sleepOn })
   // Why the button is off, shown before anyone taps it.

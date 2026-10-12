@@ -22,13 +22,14 @@ describe('durationSeries', () => {
     expect(s).toHaveLength(30)
     expect(s[0].night).toBe('2026-10-01')
     expect(s[29].night).toBe(TODAY)
-    expect(s[0]).toEqual({ night: '2026-10-01', duration: 470, goal: 480, onTarget: true })
+    expect(s[0]).toEqual({ night: '2026-10-01', duration: 470, goal: 480, onTarget: true, open: false })
     // A closed night without a log, and a day with nothing at all, are both empty.
     expect(s[9]).toMatchObject({ night: '2026-10-10', duration: null, onTarget: false })
     expect(s[4]).toMatchObject({ night: '2026-10-05', duration: null, goal: 480, onTarget: false })
     expect(s[19]).toMatchObject({ duration: 400, onTarget: false })
-    // Today's open night is judged by the goal in force, as a preview.
-    expect(s[29]).toEqual({ night: TODAY, duration: 470, goal: 480, onTarget: true })
+    // Today's open night is judged by the goal in force, as a preview, and stays to confirm.
+    expect(s[29]).toEqual({ night: TODAY, duration: 470, goal: 480, onTarget: true, open: true })
+    expect(s.filter(p => p.open).map(p => p.night)).toEqual([TODAY])
     expect(s.filter(p => p.duration == null)).toHaveLength(27)
   })
 
@@ -85,7 +86,7 @@ describe('bedtimeSeries', () => {
 })
 
 const point = (over: Partial<DurationPoint>, i: number): DurationPoint =>
-  ({ night: shiftDay(TODAY, i - 29), duration: null, goal: 480, onTarget: false, ...over })
+  ({ night: shiftDay(TODAY, i - 29), duration: null, goal: 480, onTarget: false, open: false, ...over })
 
 describe('descriptions', () => {
   // 20 logged nights averaging 7h 25 (445 min), 18 of them on target.
@@ -124,7 +125,16 @@ describe('row texts', () => {
     expect(durationState(point({}, 0))).toBe('Not logged')
     expect(durationState(point({ duration: 470, onTarget: true }, 0))).toBe('On target')
     expect(durationState(point({ duration: 400 }, 0))).toBe('Off target')
-    expect(durationState(point({ duration: 400, goal: null }, 0))).toBe('Logged')
+    expect(durationState(point({ duration: 400, goal: null }, 0))).toBe('Logged night')
+    // A night not closed yet is not settled, whatever its preview says.
+    expect(durationState(point({ duration: 470, onTarget: true, open: true }, 0))).toBe('To confirm')
+    expect(durationState(point({ duration: 400, open: true }, 0))).toBe('To confirm')
+  })
+
+  it('agrees a logged night in pt-BR', async () => {
+    await setLang('pt-BR')
+    expect(durationState(point({ duration: 400, goal: null }, 0))).toBe('Registrada')
+    expect(durationState(point({ duration: 400, open: true }, 0))).toBe('A confirmar')
   })
 
   it('writes the bedtime deviation in words', async () => {

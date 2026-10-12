@@ -41,7 +41,7 @@ describe('NightSheet', () => {
   it('leaves out what was not given and says when no goal was in force', () => {
     const night = nightOf({ night: '2026-10-02', on_target: false, target: null, bed_diff_min: null, quality: null, note: null, xp: 0 })
     render(<NightSheet night={night} open onOpenChange={() => {}} />)
-    expect(screen.getByText('Logged')).toBeTruthy()
+    expect(screen.getByText('Logged night')).toBeTruthy()
     expect(screen.queryByText('Sleep quality', { selector: 'dt' })).toBeNull()
     expect(screen.queryByText('Note', { selector: 'dt' })).toBeNull()
     expect(row('Goal that night')).toBe('No goal')

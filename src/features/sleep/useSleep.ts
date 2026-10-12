@@ -97,6 +97,8 @@ export type SleepStore = {
   setTarget(t: Omit<SleepTarget, 'valid_from'>, validFrom: string): Promise<void>
   targetOn(night: string): SleepTarget | null
   // The most recent logged night from today - 14 to today, from the open logs and the closed nights.
+  // Only to prefill a form: a closed night comes back with updated_at '' (it has no row to keep), so
+  // never pass the result itself to saveNight or the queue.
   lastLogged(today: string): SleepLog | null
   // A calendar month (YYYY-MM) up to today; null for a month still to come, or offline with no saved copy.
   loadMonth(month: string): Promise<SleepHistory | null>

@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, waitFor, act } from '@testing-library/react'
 
 const h = vi.hoisted(() => ({ toast: vi.fn(), fetchTargets: vi.fn() }))
 vi.mock('sonner', () => ({ toast: h.toast }))
@@ -228,6 +228,34 @@ describe('SleepSetup', () => {
       click('Save')
       await waitFor(() => expect(save).toHaveBeenCalledWith({ sleep_nights_per_week: 6 }))
       expect(setTarget).not.toHaveBeenCalled()
+    })
+
+    it('adopts the goal that loads after the sheet opened, so a new count keeps it', async () => {
+      useSleep.setState({ status: 'loading', targets: [] })
+      show()
+      expect(screen.getByText('8h')).toBeTruthy()
+      act(() => useSleep.setState({
+        status: 'ready', targets: [targetOf({ valid_from: '2026-09-01', goal_min: 450, bed_target: '23:30' })],
+      }))
+      expect(screen.getByText('7h 30')).toBeTruthy()
+      expect(screen.getByText(/^23:30/)).toBeTruthy()
+      expect(screen.queryByText('Starts tomorrow')).toBeNull()
+      choose('6')
+      click('Save')
+      await waitFor(() => expect(save).toHaveBeenCalledWith({ sleep_nights_per_week: 6 }))
+      expect(setTarget).not.toHaveBeenCalled()
+    })
+
+    it('keeps what the person set when the goal loads later', async () => {
+      useSleep.setState({ status: 'loading', targets: [] })
+      show()
+      click('Sleep 15 minutes more')
+      act(() => useSleep.setState({
+        status: 'ready', targets: [targetOf({ valid_from: '2026-09-01', goal_min: 450, bed_target: '23:30' })],
+      }))
+      expect(screen.getByText('8h 15')).toBeTruthy()
+      click('Save')
+      await waitFor(() => expect(setTarget).toHaveBeenCalledWith({ goal_min: 495, bed_target: '23:30' }, '2026-10-07'))
     })
 
     it('goes back to a quiet form when the change is undone', () => {

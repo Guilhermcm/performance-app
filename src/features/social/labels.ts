@@ -49,7 +49,7 @@ export const TEMPLATE_TEXT: Record<ChallengeTemplate, { name: () => string; rule
   },
   sleep_nights_on_target: {
     name: () => t('Nights on sleep target'),
-    rule: () => t('Nights in the period that each person hits their sleep target. Others only see how many, never your times or how long you slept.'),
+    rule: () => t('Nights in the period that each person hits their sleep target. Others only see how many, never your times, how long you slept, its quality or your notes.'),
     icon: Moon
   }
 }
@@ -72,7 +72,9 @@ export function amountText(template: ChallengeTemplate, n: number): string {
 export function autoTitle(template: ChallengeTemplate, target: number, days: number): string {
   if (isTrainingDays(template)) return t('{0} training days in {1} days', target, days)
   if (template === 'weeks_on_target') return t('{0} weeks on target', target)
-  if (template === 'nutrition_days_on_target') return t('{0} days on target in {1} days', target, days)
+  if (template === 'nutrition_days_on_target') {
+    return target === 1 ? t('1 day on target in {0} days', days) : t('{0} days on target in {1} days', target, days)
+  }
   if (template === 'sleep_nights_on_target') {
     return target === 1 ? t('1 night on target in {0} days', days) : tn(target, '{0} nights on target in {1} days', target, days)
   }
@@ -89,5 +91,5 @@ export const nutritionOptInText = () => ({
 // nights on target leaves the account.
 export const sleepOptInText = () => ({
   label: t('Show participants how many nights I was on target'),
-  detail: t('They see only that number, never your times, how long you slept or your notes.')
+  detail: t('They see only that number, never your times, how long you slept, its quality or your notes.')
 })

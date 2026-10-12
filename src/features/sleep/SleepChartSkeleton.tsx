@@ -2,9 +2,10 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { t } from '../../lib/i18n.js'
 
 // The box of a sleep chart card, shared with its skeleton so nothing below moves when the chunk
-// arrives: title, two lines of description, the plot, the legend and "Show as table". The minimum
-// height holds that column whether or not the padding counts (Tailwind runs without preflight).
-export const SLEEP_CHART_CARD = 'flex min-h-[400px] flex-col gap-2 rounded-3xl border border-border bg-card p-4 text-card-foreground'
+// arrives: title, description, the plot, the legend and "Show as table". The minimum height holds
+// that column with a description of up to three lines (it wraps on a narrow phone), so the card
+// never comes out taller than its skeleton.
+export const SLEEP_CHART_CARD = 'flex min-h-[416px] flex-col gap-2 rounded-3xl border border-border bg-card p-4 text-card-foreground'
 export const SLEEP_CHART_HEIGHT = 208
 
 const KIND = {

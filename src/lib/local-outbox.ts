@@ -16,6 +16,8 @@ export type LocalOutbox<Op> = {
   flush(userId: string): Promise<FlushResult>
   // Every account's queue (tests; nothing in the app clears a queue on sign-out).
   clear(): void
+  // One account's queue, when that account is deleted; the others stay.
+  forget(userId: string): void
 }
 
 type Queues<Op> = Record<string, Op[]>
@@ -95,5 +97,11 @@ export function createLocalOutbox<Op>(o: { key: string; same: (a: Op, b: Op) => 
     try { localStorage.removeItem(o.key) } catch { /* ignore */ }
   }
 
-  return { pending, enqueue, flush, clear }
+  function forget(userId: string): void {
+    const all = readAll()
+    delete all[userId]
+    writeAll(all)
+  }
+
+  return { pending, enqueue, flush, clear, forget }
 }

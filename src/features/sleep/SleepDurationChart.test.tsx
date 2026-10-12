@@ -23,11 +23,11 @@ const TODAY = '2026-10-30'
 // Nights on the 1st (on target), the 2nd (off target) and the 3rd (no goal in force); the rest empty.
 const SERIES: DurationPoint[] = Array.from({ length: 30 }, (_, i) => {
   const night = shiftDay(TODAY, i - 29)
-  if (i === 0) return { night, duration: 470, goal: 480, onTarget: true }
-  if (i === 1) return { night, duration: 400, goal: 480, onTarget: false }
-  if (i === 2) return { night, duration: 445, goal: null, onTarget: false }
-  if (i === 29) return { night, duration: 485, goal: 480, onTarget: true }
-  return { night, duration: null, goal: 480, onTarget: false }
+  if (i === 0) return { night, duration: 470, goal: 480, onTarget: true, open: false }
+  if (i === 1) return { night, duration: 400, goal: 480, onTarget: false, open: false }
+  if (i === 2) return { night, duration: 445, goal: null, onTarget: false, open: false }
+  if (i === 29) return { night, duration: 485, goal: 480, onTarget: true, open: true }
+  return { night, duration: null, goal: 480, onTarget: false, open: false }
 })
 
 afterEach(async () => { cleanup(); await setLang('en') })
@@ -69,8 +69,10 @@ describe('SleepDurationChart', () => {
     expect(within(rows[0]).getByText('On target')).toBeTruthy()
     expect(within(rows[1]).getByText('6h 40')).toBeTruthy()
     expect(within(rows[1]).getByText('Off target')).toBeTruthy()
-    expect(within(rows[2]).getByText('Logged')).toBeTruthy()
+    expect(within(rows[2]).getByText('Logged night')).toBeTruthy()
     expect(within(rows[3]).getByText('Not logged')).toBeTruthy()
+    // Today's night is not closed yet: it waits to be confirmed.
+    expect(within(rows[29]).getByText('To confirm')).toBeTruthy()
     // And back to the chart.
     fireEvent.click(screen.getByRole('button', { name: 'Show as chart' }))
     expect(screen.queryByRole('table')).toBeNull()
@@ -85,6 +87,10 @@ describe('SleepDurationChart', () => {
     const on = tip(SERIES[0])
     expect(on.getByText('7h 50')).toBeTruthy()
     expect(on.getByText('On target')).toBeTruthy()
+    cleanup()
+    const open = tip(SERIES[29])
+    expect(open.getByText('8h 05')).toBeTruthy()
+    expect(open.getByText('To confirm')).toBeTruthy()
     cleanup()
     await setLang('pt-BR')
     expect(tip(SERIES[3]).getByText('Sem registro')).toBeTruthy()

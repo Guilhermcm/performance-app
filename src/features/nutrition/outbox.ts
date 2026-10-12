@@ -24,3 +24,4 @@ export const pending = box.pending
 export const enqueue = box.enqueue
 export const flushOutbox = box.flush
 export const clearOutbox = box.clear
+export const forgetOutbox = box.forget

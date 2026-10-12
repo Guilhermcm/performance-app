@@ -81,13 +81,4 @@ describe('sleep api', () => {
     h.rpc.mockRejectedValue(new TypeError('Failed to fetch'))
     await expect(api.fetchNights('2026-10-01', '2026-10-05')).rejects.toMatchObject({ code: 'network', refused: false })
   })
-
-  it('maps errors to the codes the screens show', () => {
-    expect(api.toSleepError({ code: '23514', message: 'new row violates check constraint "sleep_logs_check"' })).toBe('invalid_duration')
-    expect(api.toSleepError({ code: 'P0001', message: 'night_closed' })).toBe('night_closed')
-    expect(api.toSleepError({ code: 'P0001', message: 'item_immutable' })).toBe('refused')
-    expect(api.toSleepError({ code: '22P02', message: 'bad date' })).toBe('refused')
-    expect(api.toSleepError(new TypeError('Failed to fetch'))).toBe('network')
-    expect(api.toSleepError({ code: '42501', message: 'permission denied' })).toBe('network')
-  })
 })

@@ -17,7 +17,7 @@ describe('nightStatus', () => {
     expect(nightStatus(cls, targetOf())).toEqual({ text: 'Off target', on: false })
   })
   it('only says logged when no goal was in force', () => {
-    expect(nightStatus({ ...cls, bed_diff_min: null }, null)).toEqual({ text: 'Logged', on: false })
+    expect(nightStatus({ ...cls, bed_diff_min: null }, null)).toEqual({ text: 'Logged night', on: false })
   })
   it('says not logged without a record', () => {
     expect(nightStatus(null, targetOf())).toEqual({ text: 'Not logged', on: false })

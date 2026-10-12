@@ -179,6 +179,19 @@ describe('NewChallengeSheet', () => {
     }))
   })
 
+  it('does not send the nutrition opt-in with another template', async () => {
+    pillar(true)
+    h.createChallenge.mockResolvedValue('c9')
+    render(<NewChallengeSheet open onClose={onClose} />)
+    fireEvent.click(nutritionRadio())
+    fireEvent.click(screen.getByRole('switch', { name: /how many days/ }))
+    fireEvent.click(screen.getByRole('radio', { name: /Training days/ }))
+    fireEvent.click(screen.getByRole('checkbox', { name: /Bia/ }))
+    fireEvent.click(create())
+    await waitFor(() => expect(h.createChallenge).toHaveBeenCalled())
+    expect(h.createChallenge).toHaveBeenCalledWith(expect.objectContaining({ template: 'checkin_days', share_nutrition: false }))
+  })
+
   it('says when the pillar went off under an open form', () => {
     pillar(true)
     render(<NewChallengeSheet open onClose={onClose} />)
@@ -254,7 +267,7 @@ describe('NewChallengeSheet', () => {
       fireEvent.click(screen.getByRole('checkbox', { name: /Bia/ }))
       expect(screen.getByText(SLEEP_HINT)).toBeTruthy()
       expect(create().disabled).toBe(true)
-      expect(screen.getByText('They see only that number, never your times, how long you slept or your notes.')).toBeTruthy()
+      expect(screen.getByText('They see only that number, never your times, how long you slept, its quality or your notes.')).toBeTruthy()
       // The nutrition opt-in is not offered for it.
       expect(screen.queryByRole('switch', { name: /how many days/ })).toBeNull()
       fireEvent.click(screen.getByRole('switch', { name: /^Show participants how many nights I was on target/ }))

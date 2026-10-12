@@ -20,7 +20,7 @@ export const QUALITY_LABEL: Record<1 | 2 | 3 | 4 | 5, () => string> = {
 // recorded: it is not judged. `on` is for the one state that earned something.
 export function nightStatus(cls: NightClass | null, target: SleepTarget | null): { text: string; on: boolean } {
   if (!cls || !cls.logged) return { text: t('Not logged'), on: false }
-  if (!target) return { text: t('Logged'), on: false }
+  if (!target) return { text: t('Logged night'), on: false }
   return cls.on_target ? { text: t('On target'), on: true } : { text: t('Off target'), on: false }
 }
 

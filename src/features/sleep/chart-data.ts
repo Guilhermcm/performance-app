@@ -13,8 +13,9 @@ export const BEDTIME_DAYS = 14
 export const BED_LIMIT = 180
 
 // `duration` is null on a night with nothing logged; `goal` is the goal in force that night (null
-// when there was none), so the goal line steps on the day a new goal starts.
-export type DurationPoint = { night: string; duration: number | null; goal: number | null; onTarget: boolean }
+// when there was none), so the goal line steps on the day a new goal starts. `open` is a logged
+// night with no closed row yet: still to confirm, `onTarget` only a preview.
+export type DurationPoint = { night: string; duration: number | null; goal: number | null; onTarget: boolean; open: boolean }
 // Minutes from the bedtime target, later positive, held to ±BED_LIMIT; `clamped` says which edge
 // held a night that went further.
 export type BedtimePoint = { night: string; dev: number; clamped: 'up' | 'down' | null }
@@ -24,9 +25,13 @@ export type BedtimePoint = { night: string; dev: number; clamped: 'up' | 'down' 
 export function durationSeries(
   nights: SleepNight[], logs: Record<string, SleepLog>, targets: SleepTarget[], today: string,
 ): DurationPoint[] {
+  const closed = new Set(nights.map(n => n.night))
   return Array.from({ length: DURATION_DAYS }, (_, i) => {
     const n = nightAt(shiftDay(today, i - (DURATION_DAYS - 1)), nights, logs, targets)
-    return { night: n.night, duration: n.logged ? n.duration_min : null, goal: n.target?.goal_min ?? null, onTarget: n.on_target }
+    return {
+      night: n.night, duration: n.logged ? n.duration_min : null, goal: n.target?.goal_min ?? null, onTarget: n.on_target,
+      open: n.logged && !closed.has(n.night),
+    }
   })
 }
 
@@ -63,10 +68,12 @@ export function bedtimeDescription(series: BedtimePoint[]): string {
   return t('Last 14 days: {0}, {1} within 45 min of the target', nightsLogged(series.length), within)
 }
 
-// Where a night stands, in words: the tooltip and the table say it, the colour only repeats it.
+// Where a night stands, in words: the tooltip and the table say it, the colour only repeats it. An
+// open night is not settled yet, as on the calendar.
 export function durationState(p: DurationPoint): string {
   if (p.duration == null) return t('Not logged')
-  if (p.goal == null) return t('Logged')
+  if (p.goal == null) return t('Logged night')
+  if (p.open) return t('To confirm')
   return p.onTarget ? t('On target') : t('Off target')
 }
 

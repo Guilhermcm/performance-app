@@ -65,8 +65,12 @@ function SetupBody({ profile, onDone }: { profile: Profile; onDone: () => void }
   }, [])
   const ahead = useSleep(s => s.targetOn(tomorrow))
 
-  const [goal, setGoal] = useState(ahead?.goal_min ?? DEFAULT_GOAL)
-  const [bed, setBed] = useState(ahead?.bed_target ?? DEFAULT_BED)
+  // Until the person moves them, the goal and bedtime follow the goal in force from tomorrow, also
+  // when it only loads after the sheet opened (otherwise saving a new count wrote the defaults).
+  const [goalEdit, setGoal] = useState<number | null>(null)
+  const [bedEdit, setBed] = useState<string | null>(null)
+  const goal = goalEdit ?? ahead?.goal_min ?? DEFAULT_GOAL
+  const bed = bedEdit ?? ahead?.bed_target ?? DEFAULT_BED
   const [nights, setNights] = useState(profile.sleep_nights_per_week ?? DEFAULT_NIGHTS)
   const [busy, setBusy] = useState(false)
 
@@ -123,11 +127,11 @@ function SetupBody({ profile, onDone }: { profile: Profile; onDone: () => void }
         <Stepper id="sleep-goal" label={t('Sleep goal')} value={fmtDuration(goal)}
           lessLabel={t('Sleep 15 minutes less')} moreLabel={t('Sleep 15 minutes more')}
           lessDisabled={goal <= MIN_GOAL} moreDisabled={goal >= MAX_GOAL}
-          onLess={() => setGoal(g => Math.max(MIN_GOAL, g - STEP))} onMore={() => setGoal(g => Math.min(MAX_GOAL, g + STEP))} />
+          onLess={() => setGoal(Math.max(MIN_GOAL, goal - STEP))} onMore={() => setGoal(Math.min(MAX_GOAL, goal + STEP))} />
 
         <Stepper id="sleep-bed" label={t('Bedtime')} value={fmtClock(bed)}
           lessLabel={t('Bedtime 15 minutes earlier')} moreLabel={t('Bedtime 15 minutes later')}
-          onLess={() => setBed(b => shiftClock(b, -STEP))} onMore={() => setBed(b => shiftClock(b, STEP))} />
+          onLess={() => setBed(shiftClock(bed, -STEP))} onMore={() => setBed(shiftClock(bed, STEP))} />
 
         <p className="-mt-2 text-sm leading-snug text-muted-foreground">
           {t('On target: at least {0} of sleep and in bed within {1} minutes of {2}.', fmtDuration(goal - GOAL_SLACK_MIN), BED_SLACK_MIN, fmtClock(bed))}
