@@ -31,9 +31,9 @@ combinada a partir de outubro de 2026: **1c → 1d → 3 → 4 → 5 → 6** (a 
 | 1a | Gamificação individual | M | 0 | concluída |
 | 1b | Social | M | 1a | concluída |
 | 1c | Check-in com foto e social | M | 1b | concluída, em produção desde 2026-10-11 ([spec](superpowers/specs/2026-10-06-checkin-social-design.md), [plano](superpowers/plans/2026-10-06-fase-1c-checkin.md)) |
-| 1d | Plano com evidência | M | 1c | concluída no código, sem SQL; aguarda a conferência das fontes em `docs/fontes-1d.md` e o merge ([spec](superpowers/specs/2026-10-12-fase-1d-plano-evidencia-design.md), [plano](superpowers/plans/2026-10-12-fase-1d-plano-evidencia.md)) |
+| 1d | Plano com evidência | M | 1c | em produção desde 2026-10-12 (PR #6), sem SQL; falta a conferência das fontes em `docs/fontes-1d.md` ([spec](superpowers/specs/2026-10-12-fase-1d-plano-evidencia-design.md), [plano](superpowers/plans/2026-10-12-fase-1d-plano-evidencia.md)) |
 | 2 | Nutrição | G | 1a | concluída (2a e 2b) |
-| 3 | Sono | P | 1a | concluída no código, aguarda o SQL 0021-0025 em produção e o merge do PR #6 no mesmo dia ([spec](superpowers/specs/2026-10-06-fase-3-sono-design.md), [plano](superpowers/plans/2026-10-12-fase-3-sono.md)) |
+| 3 | Sono | P | 1a | em produção desde 2026-10-12 (SQL 0021-0025 e PR #6) ([spec](superpowers/specs/2026-10-06-fase-3-sono-design.md), [plano](superpowers/plans/2026-10-12-fase-3-sono.md)) |
 | 4 | Hábitos + trackers | M | 1a | a especificar |
 | 5 | Painel de performance | M | 2, 3, 4 | a especificar |
 | 6 | Foco (ActivityWatch) | P | 1a | a especificar |
@@ -173,7 +173,8 @@ aparecer como característica de um programa do catálogo), coach com IA.
 mostra volume e frequência por músculo do plano atual com pelo menos uma sugestão aplicada; toda
 recomendação com número tem um ⓘ com fonte verificável.
 
-**Status:** concluída no código, sem SQL; aguarda a conferência das fontes em `docs/fontes-1d.md` e o merge.
+**Status:** concluída e em produção desde 2026-10-12 (PR #6), sem SQL. Falta a conferência das fontes em
+`docs/fontes-1d.md`.
 Não há migration nem SQL novo nesta fase.
 
 **Pendências (antes do merge e depois)**
@@ -261,9 +262,8 @@ nativos).
 - Migrations `0021` a `0025`, publicadas no arquivo único `supabase/release/0021-0025_sleep.sql`, e o
   job `close-sleep-nights`.
 
-**Status:** concluída no código, aguarda o SQL 0021-0025 em produção e o merge do PR #6, que leva a
-1d e o Sono. O roteiro de lançamento está em [docs/SETUP.md](SETUP.md): rodar
-`supabase/release/0021-0025_sleep.sql` e fazer o merge no mesmo dia, logo em seguida.
+**Status:** concluída. SQL 0021-0025 rodado em produção em 2026-10-12, com as conferências do roteiro
+de [docs/SETUP.md](SETUP.md) ok, e o PR #6 (1d e Sono) entrou no mesmo dia.
 
 ---
 
