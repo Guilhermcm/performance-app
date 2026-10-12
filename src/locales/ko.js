@@ -2429,4 +2429,15 @@ export default {
   "Progress": "진행 상황",
   "App rule": "앱 규칙",
   "The app’s own rule, with no study behind it: it flags an exercise that shows up on 3 or more days of the week, so you can think about varying it.": "연구 근거 없는 앱 자체 규칙입니다. 한 주에 3일 이상 나오는 운동을 표시해, 바꿔 볼지 생각해 볼 수 있게 합니다.",
+  // --- sleep badges (phase 3) ---
+  "First night": "첫 밤",
+  "Log your first night of sleep.": "첫 수면 기록을 남기세요.",
+  "{0} nights on target": "목표 달성 {0}밤",
+  "Sleep enough and go to bed on time on {0} nights.": "{0}밤 동안 충분히 자고 제시간에 잠자리에 드세요.",
+  "Sleep goal met": "수면 목표 달성",
+  "Meet your weekly sleep goal for the first time.": "처음으로 주간 수면 목표를 달성하세요.",
+  "{0} weeks of sleep": "수면 {0}주",
+  "Meet your weekly sleep goal {0} weeks in a row.": "{0}주 연속 주간 수면 목표를 달성하세요.",
+  "Clock on time": "시계처럼 정확하게",
+  "Go to bed within 30 minutes of your bedtime 7 nights in a row.": "7일 연속 취침 시간 전후 30분 안에 잠자리에 드세요.",
 }

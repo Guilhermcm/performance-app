@@ -130,7 +130,6 @@ describe('sleep targets', () => {
 
   it('lets the first target start today and later ones tomorrow', async () => {
     await insTarget('2026-10-07')
-    await expect(insTarget('2026-10-07')).rejects.toThrow()
     await insTarget('2026-10-08')
     expect(await rows(db, A,
       `update public.sleep_targets set goal_min = 450 where valid_from <= '2026-10-07' returning 1`)).toHaveLength(0)
@@ -138,6 +137,11 @@ describe('sleep targets', () => {
       `update public.sleep_targets set goal_min = 450 where valid_from = '2026-10-08' returning 1`)).toHaveLength(1)
     await expect(rows(db, A, 'delete from public.sleep_targets')).rejects.toThrow(/permission denied/)
     expect(await count()).toBe(2)
+    // A day later, with no target starting that day yet: a later target still cannot start today.
+    await setClock(db, '2026-10-09T15:00:00Z')
+    await expect(insTarget('2026-10-09')).rejects.toThrow(/row-level security/)
+    await insTarget('2026-10-10')
+    expect(await count()).toBe(3)
   })
 
   it('does not let a first target start in the past', async () => {
@@ -183,6 +187,6 @@ describe('sleep targets', () => {
       .toMatch(/row-level security/)
     expect(await count()).toBe(1)
     expect(await sql(db, 'select quality from public.sleep_logs')).toEqual([{ quality: null }])
-    expect(await rows(db, null, 'select 1 from public.sleep_logs').catch(() => [])).toHaveLength(0)
+    await expect(rows(db, null, 'select 1 from public.sleep_logs')).rejects.toThrow(/permission denied/)
   })
 })

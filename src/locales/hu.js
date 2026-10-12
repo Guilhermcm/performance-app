@@ -2432,4 +2432,15 @@ export default {
   "Progress": "Fejlődés",
   "App rule": "Az app szabálya",
   "The app’s own rule, with no study behind it: it flags an exercise that shows up on 3 or more days of the week, so you can think about varying it.": "Az app saját szabálya, tanulmány nélkül: jelzi azt a gyakorlatot, amely a hét 3 vagy több napján szerepel, hogy elgondolkodhass a változtatásán.",
+  // --- sleep badges (phase 3) ---
+  "First night": "Első éjszaka",
+  "Log your first night of sleep.": "Rögzítsd az első éjszakai alvásodat.",
+  "{0} nights on target": "{0} éjszaka a célban",
+  "Sleep enough and go to bed on time on {0} nights.": "Aludj eleget és feküdj le időben {0} éjszakán át.",
+  "Sleep goal met": "Alváscél teljesítve",
+  "Meet your weekly sleep goal for the first time.": "Teljesítsd először a heti alváscélodat.",
+  "{0} weeks of sleep": "{0} hét alvás",
+  "Meet your weekly sleep goal {0} weeks in a row.": "Teljesítsd a heti alváscélodat {0} héten át egymás után.",
+  "Clock on time": "Pontos óra",
+  "Go to bed within 30 minutes of your bedtime 7 nights in a row.": "Feküdj le a lefekvési időd előtt vagy után 30 percen belül 7 éjszakán át egymás után.",
 }

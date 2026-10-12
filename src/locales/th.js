@@ -2440,4 +2440,15 @@ export default {
   "Progress": "ความก้าวหน้า",
   "App rule": "กฎของแอป",
   "The app’s own rule, with no study behind it: it flags an exercise that shows up on 3 or more days of the week, so you can think about varying it.": "กฎของแอปเอง ไม่มีงานวิจัยรองรับ แอปจะทำเครื่องหมายท่าที่อยู่ใน 3 วันขึ้นไปของสัปดาห์ เพื่อให้คุณลองคิดเรื่องการเปลี่ยนท่า",
+  // --- sleep badges (phase 3) ---
+  "First night": "คืนแรก",
+  "Log your first night of sleep.": "บันทึกการนอนคืนแรกของคุณ",
+  "{0} nights on target": "ตามเป้า {0} คืน",
+  "Sleep enough and go to bed on time on {0} nights.": "นอนให้พอและเข้านอนตรงเวลา {0} คืน",
+  "Sleep goal met": "ถึงเป้าการนอน",
+  "Meet your weekly sleep goal for the first time.": "ทำเป้าการนอนรายสัปดาห์ได้เป็นครั้งแรก",
+  "{0} weeks of sleep": "นอนดี {0} สัปดาห์",
+  "Meet your weekly sleep goal {0} weeks in a row.": "ทำเป้าการนอนรายสัปดาห์ได้ {0} สัปดาห์ติดต่อกัน",
+  "Clock on time": "ตรงเวลาเป๊ะ",
+  "Go to bed within 30 minutes of your bedtime 7 nights in a row.": "เข้านอนห่างจากเวลาที่ตั้งไว้ไม่เกิน 30 นาที 7 คืนติดต่อกัน",
 }

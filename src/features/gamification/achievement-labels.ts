@@ -39,7 +39,17 @@ export const ACHIEVEMENT_TEXT: Record<AchievementCode, Text> = {
   nutrition_streak_4: { title: () => t('{0} nutrition weeks in a row', 4), detail: () => t('Meet your weekly nutrition goal {0} weeks in a row.', 4) },
   nutrition_streak_12: { title: () => t('{0} nutrition weeks in a row', 12), detail: () => t('Meet your weekly nutrition goal {0} weeks in a row.', 12) },
   nutrition_streak_26: { title: () => t('{0} nutrition weeks in a row', 26), detail: () => t('Meet your weekly nutrition goal {0} weeks in a row.', 26) },
-  protein_7: { title: () => t('Protein week'), detail: () => t('Hit your protein target 7 days in a row.') }
+  protein_7: { title: () => t('Protein week'), detail: () => t('Hit your protein target 7 days in a row.') },
+  sleep_first_night: { title: () => t('First night'), detail: () => t('Log your first night of sleep.') },
+  sleep_nights_10: { title: () => tn(10, '{0} nights on target', 10), detail: () => tn(10, 'Sleep enough and go to bed on time on {0} nights.', 10) },
+  sleep_nights_50: { title: () => tn(50, '{0} nights on target', 50), detail: () => tn(50, 'Sleep enough and go to bed on time on {0} nights.', 50) },
+  sleep_nights_100: { title: () => tn(100, '{0} nights on target', 100), detail: () => tn(100, 'Sleep enough and go to bed on time on {0} nights.', 100) },
+  sleep_nights_250: { title: () => tn(250, '{0} nights on target', 250), detail: () => tn(250, 'Sleep enough and go to bed on time on {0} nights.', 250) },
+  sleep_week_target_1: { title: () => t('Sleep goal met'), detail: () => t('Meet your weekly sleep goal for the first time.') },
+  sleep_streak_4: { title: () => tn(4, '{0} weeks of sleep', 4), detail: () => tn(4, 'Meet your weekly sleep goal {0} weeks in a row.', 4) },
+  sleep_streak_12: { title: () => tn(12, '{0} weeks of sleep', 12), detail: () => tn(12, 'Meet your weekly sleep goal {0} weeks in a row.', 12) },
+  sleep_streak_26: { title: () => tn(26, '{0} weeks of sleep', 26), detail: () => tn(26, 'Meet your weekly sleep goal {0} weeks in a row.', 26) },
+  sleep_clock_7: { title: () => t('Clock on time'), detail: () => t('Go to bed within 30 minutes of your bedtime 7 nights in a row.') }
 }
 
 // A badge's name; one this build does not know yet (added on the server later) gets a generic

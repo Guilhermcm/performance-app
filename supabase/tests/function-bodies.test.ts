@@ -12,6 +12,8 @@ const REDEFINED: { fn: string; base: string; in: string; changed: string[] }[] =
   },
   { fn: 'freeze_week_target', base: '0008_weekly_targets_pillar.sql', in: '0021_sleep_base.sql', changed: [] },
   { fn: 'award_xp', base: '0020_checkin_feed.sql', in: '0022_sleep_close.sql', changed: [] },
+  // The last line of protein_best_run gains a comma: the sleep metrics follow it.
+  { fn: 'achievement_stats', base: '0020_checkin_feed.sql', in: '0022_sleep_close.sql', changed: [') lengths), 0)'] },
 ]
 
 describe('redefined function bodies', () => {

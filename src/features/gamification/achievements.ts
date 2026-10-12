@@ -1,5 +1,6 @@
 // The achievement catalogue v1 (spec §5.5), mirrored from public.achievement_catalog in
-// supabase/migrations/0002_gamification.sql and, for nutrition, 0011_nutrition_week.sql;
+// supabase/migrations/0002_gamification.sql and, for nutrition, 0011_nutrition_week.sql and, for
+// sleep, 0022_sleep_close.sql;
 // gamification-catalog.test.ts keeps the two equal.
 // Pure on purpose: the SQL tests import it. Titles and descriptions live in achievement-labels.ts.
 
@@ -8,6 +9,8 @@ export type Metric =
   | 'level' | 'early_workouts' | 'friends' | 'challenges_won'
   | 'nutrition_logged_days' | 'nutrition_on_target_days' | 'nutrition_week_targets'
   | 'nutrition_best_streak' | 'protein_best_run'
+  | 'sleep_logged_nights' | 'sleep_on_target_nights' | 'sleep_week_targets' | 'sleep_best_streak'
+  | 'sleep_clock_best_run'
 
 export type AchievementCode =
   | 'first_workout' | 'workouts_10' | 'workouts_50' | 'workouts_100' | 'workouts_250' | 'workouts_500'
@@ -17,8 +20,10 @@ export type AchievementCode =
   | 'first_friend' | 'challenge_first' | 'challenge_won_5' | 'early_bird'
   | 'nutrition_first_day' | 'nutrition_days_10' | 'nutrition_days_50' | 'nutrition_days_100' | 'nutrition_days_250'
   | 'nutrition_week_target_1' | 'nutrition_streak_4' | 'nutrition_streak_12' | 'nutrition_streak_26' | 'protein_7'
+  | 'sleep_first_night' | 'sleep_nights_10' | 'sleep_nights_50' | 'sleep_nights_100' | 'sleep_nights_250'
+  | 'sleep_week_target_1' | 'sleep_streak_4' | 'sleep_streak_12' | 'sleep_streak_26' | 'sleep_clock_7'
 
-// private: never shown to friends (nutrition comes from health data).
+// private: never shown to friends (nutrition and sleep come from health data).
 export type Achievement = {
   code: AchievementCode; metric: Metric; threshold: number; xp: number; sort: number; private?: boolean
 }
@@ -61,7 +66,17 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
   own('nutrition_streak_4', 'nutrition_best_streak', 4, 150, 360),
   own('nutrition_streak_12', 'nutrition_best_streak', 12, 400, 370),
   own('nutrition_streak_26', 'nutrition_best_streak', 26, 800, 380),
-  own('protein_7', 'protein_best_run', 7, 100, 390)
+  own('protein_7', 'protein_best_run', 7, 100, 390),
+  own('sleep_first_night', 'sleep_logged_nights', 1, 50, 400),
+  own('sleep_nights_10', 'sleep_on_target_nights', 10, 100, 410),
+  own('sleep_nights_50', 'sleep_on_target_nights', 50, 200, 420),
+  own('sleep_nights_100', 'sleep_on_target_nights', 100, 300, 430),
+  own('sleep_nights_250', 'sleep_on_target_nights', 250, 500, 440),
+  own('sleep_week_target_1', 'sleep_week_targets', 1, 75, 450),
+  own('sleep_streak_4', 'sleep_best_streak', 4, 150, 460),
+  own('sleep_streak_12', 'sleep_best_streak', 12, 400, 470),
+  own('sleep_streak_26', 'sleep_best_streak', 26, 800, 480),
+  own('sleep_clock_7', 'sleep_clock_best_run', 7, 100, 490)
 ]
 
 // Unlocked only by Phase 1b (friends, challenges); Phase 1a never computes these metrics.
@@ -70,6 +85,11 @@ export const SOCIAL_METRICS: readonly Metric[] = ['friends', 'challenges_won']
 // The nutrition pillar's metrics (phase 2a); every badge on them is private.
 export const NUTRITION_METRICS: readonly Metric[] = [
   'nutrition_logged_days', 'nutrition_on_target_days', 'nutrition_week_targets', 'nutrition_best_streak', 'protein_best_run'
+]
+
+// The sleep pillar's metrics (phase 3); every badge on them is private.
+export const SLEEP_METRICS: readonly Metric[] = [
+  'sleep_logged_nights', 'sleep_on_target_nights', 'sleep_week_targets', 'sleep_best_streak', 'sleep_clock_best_run'
 ]
 
 const BY_CODE = new Map<string, Achievement>(ACHIEVEMENTS.map(x => [x.code, x]))

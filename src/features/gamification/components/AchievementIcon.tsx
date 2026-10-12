@@ -1,6 +1,6 @@
 import {
-  Beef, CalendarCheck, Crown, Dumbbell, Flame, Lock, NotebookPen, Salad, Scale, Sunrise, Swords, Target, Trophy, UserPlus,
-  type LucideIcon
+  AlarmClock, BedDouble, Beef, CalendarCheck, Crown, Dumbbell, Flame, Lock, Moon, NotebookPen, Salad, Scale, Sunrise, Swords,
+  Target, Trophy, UserPlus, type LucideIcon
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { achievementByCode, type Metric } from '../achievements'
@@ -10,7 +10,9 @@ const ICON: Record<Metric, LucideIcon> = {
   workouts: Dumbbell, prs: Trophy, week_targets: Target, best_streak: Flame, weigh_in_run: Scale,
   level: Crown, early_workouts: Sunrise, friends: UserPlus, challenges_won: Swords,
   nutrition_logged_days: NotebookPen, nutrition_on_target_days: Salad, nutrition_week_targets: CalendarCheck,
-  nutrition_best_streak: Flame, protein_best_run: Beef
+  nutrition_best_streak: Flame, protein_best_run: Beef,
+  sleep_logged_nights: Moon, sleep_on_target_nights: BedDouble, sleep_week_targets: CalendarCheck,
+  sleep_best_streak: Flame, sleep_clock_best_run: AlarmClock
 }
 
 // Decorative: the badge's name is always written next to it.

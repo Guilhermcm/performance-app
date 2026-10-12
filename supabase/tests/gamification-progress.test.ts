@@ -38,7 +38,8 @@ describe('get_my_progress', () => {
       streak: { current: 0, best: 0, shields: 0 },
       stats: { workouts: 1, prs: 1, week_targets: 0, best_streak: 0, weigh_in_run: 1, early_workouts: 0, friends: 0, challenges_won: 0, level: 3,
                nutrition_logged_days: 0, nutrition_on_target_days: 0, nutrition_week_targets: 0,
-               nutrition_best_streak: 0, protein_best_run: 0 }
+               nutrition_best_streak: 0, protein_best_run: 0, sleep_logged_nights: 0, sleep_on_target_nights: 0,
+               sleep_week_targets: 0, sleep_best_streak: 0, sleep_clock_best_run: 0 }
     })
     expect(achievements.map((a: { code: string }) => a.code).sort()).toEqual(['first_pr', 'first_workout'])
     expect(achievements.every((a: { unlocked_at: unknown }) => typeof a.unlocked_at === 'string')).toBe(true)

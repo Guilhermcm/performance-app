@@ -2429,4 +2429,15 @@ export default {
   "Progress": "प्रगति",
   "App rule": "ऐप का नियम",
   "The app’s own rule, with no study behind it: it flags an exercise that shows up on 3 or more days of the week, so you can think about varying it.": "यह ऐप का अपना नियम है, इसके पीछे कोई अध्ययन नहीं: जो एक्सरसाइज़ हफ़्ते में 3 या ज़्यादा दिन आती है, उसे यह चिह्नित करता है ताकि आप उसे बदलने के बारे में सोच सकें।",
+  // --- sleep badges (phase 3) ---
+  "First night": "पहली रात",
+  "Log your first night of sleep.": "अपनी पहली रात की नींद दर्ज करें।",
+  "{0} nights on target": "{0} रातें लक्ष्य पर",
+  "Sleep enough and go to bed on time on {0} nights.": "{0} रातों में पूरी नींद लें और समय पर सोएँ।",
+  "Sleep goal met": "नींद का लक्ष्य पूरा",
+  "Meet your weekly sleep goal for the first time.": "पहली बार साप्ताहिक नींद लक्ष्य पूरा करें।",
+  "{0} weeks of sleep": "नींद के {0} हफ़्ते",
+  "Meet your weekly sleep goal {0} weeks in a row.": "लगातार {0} हफ़्ते साप्ताहिक नींद लक्ष्य पूरा करें।",
+  "Clock on time": "घड़ी पर सही",
+  "Go to bed within 30 minutes of your bedtime 7 nights in a row.": "लगातार 7 रातें अपने सोने के समय से 30 मिनट के अंदर सोएँ।",
 }

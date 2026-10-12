@@ -76,7 +76,9 @@ describe('closing a sleep night', () => {
       on_target: false, rested: false,
     })
     expect(await events(B)).toEqual([])
-    expect(await ledger(db, B)).toEqual([])
+    // Nothing for the pillar; the night still counts as logged for the badges (plan decision 5).
+    expect(await pillarRows(B)).toEqual([])
+    expect((await ledger(db, B)).map(r => r.reason)).toEqual(['achievement:sleep_first_night'])
   })
 
   it('skips nights outside a period', async () => {

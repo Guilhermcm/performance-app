@@ -97,7 +97,7 @@ describe('ProgressHero', () => {
   it('opens the achievements', () => {
     ready()
     render(<ProgressHero />)
-    expect(screen.getByText('0 of 32 unlocked')).toBeTruthy()
+    expect(screen.getByText('0 of 42 unlocked')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /Achievements/ }))
     expect(h.nav).toHaveBeenCalledWith('/conquistas')
   })

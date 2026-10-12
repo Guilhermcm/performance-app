@@ -2429,4 +2429,15 @@ export default {
   "Progress": "İlerleme",
   "App rule": "Uygulama kuralı",
   "The app’s own rule, with no study behind it: it flags an exercise that shows up on 3 or more days of the week, so you can think about varying it.": "Uygulamanın kendi kuralı, arkasında bir çalışma yok: haftanın 3 veya daha fazla gününde yer alan bir egzersizi işaretler, böylece onu çeşitlendirmeyi düşünebilirsin.",
+  // --- sleep badges (phase 3) ---
+  "First night": "İlk gece",
+  "Log your first night of sleep.": "İlk uyku geceni kaydet.",
+  "{0} nights on target": "Hedefte {0} gece",
+  "Sleep enough and go to bed on time on {0} nights.": "{0} gece yeterince uyu ve zamanında yat.",
+  "Sleep goal met": "Uyku hedefi tamam",
+  "Meet your weekly sleep goal for the first time.": "Haftalık uyku hedefini ilk kez tuttur.",
+  "{0} weeks of sleep": "{0} hafta uyku",
+  "Meet your weekly sleep goal {0} weeks in a row.": "Haftalık uyku hedefini {0} hafta üst üste tuttur.",
+  "Clock on time": "Saat gibi",
+  "Go to bed within 30 minutes of your bedtime 7 nights in a row.": "7 gece üst üste yatma saatinin en fazla 30 dakika öncesinde veya sonrasında yat.",
 }

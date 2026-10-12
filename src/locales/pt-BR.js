@@ -1820,6 +1820,17 @@ export const PT_BR_OVERRIDES = {
   "Progress": "Progresso",
   "App rule": "Regra do app",
   "The app’s own rule, with no study behind it: it flags an exercise that shows up on 3 or more days of the week, so you can think about varying it.": "Regra do próprio app, sem estudo por trás: marca o exercício que aparece em 3 dias ou mais da semana, para você pensar em variar.",
+  // --- sleep badges (phase 3) ---
+  "First night": "Primeira noite",
+  "Log your first night of sleep.": "Registre sua primeira noite de sono.",
+  "{0} nights on target": "{0} noites no alvo",
+  "Sleep enough and go to bed on time on {0} nights.": "Durma o suficiente e deite no horário em {0} noites.",
+  "Sleep goal met": "Meta de sono cumprida",
+  "Meet your weekly sleep goal for the first time.": "Cumpra a meta semanal de sono pela primeira vez.",
+  "{0} weeks of sleep": "{0} semanas seguidas no sono",
+  "Meet your weekly sleep goal {0} weeks in a row.": "Cumpra a meta semanal de sono {0} semanas seguidas.",
+  "Clock on time": "Relógio em dia",
+  "Go to bed within 30 minutes of your bedtime 7 nights in a row.": "Deite até 30 minutos antes ou depois do seu horário por 7 noites seguidas.",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

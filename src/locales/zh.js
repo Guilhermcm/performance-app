@@ -2429,4 +2429,15 @@ export default {
   "Progress": "进步",
   "App rule": "应用规则",
   "The app’s own rule, with no study behind it: it flags an exercise that shows up on 3 or more days of the week, so you can think about varying it.": "这是应用自己的规则，没有研究依据：一个动作在一周中出现 3 天或以上时会被标出，方便你考虑换一换。",
+  // --- sleep badges (phase 3) ---
+  "First night": "第一晚",
+  "Log your first night of sleep.": "记录你的第一晚睡眠。",
+  "{0} nights on target": "{0} 晚达标",
+  "Sleep enough and go to bed on time on {0} nights.": "在 {0} 个晚上睡够并按时上床。",
+  "Sleep goal met": "睡眠目标达成",
+  "Meet your weekly sleep goal for the first time.": "首次完成每周睡眠目标。",
+  "{0} weeks of sleep": "睡眠 {0} 周",
+  "Meet your weekly sleep goal {0} weeks in a row.": "连续 {0} 周完成每周睡眠目标。",
+  "Clock on time": "作息准点",
+  "Go to bed within 30 minutes of your bedtime 7 nights in a row.": "连续 7 晚在目标就寝时间前后 30 分钟内上床。",
 }

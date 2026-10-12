@@ -2449,4 +2449,15 @@ export default {
   "Progress": "Fortschritt",
   "App rule": "Regel der App",
   "The app’s own rule, with no study behind it: it flags an exercise that shows up on 3 or more days of the week, so you can think about varying it.": "Eine eigene Regel der App, ohne Studie dahinter: Sie markiert eine Übung, die an 3 oder mehr Tagen der Woche vorkommt, damit du überlegen kannst, sie abzuwandeln.",
+  // --- sleep badges (phase 3) ---
+  "First night": "Erste Nacht",
+  "Log your first night of sleep.": "Trag deine erste Nacht Schlaf ein.",
+  "{0} nights on target": "{0} Nächte im Ziel",
+  "Sleep enough and go to bed on time on {0} nights.": "Schlaf genug und geh in {0} Nächten pünktlich ins Bett.",
+  "Sleep goal met": "Schlafziel erreicht",
+  "Meet your weekly sleep goal for the first time.": "Erreiche dein wöchentliches Schlafziel zum ersten Mal.",
+  "{0} weeks of sleep": "{0} Wochen Schlaf",
+  "Meet your weekly sleep goal {0} weeks in a row.": "Erreiche dein wöchentliches Schlafziel {0} Wochen in Folge.",
+  "Clock on time": "Pünktlich wie die Uhr",
+  "Go to bed within 30 minutes of your bedtime 7 nights in a row.": "Geh 7 Nächte in Folge höchstens 30 Minuten vor oder nach deiner Schlafenszeit ins Bett.",
 }

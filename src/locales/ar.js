@@ -2482,4 +2482,15 @@ export default {
   "Progress": "التقدّم",
   "App rule": "قاعدة التطبيق",
   "The app’s own rule, with no study behind it: it flags an exercise that shows up on 3 or more days of the week, so you can think about varying it.": "قاعدة خاصة بالتطبيق، بلا دراسة وراءها: تنبّه إلى التمرين الذي يظهر في 3 أيام أو أكثر من الأسبوع، لتفكر في تنويعه.",
+  // --- sleep badges (phase 3) ---
+  "First night": "الليلة الأولى",
+  "Log your first night of sleep.": "سجّل أول ليلة نوم لك.",
+  "{0} nights on target": "{0} ليالٍ ضمن الهدف",
+  "Sleep enough and go to bed on time on {0} nights.": "نم بما يكفي واذهب إلى السرير في موعدك خلال {0} ليالٍ.",
+  "Sleep goal met": "تحقق هدف النوم",
+  "Meet your weekly sleep goal for the first time.": "حقق هدف النوم الأسبوعي لأول مرة.",
+  "{0} weeks of sleep": "{0} أسابيع من النوم",
+  "Meet your weekly sleep goal {0} weeks in a row.": "حقق هدف النوم الأسبوعي {0} أسابيع متتالية.",
+  "Clock on time": "الساعة مضبوطة",
+  "Go to bed within 30 minutes of your bedtime 7 nights in a row.": "اذهب إلى السرير في حدود 30 دقيقة من موعدك 7 ليالٍ متتالية.",
 }

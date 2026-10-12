@@ -170,7 +170,8 @@ describe('nutrition badges', () => {
 
     const catalog = await sql<{ code: string; private: boolean }>(db,
       'select code, private from public.achievement_catalog order by sort')
-    expect(catalog.filter(r => r.private).map(r => r.code)).toEqual(NUTRITION_CODES)
+    // The sleep badges (phase 3, sort 400 on) follow them, private too.
+    expect(catalog.filter(r => r.private).map(r => r.code).slice(0, 10)).toEqual(NUTRITION_CODES)
     expect(catalog.filter(r => !r.private)).toHaveLength(22)
   })
 
