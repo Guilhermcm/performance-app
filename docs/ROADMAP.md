@@ -30,8 +30,8 @@ combinada a partir de outubro de 2026: **1c → 1d → 3 → 4 → 5 → 6** (a 
 | 0 | Fundação | G | — | concluída |
 | 1a | Gamificação individual | M | 0 | concluída |
 | 1b | Social | M | 1a | concluída |
-| 1c | Check-in com foto e social | M | 1b | concluída no código, aguarda SQL 0017-0020 em produção e merge do PR #4 ([spec](superpowers/specs/2026-10-06-checkin-social-design.md), [plano](superpowers/plans/2026-10-06-fase-1c-checkin.md)) |
-| 1d | Plano com evidência | M | 1c | a especificar |
+| 1c | Check-in com foto e social | M | 1b | concluída, em produção desde 2026-10-11 ([spec](superpowers/specs/2026-10-06-checkin-social-design.md), [plano](superpowers/plans/2026-10-06-fase-1c-checkin.md)) |
+| 1d | Plano com evidência | M | 1c | spec em revisão ([spec](superpowers/specs/2026-10-12-fase-1d-plano-evidencia-design.md)) |
 | 2 | Nutrição | G | 1a | concluída (2a e 2b) |
 | 3 | Sono | P | 1a | especificada, execução adiada ([spec](superpowers/specs/2026-10-06-fase-3-sono-design.md)) |
 | 4 | Hábitos + trackers | M | 1a | a especificar |
@@ -126,9 +126,8 @@ desafios.
 offline), veem e reagem aos posts uma da outra, completam um desafio de dias de treino, e a
 observação privada e a foto "Só eu" nunca aparecem para a outra conta (testado por RLS).
 
-**Status:** concluída no código, aguarda SQL 0017-0020 em produção e merge do PR #4. O roteiro de
-lançamento está em [docs/SETUP.md](SETUP.md): rodar `supabase/release/0017-0020_checkin.sql` e fazer
-o merge logo em seguida.
+**Status:** concluída. SQL 0017-0020 rodado em produção em 2026-10-11 (corte `training_checkin_since`
+= 2026-10-11) e PR #4 no ar no mesmo dia. O roteiro de lançamento está em [docs/SETUP.md](SETUP.md).
 
 **Pendências (depois do lançamento)**
 - Variante leve da foto (miniatura) para "Meus treinos" e para a Home: hoje as duas telas carregam
