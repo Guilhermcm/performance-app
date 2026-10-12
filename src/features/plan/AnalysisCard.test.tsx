@@ -40,7 +40,7 @@ describe('analysisSummary', () => {
   })
 
   it.each([
-    [{ kind: 'missing', group: 'hamstrings' }, 'hamstrings with no sets'],
+    [{ kind: 'missing', group: 'hamstrings' }, 'hamstring with no sets'],
     [{ kind: 'low', group: 'biceps' }, 'biceps below ideal'],
     [{ kind: 'high', group: 'triceps' }, 'triceps with little extra gain'],
     [{ kind: 'frequency', group: 'quads' }, 'quads with low frequency'],
@@ -90,6 +90,25 @@ describe('AnalysisCard', () => {
     expect(screen.queryByText(/alert/)).toBeNull()
     fireEvent.click(card)
     expect(h.nav).toHaveBeenCalledWith('/plan/programas')
+  })
+
+  it('with routines but nothing scheduled, points to the week schedule (review M6)', () => {
+    pushDay()
+    setS({ week: {} })
+    const week = document.createElement('h4')
+    week.id = 'plan-week'
+    week.tabIndex = -1
+    const scrolled = vi.fn()
+    week.scrollIntoView = scrolled
+    document.body.appendChild(week)
+    render(<AnalysisCard />)
+    const card = screen.getByRole('button', { name: /^Analysis/ })
+    expect(card.textContent).toContain('Put a routine on a day of the week')
+    fireEvent.click(card)
+    expect(h.nav).not.toHaveBeenCalled()
+    expect(scrolled).toHaveBeenCalled()
+    expect(document.activeElement).toBe(week)
+    week.remove()
   })
 
   it('reads the profile from the profile goal', () => {

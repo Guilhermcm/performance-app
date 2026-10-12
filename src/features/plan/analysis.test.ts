@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { analyzePlan, BIG_GROUPS, GROUP_OF, type Alert, type Group } from './analysis'
+import { analyzePlan, BIG_GROUPS, exerciseGroupWeights, GROUP_OF, type Alert, type Group } from './analysis'
 import { estimateMinutes } from './time'
 import { EXIDX } from '@/lib/exercises.js'
 import { musclesOf } from '@/lib/muscles.js'
@@ -289,5 +289,26 @@ describe('analyzePlan unknown and empty', () => {
   it('is not empty once one scheduled routine has an exercise', () => {
     const a = analyzePlan(plan({ 1: ['a'] }, [routine('a', [{ id: 'c-chest', sets: 3 }])], [CHEST]), 'hypertrophy')
     expect(a.empty).toBe(false)
+  })
+})
+
+describe('review T5-T6 follow-ups', () => {
+  it('does not call cardio on 3 days a repeated exercise (M3)', () => {
+    const bike = routine('bike', [{ id: '2138', sets: 3 }])
+    const a = analyzePlan(plan({ 1: ['bike'], 3: ['bike'], 5: ['bike'] }, [bike]), 'hypertrophy')
+    expect(kinds(a.alerts)).not.toContain('repeated')
+  })
+
+  it('exerciseGroupWeights gives the group weights under the analysis rules (M2)', () => {
+    const S = { customEx: [CHEST_SEC, { id: 'c-bare', n: 'Bare', bp: 'upper legs', custom: true }] }
+    // 1 for the main muscle, 0.5 for any other, the bigger weight per group
+    expect(exerciseGroupWeights(S, 'c-chest-sec')).toEqual({ triceps: 1, chest: 0.5 })
+    const bench = exerciseGroupWeights(S, '0025')
+    expect(bench.chest).toBe(1)
+    for (const w of Object.values(bench)) expect([0.5, 1]).toContain(w)
+    // cardio, a custom with no muscles of its own, and an id found nowhere count for nothing
+    expect(exerciseGroupWeights(S, '2138')).toEqual({})
+    expect(exerciseGroupWeights(S, 'c-bare')).toEqual({})
+    expect(exerciseGroupWeights(S, 'nope')).toEqual({})
   })
 })

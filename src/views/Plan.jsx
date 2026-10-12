@@ -130,7 +130,8 @@ export default function Plan() {
     </div>}
 
     <div className="cols"><div>
-      <h4 className="sec">{t('Week schedule')}</h4>
+      {/* the Analysis card brings the focus here when there are routines but no day holds one */}
+      <h4 className="sec" id="plan-week" tabIndex={-1}>{t('Week schedule')}</h4>
       <div className="list" style={{ display: 'flex', flexDirection: 'column' }}>
         {weekOrder(weekStartOf(S)).map(d => {
           const dayRoutines = [].concat(S.week[d] || []).map(id => S.routines.find(x => x.id === id)).filter(Boolean)

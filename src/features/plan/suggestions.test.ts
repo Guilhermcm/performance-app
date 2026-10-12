@@ -302,3 +302,12 @@ describe('alerts without a suggestion', () => {
     expect(suggestionsFor(state({}, []), 'hypertrophy')).toEqual([])
   })
 })
+
+describe('Suggestion type (review M1)', () => {
+  it('an added exercise always carries its profile', () => {
+    // @ts-expect-error add-exercise needs the profile its rep range comes from
+    const bad: Suggestion = { kind: 'add-exercise', group: 'chest', changes: [] }
+    const ok: Suggestion = { kind: 'add-sets', group: 'chest', changes: [] }
+    expect([bad.kind, ok.kind]).toEqual(['add-exercise', 'add-sets'])
+  })
+})

@@ -15,7 +15,8 @@ export const groupTerm = (g: Group): string => ({
   biceps: () => t('biceps'),
   triceps: () => t('triceps'),
   quads: () => t('quads'),
-  hamstrings: () => t('hamstrings'),
+  // its own key: pt-BR calls the group "posterior de coxa" here, while the library keeps "isquiotibiais"
+  hamstrings: () => t('hamstring'),
   glutes: () => t('glutes'),
   calves: () => t('calves'),
   abs: () => t('abs'),
@@ -69,7 +70,7 @@ export function alertHint(alert: Alert): string {
     case 'missing': return t('Add an exercise for this muscle to one of your routines.')
     case 'low': return t('Add sets to the exercises for this muscle.')
     case 'high': return t('Above the range, each extra set adds little.')
-    case 'frequency': return t('Split its sets across 2 days of the week.')
+    case 'frequency': return t('Train it on 2 or more days a week, with at least 2 sets each day.')
     case 'balance-push-pull':
     case 'balance-quad-ham': return t('Add sets to the smaller side, or take some from the bigger one.')
     case 'long': return t('Cut an exercise or a few sets, or split it into two workouts.')

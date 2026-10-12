@@ -5,10 +5,9 @@
 // Only the group alerts have a suggestion: too little (add sets, or add an exercise when no
 // exercise has the group as its main muscle), none at all (add an exercise) and too much (take
 // sets away). Long sessions, imbalance and repeated exercises are told in words, not changed.
-import { EXIDX, isAssisted, isCardio } from '@/lib/exercises.js'
+import { EXIDX, isAssisted } from '@/lib/exercises.js'
 import { exAvailable } from '@/lib/equipment.js'
-import { hasExplicitMuscleMetadata, musclesOf } from '@/lib/muscles.js'
-import { analyzePlan, GROUP_OF, type Group, type MuscleSlug, type PlanInput } from './analysis'
+import { analyzePlan, exerciseGroupWeights, type Group, type PlanInput } from './analysis'
 import { RANGES, type AnalysisProfile } from './goal'
 import { ISOLATION, slotToCfg, type Routine } from './programs'
 import { estimateMinutes } from './time'
@@ -29,13 +28,11 @@ export const DEFAULT_EXERCISES: Record<Group, string[]> = {
 
 // from: null is an exercise that is not in the routine yet
 export type Change = { routineId: string; exId: string; from: number | null; to: number }
-export type Suggestion = {
-  kind: 'add-sets' | 'remove-sets' | 'add-exercise'
-  group: Group
-  changes: Change[]
+type SuggestionBase = { group: Group; changes: Change[] }
+export type Suggestion =
+  | (SuggestionBase & { kind: 'add-sets' | 'remove-sets' })
   // the rep range of an added exercise comes from the profile it was suggested for
-  profile?: AnalysisProfile
-}
+  | (SuggestionBase & { kind: 'add-exercise'; profile: AnalysisProfile })
 
 type PlanExercise = { id: string; sets: number; [k: string]: unknown }
 type PlanRoutine = { id: string; ex: PlanExercise[]; [k: string]: unknown }
@@ -57,23 +54,6 @@ const COMPOUND_REST = 120
 
 const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v))
 const sets = (e: { sets?: unknown }) => Number(e.sets) || 0
-
-// What one exercise gives each group per set (1 main, 0.5 any other), counting only exercises that
-// the analysis counts: no cardio, no custom exercise without muscles of its own.
-function weightsOf(S: SuggestionState, id: string): Partial<Record<Group, number>> {
-  const custom = (S.customEx ?? []).find(e => e?.id === id)
-  const exercise = custom ?? (EXIDX as Record<string, object | undefined>)[id]
-  const isCustom = !!custom || (exercise as { custom?: boolean } | undefined)?.custom === true
-  const muscles = musclesOf(exercise) as Record<string, number>
-  if (!exercise || isCardio(exercise) || Object.keys(muscles).length === 0) return {}
-  if (isCustom && !hasExplicitMuscleMetadata(exercise)) return {}
-  const out: Partial<Record<Group, number>> = {}
-  for (const [slug, weight] of Object.entries(muscles)) {
-    const group = GROUP_OF[slug as MuscleSlug]
-    if (group && weight > 0) out[group] = Math.max(out[group] ?? 0, weight === 1 ? 1 : 0.5)
-  }
-  return out
-}
 
 // The routines that are in the week, each once, in week order, with how many times a week it runs.
 function scheduled(S: SuggestionState): { routine: PlanRoutine; times: number }[] {
@@ -98,7 +78,7 @@ function exercisesFor(S: SuggestionState, routine: PlanRoutine, group: Group) {
   for (const ex of routine.ex ?? []) {
     if (!ex?.id || seen.has(ex.id)) continue
     seen.add(ex.id)
-    const weight = weightsOf(S, ex.id)[group] ?? 0
+    const weight = exerciseGroupWeights(S, ex.id)[group] ?? 0
     if (weight > 0) out.push({ ex, weight })
   }
   return out
@@ -148,7 +128,7 @@ function routineFor(S: SuggestionState, group: Group): PlanRoutine | null {
   for (const { routine } of scheduled(S)) {
     let score = 0
     for (const ex of routine.ex ?? []) {
-      const weights = weightsOf(S, ex.id)
+      const weights = exerciseGroupWeights(S, ex.id)
       for (const g of GROUPS) if (half && HALF[g] === half) score += sets(ex) * (weights[g] ?? 0)
     }
     const minutes = estimateMinutes(routine)
@@ -198,12 +178,12 @@ export function suggestionsFor(S: SuggestionState, profile: AnalysisProfile): Su
 export function applySuggestion(S: { routines: PlanRoutine[] }, s: Suggestion): Routine[] {
   const touched = new Set(s.changes.map(c => c.routineId))
   const snapshot = clone(S.routines.filter(r => touched.has(r.id))) as unknown as Routine[]
-  const range = REPS[s.profile ?? 'hypertrophy']
+  const range = s.kind === 'add-exercise' ? REPS[s.profile] : null
   for (const c of s.changes) {
     const routine = S.routines.find(r => r.id === c.routineId)
     if (!routine) continue
     if (c.from === null) {
-      if (routine.ex.some(e => e.id === c.exId)) continue
+      if (!range || routine.ex.some(e => e.id === c.exId)) continue
       const restSec = ISOLATION.has(c.exId) ? ISOLATION_REST : COMPOUND_REST
       routine.ex.push(slotToCfg({ ex: c.exId, sets: c.to, reps: range.min, repsMax: range.max, restSec }) as unknown as PlanExercise)
     } else {

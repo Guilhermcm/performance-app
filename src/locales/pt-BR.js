@@ -1769,7 +1769,9 @@ export const PT_BR_OVERRIDES = {
   "Add an exercise for this muscle to one of your routines.": "Inclua um exercício para esse músculo em uma das suas rotinas.",
   "Add sets to the exercises for this muscle.": "Acrescente séries aos exercícios desse músculo.",
   "Above the range, each extra set adds little.": "Acima da faixa, cada série a mais rende pouco.",
-  "Split its sets across 2 days of the week.": "Divida essas séries em 2 dias da semana.",
+  "Train it on 2 or more days a week, with at least 2 sets each day.": "Treine esse músculo em 2 dias da semana ou mais, com pelo menos 2 séries em cada dia.",
+  "hamstring": "posterior de coxa",
+  "Put a routine on a day of the week": "Coloque uma rotina em um dia da semana",
   "Add sets to the smaller side, or take some from the bigger one.": "Acrescente séries ao lado menor ou tire algumas do maior.",
   "Cut an exercise or a few sets, or split it into two workouts.": "Tire um exercício ou algumas séries, ou divida em dois treinos.",
   "On some of those days, swap it for another exercise for the same muscle.": "Em alguns desses dias, troque por outro exercício do mesmo músculo.",
@@ -1809,7 +1811,6 @@ export const PT_BR_OVERRIDES = {
   "These count toward the time, not toward the sets.": "Entram no tempo, mas não nas séries.",
   "{0}: added with {1} sets": "{0}: entra com {1} séries",
   "{0}: {1} → {2} sets": "{0}: {1} → {2} séries",
-  "hamstrings": "posterior de coxa",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

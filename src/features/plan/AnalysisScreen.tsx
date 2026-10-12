@@ -22,7 +22,7 @@ import {
   GROUPS, alertHint, alertPhrase, balancedText, capitalize, daysText, frequencyNote, goalText, groupLabel,
   pushPullText, quadHamText, statusLabel, unknownText,
 } from './analysis-copy'
-import { useAnalysisProfile, usePlanAnalysis } from './AnalysisCard'
+import { useAnalysisProfile, usePlanAnalysis, usePlanStart } from './use-plan-analysis'
 import { RANGES, type AnalysisProfile } from './goal'
 import { RULE_OF_THUMB, type SourceId } from './references'
 import { applySuggestion, restoreRoutines, suggestionsFor, type Change, type Suggestion, type SuggestionState } from './suggestions'
@@ -83,6 +83,7 @@ export default function AnalysisScreen() {
   const S = useStore((s: AppStore) => s.S)
   const update = useStore((s: AppStore) => s.update)
   const analysis = usePlanAnalysis(profile)
+  const start = usePlanStart(analysis)
   const suggestions = useMemo(() => (analysis.empty ? [] : suggestionsFor(S, profile)), [S, profile, analysis.empty])
   const goBack = () => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/plan'))
 
@@ -160,9 +161,11 @@ export default function AnalysisScreen() {
         )}
       </header>
 
-      {analysis.empty ? (
+      {start !== 'ready' ? (
         <div className="rounded-2xl border border-border bg-card px-4 py-3">
-          <Button variant="link" className="h-11 px-0 text-[15px]" onClick={() => navigate('/plan/programas')}>{t('Pick a program to start')}</Button>
+          {start === 'empty'
+            ? <Button variant="link" className="h-11 px-0 text-[15px]" onClick={() => navigate('/plan/programas')}>{t('Pick a program to start')}</Button>
+            : <Button variant="link" className="h-11 px-0 text-[15px]" onClick={() => navigate('/plan')}>{t('Put a routine on a day of the week')}</Button>}
         </div>
       ) : (
         <>
@@ -317,7 +320,7 @@ function Volume({ S, analysis, profile }: { S: PlanS; analysis: PlanAnalysis; pr
             <span />
             <span className="relative h-5 text-xs tabular-nums text-muted-foreground">
               {[0, min, max].map(v => (
-                <span key={v} className={cn('absolute top-1', v > 0 && '-translate-x-1/2 rtl:translate-x-1/2')} style={{ insetInlineStart: at(v) }}>{v}</span>
+                <span key={v} className={cn('absolute top-1', v > 0 && '-translate-x-1/2 rtl:translate-x-1/2')} style={{ insetInlineStart: at(v) }}>{fmt(v)}</span>
               ))}
             </span>
             <span />

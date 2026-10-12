@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { useStore } from '../../store/useStore.js'
 import { useProfile } from '../profile/useProfile'
-import { exerciseNameFor, setLang } from '../../lib/i18n.js'
+import { exerciseNameFor, setLang, t } from '../../lib/i18n.js'
 import { EXIDX } from '../../lib/exercises.js'
 import { REFS } from './references'
 import { RANGES } from './goal'
@@ -214,7 +214,7 @@ describe('AnalysisScreen: alerts and Apply', () => {
     expect(titles.indexOf('Back with no sets')).toBeLessThan(titles.indexOf('Chest below ideal'))
     const freq = screen.getByRole('article', { name: 'Chest with low frequency' })
     expect(within(freq).queryByRole('button', { name: /^Apply/ })).toBeNull()
-    expect(freq.textContent).toContain('Split its sets across 2 days of the week.')
+    expect(freq.textContent).toContain('Train it on 2 or more days a week, with at least 2 sets each day.')
     const balance = screen.getByRole('article', { name: 'More push than pull' })
     expect(within(balance).queryByRole('button', { name: /^Apply/ })).toBeNull()
     expect(balance.textContent).toContain('Add sets to the smaller side, or take some from the bigger one.')
@@ -315,5 +315,27 @@ describe('AnalysisScreen in pt-BR', () => {
     const chest = screen.getByRole('article', { name: 'Peito abaixo do ideal' })
     fireEvent.click(within(chest).getByRole('button', { name: /^Aplicar/ }))
     expect(screen.getByRole('dialog').textContent).toContain(`${name('0025')}: 3 → 5 séries`)
+  })
+
+  it('names the hamstrings group "Posterior de coxa" here only, and states the frequency rule (review I1, I2)', async () => {
+    await setLang('pt-BR')
+    render(<AnalysisScreen />)
+    const rows = within(region('Séries por músculo na semana')).getAllByTestId('volume-row')
+    expect(rows.find(r => r.dataset.group === 'hamstrings')?.textContent).toContain('Posterior de coxa')
+    expect(screen.getByRole('article', { name: 'Peito com frequência baixa' }).textContent)
+      .toContain('Treine esse músculo em 2 dias da semana ou mais, com pelo menos 2 séries em cada dia.')
+    // the rest of the app keeps its own name for the muscle
+    expect(t('hamstrings')).toBe('isquiotibiais')
+    expect(t('Hamstrings')).toBe('Isquiotibiais')
+  })
+})
+
+describe('AnalysisScreen with routines but nothing scheduled (review M6)', () => {
+  it('points to the week schedule instead of the programs', () => {
+    setS({ week: {} })
+    render(<AnalysisScreen />)
+    expect(screen.queryByRole('button', { name: 'Pick a program to start' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Put a routine on a day of the week' }))
+    expect(h.nav).toHaveBeenCalledWith('/plan')
   })
 })

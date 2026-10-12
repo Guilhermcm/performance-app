@@ -39,6 +39,19 @@ describe('Plan analysis card', () => {
     expect(nav).toHaveBeenCalledWith('/plan/analise')
   })
 
+  it('with routines but nothing scheduled, takes the focus to the week schedule (review M6)', () => {
+    useStore.setState(s => ({ S: { ...s.S, active: null, program: undefined, customEx: [],
+      routines: [{ id: 'push', name: 'Push', emoji: 'star', ex: [{ id: '0025', sets: 3 }] }], week: {} } }))
+    act(() => root.render(<Plan />))
+    expect(card().textContent).toContain('Put a routine on a day of the week')
+    const week = host.querySelector('#plan-week')
+    expect(week.textContent).toBe('Week schedule')
+    week.scrollIntoView = vi.fn()
+    act(() => { card().click() })
+    expect(nav).not.toHaveBeenCalled()
+    expect(document.activeElement).toBe(week)
+  })
+
   it('on an empty plan asks for a program', () => {
     useStore.setState(s => ({ S: { ...s.S, active: null, program: undefined, routines: [], week: {} } }))
     act(() => root.render(<Plan />))
