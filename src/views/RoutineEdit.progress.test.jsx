@@ -80,6 +80,22 @@ describe('routine list progress and load up hint', () => {
     expect(rows()[0].textContent).not.toContain('Next workout')
   })
 
+  it('gives the Progress button a 44 px target', () => {
+    renderRoutine([session(all(60, 8))])
+    const button = progressButton(rows()[0])
+    expect(button.style.width).toBe('44px')
+    expect(button.style.height).toBe('44px')
+  })
+
+  it('keeps a tap on the hint pill for editing, and leaves no dead zone when there is no hint', () => {
+    renderRoutine([session(all(60, 8))])
+    const [benchRow, rowRow] = rows()
+    const pill = [...benchRow.querySelectorAll('span')].find(el => el.textContent === 'Next workout: 62.5 kg')
+    act(() => pill.click())
+    expect(exConfigSheet).toHaveBeenCalledTimes(1)
+    expect(rowRow.querySelector('[data-nodrag]')).toBeNull()
+  })
+
   it('keeps tapping the row for editing, and the source button off it', () => {
     renderRoutine([session(all(60, 8))])
     const benchRow = rows()[0]

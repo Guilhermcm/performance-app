@@ -32,8 +32,12 @@ export function LoadUpBadge({ S, cfg, routine }: { S: State; cfg: Cfg; routine: 
         <TrendingUp aria-hidden className="size-3.5 shrink-0" />
         <span className="truncate">{t('Next workout: {0}', `${fmtNum(up.weight)} ${unit}`)}</span>
       </span>
-      <InfoSource refs={['plotkin2022']} label={t('Why raise the load')}
-        note={t('You did every rep last time, so the load can go up.')} />
+      {/* Only the ⓘ keeps its tap: on the routine list a tap on the pill still edits the row, and
+          a tap on the ⓘ, or inside the balloon it opens (the portal bubbles in React), does not. */}
+      <span data-nodrag className="inline-flex" onClick={ev => ev.stopPropagation()}>
+        <InfoSource refs={['plotkin2022']} label={t('Why raise the load')}
+          note={t('You did every rep last time, so the load can go up.')} />
+      </span>
     </span>
   )
 }

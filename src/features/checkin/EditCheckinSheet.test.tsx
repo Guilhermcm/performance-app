@@ -120,6 +120,8 @@ describe('editing a posted check-in', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
     const sheets = screen.getAllByRole('dialog')
     const detail = sheets[sheets.length - 1]
+    // Its session is already in the history: a suggestion would be the step after this one.
+    expect(within(detail).queryByText(/suggested/)).toBeNull()
     fireEvent.change(within(detail).getByLabelText('Set 1 · Weight (kg)'), { target: { value: '65' } })
     fireEvent.click(within(detail).getByRole('button', { name: 'Save' }))
     await act(async () => { fireEvent.click(save()) })

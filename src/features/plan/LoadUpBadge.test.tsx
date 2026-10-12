@@ -41,6 +41,26 @@ describe('loadUp', () => {
   })
 })
 
+describe('loadUp on an assistance machine and on a deload', () => {
+  it('is null on an assistance machine, where up means less help (a lighter number)', () => {
+    const assisted = { id: '1432', sets: 3, reps: 8, weight: 30, mode: 'reps' }
+    const r = { ...routine, ex: [assisted] }
+    const w = { id: 'w', d: '2026-10-05', start: 1, end: 2, routineIds: ['r1'], name: 'Push', prs: [], entries: [{ id: '1432', rid: 'r1', target: assisted, sets: all(30, 8) }] }
+    const S = state([w], { routines: [r] })
+    const p = nextPrescription(S, assisted, r)
+    expect(p.kind).toBe('up')
+    expect(p.weight).toBeLessThan(30)
+    expect(loadUp(S, assisted, r)).toBeNull()
+  })
+
+  it('is null on a deload', () => {
+    const missed = [{ w: 60, r: 8, done: true }, { w: 60, r: 6, done: true }, { w: 60, r: 5, done: true }]
+    const S = state([session(missed, '2026-10-01'), session(missed, '2026-10-03'), session(missed, '2026-10-05')])
+    expect(nextPrescription(S, cfg, routine).kind).toBe('deload')
+    expect(loadUp(S, cfg, routine)).toBeNull()
+  })
+})
+
 describe('LoadUpBadge', () => {
   it('shows the next workout load with the source of the advice', () => {
     render(<LoadUpBadge S={state([session(all(60, 8))])} cfg={cfg} routine={routine} />)

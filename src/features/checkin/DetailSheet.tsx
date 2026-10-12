@@ -18,6 +18,8 @@ type Props = {
   routineId: string | null
   // A detail already given in this check-in, to reopen as it was.
   initial?: CheckinDetail | null
+  // The check-in is already posted, so its session is in the history (editing it).
+  posted?: boolean
   // null when every exercise was turned off: the check-in goes without a detail.
   onConfirm: (detail: CheckinDetail | null) => void
 }
@@ -36,11 +38,11 @@ type AppState = { unit?: string } & Parameters<typeof draftFor>[0] & Parameters<
 type AppStore = { S: AppState }
 
 // The load the next workout of each exercise goes up to (LoadUpBadge's loadUp), shown beside its
-// fields. Not on a detail already given: its session may already be in the history, and the
-// suggestion would then be the one after it.
-function suggestions(S: AppState, routineId: string | null, given: boolean): Map<string, number> {
+// fields. Not when editing a posted check-in: its session is already in the history, and the
+// suggestion would then be the one after it. A draft reopened before posting still shows it.
+function suggestions(S: AppState, routineId: string | null, posted: boolean): Map<string, number> {
   const out = new Map<string, number>()
-  const r = given || !routineId ? null : (S.routines ?? []).find(x => x.id === routineId)
+  const r = posted || !routineId ? null : (S.routines ?? []).find(x => x.id === routineId)
   for (const cfg of r?.ex ?? []) {
     const up = out.has(cfg.id) ? null : loadUp(S, cfg, r)
     if (up) out.set(cfg.id, up.weight)
@@ -50,14 +52,14 @@ function suggestions(S: AppState, routineId: string | null, given: boolean): Map
 
 // "Detalhar treino" (spec 3.4): the exercises of the routine with last time's load and reps filled in;
 // the person changes what was different, turns off what was skipped, and saves.
-export default function DetailSheet({ open, onOpenChange, routineId, initial, onConfirm }: Props) {
+export default function DetailSheet({ open, onOpenChange, routineId, initial, posted = false, onConfirm }: Props) {
   const unit = useStore((s: AppStore) => s.S.unit) || 'kg'
   const build = (): Row[] => draftFor(useStore.getState().S, routineId, initial)
     .map(e => ({ id: e.id, on: e.on, sets: e.sets.map(s => ({ w: text(s.w), r: text(s.r) })) }))
   const [rows, setRows] = useState<Row[]>(build)
   // Each opening starts from the routine and the detail as they are now.
   useEffect(() => { if (open) setRows(build()) }, [open])
-  const suggested = useMemo(() => suggestions(useStore.getState().S, routineId, !!initial), [open, routineId, initial])
+  const suggested = useMemo(() => suggestions(useStore.getState().S, routineId, posted), [open, routineId, posted])
 
   const change = (i: number, fn: (r: Row) => Row) => setRows(rs => rs.map((r, k) => (k === i ? fn(r) : r)))
   const setField = (i: number, j: number, key: 'w' | 'r', v: string) =>

@@ -133,8 +133,9 @@ observação privada e a foto "Só eu" nunca aparecem para a outra conta (testad
 - Variante leve da foto (miniatura) para "Meus treinos" e para a Home: hoje as duas telas carregam
   a foto inteira, de uns 400 KB.
 - Smoke manual da câmera no iPhone (Safari e app instalado) e no Android.
-- Fase 1d: normalizar a unidade dos pesos do detalhe antes de lê-los para o progresso dos
-  exercícios (o detalhe guarda a unidade de exibição, kg ou lb).
+- Normalizar a unidade dos pesos do detalhe: feito na 1d. O detalhe guarda `unit` e a ingestão
+  converte para a unidade do perfil. Check-ins detalhados antes da 1d não têm `unit` e são lidos na
+  unidade atual do perfil.
 
 ---
 

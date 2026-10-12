@@ -464,12 +464,15 @@ export default function RoutineEdit() {
           <Thumb ex={ex} />
           <div className="grow"><div className={`tt ${exerciseNameClass(ex)}`}>{exerciseNameFor(ex)}</div><div className="ss">{exLine(e, S.unit, speedUnitOf(S))}</div>
             {e.note && <div className="small dim" style={{ marginTop: 2 }}>{e.note}</div>}
-            {/* "Suba a carga" (spec §6). Its ⓘ is a button of its own: a tap there, or inside the
-                balloon it opens, must not reach the row and open the exercise's settings. */}
-            <div data-nodrag onClick={ev => ev.stopPropagation()}><LoadUpBadge S={S} cfg={e} routine={r} /></div></div>
+            {/* "Suba a carga" (spec §6). The badge keeps its own ⓘ off the row's tap. */}
+            <LoadUpBadge S={S} cfg={e} routine={r} /></div>
           {noEquip && <span className="tag" style={{ color: 'var(--orange)', borderColor: 'var(--orange)' }} title={t('Needs {0} — not in your active profile', t(ex.eq))}><Icon name="warning" /></span>}
-          {withProgress.has(e.id) && <button className="iconbtn" aria-label={t('Progress')} title={t('Progress')} style={{ width: 32, height: 32, borderRadius: 8, fontSize: 15, flex: 'none' }}
-            onClick={ev => { ev.stopPropagation(); openExerciseProgress(e.id) }}><Icon name="chartLine" /></button>}
+          {/* A 44 px target (foundation spec) around the row's 32 px icon look. */}
+          {withProgress.has(e.id) && <button aria-label={t('Progress')} title={t('Progress')}
+            style={{ width: 44, height: 44, flex: 'none', display: 'grid', placeItems: 'center', padding: 0, border: 0, background: 'transparent', color: 'inherit' }}
+            onClick={ev => { ev.stopPropagation(); openExerciseProgress(e.id) }}>
+            <span className="iconbtn" aria-hidden="true" style={{ width: 32, height: 32, borderRadius: 8, fontSize: 15, pointerEvents: 'none' }}><Icon name="chartLine" /></span>
+          </button>}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 'none', alignItems: 'center' }}>
             {i > 0 && <button className={'iconbtn' + (linkedPrev ? ' on-ss' : '')} title={t('Superset with exercise above')} style={{ width: 32, height: 28, borderRadius: 8, fontSize: 15 }} onClick={ev => { ev.stopPropagation(); toggleLink(i) }}><Icon name="link" /></button>}
             <div style={{ display: 'flex', gap: 2 }}>

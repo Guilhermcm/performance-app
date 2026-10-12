@@ -82,9 +82,15 @@ describe('DetailSheet', () => {
       expect(screen.queryByText(/suggested/)).toBeNull()
     })
 
-    it('shows none on a detail already given, whose session may already be in the history', () => {
+    it('still shows it when reopening the draft of a check-in not posted yet', () => {
       withLast(allReps)
-      render(<DetailSheet open routineId="r1" initial={{ entries: [{ id: BENCH, sets: [{ w: 60, r: 8, done: true }] }] }} onOpenChange={onOpenChange} onConfirm={onConfirm} />)
+      render(<DetailSheet open routineId="r1" initial={{ entries: [{ id: BENCH, sets: [{ w: 62.5, r: 8, done: true }] }] }} onOpenChange={onOpenChange} onConfirm={onConfirm} />)
+      expect(within(group(/bench press/i)).getByText('suggested 62.5 kg')).toBeTruthy()
+    })
+
+    it('shows none when editing a posted check-in, whose session is already in the history', () => {
+      withLast(allReps)
+      render(<DetailSheet open posted routineId="r1" initial={{ entries: [{ id: BENCH, sets: [{ w: 60, r: 8, done: true }] }] }} onOpenChange={onOpenChange} onConfirm={onConfirm} />)
       expect(screen.queryByText(/suggested/)).toBeNull()
     })
   })

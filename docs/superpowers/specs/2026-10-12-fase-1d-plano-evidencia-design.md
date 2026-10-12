@@ -1,6 +1,7 @@
 # Fase 1d: Plano com evidência
 
-- **Status:** spec em revisão (2026-10-12)
+- **Status:** concluída no código, sem SQL (2026-10-12); aguarda a conferência das fontes em
+  `docs/fontes-1d.md` e o merge
 - **Base:** [ROADMAP §Fase 1d](../../ROADMAP.md), [spec da 1c](2026-10-06-checkin-social-design.md) (check-in, detalhe
   do treino, pilar Treino) e [spec da Fundação](2026-10-04-performance-app-foundation-design.md).
 - **Depende de:** 1c (no ar desde 2026-10-11).
@@ -436,7 +437,7 @@ Escolhas feitas ao escrever o plano e ao executá-lo. Onde diferem do texto acim
   HomeCards.tsx passam a abrir `/plan/programas`.
 - **Estado do programa aplicado.** `S.program = { id, variant, appliedAt, routineIds, prevWeek,
   dismissed }`. Com `dismissed: true` a faixa some. Editar qualquer rotina ou a agenda também esconde
-  a faixa, porque o `update` do Plano marca `dismissed`.
+  a faixa, porque qualquer edição de rotina ou de agenda marca `dismissed` (ver 12.2).
 - **Última sugestão aplicada.** O estado fica só na memória da tela e não sincroniza. O Desfazer vale
   enquanto a tela está aberta.
 - **Gráfico da análise.** Barras horizontais por grupo, com a faixa recomendada como banda neutra e o
@@ -460,7 +461,8 @@ Escolhas feitas ao escrever o plano e ao executá-lo. Onde diferem do texto acim
   programa de saúde de 3 dias fica em cerca de 30 a 31 min, dentro do "cerca de 35" da spec.
 - **Personalizado sem músculo explícito e cardio ficam fora do volume.** Exercício criado pela pessoa
   sem músculo informado entra em "sem músculo conhecido" (§5.2 e §9). Cardio não é volume de
-  resistência e fica fora do volume e da frequência, mas continua contando nos minutos.
+  resistência e fica fora do volume e da frequência, mas continua contando nos minutos. Cardio
+  também não conta como exercício repetido (um aparelho de cardio em 3 dias não gera o alerta).
 - **"Posterior de coxa" só na análise.** O nome vale apenas nas telas da análise, com chave de texto
   própria. A biblioteca de exercícios continua dizendo "Isquiotibiais".
 - **Texto da dica de frequência.** A dica diz a regra real: treinar o músculo em 2 dias da semana ou
@@ -468,6 +470,22 @@ Escolhas feitas ao escrever o plano e ao executá-lo. Onde diferem do texto acim
 - **Prefixos dos programas.** Os nomes das rotinas criadas levam o prefixo do programa: Full Body,
   Upper/Lower, PPL, 5×5, PHUL, Short e Health. O separador é ` · `, como em `PPL · Push`, e os nomes
   não são traduzidos.
+- **Progresso abre por um botão (§6).** Tocar no exercício da rotina continua abrindo a edição. O
+  progresso abre por um botão de ícone na linha, que só aparece quando o exercício tem carga
+  registrada.
+- **Onde ficam o selo e a entrada do progresso (§8).** Os dois ficam na lista de exercícios da
+  rotina, em `src/views/RoutineEdit.jsx`, e não em `Plan.jsx`.
+- **Carga sugerida no detalhe (§6).** Aparece ao detalhar no check-in, inclusive quando a pessoa
+  reabre o rascunho antes de postar. Some só ao editar um check-in já postado, porque a sessão dele já
+  está no histórico e a sugestão seria a do treino seguinte.
+- **`loadUp` sem selo para peso do corpo e máquina assistida.** No peso do corpo a progressão sobe as
+  repetições, não a carga. Na máquina assistida, subir significa menos ajuda, um número menor.
+- **Detalhe reaberto em outra unidade.** O `draftFor` converte para a unidade do perfil o detalhe
+  dado na outra unidade, e ele volta a ser salvo nessa unidade.
+- **Onboarding sem prévia (§4.5).** O onboarding aplica o programa sugerido sem a prévia, como antes.
+  A faixa do programa no Plano é o retorno.
+- **"Hamstrings" em inglês.** O grupo da análise aparece como "Hamstrings" em inglês (`EN_OVERRIDES`);
+  em pt-BR continua "Posterior de coxa".
 
 **De processo e de escopo**
 
@@ -478,11 +496,11 @@ Escolhas feitas ao escrever o plano e ao executá-lo. Onde diferem do texto acim
 - Os padrões menores do implementador foram aceitos: PHUL com os slots de repetição fixa em
   progressão linear, programas de saúde em A/B/A, PPL de 6 dias na agenda e listas de referências
   por programa.
-- Desfazer o programa contra a união de rotinas fica para o aviso da faixa. Os achados de menor
+- Se a sincronização trouxer de volta uma rotina removida pelo Desfazer (união de rotinas), o Plano
+  mostra um aviso e a pessoa apaga à mão (§4.5). Os achados de menor
   gravidade das revisões foram corrigidos em lotes, e os restantes foram aceitos ou levados para a
   revisão final.
 - O programa aplicado esconde a faixa em qualquer edição de rotina ou de semana no app todo. Terminar
   um treino não conta como edição.
 - Máquinas assistidas recebem `{ reps, repsMax }` por `climbsReps`, e a sugestão de adicionar
-  exercício não escolhe exercício assistido (ou usa o formato com carga).
-- Fica anotado, sem correção: o alerta de "repetido" ainda dispara para cardio em 3 ou mais dias.
+  exercício não escolhe exercício assistido.
