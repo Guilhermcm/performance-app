@@ -169,8 +169,8 @@ O Plano ganha a entrada **"Programas"** (substitui "Carregar plano inicial", e `
 3. Aviso "Programa aplicado" com **"Desfazer"**, e uma faixa no topo do Plano com o nome do programa e
    "Desfazer", que some quando a pessoa fecha a faixa ou edita o plano.
 4. "Desfazer": volta `S.week` para `prevWeek`, remove as rotinas de `routineIds` que ainda não têm treino
-   registrado (`S.workouts` com `routineIds` contendo o id) e limpa `S.program`. Rotinas com treino
-   ficam, sem dia na agenda.
+   registrado (`S.workouts` com `routineIds` contendo o id, ou um check-in da pessoa com aquele
+   `routine_id`) e limpa `S.program`. Rotinas com treino ficam, sem dia na agenda.
 
 `S.program` sincroniza junto do estado, com a regra de `week` em `src/lib/sync-merge.js` (vence o
 `_ts` mais novo). O plano de implementação confere que a fusão trata a chave nova e que a união de
@@ -190,10 +190,13 @@ analyzePlan(S, profile: 'hypertrophy' | 'strength' | 'health'): PlanAnalysis
 
 ### 5.2 Volume por grupo muscular
 
-- Mapa de músculos do app (`src/lib/muscles.js`, 18 músculos). Para a análise, o músculo principal do
-  exercício conta **1** série e cada secundário conta **0,5**, a contagem fracionada que a meta-análise
-  de dose-resposta usou nos modelos principais [pelland2025]. A função `musclesOf` atual (peso 0,4) não
-  muda; a análise aplica o próprio peso.
+- Mapa de músculos do app (`src/lib/muscles.js`, 18 músculos). Para a análise, o músculo com peso 1 em
+  `musclesOf` conta **1** série e o secundário conta **0,5**, a contagem fracionada que a meta-análise
+  de dose-resposta usou nos modelos principais [pelland2025]. Só conta como secundário o músculo que os
+  dados do exercício citam: a lista `sm` do catálogo (por `smOf`) ou, num exercício sem `sm`, os
+  `secondaries` explícitos. A cauda longa que `musclesOf` deriva com peso 0,4 (a camada de músculos do
+  catálogo, o campo `mg` ou a parte do corpo) conta 0. A função `musclesOf` atual não muda; a análise
+  aplica o próprio peso.
 - 10 grupos exibidos: peito (chest), costas (upper-back), ombros (deltoids), bíceps, tríceps, quadríceps,
   posterior de coxa (hamstring), glúteos (gluteal), panturrilha (calves) e abdômen (abs, obliques). Os
   demais músculos (trapézio, antebraço, lombar, adutores etc.) não aparecem como barra.
@@ -221,8 +224,11 @@ mais na semana, não cada músculo [who2020]. Nesses dois perfis a tela mostra a
 
 ### 5.4 Equilíbrio
 
-- Empurrar (peito, ombros, tríceps) contra puxar (costas, bíceps).
-- Quadríceps contra posterior de coxa.
+- Empurrar contra puxar, pelo grupo principal de cada exercício: cada série de um exercício cujo grupo
+  principal é peito, ombros ou tríceps conta como empurrar; costas ou bíceps, como puxar. O grupo
+  principal é o do primeiro músculo com peso 1, na ordem em que os dados do exercício os listam (o
+  agachamento lista quadríceps antes de glúteos). Os secundários não entram nessa conta.
+- Quadríceps contra posterior de coxa, pelas séries fracionadas de cada grupo (§5.2).
 
 Alerta quando o lado menor tem menos de 2/3 do maior. A tela não mostra o número da regra; diz
 "Você faz bem mais séries de empurrar do que de puxar". O ⓘ explica que é uma regra prática de
@@ -256,8 +262,9 @@ Cada sugestão é uma mudança pequena, mostrada como antes e depois ("Supino: 3
 - **Abaixo do ideal:** soma séries aos exercícios em que o grupo é o principal, até 2 séries por
   exercício e até chegar ao mínimo; se não houver exercício principal do grupo, vira a sugestão de
   adicionar.
-- **Ganho extra pequeno:** tira séries primeiro dos exercícios em que o grupo é secundário, sem deixar
-  nenhum exercício com menos de 2 séries.
+- **Ganho extra pequeno:** tira séries só dos exercícios cujo grupo principal é o do alerta, sem deixar
+  nenhum exercício com menos de 2 séries e sem levar outro grupo que o exercício treina para baixo do
+  mínimo do perfil. Se nenhum exercício servir, não há sugestão.
 - **Músculo esquecido:** adiciona o exercício padrão do grupo (lista curada abaixo, filtrada pelo
   equipamento) com 3 séries e a faixa do perfil, na rotina da agenda que mais trabalha grupos vizinhos
   (mesma metade do corpo: superior ou inferior); empate vai para a rotina com menor tempo estimado.
@@ -398,7 +405,9 @@ Sem migration. Sem mudança em RLS. Nada novo no servidor.
   dias.
 - `programs.test.ts`: os 7 programas montam rotinas válidas; todo id existe e tem mapa de músculos;
   alternativas por equipamento; aplicar e desfazer (inclusive rotina com treino que fica); `dayPlan`
-  intocado; a análise de cada programa no próprio perfil não acusa "músculo grande esquecido".
+  intocado; a análise de cada programa no próprio perfil não acusa "músculo grande esquecido" nem
+  desequilíbrio, e os demais alertas ficam numa lista explícita no teste; nenhuma sugestão tira séries
+  de exercício de outro grupo principal.
 - `suggest-program.test.ts`: a tabela de §4.3 inteira.
 - `references.test.ts`: as regras de §7.3.
 - `info-source.test.tsx`: abre, fecha por fora, X e Esc, devolve o foco, rótulo, folha em tela estreita.
@@ -484,6 +493,15 @@ Escolhas feitas ao escrever o plano e ao executá-lo. Onde diferem do texto acim
   dado na outra unidade, e ele volta a ser salvo nessa unidade.
 - **Onboarding sem prévia (§4.5).** O onboarding aplica o programa sugerido sem a prévia, como antes.
   A faixa do programa no Plano é o retorno.
+- **Contagem da análise e o catálogo (revisão final, I1).** O secundário só conta 0,5 quando os dados
+  do exercício o citam (§5.2), e empurrar contra puxar sai do grupo principal (§5.4). Quadríceps contra
+  posterior continua pelas séries fracionadas: pelo grupo principal, 7 dos 8 casos do catálogo
+  alertariam, porque o terra romeno tem glúteos como grupo principal. "Tirar séries" só mexe em
+  exercício do grupo do alerta (§5.7). Os alertas que o catálogo ainda dispara ficam listados no teste e
+  em `docs/fontes-1d.md` como perguntas de conteúdo.
+- **Desfazer e check-in sem detalhe.** Um check-in com foto e sem detalhe não registra treino. O
+  "Desfazer" também guarda a rotina que um check-in da pessoa cita (§4.5), lida da loja de check-ins,
+  que tem os últimos 14 dias.
 - **"Hamstrings" em inglês.** O grupo da análise aparece como "Hamstrings" em inglês (`EN_OVERRIDES`);
   em pt-BR continua "Posterior de coxa".
 

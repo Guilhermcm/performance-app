@@ -15,6 +15,50 @@ sai do catálogo, e a recomendação que dependia só dela sai ou perde o númer
 - [ ] 6. Se o ACSM 2009 recomenda equilíbrio entre grupos opostos (spec §5.4). Se não, o ⓘ do equilíbrio continua como "regra prática".
 - [ ] 7. Se o ACSM 2026 (Currier et al., 10.1249/MSS.0000000000003897, encontrado na busca, não conferido) deve substituir o de 2009.
 
+## Textos dos programas
+
+As frases de "Por que é assim" (`src/features/plan/program-copy.tsx`) aparecem com o ⓘ das referências
+do programa. Conferir se cada uma se sustenta nelas.
+
+- [ ] Full Body e Superior/Inferior: treinar cada músculo 2 vezes por semana deu mais ganho que 1 vez
+  (schoenfeld2016).
+- [ ] PPL: o mesmo fato para a versão de 6 dias, e 3 ou 4 séries de 8 a 15 repetições com 2 min de
+  descanso nos multiarticulares (schoenfeld2017, schoenfeld2016rest).
+- [ ] 5×5: poucas repetições com carga alta treinam força (schoenfeld2021, incluído nas referências de
+  força) e descansar mais ajudou a força nos multiarticulares (grgic2018rest).
+- [ ] PHUL: nos dias pesados, 3 min de descanso nos básicos; os acessórios desses dias ficam em 8 a 10
+  repetições com 90 s.
+- [ ] Treino curto: treinos curtos com multiarticulares podem dar força e músculo (iversen2021).
+- [ ] Saúde geral: as recomendações de saúde incluem fortalecer o corpo todo toda semana (who2020).
+- [ ] A faixa de força de 4 a 6 repetições que a sugestão "adicionar exercício" grava
+  (`src/features/plan/suggestions.ts`) não tem linha na spec nem fonte. Com ela, uma mesa flexora
+  sugerida no perfil força entraria em 3 × 4 a 6.
+- [ ] OMS 2020 e ACSM 2009 não dão número de séries por músculo na semana. Conferir se sustentam a
+  faixa de saúde de 4 a 10 ou se ela fica como proposta do app.
+
+### Alertas que o próprio catálogo dispara
+
+Depois da correção da contagem (secundário só quando os dados do exercício o citam, revisão final I1),
+os programas analisados no próprio perfil não acusam desequilíbrio nem músculo grande esquecido. Os
+alertas abaixo continuam e estão fixados em `src/features/plan/programs.test.ts`. O código não muda o
+conteúdo dos programas; a pergunta é se o programa ou a faixa deve mudar.
+
+| Programa, perfil | Alertas | Pergunta |
+|---|---|---|
+| Full Body, saúde | ombros 11 e glúteos 11 acima de 10 | Aceitar 1 série acima do topo no perfil saúde? |
+| Full Body, hipertrofia | peito 6, costas 9, bíceps 8,5, tríceps 6,5, quadríceps 9, posterior 9, panturrilha 8 abaixo de 10; tríceps em 1 dia | O programa de iniciante sugerido pelo app fica abaixo do mínimo em 7 grupos. Subir séries ou aceitar volume de iniciante? |
+| Superior/Inferior, hipertrofia | peito 8, bíceps 9, tríceps 9 abaixo de 10 | Uma série a mais no supino e nos braços? |
+| PPL 3 dias, hipertrofia | tríceps 9,5, posterior 9,5, panturrilha 9 abaixo de 10; frequência de todos os grupos | A frequência é esperada (o detalhe avisa). E o volume? |
+| PPL 6 dias, hipertrofia | costas 22, ombros 30, bíceps 23 acima de 20 | Ombros recebem 0,5 dos supinos e dos deltoides posteriores das remadas. Menos ombro direto? |
+| 5×5, força | costas 15, ombros 15, glúteos 15 acima de 12; panturrilha 5 abaixo de 6 | O peito, que a revisão viu em 15, agora fica em 10. As três linhas acima de 12 são esperadas num 5×5? |
+| PHUL, força | costas, ombros, quadríceps, posterior, glúteos e panturrilha acima de 12 | A faixa de força lê os dias de hipertrofia como volume extra. Esperado? |
+| PHUL, hipertrofia | peito 7 abaixo de 10 | Só supino e supino inclinado. Mais séries de peito? |
+| Treino curto, saúde | peito 3, bíceps 3, tríceps 3, panturrilha 3 abaixo de 4 | Sem braço nem panturrilha por desenho. Aceitar? |
+| Saúde geral, saúde | bíceps 3 e tríceps 3 abaixo de 4 | Sem braço direto por desenho. Aceitar? |
+
+Abdômen abaixo do mínimo (e com frequência baixa na hipertrofia) aparece em quase todos: os programas
+têm no máximo um exercício de abdômen. Está aceito no teste.
+
 ## Referências
 
 | Id | DOI | O que conferir | Conferido |

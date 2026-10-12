@@ -182,6 +182,8 @@ Não há migration nem SQL novo nesta fase.
 - Revisar as traduções dos 14 pacotes que não são pt-BR nem en para os textos novos da fase.
 - Passar o humanizer nas 14 linhas "o que o estudo achou" em en e pt-BR (`refFinding` em
   `src/features/plan/references.ts`).
+- Consolidar o progresso do exercício: `ExerciseProgress.tsx` repete a folha `ExerciseHistory`
+  (`sheets.jsx`). `openExerciseProgress` pode abrir `exerciseHistorySheet(exId)` e o arquivo sai.
 
 ---
 
