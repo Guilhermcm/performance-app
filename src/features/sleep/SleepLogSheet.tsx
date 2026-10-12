@@ -3,17 +3,16 @@ import { Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
-import { dateLocale, t } from '../../lib/i18n.js'
+import { t } from '../../lib/i18n.js'
 import { useProfile } from '../profile/useProfile'
 import { shiftDay } from '../nutrition/days'
 import { useLocalNow } from './use-local-now'
 import { useSleep } from './useSleep'
 import { SleepLogForm } from './SleepLogForm'
+import { nightDate } from './labels'
 
 type Props = { night: string; open: boolean; onOpenChange: (open: boolean) => void }
 
-const longDate = (iso: string) =>
-  new Date(iso + 'T12:00:00').toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })
 
 // One night in a sheet (spec 4.4): today's and yesterday's can be logged, changed or deleted;
 // an older night has closed on the server and only says so.
@@ -61,7 +60,7 @@ function SheetBody({ night, onClose }: { night: string; onClose: () => void }) {
     return (
       <>
         <DrawerHeader className="text-left group-data-[vaul-drawer-direction=bottom]/drawer-content:text-left">
-          <DrawerTitle className="text-xl first-letter:uppercase">{longDate(night)}</DrawerTitle>
+          <DrawerTitle className="text-xl first-letter:uppercase">{nightDate(night)}</DrawerTitle>
           <DrawerDescription>{t('This night has closed. Only today’s and yesterday’s nights can still change.')}</DrawerDescription>
         </DrawerHeader>
         <DrawerFooter className="border-t border-border pb-[calc(1rem+env(safe-area-inset-bottom))]">
@@ -75,7 +74,7 @@ function SheetBody({ night, onClose }: { night: string; onClose: () => void }) {
     <>
       <DrawerHeader className="text-left group-data-[vaul-drawer-direction=bottom]/drawer-content:text-left">
         <DrawerTitle className="text-xl">{log ? t('Edit night') : t('Log night')}</DrawerTitle>
-        <DrawerDescription className="first-letter:uppercase">{longDate(night)}</DrawerDescription>
+        <DrawerDescription className="first-letter:uppercase">{nightDate(night)}</DrawerDescription>
       </DrawerHeader>
       <div className="flex flex-col gap-4 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <SleepLogForm night={night} initial={log} onSaved={() => { toast(t('Night saved')); onClose() }} />

@@ -257,7 +257,7 @@ describe('useSleep', () => {
 describe('startSleepSync', () => {
   it('pulls on focus back and on reconnect, sends the queue every minute, and stops', async () => {
     await bound()
-    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] }); vi.setSystemTime(NOW)
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] }); vi.setSystemTime(NOW)
     const refresh = vi.spyOn(useSleep.getState(), 'refresh').mockResolvedValue()
     const flushPending = vi.spyOn(useSleep.getState(), 'flushPending').mockResolvedValue()
     const stop = startSleepSync()
@@ -271,6 +271,23 @@ describe('startSleepSync', () => {
     vi.advanceTimersByTime(60_000)
     expect(refresh).toHaveBeenCalledTimes(2)
     expect(flushPending).toHaveBeenCalledTimes(1)
+    refresh.mockRestore(); flushPending.mockRestore()
+  })
+
+  it('pulls again when the local day turns with the app open, on the minute, once', async () => {
+    await bound()
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] })
+    vi.setSystemTime(new Date('2026-10-06T02:59:00Z')) // 23:59 in Sao Paulo
+    const refresh = vi.spyOn(useSleep.getState(), 'refresh').mockResolvedValue()
+    const flushPending = vi.spyOn(useSleep.getState(), 'flushPending').mockResolvedValue()
+    const stop = startSleepSync()
+    expect(refresh).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(60_000)
+    expect(refresh).toHaveBeenCalledTimes(1)
+    vi.advanceTimersByTime(60_000)
+    expect(refresh).toHaveBeenCalledTimes(1)
+    expect(flushPending).toHaveBeenCalledTimes(1)
+    stop()
     refresh.mockRestore(); flushPending.mockRestore()
   })
 })

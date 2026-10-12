@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronRight, Moon } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { t } from '../../lib/i18n.js'
@@ -12,13 +12,12 @@ import { confirmsOn, nightSummary } from './labels'
 import { fmtDuration } from './time'
 import { SleepLogForm } from './SleepLogForm'
 import { SleepLogSheet } from './SleepLogSheet'
+import { SLEEP_CARD as CARD, SleepTile as Tile } from './card'
 import type { SleepLog } from './types'
 
 // Spec 4.3: the card asks about the night from 04:00 to 13:59 in the profile's zone.
 const ASK_FROM = 4 * 60
 const ASK_UNTIL = 14 * 60
-
-const CARD = 'rounded-3xl border border-border bg-card p-4 text-card-foreground'
 
 // Home's morning card for the sleep pillar. Before the night is logged, and only in the morning,
 // "How was your night?" with the times filled in and one tap to save. Once it is logged, the night
@@ -28,7 +27,6 @@ export default function HomeSleepCard() {
   const profile = useProfile(s => s.profile)
   const enabled = !!profile?.sleep_enabled
   const now = useLocalNow(profile?.timezone)
-  useRefreshOnNewDay(now.today, enabled)
   const status = useSleep(s => s.status)
   const log = useSleep(s => s.logs[now.today])
 
@@ -53,25 +51,6 @@ export default function HomeSleepCard() {
       {/* A new day starts from fresh times. */}
       <SleepLogForm key={now.today} night={now.today} />
     </section>
-  )
-}
-
-// The store pulls on focus, on visibility and when the network returns. A tab left open across
-// local midnight gets none of those, so the change of day asks for the new today and yesterday.
-function useRefreshOnNewDay(today: string, enabled: boolean) {
-  const seen = useRef(today)
-  useEffect(() => {
-    if (seen.current === today) return
-    seen.current = today
-    if (enabled) void useSleep.getState().refresh()
-  }, [today, enabled])
-}
-
-function Tile() {
-  return (
-    <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-xl bg-pillar-sleep/15 text-pillar-sleep">
-      <Moon className="size-5" strokeWidth={1.75} />
-    </span>
   )
 }
 

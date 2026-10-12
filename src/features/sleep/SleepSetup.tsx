@@ -11,6 +11,7 @@ import type { Profile } from '../profile/types'
 import { shiftDay } from '../nutrition/days'
 import { useLocalNow } from './use-local-now'
 import { useSleep } from './useSleep'
+import { DEFAULT_BED, DEFAULT_GOAL, DEFAULT_NIGHTS } from './goal'
 import { fetchTargets } from './sleep-api'
 import { fmtClock, fmtDuration, shiftClock } from './time'
 import { BED_SLACK_MIN, GOAL_SLACK_MIN } from './classify'
@@ -19,9 +20,6 @@ import { BED_SLACK_MIN, GOAL_SLACK_MIN } from './classify'
 const STEP = 15
 const MIN_GOAL = 360
 const MAX_GOAL = 600
-const DEFAULT_GOAL = 480
-const DEFAULT_BED = '23:00'
-const DEFAULT_NIGHTS = 5
 const NIGHTS = [3, 4, 5, 6, 7]
 
 const ON = 'data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary'

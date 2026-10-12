@@ -47,6 +47,15 @@ describe('NightSheet', () => {
     expect(row('Goal that night')).toBe('No goal')
   })
 
+  it('reads a pending night as still to confirm, with no XP yet', () => {
+    const night = nightOf({ night: '2026-10-05', xp: 0 })
+    render(<NightSheet night={night} pending open onOpenChange={() => {}} />)
+    expect(screen.getByText('To confirm')).toBeTruthy()
+    expect(screen.getByText('On target')).toBeTruthy()
+    expect(screen.queryByText(/XP/)).toBeNull()
+    expect(screen.queryByText('Not logged')).toBeNull()
+  })
+
   it('closes from its button', () => {
     const onOpenChange = vi.fn()
     render(<NightSheet night={nightOf()} open onOpenChange={onOpenChange} />)

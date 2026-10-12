@@ -1,23 +1,23 @@
 import type { ReactNode } from 'react'
-import { Check, Circle, Dot, Sparkles } from 'lucide-react'
+import { Check, Circle, CircleDashed, Dot, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { cn } from '@/lib/utils'
-import { dateLocale, t } from '../../lib/i18n.js'
+import { t } from '../../lib/i18n.js'
 import { fmtNumber } from '../nutrition/labels'
-import { QUALITY_LABEL, nightStatus } from './labels'
+import { QUALITY_LABEL, nightDate, nightStatus } from './labels'
 import { fmtClock, fmtDuration } from './time'
 import type { SleepNight } from './types'
 
-type Props = { night: SleepNight; open: boolean; onOpenChange: (open: boolean) => void }
+// pending: a logged night whose day has closed but whose closed row has not reached the phone yet;
+// it reads as still to confirm and has paid no XP so far.
+type Props = { night: SleepNight; pending?: boolean; open: boolean; onOpenChange: (open: boolean) => void }
 
-const longDate = (iso: string) =>
-  new Date(iso + 'T12:00:00').toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })
 
 // A closed night of the calendar, read only (spec 7.2): when the person went to bed and woke up,
 // how long they slept, the quality and the note they gave, the goal in force that night and the
 // XP it paid.
-export function NightSheet({ night, open, onOpenChange }: Props) {
+export function NightSheet({ night, pending = false, open, onOpenChange }: Props) {
   const status = nightStatus(night, night.target ? { valid_from: night.night, ...night.target } : null)
   const StatusIcon = night.on_target ? Check : night.logged ? Dot : Circle
   const rows: [string, ReactNode][] = []
@@ -36,12 +36,17 @@ export function NightSheet({ night, open, onOpenChange }: Props) {
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[92dvh]">
         <DrawerHeader className="text-left group-data-[vaul-drawer-direction=bottom]/drawer-content:text-left">
-          <DrawerTitle className="text-xl first-letter:uppercase">{longDate(night.night)}</DrawerTitle>
+          <DrawerTitle className="text-xl first-letter:uppercase">{nightDate(night.night)}</DrawerTitle>
           <DrawerDescription className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <span className={cn('flex items-center gap-1.5', status.on ? 'text-pillar-sleep' : 'text-muted-foreground')}>
               <StatusIcon aria-hidden className="size-4" /><span>{status.text}</span>
             </span>
-            {night.logged && (
+            {pending && (
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                <CircleDashed aria-hidden className="size-4" /><span>{t('To confirm')}</span>
+              </span>
+            )}
+            {night.logged && !pending && (
               <span className="flex items-center gap-1.5 text-foreground">
                 <Sparkles aria-hidden className="size-4 text-pillar-sleep" />
                 <span className="font-mono tabular-nums">{t('+{0} XP', fmtNumber(night.xp))}</span>

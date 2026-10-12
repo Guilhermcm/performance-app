@@ -3,6 +3,7 @@ import * as api from './sleep-api'
 import { sleepOutbox, type SleepOp } from './outbox'
 import { SLEEP_CACHE_KEY, SLEEP_HISTORY_KEY } from './storage-keys'
 import { durationMin } from './time'
+import { targetAt } from './goal'
 import { useProgress } from '../gamification/useProgress'
 import { useProfile } from '../profile/useProfile'
 import { shiftDay, todayIn } from '../nutrition/days'
@@ -228,9 +229,7 @@ export const useSleep = create<SleepStore>((set, get) => {
     },
 
     targetOn(night) {
-      let found: SleepTarget | null = null
-      for (const x of get().targets) if (x.valid_from <= night && (!found || x.valid_from > found.valid_from)) found = x
-      return found
+      return targetAt(get().targets, night)
     },
 
     lastLogged(today) {
@@ -271,17 +270,26 @@ export const useSleep = create<SleepStore>((set, get) => {
 })
 
 // Pull again when the app comes back to the screen or the network returns; the refresh sends the
-// queue first. Every minute, a visible tab with something waiting sends it (no pull). Returns the cleanup.
+// queue first. On each minute boundary: when the local day (profile time zone) has turned, pull
+// again, since a tab left open across midnight gets no focus or network event and every screen
+// needs the new today and yesterday (and yesterday's yesterday closed); otherwise a visible tab
+// with something waiting sends it (no pull). Returns the cleanup.
 export function startSleepSync(): () => void {
-  const run = () => { void useSleep.getState().refresh() }
+  let day = todayNow()
+  const run = () => { day = todayNow(); void useSleep.getState().refresh() }
   const onVisible = () => { if (document.visibilityState === 'visible') run() }
+  const tick = () => {
+    if (todayNow() !== day) return run()
+    if (document.visibilityState === 'visible') void useSleep.getState().flushPending()
+  }
   window.addEventListener('online', run)
   document.addEventListener('visibilitychange', onVisible)
-  const timer = window.setInterval(() => {
-    if (document.visibilityState === 'visible') void useSleep.getState().flushPending()
-  }, 60_000)
+  // The first tick lands on the next minute boundary, so the day turns at 00:00, not up to a minute late.
+  let timer: number | undefined
+  const first = window.setTimeout(() => { tick(); timer = window.setInterval(tick, 60_000) }, 60_000 - (Date.now() % 60_000))
   return () => {
-    window.clearInterval(timer)
+    window.clearTimeout(first)
+    if (timer !== undefined) window.clearInterval(timer)
     window.removeEventListener('online', run)
     document.removeEventListener('visibilitychange', onVisible)
   }

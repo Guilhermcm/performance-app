@@ -4,10 +4,11 @@
 import { createElement, type ReactNode } from 'react'
 import { Check, Circle, CircleDashed, Clock, Dot, Minus } from 'lucide-react'
 import type { CalendarCell, CalendarWeek } from '@/components/calendar/MonthCalendar'
-import { dateLocale, t } from '../../lib/i18n.js'
+import { t } from '../../lib/i18n.js'
 import { buildMonth, firstMonth, monthOf, monthRange } from '../nutrition/history'
 import { classifyNight } from './classify'
-import { nightStatus, nightSummary } from './labels'
+import { nightDate, nightStatus, nightSummary } from './labels'
+import { goalOf, targetAt } from './goal'
 import { fmtDuration } from './time'
 import { useSleep } from './useSleep'
 import type { SleepHistory, SleepLog, SleepNight, SleepPeriod, SleepTarget } from './types'
@@ -28,19 +29,9 @@ export const NIGHT_STATE: Record<NightState, { label: () => string; icon: () => 
 }
 export const NIGHT_LEGEND: NightState[] = ['on_target', 'logged', 'none', 'open', 'inactive', 'future']
 
-const longDay = (iso: string) => new Date(iso + 'T12:00:00').toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })
-
-// The goal in force on a night: the latest one that started on or before it.
-export function targetAt(targets: SleepTarget[], night: string): SleepTarget | null {
-  let found: SleepTarget | null = null
-  for (const x of targets) if (x.valid_from <= night && (!found || x.valid_from > found.valid_from)) found = x
-  return found
-}
-
-const goalOf = (t: SleepTarget | null) => (t ? { goal_min: t.goal_min, bed_target: t.bed_target } : null)
-
-// A night as the sheet shows it: the closed row when there is one; else today's or yesterday's
-// log judged by the goal in force that night (no XP yet); else a night with nothing logged.
+// A night as the sheet shows it: the closed row when there is one; else its log, judged by the goal
+// in force that night (still to confirm, no XP yet): today's or yesterday's, or an older one whose
+// day has closed but whose closed row the phone has not received yet; else a night with nothing logged.
 export function nightAt(night: string, nights: SleepNight[], logs: Record<string, SleepLog>, targets: SleepTarget[]): SleepNight {
   const row = nights.find(n => n.night === night)
   if (row) return row
@@ -59,7 +50,8 @@ export function nightAt(night: string, nights: SleepNight[], logs: Record<string
 }
 
 // The month as Monday-first rows of cells. nutrition/history buildMonth lays the grid out and
-// decides future, open, inside or outside a period; a closed night then speaks for its day.
+// decides future, open, inside or outside a period; a closed night then speaks for its day, and an
+// older day with a log but no closed row yet stays open.
 export function buildSleepMonth(
   month: string, nights: SleepNight[], logs: Record<string, SleepLog>, periods: SleepPeriod[], targets: SleepTarget[], today: string,
 ): CalendarWeek[] {
@@ -69,17 +61,19 @@ export function buildSleepMonth(
     cells: row.cells.map(c => {
       if (!c.inMonth) return null
       const closed = byNight.get(c.day)
+      const log = logs[c.day]
       let state: NightState
       let label: string
       let detail = ''
       if (c.future) state = 'future'
-      else if (c.state === 'open') {
-        state = 'open'
-        const log = logs[c.day]
-        if (log) detail = `, ${fmtDuration(log.duration_min)}, ${nightSummary(log, goalOf(targetAt(targets, c.day)))}`
-      } else if (closed) {
+      else if (closed && c.state !== 'open') {
         state = closed.on_target ? 'on_target' : closed.logged ? 'logged' : 'none'
         if (closed.logged && closed.duration_min != null) detail = `, ${fmtDuration(closed.duration_min)}`
+      } else if (c.state === 'open' || log) {
+        // Today, yesterday, or a logged night whose day closed before the phone heard back: still
+        // to confirm, never "Not logged".
+        state = 'open'
+        if (log) detail = `, ${fmtDuration(log.duration_min)}, ${nightSummary(log, goalOf(targetAt(targets, c.day)))}`
       } else state = c.state === 'inactive' ? 'inactive' : 'none'
       // A night with no goal in force was only recorded, not judged (plan decision 5).
       if (state === 'logged' && closed) label = nightStatus(closed, closed.target ? { valid_from: closed.night, ...closed.target } : null).text
@@ -89,7 +83,7 @@ export function buildSleepMonth(
         state,
         label,
         icon: NIGHT_STATE[state].icon(),
-        accessibleText: `${longDay(c.day)}: ${label}${detail}`,
+        accessibleText: `${nightDate(c.day)}: ${label}${detail}`,
         selectable: state !== 'future' && state !== 'inactive',
         current: c.day === today,
       }

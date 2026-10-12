@@ -1,20 +1,22 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, Check, CircleDashed, CloudOff, Dot, Moon, RefreshCw } from 'lucide-react'
+import { ArrowLeft, Check, CircleDashed, CloudOff, Dot, RefreshCw } from 'lucide-react'
 import MonthCalendar, { type CalendarLegendItem } from '@/components/calendar/MonthCalendar'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOnline } from '@/lib/use-online'
 import { cn } from '@/lib/utils'
-import { dateLocale, t } from '../../lib/i18n.js'
+import { t } from '../../lib/i18n.js'
 import { useProfile } from '../profile/useProfile'
 import { useProgress } from '../gamification/useProgress'
 import { shiftDay } from '../nutrition/days'
 import { monthHasActiveDay, monthOf, monthRange, shiftMonth } from '../nutrition/history'
 import { classifyNight } from './classify'
-import { NIGHT_LEGEND, NIGHT_STATE, buildSleepMonth, loadSleepMonth, monthBounds, nightAt, targetAt, type NightState } from './history'
-import { QUALITY_LABEL, nightStatus } from './labels'
+import { NIGHT_LEGEND, NIGHT_STATE, buildSleepMonth, loadSleepMonth, monthBounds, nightAt, type NightState } from './history'
+import { DEFAULT_BED, DEFAULT_NIGHTS, goalOf, targetAt } from './goal'
+import { SLEEP_CARD as CARD, SleepTile as Tile } from './card'
+import { QUALITY_LABEL, nightDate, nightStatus } from './labels'
 import { fetchPeriods } from './sleep-api'
 import type { StatNight } from './stats'
 import { fmtClock, fmtDuration } from './time'
@@ -26,11 +28,7 @@ import { SleepLogSheet } from './SleepLogSheet'
 import SleepInvite from './SleepInvite'
 import SleepSetup from './SleepSetup'
 import SleepStats from './SleepStats'
-import type { NightClass, SleepHistory, SleepLog, SleepNight, SleepPeriod, SleepTarget } from './types'
-
-// With no goal yet, the setup's default bedtime (spec 3.1).
-const DEFAULT_BED = '23:00'
-const DEFAULT_NIGHTS = 5
+import type { NightClass, SleepHistory, SleepNight, SleepPeriod, SleepTarget } from './types'
 
 const STATE_CLASS: Record<NightState, string> = {
   on_target: 'bg-pillar-sleep/15 text-pillar-sleep',
@@ -41,10 +39,6 @@ const STATE_CLASS: Record<NightState, string> = {
   future: 'border border-dotted border-border text-muted-foreground',
 }
 
-const CARD = 'rounded-3xl border border-border bg-card p-4 text-card-foreground'
-
-const longDate = (iso: string) => new Date(iso + 'T12:00:00').toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })
-const goalOf = (x: SleepTarget | null) => (x ? { goal_min: x.goal_min, bed_target: x.bed_target } : null)
 
 // /sono (spec 7.2): last night on top (or the form while today's night is not logged), the four
 // numbers, room for the charts and the month of nights. Opens from the Home card, the radar and
@@ -121,13 +115,21 @@ function Nights({ today, failed, nightsPerWeek }: { today: string; failed: boole
   const weekTarget = useProgress(s => s.progress?.sleep?.target) ?? nightsPerWeek
   const [logNight, setLogNight] = useState(today)
   const [logOpen, setLogOpen] = useState(false)
-  const [picked, setPicked] = useState<SleepNight | null>(null)
+  const [picked, setPicked] = useState<{ night: SleepNight; pending: boolean } | null>(null)
   const [pickedOpen, setPickedOpen] = useState(false)
 
   const yesterday = shiftDay(today, -1)
   // Today and yesterday come from the logs; a closed row for them would be an old saved copy.
   const older = useMemo(() => closed.filter(n => n.night < yesterday), [closed, yesterday])
-  const openLogs = useMemo(() => [yesterday, today].map(n => logs[n]).filter((l): l is SleepLog => !!l), [logs, today, yesterday])
+  // The nights still to confirm: today's and yesterday's logs, and an older log whose day has
+  // closed while its closed row has not reached the phone (the screen stayed open past midnight, or
+  // the pull failed offline). Such a night is pending, never "Not logged".
+  const openLogs = useMemo(() => {
+    const done = new Set(older.map(n => n.night))
+    return Object.values(logs)
+      .filter(l => l.night <= today && (l.night >= yesterday || !done.has(l.night)))
+      .sort((a, b) => (a.night < b.night ? -1 : 1))
+  }, [logs, older, today, yesterday])
 
   const stat = useMemo<StatNight[]>(() => [
     ...older.filter(n => n.logged && n.bed_time && n.duration_min != null)
@@ -137,13 +139,15 @@ function Nights({ today, failed, nightsPerWeek }: { today: string; failed: boole
   const open = useMemo<{ night: string; cls: NightClass }[]>(
     () => openLogs.map(l => ({ night: l.night, cls: classifyNight(l, goalOf(targetAt(targets, l.night))) })), [openLogs, targets])
 
-  // The last night logged: today's, yesterday's, or the latest closed one.
-  const lastNight = openLogs.length ? openLogs[openLogs.length - 1].night
-    : [...older].reverse().find(n => n.logged)?.night ?? null
+  // The last night logged, open or closed.
+  const lastOpen = openLogs.length ? openLogs[openLogs.length - 1].night : null
+  const lastClosed = [...older].reverse().find(n => n.logged)?.night ?? null
+  const lastNight = lastOpen && (!lastClosed || lastOpen > lastClosed) ? lastOpen : lastClosed
+  const lastPending = lastNight != null && lastNight === lastOpen
   const todayLogged = !!logs[today]
 
   const openLog = (night: string) => { setLogNight(night); setLogOpen(true) }
-  const openNight = (n: SleepNight) => { setPicked(n); setPickedOpen(true) }
+  const openNight = (night: SleepNight, pending: boolean) => { setPicked({ night, pending }); setPickedOpen(true) }
 
   return (
     <>
@@ -158,6 +162,11 @@ function Nights({ today, failed, nightsPerWeek }: { today: string; failed: boole
         </section>
       )}
 
+      {lastNight && (
+        <LastNight night={nightAt(lastNight, older, logs, targets)} today={today} pending={lastPending}
+          target={targetAt(targets, lastNight)} onEdit={() => openLog(lastNight)} />
+      )}
+
       {failed ? (
         <div role="alert" className="flex flex-col items-start gap-3 rounded-2xl border border-border bg-card p-5">
           <p className="text-[15px] font-medium leading-snug">{t('Could not load your nights.')}</p>
@@ -167,10 +176,6 @@ function Nights({ today, failed, nightsPerWeek }: { today: string; failed: boole
         </div>
       ) : (
         <>
-          {lastNight && (
-            <LastNight night={nightAt(lastNight, older, logs, targets)} today={today} closed={lastNight < yesterday}
-              target={targetAt(targets, lastNight)} onEdit={() => openLog(lastNight)} />
-          )}
           {lastNight && (
             <SleepStats stat={stat} closed={older} open={open} today={today} target={weekTarget}
               bedTarget={targetAt(targets, today)?.bed_target ?? DEFAULT_BED} />
@@ -182,28 +187,21 @@ function Nights({ today, failed, nightsPerWeek }: { today: string; failed: boole
       )}
 
       <SleepLogSheet night={logNight} open={logOpen} onOpenChange={setLogOpen} />
-      {picked && <NightSheet night={picked} open={pickedOpen} onOpenChange={setPickedOpen} />}
+      {picked && <NightSheet night={picked.night} pending={picked.pending} open={pickedOpen} onOpenChange={setPickedOpen} />}
     </>
   )
 }
 
-function Tile() {
-  return (
-    <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-xl bg-pillar-sleep/15 text-pillar-sleep">
-      <Moon className="size-5" strokeWidth={1.75} />
-    </span>
-  )
-}
-
 // The last night logged: how long, when, the quality in words and where it stands, never by colour
-// alone. An open night (today or yesterday) is still to confirm and can be edited.
-function LastNight({ night, today, closed, target, onEdit }: {
-  night: SleepNight; today: string; closed: boolean; target: SleepTarget | null; onEdit: () => void
+// alone. A night without its closed row yet is still to confirm; today's and yesterday's can be edited.
+function LastNight({ night, today, pending, target, onEdit }: {
+  night: SleepNight; today: string; pending: boolean; target: SleepTarget | null; onEdit: () => void
 }) {
   const yesterday = shiftDay(today, -1)
-  const when = night.night === today ? t('Today') : night.night === yesterday ? t('Yesterday') : longDate(night.night)
-  // A closed night carries the goal it was judged by; an open one, the goal in force that night.
-  const status = nightStatus(night, closed ? (night.target ? { valid_from: night.night, ...night.target } : null) : target)
+  const editable = night.night >= yesterday
+  const when = night.night === today ? t('Today') : night.night === yesterday ? t('Yesterday') : nightDate(night.night)
+  // A closed night carries the goal it was judged by; a pending one, the goal in force that night.
+  const status = nightStatus(night, pending ? target : night.target ? { valid_from: night.night, ...night.target } : null)
   const StatusIcon = night.on_target ? Check : Dot
   const chip = 'inline-flex h-7 items-center gap-1 rounded-full px-2.5 text-xs font-medium'
   return (
@@ -216,7 +214,7 @@ function LastNight({ night, today, closed, target, onEdit }: {
             <p className="text-sm text-muted-foreground">{t('went to bed {0} · woke up {1}', fmtClock(night.bed_time), fmtClock(night.wake_time))}</p>
           )}
         </div>
-        {!closed && (
+        {editable && (
           <Button variant="outline" className="h-11 shrink-0 rounded-xl px-3.5" aria-label={t('Edit night')} onClick={onEdit}>{t('Edit')}</Button>
         )}
       </div>
@@ -227,7 +225,7 @@ function LastNight({ night, today, closed, target, onEdit }: {
         <span className={cn(chip, status.on ? 'bg-pillar-sleep/15 text-pillar-sleep' : 'bg-secondary text-muted-foreground')}>
           <StatusIcon aria-hidden className="size-3.5" strokeWidth={status.on ? 3 : 4} /><span>{status.text}</span>
         </span>
-        {!closed && (
+        {pending && (
           <span className={cn(chip, 'border border-dashed border-border text-muted-foreground')}>
             <CircleDashed aria-hidden className="size-3.5" /><span>{t('To confirm')}</span>
           </span>
@@ -247,13 +245,21 @@ const mergePeriods = (lists: SleepPeriod[][]): SleepPeriod[] => {
 // of closed nights; an older month is read with get_sleep_nights (useSleep.loadMonth keeps it on
 // the phone), and a month with no closed night inside a period asks nothing.
 function NightCalendar({ today, older, onLog, onOpen }: {
-  today: string; older: SleepNight[]; onLog: (night: string) => void; onOpen: (night: SleepNight) => void
+  today: string; older: SleepNight[]; onLog: (night: string) => void; onOpen: (night: SleepNight, pending: boolean) => void
 }) {
   const online = useOnline()
   const logs = useSleep(s => s.logs)
   const targets = useSleep(s => s.targets)
   const storePeriods = useSleep(s => s.periods)
-  const [month, setMonth] = useState(() => monthOf(today))
+  // The month shown follows the turn of a month while the screen stays open, unless the person
+  // has moved to another one.
+  const current = monthOf(today)
+  const [month, setMonth] = useState(current)
+  const [base, setBase] = useState(current)
+  if (base !== current) {
+    setBase(current)
+    if (month === base) setMonth(current)
+  }
   // Every period, for the way back to the first one; until it comes, the ones already seen.
   const [allPeriods, setAllPeriods] = useState<SleepPeriod[] | null>(null)
   const [months, setMonths] = useState<Record<string, SleepHistory>>({})
@@ -300,7 +306,7 @@ function NightCalendar({ today, older, onLog, onOpen }: {
 
   const select = (day: string) => {
     if (day >= shiftDay(today, -1)) onLog(day)
-    else onOpen(nightAt(day, nights, logs, targets))
+    else onOpen(nightAt(day, nights, logs, targets), !nights.some(n => n.night === day) && !!logs[day])
   }
   const retry = () => {
     asked.current.delete(month)

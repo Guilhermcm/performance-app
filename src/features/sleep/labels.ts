@@ -1,7 +1,11 @@
-import { t } from '../../lib/i18n.js'
+import { dateLocale, t } from '../../lib/i18n.js'
 import { BED_SLACK_MIN, classifyNight } from './classify'
 import { fmtGap, signedDeviation } from './time'
 import type { NightClass, SleepLog, SleepTarget } from './types'
+
+// A night's date written out, "Thursday 1 October", read at noon so no zone moves it.
+export const nightDate = (iso: string): string =>
+  new Date(iso + 'T12:00:00').toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })
 
 // Plan decision 14: the five quality levels a person can give a night, as words.
 export const QUALITY_LABEL: Record<1 | 2 | 3 | 4 | 5, () => string> = {

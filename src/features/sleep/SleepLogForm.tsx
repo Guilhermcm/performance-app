@@ -7,14 +7,12 @@ import { t } from '../../lib/i18n.js'
 import { useProfile } from '../profile/useProfile'
 import { useLocalNow, type LocalNow } from './use-local-now'
 import { useSleep } from './useSleep'
+import { DEFAULT_BED, DEFAULT_GOAL } from './goal'
 import { QUALITY_LABEL } from './labels'
 import { TimeWheel } from './TimeWheel'
 import { durationMin, fmtClock, fromMinutes, shiftClock, toMinutes, validDuration } from './time'
 import type { SleepLog } from './types'
 
-// With no night to start from and no goal yet, the defaults of the setup (spec 3.1).
-const DEFAULT_BED = '23:00'
-const DEFAULT_GOAL = 480
 const NOTE_MAX = 140
 const QUALITIES = [1, 2, 3, 4, 5] as const
 

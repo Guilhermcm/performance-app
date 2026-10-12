@@ -89,6 +89,17 @@ describe('buildSleepMonth', () => {
     expect(cell(weeks, TODAY).accessibleText).toBe('Wednesday 7 October: Still open, 7h 50, on target')
     expect(cell(weeks, YESTERDAY).accessibleText).toBe('Tuesday 6 October: Still open')
   })
+  it('keeps a logged night pending once its day closes, until its closed row arrives', () => {
+    // The day turned with the screen open (or the pull failed offline): 5 October is now older than
+    // yesterday, the log is still on the phone and no closed row came back yet.
+    const logs = { '2026-10-05': logOf({ night: '2026-10-05', bed_time: '23:20', wake_time: '07:10', duration_min: 470 }) }
+    const weeks = buildSleepMonth('2026-10', [], logs, SINCE_SEPT, TARGETS, TODAY)
+    expect(cell(weeks, '2026-10-05')).toMatchObject({ state: 'open', label: 'Still open', accessibleText: 'Monday 5 October: Still open, 7h 50, on target' })
+    expect(cell(weeks, '2026-10-05').selectable).not.toBe(false)
+    // Once the row is there, it speaks for the night.
+    const closed = buildSleepMonth('2026-10', [nightOf({ night: '2026-10-05' })], logs, SINCE_SEPT, TARGETS, TODAY)
+    expect(cell(closed, '2026-10-05').state).toBe('on_target')
+  })
 })
 
 describe('nightAt', () => {

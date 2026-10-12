@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, cleanup, within, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, within, waitFor, act } from '@testing-library/react'
 
 const h = vi.hoisted(() => ({
   nav: vi.fn(),
@@ -17,7 +17,7 @@ vi.mock('./sleep-api', async orig => ({
 }))
 
 import SleepScreen from './SleepScreen'
-import { droppedNoticeText, useSleep } from './useSleep'
+import { droppedNoticeText, startSleepSync, useSleep } from './useSleep'
 import { useProfile } from '../profile/useProfile'
 import { setLang } from '../../lib/i18n.js'
 import { ME, logOf, nightOf, targetOf } from './test-sleep'
@@ -139,6 +139,15 @@ describe('SleepScreen', () => {
     expect(refresh).toHaveBeenCalledTimes(1)
   })
 
+  it('still shows a night logged offline today next to the error, with Edit', () => {
+    sleep({ status: 'error', closed: [], logs: { [TODAY]: logOf({ night: TODAY, bed_time: '23:20', wake_time: '07:00', duration_min: 460 }) } })
+    render(<SleepScreen />)
+    expect(screen.getByRole('alert')).toBeTruthy()
+    const top = screen.getByTestId('sleep-last-night')
+    expect(within(top).getByText('7h 40')).toBeTruthy()
+    expect(within(top).getByRole('button', { name: /Edit/ })).toBeTruthy()
+  })
+
   it('says once that nights of closed days were not saved', () => {
     sleep({ droppedNotice: true })
     render(<SleepScreen />)
@@ -205,5 +214,70 @@ describe('SleepScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Wednesday 7 October: Still open/ }))
     sheet = screen.getByRole('dialog')
     expect(within(sheet).getByRole('heading', { name: 'Log night' })).toBeTruthy()
+  })
+})
+
+describe('SleepScreen across midnight', () => {
+  // 23:59 on Wednesday 7 October in Sao Paulo; a minute later it is Thursday the 8th.
+  const BEFORE_MIDNIGHT = new Date('2026-10-08T02:59:00Z')
+  let stop: () => void = () => {}
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] })
+    vi.setSystemTime(BEFORE_MIDNIGHT)
+    sleep({ logs: { '2026-10-06': logOf({ night: '2026-10-06', bed_time: '23:20', wake_time: '07:10', duration_min: 470 }) } })
+  })
+  afterEach(() => stop())
+
+  const turnTheDay = () => act(() => { vi.advanceTimersByTime(60_000) })
+  const expectPending = () => {
+    const cell = screen.getByRole('button', { name: /^Tuesday 6 October:/ })
+    expect(cell.getAttribute('aria-label')).toBe('Tuesday 6 October: Still open, 7h 50, on target')
+    const top = screen.getByTestId('sleep-last-night')
+    expect(within(top).getByText('To confirm')).toBeTruthy()
+    expect(within(top).queryByText('Not logged')).toBeNull()
+    // Two days back: it can no longer be edited.
+    expect(within(top).queryByRole('button', { name: /Edit/ })).toBeNull()
+    fireEvent.click(cell)
+    const sheet = screen.getByRole('dialog')
+    expect(within(sheet).getByText('To confirm')).toBeTruthy()
+    expect(within(sheet).queryByText('Not logged')).toBeNull()
+    expect(within(sheet).queryByText(/XP/)).toBeNull()
+  }
+
+  it('keeps yesterday pending when the day turns with the screen open, and the store pulls again', () => {
+    stop = startSleepSync()
+    render(<SleepScreen />)
+    expect(within(screen.getByTestId('sleep-last-night')).getByRole('button', { name: /Edit/ })).toBeTruthy()
+    turnTheDay()
+    expect(refresh).toHaveBeenCalledTimes(1)
+    // The closed row has not come back yet: the night is still to confirm, never "Not logged".
+    expectPending()
+  })
+
+  it('keeps it pending offline, when the pull fails', () => {
+    setOnline(false)
+    refresh.mockImplementation(async () => { useSleep.setState({ stale: true }) })
+    stop = startSleepSync()
+    render(<SleepScreen />)
+    turnTheDay()
+    expect(refresh).toHaveBeenCalledTimes(1)
+    expectPending()
+  })
+
+  it('moves the calendar to the new month, unless another month is on screen', () => {
+    vi.setSystemTime(new Date('2026-11-01T02:59:00Z')) // 23:59 on 31 October
+    sleep({ periods: [{ started_on: '2026-09-01', ended_on: null }] })
+    render(<SleepScreen />)
+    expect(screen.getByRole('heading', { name: 'October 2026' })).toBeTruthy()
+    turnTheDay()
+    expect(screen.getByRole('heading', { name: 'November 2026' })).toBeTruthy()
+    cleanup()
+
+    vi.setSystemTime(new Date('2026-11-01T02:59:00Z'))
+    render(<SleepScreen />)
+    fireEvent.click(screen.getByRole('button', { name: 'Previous month' }))
+    expect(screen.getByRole('heading', { name: 'September 2026' })).toBeTruthy()
+    turnTheDay()
+    expect(screen.getByRole('heading', { name: 'September 2026' })).toBeTruthy()
   })
 })

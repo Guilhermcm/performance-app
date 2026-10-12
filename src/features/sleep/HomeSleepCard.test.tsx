@@ -127,14 +127,4 @@ describe('HomeSleepCard', () => {
     const { container } = render(<HomeSleepCard />)
     expect(container.innerHTML).toBe('')
   })
-
-  it('pulls the nights again when the local day turns with the screen open', () => {
-    vi.setSystemTime(at('23:59'))
-    render(<HomeSleepCard />)
-    expect(refresh).not.toHaveBeenCalled()
-    act(() => { vi.advanceTimersByTime(60_000) })
-    expect(refresh).toHaveBeenCalledTimes(1)
-    act(() => { vi.advanceTimersByTime(60_000) })
-    expect(refresh).toHaveBeenCalledTimes(1)
-  })
 })
