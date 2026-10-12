@@ -41,3 +41,10 @@ export async function logNight(
   if (over.asOwner) await db.query(q, params)
   else await asUser(db, uid, () => db.query(q, params))
 }
+
+// Closes the pending nights of a person the way the server does (as the database owner) and
+// returns how many nights it closed.
+export async function closeSleepAs(db: PGlite, uid: string): Promise<number> {
+  const { rows } = await db.query<{ n: number }>('select public.close_sleep_nights($1) as n', [uid])
+  return rows[0].n
+}

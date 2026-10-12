@@ -62,6 +62,16 @@ export interface Database {
         Update: Partial<Omit<Database['public']['Tables']['sleep_logs']['Insert'], 'user_id' | 'night'>>
         Relationships: []
       }
+      sleep_nights: {
+        Row: {
+          user_id: string; night: string; target: { goal_min: number; bed_target: string } | null
+          logged: boolean; duration_min: number | null; bed_diff_min: number | null; quality: number | null
+          on_target: boolean; rested: boolean; closed_at: string
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
       food_logs: {
         Row: {
           id: string; user_id: string; day: string; meal: 'breakfast' | 'lunch' | 'dinner' | 'snack'
