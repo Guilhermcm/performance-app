@@ -3,7 +3,7 @@
 - **Data:** 2026-10-06
 - **Status:** aprovada em 2026-10-06; ajustada à 1c em 2026-10-12 (§0); implementada em 2026-10-12.
   O que esta spec deixava em aberto foi fechado nas
-  [Decisões do plano](../plans/2026-10-12-fase-3-sono.md#decisões-do-plano)
+  [Decisões do plano](../plans/2026-10-12-fase-3-sono.md#decisões-do-plano).
 - **Roadmap:** [docs/ROADMAP.md](../../ROADMAP.md), Fase 3
 - **Base:** [spec da Fase 2](2026-10-05-fase-2-nutricao-design.md) (molde do pilar: períodos, fechamento
   em D+2, XP, streak, conquistas privadas, radar), [spec da 2b](2026-10-06-fase-2b-nutricao-design.md)
@@ -565,6 +565,7 @@ comparação com amigos (Fase 5).
 
 ## 13. Publicação
 
-A publicação em produção não espera esta fase: ela acontece ao fim da 2b. Quando a Fase 3 for
-executada, as migrations `0021` a `0025` e o job `close-sleep-nights` entram no passo a passo de
-`docs/SETUP.md`, e o cliente e as migrations sobem no mesmo deploy (por causa de `join_challenge`).
+As migrations `0021` a `0025`, no arquivo único `supabase/release/0021-0025_sleep.sql`, e o job
+`close-sleep-nights` sobem pelo roteiro do Sono em [docs/SETUP.md](../../SETUP.md): o SQL roda em
+produção e o merge do PR #6 vem logo em seguida, no mesmo dia (por causa de `create_challenge` e
+`join_challenge`).

@@ -159,14 +159,16 @@ Use este roteiro para levar um banco que já roda o check-in (`0001` a `0020`) a
 migrations do pilar Sono (fase 3). Rode o SQL e faça o merge no mesmo dia, nesta ordem:
 
 1. Rode o SQL em produção (passos abaixo).
-2. Faça o merge do PR do Sono logo em seguida, para o cliente novo ir ao ar.
+2. Faça o merge do PR #6 (que leva a 1d e o Sono) logo em seguida, para o cliente novo ir ao ar.
 
 A ordem vem da `0024`. Ela apaga as versões de `create_challenge` e `join_challenge` e cria as novas,
 com o parâmetro `p_share_sleep boolean default false` no fim. O cliente novo já manda
 `p_share_sleep`, então criar ou aceitar um desafio só funciona nele depois do SQL: não publique o
 cliente antes. O cliente da 1c, que fica no ar enquanto o roteiro corre, continua funcionando. Ele
 chama as duas funções por parâmetros nomeados, sem `p_share_sleep`, e o valor padrão cobre a falta;
-só não oferece o Sono. A spec (§13) pede o SQL e o cliente no mesmo deploy, então não deixe o merge
+só não oferece o Sono. O painel de desafios dele, porém, quebra ao receber um desafio de um modelo
+que não conhece, como o de noites no alvo: por isso o primeiro desafio de Sono só sai depois que
+todos reabrirem o app (passo 5). A spec (§13) pede o SQL e o cliente no mesmo deploy, então não deixe o merge
 para outro dia.
 
 O que muda no banco quando a `0021` a `0025` rodam:
@@ -201,10 +203,11 @@ Passo a passo:
      completo está na seção 7).
 4. Se o app disser que não achou a função logo depois ("Could not find the function"), recarregue o
    cache da API: `notify pgrst, 'reload schema';`.
-5. Faça o merge do PR do Sono e o deploy do cliente novo. Depois do deploy, peça ao grupo para
-   fechar e abrir o app. Um app instalado que ficou aberto durante o deploy ainda roda o cliente
-   antigo: ele continua funcionando, pelo valor padrão dos parâmetros nomeados, mas só mostra o Sono
-   depois de reaberto.
+5. Faça o merge do PR #6 e o deploy do cliente novo. Depois do deploy, peça ao grupo para fechar e
+   abrir o app, e só crie o primeiro desafio de Sono depois que todos tiverem reaberto. Um app
+   instalado que ficou aberto durante o deploy ainda roda o cliente antigo: ele continua
+   funcionando, pelo valor padrão dos parâmetros nomeados, mas só mostra o Sono depois de reaberto.
+   O painel de desafios desse cliente quebra quando aparece um desafio de noites no alvo.
 6. Faça o smoke da spec (§10) com duas contas: ligue o pilar em Perfil > Sono; registre a noite pelo
    cartão da manhã na Home, no celular; edite a noite de ontem; dois dias depois, veja o XP da noite
    chegar; depois que a semana fechar, veja o eixo Sono aceso no radar; e crie um desafio de noites
