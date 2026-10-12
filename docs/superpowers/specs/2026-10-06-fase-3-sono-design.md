@@ -1,12 +1,15 @@
 # performance-app: Design da Fase 3, Sono
 
 - **Data:** 2026-10-06
-- **Status:** aprovada em 2026-10-06; ajustada à 1c em 2026-10-12 (§0); execução ainda não começou
+- **Status:** aprovada em 2026-10-06; ajustada à 1c em 2026-10-12 (§0); implementada em 2026-10-12.
+  O que esta spec deixava em aberto foi fechado nas
+  [Decisões do plano](../plans/2026-10-12-fase-3-sono.md#decisões-do-plano)
 - **Roadmap:** [docs/ROADMAP.md](../../ROADMAP.md), Fase 3
 - **Base:** [spec da Fase 2](2026-10-05-fase-2-nutricao-design.md) (molde do pilar: períodos, fechamento
   em D+2, XP, streak, conquistas privadas, radar), [spec da 2b](2026-10-06-fase-2b-nutricao-design.md)
   (calendário e desafio de pilar) e [spec da Fundação](2026-10-04-performance-app-foundation-design.md)
-- **Ordem:** a execução fica para depois. A publicação em produção acontece ao fim da 2b, sem o Sono.
+- **Publicação:** `supabase/release/0021-0025_sleep.sql` e o cliente sobem no mesmo dia, pelo
+  roteiro do Sono em [docs/SETUP.md](../../SETUP.md)
 
 ## 0. Ajustes depois da 1c (2026-10-12)
 

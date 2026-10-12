@@ -6,7 +6,18 @@ const byName = name => RELEASES.find(r => r.name === name)
 
 describe('release SQL bundles', () => {
   it('has the named ranges, in order', () => {
-    expect(RELEASES.map(r => r.name)).toEqual(['0007-0016_nutrition', '0017-0020_checkin'])
+    expect(RELEASES.map(r => r.name)).toEqual(['0007-0016_nutrition', '0017-0020_checkin', '0021-0025_sleep'])
+  })
+
+  it('0021-0025_sleep holds migrations 0021 to 0025, in order', () => {
+    expect(releaseFiles(byName('0021-0025_sleep'))).toEqual([
+      '0021_sleep_base.sql', '0022_sleep_close.sql', '0023_sleep_progress.sql',
+      '0024_sleep_challenge.sql', '0025_sleep_cron.sql'])
+  })
+
+  it('the sleep header says it is for a database that already has 0001 to 0020', () => {
+    const sql = buildReleaseSql(byName('0021-0025_sleep'))
+    expect(sql.split('\n').slice(0, 5).join('\n')).toContain('already has 0001 to 0020')
   })
 
   it('0007-0016_nutrition holds migrations 0007 to 0016, in order', () => {
