@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { ArrowLeft, Check, CircleDashed, CloudOff, Dot, RefreshCw } from 'lucide-react'
@@ -13,6 +13,7 @@ import { useProgress } from '../gamification/useProgress'
 import { shiftDay } from '../nutrition/days'
 import { monthHasActiveDay, monthOf, monthRange, shiftMonth } from '../nutrition/history'
 import { classifyNight } from './classify'
+import { bedtimeSeries, durationSeries } from './chart-data'
 import { NIGHT_LEGEND, NIGHT_STATE, buildSleepMonth, loadSleepMonth, monthBounds, nightAt, type NightState } from './history'
 import { DEFAULT_BED, DEFAULT_NIGHTS, goalOf, targetAt } from './goal'
 import { SLEEP_CARD as CARD, SleepTile as Tile } from './card'
@@ -28,7 +29,12 @@ import { SleepLogSheet } from './SleepLogSheet'
 import SleepInvite from './SleepInvite'
 import SleepSetup from './SleepSetup'
 import SleepStats from './SleepStats'
+import { SleepChartSkeleton } from './SleepChartSkeleton'
 import type { NightClass, SleepHistory, SleepNight, SleepPeriod, SleepTarget } from './types'
+
+// Recharts and the two charts load on demand, each behind a skeleton of its own size.
+const SleepDurationChart = lazy(() => import('./SleepDurationChart'))
+const SleepBedtimeBand = lazy(() => import('./SleepBedtimeBand'))
 
 const STATE_CLASS: Record<NightState, string> = {
   on_target: 'bg-pillar-sleep/15 text-pillar-sleep',
@@ -145,6 +151,7 @@ function Nights({ today, failed, nightsPerWeek }: { today: string; failed: boole
   const lastNight = lastOpen && (!lastClosed || lastOpen > lastClosed) ? lastOpen : lastClosed
   const lastPending = lastNight != null && lastNight === lastOpen
   const todayLogged = !!logs[today]
+  const bedTarget = targetAt(targets, today)?.bed_target ?? DEFAULT_BED
 
   const openLog = (night: string) => { setLogNight(night); setLogOpen(true) }
   const openNight = (night: SleepNight, pending: boolean) => { setPicked({ night, pending }); setPickedOpen(true) }
@@ -177,11 +184,11 @@ function Nights({ today, failed, nightsPerWeek }: { today: string; failed: boole
       ) : (
         <>
           {lastNight && (
-            <SleepStats stat={stat} closed={older} open={open} today={today} target={weekTarget}
-              bedTarget={targetAt(targets, today)?.bed_target ?? DEFAULT_BED} />
+            <>
+              <SleepStats stat={stat} closed={older} open={open} today={today} target={weekTarget} bedTarget={bedTarget} />
+              <SleepCharts today={today} older={older} bedTarget={bedTarget} />
+            </>
           )}
-          {/* The charts of spec 7.4 (Task 11). */}
-          <div data-slot="sleep-charts" className="contents" />
           <NightCalendar today={today} older={older} onLog={openLog} onOpen={openNight} />
         </>
       )}
@@ -189,6 +196,25 @@ function Nights({ today, failed, nightsPerWeek }: { today: string; failed: boole
       <SleepLogSheet night={logNight} open={logOpen} onOpenChange={setLogOpen} />
       {picked && <NightSheet night={picked.night} pending={picked.pending} open={pickedOpen} onOpenChange={setPickedOpen} />}
     </>
+  )
+}
+
+// Spec 7.4: the last 30 nights' length and the last 14 bedtimes, from the closed nights and the
+// open logs, as the stats read them.
+function SleepCharts({ today, older, bedTarget }: { today: string; older: SleepNight[]; bedTarget: string }) {
+  const logs = useSleep(s => s.logs)
+  const targets = useSleep(s => s.targets)
+  const duration = useMemo(() => durationSeries(older, logs, targets, today), [older, logs, targets, today])
+  const bedtime = useMemo(() => bedtimeSeries(older, logs, bedTarget, today), [older, logs, bedTarget, today])
+  return (
+    <div data-slot="sleep-charts" className="flex flex-col gap-4">
+      <Suspense fallback={<SleepChartSkeleton kind="duration" />}>
+        <SleepDurationChart series={duration} />
+      </Suspense>
+      <Suspense fallback={<SleepChartSkeleton kind="bedtime" />}>
+        <SleepBedtimeBand series={bedtime} today={today} bedTarget={bedTarget} />
+      </Suspense>
+    </div>
   )
 }
 

@@ -23,6 +23,7 @@ import { setLang } from '../../lib/i18n.js'
 import { ME, logOf, nightOf, targetOf } from './test-sleep'
 import type { Profile } from '../profile/types'
 import type { SleepPeriod } from './types'
+import { SLEEP_CHART_CARD } from './SleepChartSkeleton'
 
 // 2026-10-07 (a Wednesday) at 07:30 in Sao Paulo.
 const TODAY = '2026-10-07'
@@ -156,12 +157,32 @@ describe('SleepScreen', () => {
     expect(useSleep.getState().droppedNotice).toBe(false)
   })
 
-  it('shows the four numbers and leaves room for the charts', () => {
+  it('shows the four numbers, then the charts in skeletons of the same size while their chunks load', async () => {
     const { container } = render(<SleepScreen />)
     expect(screen.getAllByTestId(/^sleep-stat-/)).toHaveLength(4)
-    const charts = container.querySelector('[data-slot="sleep-charts"]')
-    expect(charts).toBeTruthy()
-    expect(charts?.childElementCount).toBe(0)
+    const charts = container.querySelector('[data-slot="sleep-charts"]')!
+    const slots = ['sleep-duration-chart', 'sleep-bedtime-chart']
+    for (const slot of slots) {
+      const skeleton = charts.querySelector<HTMLElement>(`[data-slot="${slot}"][aria-busy="true"]`)
+      expect(skeleton, slot).toBeTruthy()
+      expect(skeleton!.className).toContain(SLEEP_CHART_CARD)
+    }
+    for (const slot of slots) {
+      const chart = await waitFor(() => {
+        const el = charts.querySelector<HTMLElement>(`[data-slot="${slot}"]:not([aria-busy])`)
+        if (!el) throw new Error(`${slot} not loaded yet`)
+        return el
+      }, { timeout: 10_000 }) // the first test to import a chart chunk pays its cold transform
+      expect(chart.className).toContain(SLEEP_CHART_CARD)
+    }
+    expect(charts.querySelector('[aria-busy="true"]')).toBeNull()
+    expect(screen.getByText('Last 14 days: 1 night logged, 1 within 45 min of the target')).toBeTruthy()
+  })
+
+  it('has no charts before the first night', () => {
+    sleep({ closed: [] })
+    const { container } = render(<SleepScreen />)
+    expect(container.querySelector('[data-slot="sleep-charts"]')).toBeNull()
   })
 
   it('shows the month of nights, going back no further than the first period', async () => {

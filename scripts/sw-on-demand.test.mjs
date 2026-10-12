@@ -36,6 +36,19 @@ describe('onDemandFiles', () => {
     expect(onDemandFiles(b)).toEqual(['./assets/taco-c.js', './assets/taco-measures-h.js'])
   })
 
+  it('lists the two sleep charts with the Recharts chunk they share', () => {
+    const b = {
+      'assets/index-a.js': chunk('assets/index-a.js', ['/app/src/main.jsx'], { isEntry: true }),
+      'assets/SleepDurationChart-h.js': chunk('assets/SleepDurationChart-h.js', ['/app/src/features/sleep/SleepDurationChart.tsx'],
+        { imports: ['assets/index-a.js', 'assets/recharts-e.js'] }),
+      'assets/SleepBedtimeBand-i.js': chunk('assets/SleepBedtimeBand-i.js', ['/app/src/features/sleep/SleepBedtimeBand.tsx'],
+        { imports: ['assets/recharts-e.js'] }),
+      'assets/recharts-e.js': chunk('assets/recharts-e.js', ['/app/node_modules/recharts/es6/index.js']),
+      'assets/SleepScreen-j.js': chunk('assets/SleepScreen-j.js', ['/app/src/features/sleep/SleepScreen.tsx'])
+    }
+    expect(onDemandFiles(b)).toEqual(['./assets/SleepBedtimeBand-i.js', './assets/SleepDurationChart-h.js', './assets/recharts-e.js'])
+  })
+
   it('reads Windows module ids too', () => {
     const b = { 'assets/taco-c.js': chunk('assets/taco-c.js', ['C:\\app\\src\\features\\nutrition\\data\\taco.json']) }
     expect(onDemandFiles(b)).toEqual(['./assets/taco-c.js'])

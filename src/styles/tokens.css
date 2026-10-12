@@ -23,7 +23,8 @@
   --chart-bar: oklch(0.66 0.17 130);
   --pillar-strength: oklch(0.74 0.17 50);
   --pillar-nutrition: oklch(0.76 0.16 150);
-  --pillar-sleep: oklch(0.7 0.14 275);
+  /* sleep stepped into the dark chart band (dataviz validate_palette.js, L 0.48 to 0.67) */
+  --pillar-sleep: oklch(0.66 0.14 275);
   --pillar-habits: oklch(0.82 0.15 85);
   --radius: 16px;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
