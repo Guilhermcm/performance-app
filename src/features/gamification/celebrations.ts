@@ -5,26 +5,34 @@ import { fmtInt } from './format'
 import type { Celebration, PillarKey, Progress } from './types'
 
 // What the person has already been shown: their level, badges, each pillar's level and the last
-// week whose goal was celebrated, per pillar. Markers saved before phase 2a lack the last two.
+// week whose goal was celebrated, per pillar. Markers saved before phase 2a lack the last two; markers
+// saved before phase 3 have no sleep entry in them (see markerOf).
 export type SeenMarker = {
   level: number
   codes: string[]
   pillarLevels?: Partial<Record<PillarKey, number>>
-  weekTargets?: Partial<Record<PillarKey, string>>
+  weekTargets?: Partial<Record<PillarKey, string | null>>
 }
 
-// Pillars whose level-ups get a card. Strength is left out: until phase 2a it was the only pillar
-// and its level moves with the overall one, which already has a card.
-const CELEBRATED_PILLARS: readonly PillarKey[] = ['nutrition']
+// Pillars whose level-ups and weekly goals get a card. Strength is left out: until phase 2a it was
+// the only pillar and its level moves with the overall one, which already has a card; its weekly
+// goal stays in the post-workout summary.
+const CELEBRATED_PILLARS = ['nutrition', 'sleep'] as const satisfies readonly PillarKey[]
 
-// A cached progress from an older build may lack pillars or the nutrition block.
+// A cached progress from an older build may lack pillars or the pillar blocks. Sleep is always
+// written (level 1 and no week until it has some), so a marker saved before the sleep pillar is
+// told apart by not having it.
 function pillarLevelsOf(p: Progress): Partial<Record<PillarKey, number>> {
   const out: Partial<Record<PillarKey, number>> = {}
   for (const [k, v] of Object.entries(p.pillars ?? {})) if (v) out[k as PillarKey] = v.level
+  return { ...out, sleep: out.sleep ?? 1 }
+}
+function weekTargetsOf(p: Progress): Partial<Record<PillarKey, string | null>> {
+  const out: Partial<Record<PillarKey, string | null>> = {}
+  if (p.nutrition?.last_week) out.nutrition = p.nutrition.last_week.start
+  out.sleep = p.sleep?.last_week?.start ?? null
   return out
 }
-const weekTargetsOf = (p: Progress): Partial<Record<PillarKey, string>> =>
-  p.nutrition?.last_week ? { nutrition: p.nutrition.last_week.start } : {}
 
 export const markerOf = (p: Progress): SeenMarker => ({
   level: p.level.level,
@@ -34,14 +42,17 @@ export const markerOf = (p: Progress): SeenMarker => ({
 })
 
 // An old marker gets what it lacks from the current progress, so nothing in it is celebrated:
-// the same rule as the first load on a device.
+// the same rule as the first load on a device. A marker without sleep comes from before the
+// sleep pillar: every pillar it lacks is taken as seen.
 export function completeMarker(seen: SeenMarker, p: Progress): SeenMarker {
-  if (seen.pillarLevels && seen.weekTargets) return seen
-  return { ...seen, pillarLevels: seen.pillarLevels ?? pillarLevelsOf(p), weekTargets: seen.weekTargets ?? weekTargetsOf(p) }
+  const levels = seen.pillarLevels, weeks = seen.weekTargets
+  if (levels && weeks && 'sleep' in levels && 'sleep' in weeks) return seen
+  return { ...seen, pillarLevels: { ...pillarLevelsOf(p), ...levels }, weekTargets: { ...weekTargetsOf(p), ...weeks } }
 }
 
-// A level-up (one card, the level reached), then each pillar that levelled up, the nutrition weekly
-// goal and each new badge, in catalogue order. A pillar missing from the marker starts at level 1.
+// A level-up (one card, the level reached), then each pillar that levelled up, each pillar's weekly
+// goal (nutrition, then sleep) and each new badge, in catalogue order. A pillar missing from the
+// marker starts at level 1.
 export function celebrationsSince(seen: SeenMarker, p: Progress): Celebration[] {
   const out: Celebration[] = []
   if (p.level.level > seen.level) out.push({ kind: 'level', level: p.level.level })
@@ -49,9 +60,11 @@ export function celebrationsSince(seen: SeenMarker, p: Progress): Celebration[] 
     const now = p.pillars?.[pillar]?.level
     if (now != null && now > (seen.pillarLevels?.[pillar] ?? 1)) out.push({ kind: 'pillar_level', pillar, level: now })
   }
-  const week = p.nutrition?.last_week
-  if (week?.target_hit && week.start > (seen.weekTargets?.nutrition ?? '')) {
-    out.push({ kind: 'week_target', pillar: 'nutrition', week_start: week.start })
+  for (const pillar of CELEBRATED_PILLARS) {
+    const week = p[pillar]?.last_week
+    if (week?.target_hit && week.start > (seen.weekTargets?.[pillar] ?? '')) {
+      out.push({ kind: 'week_target', pillar, week_start: week.start })
+    }
   }
   const had = new Set(seen.codes)
   const now = new Set(p.achievements.map(a => a.code))
@@ -82,4 +95,41 @@ export function trainingDayToast(p: Progress, lastShown: string | null): { text:
   const day = new Date(d.day + 'T12:00:00').toLocaleDateString(dateLocale(), { weekday: 'long' })
   const text = d.xp > 0 ? t('{0} workout confirmed, +{1} XP', day, fmtInt(d.xp)) : t('{0} workout confirmed', day)
   return { text, day: d.day }
+}
+
+// "Saturday logged": a whole sentence per weekday, since in some languages the word for logged
+// takes the gender of the day ("sábado registrado", "segunda-feira registrada"). Sunday first, as
+// Date.getDay() counts.
+const NIGHT_LOGGED_XP = [
+  (xp: string) => t('Sunday logged, +{0} XP', xp),
+  (xp: string) => t('Monday logged, +{0} XP', xp),
+  (xp: string) => t('Tuesday logged, +{0} XP', xp),
+  (xp: string) => t('Wednesday logged, +{0} XP', xp),
+  (xp: string) => t('Thursday logged, +{0} XP', xp),
+  (xp: string) => t('Friday logged, +{0} XP', xp),
+  (xp: string) => t('Saturday logged, +{0} XP', xp),
+]
+const NIGHT_LOGGED = [
+  () => t('Sunday logged'),
+  () => t('Monday logged'),
+  () => t('Tuesday logged'),
+  () => t('Wednesday logged'),
+  () => t('Thursday logged'),
+  () => t('Friday logged'),
+  () => t('Saturday logged'),
+]
+
+// The last closed night (spec 5.6), named by the weekday it was woken up on, since it closes two
+// days later: "Saturday on target, +130 XP", "Saturday logged, +10 XP". A night with no goal in
+// force pays nothing and is only logged. Null when it was shown already or there is nothing to say
+// (no closed night, or a night without a log).
+export function sleepNightToast(p: Progress, lastShown: string | null): { text: string; night: string } | null {
+  const n = p.sleep?.last_closed
+  if (!n || (lastShown && n.night <= lastShown) || !n.logged) return null
+  const xp = fmtInt(n.xp)
+  const weekday = new Date(n.night + 'T12:00:00').getDay()
+  const text = n.on_target
+    ? (n.xp > 0 ? t('{0} on target, +{1} XP', weekdayName(n.night), xp) : t('{0} on target', weekdayName(n.night)))
+    : (n.xp > 0 ? NIGHT_LOGGED_XP[weekday](xp) : NIGHT_LOGGED[weekday]())
+  return { text, night: n.night }
 }

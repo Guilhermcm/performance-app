@@ -1929,6 +1929,23 @@ export const PT_BR_OVERRIDES = {
   "More than {0} earlier": "Mais de {0} antes",
   "Right on time": "Na hora",
   "Bedtime target": "Horário-alvo",
+  // --- sleep celebrations (phase 3) ---
+  "Sleep level {0}": "Sono nível {0}",
+  "You hit your target on enough nights last week.": "Você bateu a meta em noites suficientes na semana passada.",
+  "Sunday logged, +{0} XP": "Domingo registrado, +{0} XP",
+  "Monday logged, +{0} XP": "Segunda-feira registrada, +{0} XP",
+  "Tuesday logged, +{0} XP": "Terça-feira registrada, +{0} XP",
+  "Wednesday logged, +{0} XP": "Quarta-feira registrada, +{0} XP",
+  "Thursday logged, +{0} XP": "Quinta-feira registrada, +{0} XP",
+  "Friday logged, +{0} XP": "Sexta-feira registrada, +{0} XP",
+  "Saturday logged, +{0} XP": "Sábado registrado, +{0} XP",
+  "Sunday logged": "Domingo registrado",
+  "Monday logged": "Segunda-feira registrada",
+  "Tuesday logged": "Terça-feira registrada",
+  "Wednesday logged": "Quarta-feira registrada",
+  "Thursday logged": "Quinta-feira registrada",
+  "Friday logged": "Sexta-feira registrada",
+  "Saturday logged": "Sábado registrado",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

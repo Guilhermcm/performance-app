@@ -43,6 +43,18 @@ describe('CelebrationOverlay', () => {
     expect(screen.getByText('+100 XP')).toBeTruthy()
   })
 
+  it('shows the sleep level and the sleep weekly goal', () => {
+    render(<CelebrationOverlay onDone={vi.fn()} items={[
+      { kind: 'pillar_level', pillar: 'sleep', level: 3 },
+      { kind: 'week_target', pillar: 'sleep', week_start: '2026-09-28' }
+    ]} />)
+    expect(screen.getByText('Sleep level 3')).toBeTruthy()
+    fireEvent.click(screen.getByText('Tap to continue'))
+    expect(screen.getByText('Sleep goal met')).toBeTruthy()
+    expect(screen.getByText('You hit your target on enough nights last week.')).toBeTruthy()
+    expect(screen.getByText('+150 XP')).toBeTruthy()
+  })
+
   it('never shows a raw code for a badge it does not know', () => {
     render(<CelebrationOverlay items={[{ kind: 'achievement', code: 'from_the_future' }]} onDone={vi.fn()} />)
     expect(screen.queryByText('from_the_future')).toBeNull()

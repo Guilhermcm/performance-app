@@ -8,7 +8,7 @@ vi.mock('sonner', () => ({ toast: h.toast }))
 import CelebrationHost from './CelebrationHost'
 import { useProgress } from './useProgress'
 import { progressOf } from './test-progress'
-import type { NutritionProgress, Progress } from './types'
+import type { NutritionProgress, Progress, SleepProgress } from './types'
 
 const SEEN = 'perf_nutrition_seen_v1'
 // 2026-10-03 is a Saturday, 2026-10-04 a Sunday.
@@ -90,5 +90,40 @@ describe('CelebrationHost', () => {
     act(() => ready(trained('2026-10-03')))
     expect(h.toast).toHaveBeenCalledTimes(1)
     expect(localStorage.getItem(SEEN)).toBe(JSON.stringify({ userId: 'u1', day: null }))
+  })
+
+  it('tells how a newly closed night went once, apart from the other pillars', () => {
+    const SLEEP = 'perf_sleep_seen_v1'
+    const slept = (night: string, over: Partial<NonNullable<SleepProgress['last_closed']>> = {}) => progressOf(700, {}, {
+      sleep: {
+        target: 5, on_target: 1, logged: 2, streak: { current: 0, best: 0, shields: 0 }, confirms_on: '2026-10-09', last_week: null,
+        last_closed: { night, logged: true, on_target: true, rested: false, xp: 130, ...over }
+      }
+    })
+    // First load on this device: recorded, no toast.
+    ready(slept('2026-10-02'))
+    render(<CelebrationHost />)
+    expect(h.toast).not.toHaveBeenCalled()
+    expect(JSON.parse(localStorage.getItem(SLEEP)!)).toEqual({ userId: 'u1', day: '2026-10-02' })
+    act(() => ready(slept('2026-10-03')))
+    expect(h.toast).toHaveBeenCalledTimes(1)
+    expect(h.toast).toHaveBeenCalledWith('Saturday on target, +130 XP')
+    act(() => ready(slept('2026-10-03')))
+    expect(h.toast).toHaveBeenCalledTimes(1)
+    act(() => ready(slept('2026-10-04', { on_target: false, xp: 10 })))
+    expect(h.toast).toHaveBeenLastCalledWith('Sunday logged, +10 XP')
+    expect(h.toast).toHaveBeenCalledTimes(2)
+    // A night without a log is recorded quietly.
+    act(() => ready(slept('2026-10-05', { logged: false, on_target: false, xp: 0 })))
+    expect(h.toast).toHaveBeenCalledTimes(2)
+    expect(JSON.parse(localStorage.getItem(SLEEP)!)).toEqual({ userId: 'u1', day: '2026-10-05' })
+  })
+
+  it('takes a cached progress without the sleep block in its stride', () => {
+    localStorage.setItem('perf_sleep_seen_v1', JSON.stringify({ userId: 'u1', day: '2026-10-02' }))
+    ready({ ...progressOf(700), sleep: undefined })
+    render(<CelebrationHost />)
+    expect(h.toast).not.toHaveBeenCalled()
+    expect(JSON.parse(localStorage.getItem('perf_sleep_seen_v1')!)).toEqual({ userId: 'u1', day: '2026-10-02' })
   })
 })

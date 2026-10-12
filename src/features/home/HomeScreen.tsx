@@ -18,8 +18,8 @@ import { PillarRadarSkeleton } from './PillarRadarSkeleton'
 
 // Recharts is heavy and only the radar uses it on the Home: it comes in its own chunk.
 const PillarRadar = lazy(() => import('./PillarRadar'))
-// The pillars out so far; sleep and habits show as coming soon.
-const RELEASED: PillarKey[] = ['strength', 'nutrition']
+// The pillars out so far; habits shows as coming soon.
+const RELEASED: PillarKey[] = ['strength', 'nutrition', 'sleep']
 
 type HomeStore = { S: Record<string, any>; user: { id: string; name?: string } | null }
 
@@ -85,7 +85,8 @@ function HomeRadar() {
   const loading = useProgress(s => !s.progress && (s.status === 'idle' || s.status === 'loading'))
   const profile = useProfile(s => s.profile)
   const nutrition = profile?.nutrition_enabled ?? false
-  const enabled = useMemo(() => ({ strength: true, nutrition }), [nutrition])
+  const sleep = profile?.sleep_enabled ?? false
+  const enabled = useMemo(() => ({ strength: true, nutrition, sleep }), [nutrition, sleep])
   if (!profile || loading) return <PillarRadarSkeleton />
   return (
     <Suspense fallback={<PillarRadarSkeleton />}>

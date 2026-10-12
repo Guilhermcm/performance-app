@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { useProgress } from './useProgress'
 import { CelebrationOverlay } from './components/CelebrationOverlay'
-import { dayResultToast, trainingDayToast } from './celebrations'
+import { dayResultToast, sleepNightToast, trainingDayToast } from './celebrations'
 import { DAY_SEEN_KEY } from '../nutrition/storage-keys'
+import { SLEEP_SEEN_KEY } from '../sleep/storage-keys'
 import type { Celebration } from './types'
 
-// The last closed nutrition day and the last closed Treino day already told, for the account
-// signed in on this device.
+// The last closed nutrition day, Treino day and night already told, for the account signed in on
+// this device.
 const DAY_SEEN = DAY_SEEN_KEY
 const TRAINING_SEEN = 'perf_training_seen_v1'
 
@@ -23,8 +24,9 @@ const writeSeen = (key: string, userId: string, day: string | null) => {
 
 // Shows level-ups and badges the moment the store has some and nothing holds them (the
 // post-workout summary does, until its XP has counted). Taking them marks them as seen.
-// The result of a closed nutrition day, and the confirmation of a closed Treino day, are toasts
-// instead, once per day each, from the server's answer.
+// The result of a closed nutrition day, the confirmation of a closed Treino day and the result of a
+// closed night are toasts instead, once per day each, from the server's answer. A cached progress
+// from before a pillar existed has no block for it and tells nothing.
 export default function CelebrationHost() {
   const pending = useProgress(s => s.pending)
   const held = useProgress(s => s.held)
@@ -51,6 +53,7 @@ export default function CelebrationHost() {
     }
     tell(DAY_SEEN, progress.nutrition?.last_closed?.day ?? null, seen => dayResultToast(progress, seen))
     tell(TRAINING_SEEN, progress.training?.last_closed?.day ?? null, seen => trainingDayToast(progress, seen))
+    tell(SLEEP_SEEN_KEY, progress.sleep?.last_closed?.night ?? null, seen => sleepNightToast(progress, seen))
   }, [progress, stale, userId])
 
   if (!items?.length) return null

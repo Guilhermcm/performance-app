@@ -101,6 +101,25 @@ describe('HomeScreen', () => {
     }
   })
 
+  it('puts sleep on the radar, on or off as the profile says', async () => {
+    setS({}, { id: 'u1', name: 'Ana' })
+    useProgress.setState({ status: 'ready', progress: progressOf(400), userId: 'u1' })
+    // Recharts draws nothing without a layout here; the radar's text description says the states.
+    const described = (text: string) => waitFor(() => expect(screen.getByText(text)).toBeTruthy(), { timeout: 10_000 })
+    try {
+      useProfile.setState({ profile: { timezone: 'America/Sao_Paulo', nutrition_enabled: true, sleep_enabled: true } as never })
+      const on = render(<HomeScreen />)
+      await described('Training: no weeks yet, Nutrition: no weeks yet, Sleep: no weeks yet, Habits coming soon')
+      on.unmount()
+      useProfile.setState({ profile: { timezone: 'America/Sao_Paulo', nutrition_enabled: true, sleep_enabled: false } as never })
+      render(<HomeScreen />)
+      await described('Training: no weeks yet, Nutrition: no weeks yet, Sleep: off, Habits coming soon')
+    } finally {
+      useProfile.setState({ profile: null })
+      useProgress.getState().reset()
+    }
+  })
+
   it('shows the radar empty, not a skeleton, for a cached progress from before the radar', async () => {
     setS({}, { id: 'u1', name: 'Ana' })
     useProfile.setState({ profile: { timezone: 'America/Sao_Paulo', nutrition_enabled: true } as never })
