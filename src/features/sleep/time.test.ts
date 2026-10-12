@@ -58,5 +58,7 @@ describe('sleep time rules', () => {
     expect(fmtClock('23:00', 'en-US')).toBe('11:00 PM')
     expect(fmtClock('23:00', 'pt-BR')).toBe('23:00')
     expect(fmtClock('00:05', 'pt-BR')).toBe('00:05')
+    expect(fmtClock('09:05', 'en-US')).toBe('9:05 AM')
+    expect(fmtClock('09:05', 'pt-BR')).toBe('09:05')
   })
 })

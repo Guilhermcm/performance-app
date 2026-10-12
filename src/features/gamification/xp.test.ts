@@ -3,10 +3,9 @@ import fixture from '../../../supabase/tests/fixtures/xp-scenarios.json'
 import nutrition from '../../../supabase/tests/fixtures/nutrition-scenarios.json'
 import training from '../../../supabase/tests/fixtures/training-scenarios.json'
 import {
-  nutritionWeekAwards, levelFor, replay, sessionXp, streakAfter, weekStartOf, WEEK_MAX, TRAINING_WEEK_MAX, type XpEvent
+  nutritionWeekAwards, sleepWeekAwards, levelFor, replay, sessionXp, streakAfter, weekStartOf, WEEK_MAX, TRAINING_WEEK_MAX, type XpEvent
 } from './xp'
 import sleep from '../../../supabase/tests/fixtures/sleep-scenarios.json'
-import { sleepWeekAwards } from './xp'
 
 describe('xp rules (client mirror)', () => {
   it.each(fixture.levels)('levelFor($xp)', l => {
@@ -90,5 +89,16 @@ describe('sleep xp rules (client mirror)', () => {
     const awards = sleepWeekAwards(w.nights, w.target)
     expect(awards).toEqual(w.awards)
     expect(awards.reduce((n, a) => n + a.amount, 0)).toBe(w.total)
+  })
+  // The server emits no event for a night with no target in force, so the caller passes only the
+  // nights that had one. classifyNight alone would call such a night logged.
+  it('pays nothing for a night with no target in force once the caller filters it out', () => {
+    const logged = { logged: true, on_target: true, rested: false }
+    const nights = [
+      { on: '2026-09-07', classes: logged, target: null },
+      { on: '2026-09-08', classes: logged, target: { goal_min: 480, bed_target: '23:00' } },
+    ]
+    const awards = sleepWeekAwards(nights.filter(n => n.target).map(({ on, classes }) => ({ on, classes })), 5)
+    expect(awards.map(a => a.reason)).toEqual(['sleep_logged', 'sleep_night'])
   })
 })

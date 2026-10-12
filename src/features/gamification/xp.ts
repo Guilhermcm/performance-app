@@ -222,6 +222,9 @@ export type SleepReason =
 
 // Nights in closing order (oldest first). Per night the order is logged, on target (with the
 // weekly bonus on the T-th), rested, as the cron emits the events.
+// Contract: pass only nights that had a target in force. The server emits no events for a night
+// with target null (it is not evaluated and pays nothing), but classifyNight(log, null) still says
+// logged, so the caller must filter those nights out first.
 export function sleepWeekAwards(
   nights: { on: string; classes: Omit<NightClass, 'bed_diff_min'> }[],
   target: number,

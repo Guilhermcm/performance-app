@@ -52,5 +52,9 @@ export function fmtDuration(min: number): string {
 export function fmtClock(hhmm: string, locale: string = dateLocale()): string {
   const m = toMinutes(hhmm)
   const at = new Date(Date.UTC(2000, 0, 1, Math.floor(m / 60), m % 60))
-  return new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }).format(at)
+  const opts: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }
+  // 12h locales write "9:05 AM", not "09:05 AM"; 24h ones keep the two digits.
+  const cycle = new Intl.DateTimeFormat(locale, { hour: 'numeric' }).resolvedOptions().hourCycle
+  if (cycle === 'h11' || cycle === 'h12') opts.hour = 'numeric'
+  return new Intl.DateTimeFormat(locale, opts).format(at)
 }
