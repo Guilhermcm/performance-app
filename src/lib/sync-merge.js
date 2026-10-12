@@ -7,7 +7,8 @@
  * entries and lets the newer copy decide everything that has no natural union.
  *
  * Rules, by field:
- *   - scalars and settings, `week`, `dayPlan`, `wc`, `reminder`, …: from the copy with the newer `_ts`
+ *   - scalars and settings, `week`, `dayPlan`, `program`, `wc`, `reminder`, …: from the copy with the
+ *     newer `_ts` (a `program` cleared by Undo included)
  *   - equipProfiles, gymCards: union by id, the newer copy's version of an id that both have
  *   - customEx: union by id; of an id that both have, the version edited last by its own `_ts`
  *     (stampCustomEx), the newer copy's on a tie — a photo or link added on one device must not

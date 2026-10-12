@@ -107,3 +107,16 @@ describe('demo seed — effort', () => {
     expect(flat(b)).toBe(flat(S))
   })
 })
+
+describe('demo seed — plan', () => {
+  it('trains the PPL program routines, in push, pull, legs order, on Mon/Wed/Fri', () => {
+    expect(S.routines.map(r => r.name)).toEqual(['PPL · Push', 'PPL · Pull', 'PPL · Legs'])
+    const [push, pull, legs] = S.routines
+    expect(S.week).toEqual({ 1: push.id, 3: pull.id, 5: legs.id })
+    // the program's own exercise config: double progression with its rep range and rest
+    expect(push.prog).toBe('double')
+    expect(push.ex[0]).toEqual({ id: '0025', sets: 4, reps: 12, repsMin: 8, weight: 0, restSec: 120 })
+    const ids = new Set(S.routines.map(r => r.id))
+    S.workouts.forEach(w => expect(ids.has(w.routineId)).toBe(true))
+  })
+})
