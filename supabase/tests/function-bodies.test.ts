@@ -29,6 +29,27 @@ const REDEFINED: { fn: string; base: string; in: string; changed: string[] }[] =
     changed: ["'previous', public.pillar_consistency(p_user, 'nutrition', 1))))"],
   },
   { fn: 'get_my_progress', base: '0019_training_days.sql', in: '0023_sleep_progress.sql', changed: [] },
+  { fn: 'challenge_progress', base: '0020_checkin_feed.sql', in: '0024_sleep_challenge.sql', changed: [] },
+  { fn: 'close_challenge', base: '0020_checkin_feed.sql', in: '0024_sleep_challenge.sql', changed: [] },
+  // The two-day templates gain the sleep one.
+  {
+    fn: 'challenge_grace', base: '0020_checkin_feed.sql', in: '0024_sleep_challenge.sql',
+    changed: ["select case when p_template in ('nutrition_days_on_target', 'weeks_on_target', 'workouts_count', 'checkin_days')"],
+  },
+  // The template list gains the sleep one and the creator's row records share_sleep.
+  {
+    fn: 'create_challenge', base: '0020_checkin_feed.sql', in: '0024_sleep_challenge.sql',
+    changed: [
+      "'checkin_days')",
+      'insert into public.challenge_members (challenge_id, user_id, invited_by, joined_at, share_volume, share_nutrition)',
+      "values (v_id, v_me, null, public.app_now(), p_template = 'volume_total', p_template = 'nutrition_days_on_target');",
+    ],
+  },
+  // Joining records share_sleep next to share_nutrition.
+  {
+    fn: 'join_challenge', base: '0015_nutrition_challenge.sql', in: '0024_sleep_challenge.sql',
+    changed: ["share_nutrition = (v_c.template = 'nutrition_days_on_target')"],
+  },
 ]
 
 describe('redefined function bodies', () => {

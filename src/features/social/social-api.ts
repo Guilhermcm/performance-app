@@ -70,18 +70,22 @@ export const getChallenges = () => rpc<Challenge[]>('get_challenges')
 // Every parameter by name (0015_nutrition_challenge.sql): PostgREST picks the function by the names
 // sent, so a call stays unambiguous while old and new signatures meet during a deploy, and
 // social-api.test.ts checks the names against the newest migration.
+// p_share_sleep (0024_sleep_challenge.sql) stays false while the form does not offer the sleep
+// template.
 export const createChallenge = async (c: NewChallenge): Promise<string> =>
   (await rpc<{ id: string }>('create_challenge', {
     p_template: c.template, p_title: c.title, p_mode: c.mode, p_target: c.target,
     p_starts_on: c.starts_on, p_ends_on: c.ends_on, p_invitees: c.invitees, p_share_volume: c.share_volume,
-    p_share_nutrition: c.share_nutrition
+    p_share_nutrition: c.share_nutrition, p_share_sleep: false
   })).id
 
 // The opt-ins a template asks for when joining: volume_total shares the volume, the nutrition
 // template the count of days on target.
 export type JoinOptIns = { shareVolume?: boolean; shareNutrition?: boolean }
 export const joinChallenge = async (id: string, { shareVolume = false, shareNutrition = false }: JoinOptIns = {}): Promise<void> => {
-  await rpc<null>('join_challenge', { p_id: id, p_share_volume: shareVolume, p_share_nutrition: shareNutrition })
+  await rpc<null>('join_challenge', {
+    p_id: id, p_share_volume: shareVolume, p_share_nutrition: shareNutrition, p_share_sleep: false
+  })
 }
 export const leaveChallenge = async (id: string): Promise<void> => {
   await rpc<null>('leave_challenge', { p_id: id })

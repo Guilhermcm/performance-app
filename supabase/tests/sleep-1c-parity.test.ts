@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import type { PGlite } from '@electric-sql/pglite'
 import { freshDb, asUser } from './helpers/db'
-import { A, makeUser, setClock, withoutEventWindow, ledger, sql } from './helpers/game'
+import { A, B, makeUser, setClock, withoutEventWindow, ledger, sql } from './helpers/game'
+import { befriend, one, rows } from './helpers/social'
 import { addCheckin } from './helpers/checkin'
 import { closeAs, enableNutrition, setTarget } from './helpers/nutrition'
 
@@ -107,5 +108,73 @@ describe('progress (0023)', () => {
       nutrition: { current: 0.5, previous: null },
       sleep: { current: null, previous: null },
     })
+  })
+})
+
+describe('challenges (0024)', () => {
+  // Named parameters of the 1c client (no p_share_sleep). Seven days from Monday 2026-10-05.
+  const create = async (template: string, target: number, shareNutrition = false) =>
+    (await one<{ id: string }>(db, A,
+      `select public.create_challenge(p_template => $1, p_title => 'Desafio', p_mode => 'team', p_target => $2::numeric,
+              p_starts_on => '2026-10-05', p_ends_on => '2026-10-11', p_invitees => $3::uuid[],
+              p_share_volume => false, p_share_nutrition => $4) as v`,
+      [template, target, '{' + B + '}', shareNutrition])).id
+  const join = (id: string, shareNutrition = false) =>
+    rows(db, B, 'select public.join_challenge(p_id => $1, p_share_volume => false, p_share_nutrition => $2)', [id, shareNutrition])
+  const board = async () => {
+    const [c] = await one<any[]>(db, A, 'select public.get_challenges() as v')
+    return { status: c.status, members: c.members.map((m: any) => [m.name, m.progress, m.won]) }
+  }
+  const closeAll = async () => (await sql<{ n: number }>(db, 'select public.close_all_challenges() as n'))[0].n
+  const bonus = async (uid: string) => (await ledger(db, uid)).filter(r => r.reason.startsWith('challenge:')).map(r => r.amount)
+
+  beforeEach(async () => {
+    await makeUser(db, B, { display_name: 'Bia' })
+    await befriend(db, A, B)
+  })
+
+  it('still counts training days in checkin_days', async () => {
+    const id = await create('checkin_days', 5)
+    await join(id)
+    await addCheckin(db, A, { day: '2026-10-05' })
+    await addCheckin(db, A, { day: '2026-10-05', visibility: 'private' })   // same day
+    await setClock(db, '2026-10-07T15:00:00Z')
+    await sql(db, 'select public.close_training_days($1)', [A])
+    expect(await board()).toEqual({ status: 'active', members: [['Ana', 1, null], ['Bia', 0, null]] })
+  })
+
+  it('still waits 2 days for checkin_days and closes pending training days first', async () => {
+    const id = await create('checkin_days', 3)
+    await join(id)
+    await addCheckin(db, A, { day: '2026-10-05' })
+    await setClock(db, '2026-10-06T15:00:00Z')
+    await addCheckin(db, B, { day: '2026-10-06' })
+    await setClock(db, '2026-10-11T15:00:00Z')
+    await addCheckin(db, A, { day: '2026-10-11' })   // the last day, still open
+    await setClock(db, '2026-10-14T02:59:00Z')       // 23:59 on ends_on + 2
+    expect(await closeAll()).toBe(0)
+    await setClock(db, '2026-10-14T03:01:00Z')       // 00:01 on ends_on + 3
+    expect(await closeAll()).toBe(1)
+    expect(await board()).toEqual({ status: 'won', members: [['Ana', 2, true], ['Bia', 1, true]] })
+    expect(await bonus(A)).toEqual([300])
+  })
+
+  it('still closes a nutrition challenge', async () => {
+    for (const u of [A, B]) {
+      await enableNutrition(db, u)
+      await setTarget(db, u, '2026-10-05', { kcal: 2000, protein_g: 150, carbs_g: 200, fat_g: 60 })
+    }
+    const id = await create('nutrition_days_on_target', 2, true)
+    await join(id, true)
+    // Ana on target on Monday and on the last day; nothing closed before the challenge.
+    for (const day of ['2026-10-05', '2026-10-11'])
+      for (const meal of ['lunch', 'dinner'])
+        await sql(db,
+          `insert into public.food_logs (id, user_id, day, meal, name, source, kcal, protein_g, carbs_g, fat_g)
+           values (gen_random_uuid(), $1, $2, $3, 'Item', 'quick', 1000, 75, 100, 30)`, [A, day, meal])
+    await setClock(db, '2026-10-14T03:01:00Z')
+    expect(await closeAll()).toBe(1)
+    expect(await board()).toEqual({ status: 'won', members: [['Ana', 2, true], ['Bia', 0, true]] })
+    expect(await bonus(B)).toEqual([300])
   })
 })

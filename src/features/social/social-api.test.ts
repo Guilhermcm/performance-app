@@ -35,7 +35,7 @@ describe('social api', () => {
     expect(h.rpc).toHaveBeenLastCalledWith('create_challenge', {
       p_template: 'volume_total', p_title: 'Toneladas', p_mode: 'team', p_target: 20,
       p_starts_on: '2026-10-05', p_ends_on: '2026-11-03', p_invitees: ['b'], p_share_volume: true,
-      p_share_nutrition: false
+      p_share_nutrition: false, p_share_sleep: false
     })
     await api.createChallenge({
       template: 'nutrition_days_on_target', title: 'No alvo', mode: 'solo', target: 20,
@@ -47,11 +47,11 @@ describe('social api', () => {
 
     h.rpc.mockResolvedValue({ data: null, error: null })
     await api.joinChallenge('c9', { shareVolume: true })
-    expect(h.rpc).toHaveBeenLastCalledWith('join_challenge', { p_id: 'c9', p_share_volume: true, p_share_nutrition: false })
+    expect(h.rpc).toHaveBeenLastCalledWith('join_challenge', { p_id: 'c9', p_share_volume: true, p_share_nutrition: false, p_share_sleep: false })
     await api.joinChallenge('c9', { shareNutrition: true })
-    expect(h.rpc).toHaveBeenLastCalledWith('join_challenge', { p_id: 'c9', p_share_volume: false, p_share_nutrition: true })
+    expect(h.rpc).toHaveBeenLastCalledWith('join_challenge', { p_id: 'c9', p_share_volume: false, p_share_nutrition: true, p_share_sleep: false })
     await api.joinChallenge('c9')
-    expect(h.rpc).toHaveBeenLastCalledWith('join_challenge', { p_id: 'c9', p_share_volume: false, p_share_nutrition: false })
+    expect(h.rpc).toHaveBeenLastCalledWith('join_challenge', { p_id: 'c9', p_share_volume: false, p_share_nutrition: false, p_share_sleep: false })
     await api.leaveChallenge('c9')
     expect(h.rpc).toHaveBeenLastCalledWith('leave_challenge', { p_id: 'c9' })
 
