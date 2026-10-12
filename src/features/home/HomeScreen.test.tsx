@@ -92,7 +92,7 @@ describe('HomeScreen', () => {
         const el = container.querySelector<HTMLElement>('[data-slot="pillar-radar"]:not([aria-busy])')
         if (!el) throw new Error('radar not loaded yet')
         return el
-      })
+      }, { timeout: 10_000 }) // the first test to import the chart chunk pays its cold transform
       expect(radar.className).toContain(RADAR_CARD)
       expect(container.querySelector('[data-slot="pillar-radar"][aria-busy="true"]')).toBeNull()
     } finally {
