@@ -47,6 +47,16 @@ export function fmtDuration(min: number): string {
   return r === 0 ? t('{0}h', h) : t('{0}h {1}', h, String(r).padStart(2, '0'))
 }
 
+// A gap between two times, written tighter than a night's length: "25 min", "1h", "1h10". The
+// sign is dropped; the sentence around it says before or after, over or under.
+export function fmtGap(min: number): string {
+  const m = Math.abs(Math.round(min))
+  if (m < 60) return t('{0} min', m)
+  const h = Math.floor(m / 60)
+  const r = m % 60
+  return r === 0 ? t('{0}h', h) : t('{0}h{1}', h, String(r).padStart(2, '0'))
+}
+
 // The clock in the language's own convention (24h or 12h). `locale` is for tests and callers that
 // already know it; by default it is the app's current language.
 export function fmtClock(hhmm: string, locale: string = dateLocale()): string {

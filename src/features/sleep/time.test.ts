@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   toMinutes, fromMinutes, shiftClock, durationMin, circularDiff, signedDeviation, bedDate, validDuration,
-  fmtDuration, fmtClock,
+  fmtDuration, fmtClock, fmtGap,
 } from './time'
 
 describe('sleep time rules', () => {
@@ -52,6 +52,14 @@ describe('sleep time rules', () => {
     expect(fmtDuration(480)).toBe('8h')
     expect(fmtDuration(40)).toBe('40 min')
     expect(fmtDuration(0)).toBe('0')
+  })
+
+  it('writes a gap compactly: "25 min", "1h", "1h10"', () => {
+    expect(fmtGap(25)).toBe('25 min')
+    expect(fmtGap(60)).toBe('1h')
+    expect(fmtGap(70)).toBe('1h10')
+    expect(fmtGap(125)).toBe('2h05')
+    expect(fmtGap(-70)).toBe('1h10')
   })
 
   it('formats the clock in 12h or 24h by the locale', () => {

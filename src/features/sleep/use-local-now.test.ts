@@ -5,7 +5,7 @@ import { useLocalNow } from './use-local-now'
 
 const SP = 'America/Sao_Paulo'
 
-beforeEach(() => { vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] }) })
+beforeEach(() => { vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] }) })
 afterEach(() => { cleanup(); vi.useRealTimers() })
 
 describe('useLocalNow', () => {
@@ -21,6 +21,21 @@ describe('useLocalNow', () => {
     expect(result.current.minutes).toBe(239)
     act(() => { vi.advanceTimersByTime(60_000) })
     expect(result.current).toEqual({ today: '2026-10-07', minutes: 240 })
+  })
+
+  it('moves right on the minute boundary, not up to a minute late', () => {
+    vi.setSystemTime(new Date('2026-10-07T06:59:30Z')) // 03:59:30 in Sao Paulo
+    const { result } = renderHook(() => useLocalNow(SP))
+    expect(result.current.minutes).toBe(239)
+    act(() => { vi.advanceTimersByTime(29_999) })
+    expect(result.current.minutes).toBe(239)
+    act(() => { vi.advanceTimersByTime(1) })
+    expect(result.current.minutes).toBe(240)
+    // Then once a minute, still on the boundary.
+    act(() => { vi.advanceTimersByTime(59_999) })
+    expect(result.current.minutes).toBe(240)
+    act(() => { vi.advanceTimersByTime(1) })
+    expect(result.current.minutes).toBe(241)
   })
 
   it('turns the day at local midnight', () => {
@@ -47,6 +62,12 @@ describe('useLocalNow', () => {
     const { result, unmount } = renderHook(() => useLocalNow(null))
     expect(result.current.minutes).toBe(239)
     unmount()
+    expect(vi.getTimerCount()).toBe(0)
+    // Also once the boundary timeout has handed over to the interval.
+    vi.setSystemTime(new Date('2026-10-07T06:59:30Z'))
+    const again = renderHook(() => useLocalNow(SP))
+    act(() => { vi.advanceTimersByTime(30_000) })
+    again.unmount()
     expect(vi.getTimerCount()).toBe(0)
   })
 })

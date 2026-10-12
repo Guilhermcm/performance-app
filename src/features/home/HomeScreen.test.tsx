@@ -16,6 +16,9 @@ import { useProfile } from '../profile/useProfile'
 import { useProgress } from '../gamification/useProgress'
 import { progressOf } from '../gamification/test-progress'
 import { RADAR_CARD } from './PillarRadarSkeleton'
+import { useSleep } from '../sleep/useSleep'
+import { logOf } from '../sleep/test-sleep'
+import { todayIn } from '../nutrition/days'
 
 const setS = (over: Record<string, unknown> = {}, user: unknown = null) =>
   useStore.setState((s: any) => ({ S: { ...s.S, routines: [], dayPlan: {}, workouts: [], bodyweight: [], active: null, week: {}, ...over }, user }))
@@ -123,6 +126,23 @@ describe('HomeScreen', () => {
     } finally {
       useProfile.setState({ profile: null })
       useProgress.getState().reset()
+    }
+  })
+
+  it('puts the sleep card right below the today card', () => {
+    setS({}, { id: 'u1', name: 'Ana' })
+    useProfile.setState({ profile: { id: 'u1', timezone: 'America/Sao_Paulo', nutrition_enabled: false, sleep_enabled: true } as never })
+    const today = todayIn('America/Sao_Paulo')
+    const realSleep = useSleep.getState()
+    useSleep.setState({ status: 'ready', logs: { [today]: logOf({ night: today }) }, refresh: async () => {} })
+    try {
+      render(<HomeScreen />)
+      const todayCard = screen.getByRole('region', { name: 'Today' })
+      const sleepCard = screen.getByTestId('home-sleep-card')
+      expect(todayCard.nextElementSibling).toBe(sleepCard)
+    } finally {
+      useProfile.setState({ profile: null })
+      useSleep.setState(realSleep)
     }
   })
 })
