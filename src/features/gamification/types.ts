@@ -19,8 +19,9 @@ export type WeekProgress = {
   prs: number
   target_hit: boolean
   weighed_today: boolean
-  // The week's XP by pillar; bonus is the general XP (badges, challenges).
-  pillars: { strength: number; nutrition: number; bonus: number }
+  // The week's XP by pillar; bonus is the general XP (badges, challenges). sleep is missing from a
+  // progress cached before the sleep pillar existed.
+  pillars: { strength: number; nutrition: number; sleep?: number; bonus: number }
 }
 
 // The owner's nutrition block (my_progress_extras, 0012_nutrition_progress.sql).
@@ -41,6 +42,20 @@ export type TrainingProgress = {
   last_closed: { day: string; detailed: boolean; xp: number } | null
 }
 
+// The owner's sleep block (my_progress_extras, 0023_sleep_progress.sql), once the pillar was ever
+// turned on: T of the running week, its closed nights on target and logged, the sleep_week streak,
+// the day tonight closes (today + 2), the last closed night with the XP it paid and the last week
+// whose seven nights closed.
+export type SleepProgress = {
+  target: number
+  on_target: number
+  logged: number
+  streak: { current: number; best: number; shields: number }
+  confirms_on: string
+  last_closed: { night: string; logged: boolean; on_target: boolean; rested: boolean; xp: number } | null
+  last_week: { start: string; target_hit: boolean } | null
+}
+
 // Consistency over the last 4 closed weeks and the 4 before them, 0 to 1; null without an active week.
 export type RadarPoint = { current: number | null; previous: number | null }
 
@@ -58,6 +73,8 @@ export type Progress = {
   nutrition?: NutritionProgress
   // Only once a check-in was ever posted.
   training?: TrainingProgress
+  // Only once the sleep pillar was ever turned on.
+  sleep?: SleepProgress
   radar: Partial<Record<PillarKey, RadarPoint>>
   // Not from get_my_progress: the check-in cutover (app_settings.training_checkin_since), read next
   // to it. From that day on live workouts, PRs and weigh-ins pay no XP. Null on a server without it.
@@ -77,12 +94,12 @@ export type XpLine =
 export type XpPreview = { lines: XpLine[]; total: number; viaCheckin?: boolean }
 
 // pillar_level: a pillar's own level went up (the overall one is 'level'). week_target: the nutrition
-// weekly goal was met in a closed week; the strength goal stays in the post-workout summary.
+// or sleep weekly goal was met in a closed week; the strength goal stays in the post-workout summary.
 export type Celebration =
   | { kind: 'level'; level: number }
   | { kind: 'achievement'; code: string }
   | { kind: 'pillar_level'; pillar: PillarKey; level: number }
-  | { kind: 'week_target'; pillar: 'nutrition'; week_start: string }
+  | { kind: 'week_target'; pillar: 'nutrition' | 'sleep'; week_start: string }
 
 // confirmed: the event queue was empty when the progress was read, so it already counts them.
 export type SyncResult = { progress: Progress | null; confirmed: boolean }

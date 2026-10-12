@@ -7,13 +7,13 @@ import { cn } from '@/lib/utils'
 import { useOnline } from '@/lib/use-online'
 import { t } from '../../lib/i18n.js'
 import { useProgress } from '../gamification/useProgress'
+import { useProfile } from '../profile/useProfile'
 import { displayStreak } from '../gamification/preview'
 import { ACHIEVEMENTS } from '../gamification/achievements'
 import { LevelBar } from '../gamification/components/LevelBar'
 import { StreakBadge } from '../gamification/components/StreakBadge'
 import { fmtInt } from '../gamification/format'
 import { ACCENT_TEXT } from '../gamification/components/accent'
-import { WEEK_MAX } from '../gamification/xp'
 import type { WeekProgress } from '../gamification/types'
 
 const CARD = 'relative overflow-hidden rounded-3xl border border-border bg-card p-5 text-card-foreground'
@@ -28,6 +28,8 @@ export function ProgressHero() {
   const status = useProgress(s => s.status)
   const stale = useProgress(s => s.stale)
   const online = useOnline()
+  const nutritionOn = useProfile(s => !!s.profile?.nutrition_enabled)
+  const sleepOn = useProfile(s => !!s.profile?.sleep_enabled)
   const [shieldsOpen, setShieldsOpen] = useState(false)
 
   if (!progress) {
@@ -57,7 +59,7 @@ export function ProgressHero() {
 
   const lv = progress.level
   const week = progress.week
-  const segments = weekSegments(week)
+  const segments = weekSegments(week, { nutrition: nutritionOn, sleep: sleepOn })
 
   return (
     <section data-slot="progress-hero" aria-labelledby="hero-level"
@@ -136,21 +138,25 @@ export function ProgressHero() {
   )
 }
 
-type SegmentKey = 'strength' | 'nutrition' | 'bonus'
+type SegmentKey = 'strength' | 'nutrition' | 'sleep' | 'bonus'
 const SEGMENT: Record<SegmentKey, { label: () => string; fill: string }> = {
   strength: { label: () => t('Training'), fill: 'bg-[var(--pillar-strength)]' },
   nutrition: { label: () => t('Nutrition'), fill: 'bg-pillar-nutrition' },
+  sleep: { label: () => t('Sleep'), fill: 'bg-pillar-sleep' },
   // Badges and challenges belong to no pillar: a neutral tone.
   bonus: { label: () => t('Bonus'), fill: 'bg-muted-foreground/60' }
 }
 
 // The week's XP split by pillar, each a share of the week's maximum, laid end to end and cut at
-// 100%. Nutrition shows while it is part of the week (a second pillar raises the maximum), bonus
-// once there is some. A cached week from an older build has no split: it is all strength.
-export function weekSegments(week: WeekProgress): { key: SegmentKey; xp: number; pct: number }[] {
+// 100%. Nutrition and sleep show while the profile has them on or they earned XP this week (plan
+// decision 9: the maximum alone cannot tell which pillar raised it), bonus once there is some. A
+// cached week from an older build has no split (all strength) or no sleep in it (none yet).
+export function weekSegments(week: WeekProgress, active: { nutrition: boolean; sleep: boolean }): { key: SegmentKey; xp: number; pct: number }[] {
   const p = week.pillars ?? { strength: week.xp, nutrition: 0, bonus: 0 }
+  const sleep = p.sleep ?? 0
   const shown: [SegmentKey, number][] = [['strength', p.strength]]
-  if (week.max > WEEK_MAX || p.nutrition > 0) shown.push(['nutrition', p.nutrition])
+  if (active.nutrition || p.nutrition > 0) shown.push(['nutrition', p.nutrition])
+  if (active.sleep || sleep > 0) shown.push(['sleep', sleep])
   if (p.bonus > 0) shown.push(['bonus', p.bonus])
   let room = 100
   return shown.map(([key, xp]) => {

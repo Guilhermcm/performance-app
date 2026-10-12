@@ -236,10 +236,23 @@ describe('the check-in panel', () => {
     expect(screen.getByText('Workout detailed')).toBeTruthy()
     fireEvent.click(postButton()!)
     await settle()
-    expect(post.mock.calls[0][0].detail).toEqual({ entries: [{ id: BENCH, sets: [{ w: 45, r: 8, done: true }] }] })
+    expect(post.mock.calls[0][0].detail).toEqual({ entries: [{ id: BENCH, sets: [{ w: 45, r: 8, done: true }] }], unit: 'kg' })
     const S = useStore.getState().S
     expect(S.workouts.map((w: { id: string }) => w.id)).toEqual(['w1', 'c1'])
     expect(S.workouts[1]).toMatchObject({ d: '2026-10-10', routineId: 'r1', entries: [{ id: BENCH, sets: [{ w: 45, r: 8, done: true }] }] })
+  })
+
+  it('keeps the suggested load when the draft detail is reopened before posting', () => {
+    setup({ workouts: [{ id: 'w1', d: '2026-10-03', start: 1, end: 2, routineIds: ['r1'], routineId: 'r1', name: 'Push', prs: [],
+      entries: [{ id: BENCH, rid: 'r1', target: PUSH.ex[0], sets: [{ w: 42.5, r: 8, done: true }, { w: 42.5, r: 8, done: true }] }] }] })
+    open(); pickPhoto()
+    fireEvent.click(screen.getByRole('button', { name: 'Detail workout' }))
+    let sheet = screen.getAllByRole('dialog').at(-1)!
+    expect(within(sheet).getByText('suggested 45 kg')).toBeTruthy()
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Save' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    sheet = screen.getAllByRole('dialog').at(-1)!
+    expect(within(sheet).getByText('suggested 45 kg')).toBeTruthy()
   })
 
   it('has no detail for an activity other than strength training', () => {

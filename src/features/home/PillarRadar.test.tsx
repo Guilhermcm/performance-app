@@ -16,6 +16,11 @@ vi.mock('@/components/ui/drawer', () => import('../social/test-drawer'))
 vi.mock('../nutrition/NutritionSetup', () => ({
   default: ({ open }: { open: boolean }) => (open ? <div data-testid="nutrition-setup" /> : null)
 }))
+vi.mock('../sleep/SleepSetup', () => ({
+  default: ({ open }: { open: boolean }) => (open ? <div data-testid="sleep-setup" /> : null)
+}))
+const h = vi.hoisted(() => ({ nav: vi.fn() }))
+vi.mock('react-router-dom', () => ({ useNavigate: () => h.nav }))
 
 import PillarRadar, { radarDescription } from './PillarRadar'
 import { setLang } from '../../lib/i18n.js'
@@ -34,7 +39,11 @@ const centre = (c: HTMLElement) => {
   return [ring.getAttribute('cx'), ring.getAttribute('cy')]
 }
 
-afterEach(() => cleanup())
+const RELEASED_SLEEP: PillarKey[] = ['strength', 'nutrition', 'sleep']
+const SLEEP_ON = { strength: true, nutrition: true, sleep: true }
+const RADAR_SLEEP: Progress['radar'] = { ...RADAR, sleep: { current: 0.5, previous: 0.25 } }
+
+afterEach(() => { cleanup(); h.nav.mockClear() })
 
 describe('PillarRadar', () => {
   it('describes the chart in text', async () => {
@@ -107,5 +116,68 @@ describe('PillarRadar', () => {
     const { container } = render(<PillarRadar radar={undefined} enabled={ALL_ON} released={RELEASED} />)
     expect(tick(container, 'strength').dataset.state).toBe('on')
     expect(within(tick(container, 'strength')).getByText('No weeks yet')).toBeTruthy()
+  })
+
+  describe('with sleep released', () => {
+    it('describes the sleep axis in text', async () => {
+      expect(radarDescription(RADAR_SLEEP, SLEEP_ON, RELEASED_SLEEP)).toBe('Training 82%, Nutrition 64%, Sleep 50%, Habits coming soon')
+      await setLang('pt-BR')
+      try {
+        expect(radarDescription(RADAR_SLEEP, SLEEP_ON, RELEASED_SLEEP)).toBe('Treino 82%, Nutrição 64%, Sono 50%, Hábitos em breve')
+      } finally {
+        await setLang('en')
+      }
+    })
+
+    it('locks sleep while it is off and opens its activation', () => {
+      const enabled = { strength: true, nutrition: true, sleep: false }
+      const { container } = render(<PillarRadar radar={RADAR_SLEEP} enabled={enabled} released={RELEASED_SLEEP} />)
+      expect(tick(container, 'sleep').dataset.state).toBe('off')
+      expect(tick(container, 'sleep').querySelector('[data-icon="lock"]')).toBeTruthy()
+      expect(radarDescription(RADAR_SLEEP, enabled, RELEASED_SLEEP)).toBe('Training 82%, Nutrition 64%, Sleep: off, Habits coming soon')
+      fireEvent.click(screen.getByRole('button', { name: 'Turn on Sleep' }))
+      expect(screen.getByTestId('sleep-setup')).toBeTruthy()
+      expect(screen.queryByTestId('nutrition-setup')).toBeNull()
+      expect(screen.queryByRole('dialog')).toBeNull()
+    })
+
+    it('turns on each pillar from the detail sheet', () => {
+      render(<PillarRadar radar={RADAR_SLEEP} enabled={{ strength: true, nutrition: false, sleep: false }} released={RELEASED_SLEEP} />)
+      fireEvent.click(screen.getByRole('button', { name: 'Pillar details' }))
+      fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Turn on Sleep' }))
+      expect(screen.getByTestId('sleep-setup')).toBeTruthy()
+      expect(screen.queryByTestId('nutrition-setup')).toBeNull()
+    })
+
+    it('shows sleep without active weeks at the center with its state', () => {
+      const radar = { ...RADAR, sleep: { current: null, previous: null } }
+      const { container } = render(<PillarRadar radar={radar} enabled={SLEEP_ON} released={RELEASED_SLEEP} />)
+      expect(tick(container, 'sleep').dataset.state).toBe('on')
+      expect(within(tick(container, 'sleep')).getByText('No weeks yet')).toBeTruthy()
+      const vertex = container.querySelector('[data-vertex="sleep"]')!
+      expect([vertex.getAttribute('cx'), vertex.getAttribute('cy')]).toEqual(centre(container))
+      expect(radarDescription(radar, SLEEP_ON, RELEASED_SLEEP)).toBe('Training 82%, Nutrition 64%, Sleep: no weeks yet, Habits coming soon')
+    })
+
+    it('opens the sleep screen from the axis label and from the detail sheet', () => {
+      const { container } = render(<PillarRadar radar={RADAR_SLEEP} enabled={SLEEP_ON} released={RELEASED_SLEEP} />)
+      const open = within(tick(container, 'sleep')).getByRole('button', { name: 'Open Sleep' })
+      expect(within(open).getByText('50%')).toBeTruthy()
+      fireEvent.click(open)
+      expect(h.nav).toHaveBeenCalledWith('/sono')
+      // The label goes to the screen only, not to the detail sheet behind it.
+      expect(screen.queryByRole('dialog')).toBeNull()
+      fireEvent.click(screen.getByRole('button', { name: 'Pillar details' }))
+      fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Open Sleep' }))
+      expect(h.nav).toHaveBeenCalledTimes(2)
+      expect(h.nav).toHaveBeenLastCalledWith('/sono')
+    })
+
+    it('reads a cached radar without sleep', () => {
+      const { container } = render(<PillarRadar radar={RADAR} enabled={SLEEP_ON} released={RELEASED_SLEEP} />)
+      expect(tick(container, 'sleep').dataset.state).toBe('on')
+      expect(within(tick(container, 'sleep')).getByText('No weeks yet')).toBeTruthy()
+      expect(radarDescription(RADAR, SLEEP_ON, RELEASED_SLEEP)).toBe('Training 82%, Nutrition 64%, Sleep: no weeks yet, Habits coming soon')
+    })
   })
 })

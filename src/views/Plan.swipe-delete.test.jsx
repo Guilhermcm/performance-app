@@ -11,7 +11,7 @@ import Plan from './Plan.jsx'
 const nav = vi.fn()
 vi.mock('react-router-dom', () => ({ useNavigate: () => nav }))
 vi.mock('../sheets.jsx', () => ({
-  dayAssignSheet: vi.fn(), dayAddRoutineSheet: vi.fn(), starterPlanSheet: vi.fn(), planToolsSheet: vi.fn(),
+  dayAssignSheet: vi.fn(), dayAddRoutineSheet: vi.fn(), planToolsSheet: vi.fn(),
   // Say yes straight away: the sheet itself is not what is under test.
   confirmSheet: ({ onConfirm }) => onConfirm(),
 }))

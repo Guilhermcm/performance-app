@@ -6,7 +6,7 @@ const h = vi.hoisted(() => ({ nav: vi.fn(), bwSheet: vi.fn(), weighInsSheet: vi.
 vi.mock('react-router-dom', () => ({ useNavigate: () => h.nav }))
 vi.mock('../../sheets.jsx', () => ({
   bwSheet: h.bwSheet, weighInsSheet: h.weighInsSheet, goalSheet: h.goalSheet, bwDeltaColor: () => '',
-  dayOverrideSheet: vi.fn(), calendarSheet: vi.fn(), startFlow: vi.fn(), starterPlanSheet: vi.fn()
+  dayOverrideSheet: vi.fn(), calendarSheet: vi.fn(), startFlow: vi.fn()
 }))
 vi.mock('../../components/LineChart.jsx', () => ({ default: () => null }))
 
@@ -16,6 +16,9 @@ import { useProfile } from '../profile/useProfile'
 import { useProgress } from '../gamification/useProgress'
 import { progressOf } from '../gamification/test-progress'
 import { RADAR_CARD } from './PillarRadarSkeleton'
+import { useSleep } from '../sleep/useSleep'
+import { logOf } from '../sleep/test-sleep'
+import { todayIn } from '../nutrition/days'
 
 const setS = (over: Record<string, unknown> = {}, user: unknown = null) =>
   useStore.setState((s: any) => ({ S: { ...s.S, routines: [], dayPlan: {}, workouts: [], bodyweight: [], active: null, week: {}, ...over }, user }))
@@ -89,9 +92,28 @@ describe('HomeScreen', () => {
         const el = container.querySelector<HTMLElement>('[data-slot="pillar-radar"]:not([aria-busy])')
         if (!el) throw new Error('radar not loaded yet')
         return el
-      })
+      }, { timeout: 10_000 }) // the first test to import the chart chunk pays its cold transform
       expect(radar.className).toContain(RADAR_CARD)
       expect(container.querySelector('[data-slot="pillar-radar"][aria-busy="true"]')).toBeNull()
+    } finally {
+      useProfile.setState({ profile: null })
+      useProgress.getState().reset()
+    }
+  })
+
+  it('puts sleep on the radar, on or off as the profile says', async () => {
+    setS({}, { id: 'u1', name: 'Ana' })
+    useProgress.setState({ status: 'ready', progress: progressOf(400), userId: 'u1' })
+    // Recharts draws nothing without a layout here; the radar's text description says the states.
+    const described = (text: string) => waitFor(() => expect(screen.getByText(text)).toBeTruthy(), { timeout: 10_000 })
+    try {
+      useProfile.setState({ profile: { timezone: 'America/Sao_Paulo', nutrition_enabled: true, sleep_enabled: true } as never })
+      const on = render(<HomeScreen />)
+      await described('Training: no weeks yet, Nutrition: no weeks yet, Sleep: no weeks yet, Habits coming soon')
+      on.unmount()
+      useProfile.setState({ profile: { timezone: 'America/Sao_Paulo', nutrition_enabled: true, sleep_enabled: false } as never })
+      render(<HomeScreen />)
+      await described('Training: no weeks yet, Nutrition: no weeks yet, Sleep: off, Habits coming soon')
     } finally {
       useProfile.setState({ profile: null })
       useProgress.getState().reset()
@@ -123,6 +145,23 @@ describe('HomeScreen', () => {
     } finally {
       useProfile.setState({ profile: null })
       useProgress.getState().reset()
+    }
+  })
+
+  it('puts the sleep card right below the today card', () => {
+    setS({}, { id: 'u1', name: 'Ana' })
+    useProfile.setState({ profile: { id: 'u1', timezone: 'America/Sao_Paulo', nutrition_enabled: false, sleep_enabled: true } as never })
+    const today = todayIn('America/Sao_Paulo')
+    const realSleep = useSleep.getState()
+    useSleep.setState({ status: 'ready', logs: { [today]: logOf({ night: today }) }, refresh: async () => {} })
+    try {
+      render(<HomeScreen />)
+      const todayCard = screen.getByRole('region', { name: 'Today' })
+      const sleepCard = screen.getByTestId('home-sleep-card')
+      expect(todayCard.nextElementSibling).toBe(sleepCard)
+    } finally {
+      useProfile.setState({ profile: null })
+      useSleep.setState(realSleep)
     }
   })
 })

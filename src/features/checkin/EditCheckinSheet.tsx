@@ -184,7 +184,7 @@ function Form({ base, onDone }: { base: CheckinRow; onDone: (row: CheckinRow) =>
       </DrawerFooter>
 
       {detailable && !live && (
-        <DetailSheet open={detailOpen} onOpenChange={setDetailOpen} routineId={base.routine_id} initial={detail} onConfirm={setDetail} />
+        <DetailSheet open={detailOpen} onOpenChange={setDetailOpen} routineId={base.routine_id} initial={detail} posted onConfirm={setDetail} />
       )}
     </>
   )

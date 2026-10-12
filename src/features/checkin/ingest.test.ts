@@ -48,6 +48,13 @@ describe('draftFor', () => {
     ])
   })
 
+  it('reopens a detail given in the other unit in the profile’s unit', () => {
+    const given: CheckinDetail = { unit: 'kg', entries: [{ id: BENCH, sets: [done(60, 8)] as { w: number; r: number; done: true }[] }] }
+    // 60 kg = 132.5 lb, on the 5 lb grid of a bench: 135
+    expect(draftFor(stateWith({ unit: 'lb' }), 'r1', given)[0]).toEqual({ id: BENCH, on: true, sets: [{ w: 135, r: 8 }] })
+    expect(draftFor(stateWith({ unit: 'kg' }), 'r1', given)[0]).toEqual({ id: BENCH, on: true, sets: [{ w: 60, r: 8 }] })
+  })
+
   it('is empty without a routine', () => {
     expect(draftFor(stateWith(), null)).toEqual([])
     expect(draftFor(stateWith(), 'gone')).toEqual([])
@@ -55,12 +62,18 @@ describe('draftFor', () => {
 })
 
 describe('detailOf', () => {
-  it('keeps the exercises on, and the sets with reps', () => {
+  it('keeps the exercises on, and the sets with reps, in the unit of the profile', () => {
     expect(detailOf([
       { id: BENCH, on: true, sets: [{ w: 40, r: 8 }, { w: 40, r: 0 }] },
       { id: ROW, on: false, sets: [{ w: 30, r: 10 }] }
-    ])).toEqual({ entries: [{ id: BENCH, sets: [{ w: 40, r: 8, done: true }] }] })
+    ])).toEqual({ entries: [{ id: BENCH, sets: [{ w: 40, r: 8, done: true }] }], unit: 'kg' })
     expect(detailOf([{ id: ROW, on: true, sets: [{ w: 30, r: 0 }] }])).toBeNull()
+  })
+
+  it('writes unit: S.unit', () => {
+    useStore.setState({ S: stateWith({ unit: 'lb' }) })
+    expect(detailOf([{ id: BENCH, on: true, sets: [{ w: 135, r: 8 }] }])?.unit).toBe('lb')
+    expect(detailOf([{ id: BENCH, on: true, sets: [{ w: 60, r: 8 }] }], 'kg')?.unit).toBe('kg')
   })
 })
 
@@ -72,8 +85,14 @@ describe('detailOfWorkout', () => {
         { id: RUN, target: PUSH.ex[2], sets: [{ min: 20, speed: 10, done: true }] }
       ]
     }
-    expect(detailOfWorkout(w)).toEqual({ entries: [{ id: BENCH, sets: [{ w: 40, r: 8, done: true }] }] })
+    expect(detailOfWorkout(w)).toEqual({ entries: [{ id: BENCH, sets: [{ w: 40, r: 8, done: true }] }], unit: 'kg' })
     expect(detailOfWorkout({ id: 'x', entries: [] })).toBeNull()
+  })
+
+  it('writes unit: S.unit', () => {
+    useStore.setState({ S: stateWith({ unit: 'lb' }) })
+    const w = { id: 'live', entries: [{ id: BENCH, target: PUSH.ex[0], sets: [done(135, 8)] }] }
+    expect(detailOfWorkout(w)?.unit).toBe('lb')
   })
 })
 
@@ -177,5 +196,51 @@ describe('PRs of a detailed check-in', () => {
     ingestCheckin({ id: 'c1', day: '2026-10-10', routineId: 'r1', name: 'Push', durationMin: 50,
       detail: { entries: [{ id: BENCH, sets: [done(45, 8)] as { w: number; r: number; done: true }[] }] } })
     expect(emit).not.toHaveBeenCalled()
+  })
+})
+
+// Spec §6 "Unidade do detalhe": the detail keeps the unit it was written in, and its weights are
+// converted to S.unit when it goes into the history, rounded to the exercise's load step.
+describe('the unit of a detail', () => {
+  const sets = (...ws: number[]) => ws.map(w => done(w, 8)) as { w: number; r: number; done: true }[]
+  const SQUAT = '0043'
+  const input = (detail: CheckinDetail) => ({ id: 'c1', day: '2026-10-10', routineId: 'r1', name: 'Push', durationMin: 50, detail })
+  const weights = (S: ReturnType<typeof stateWith>, detail: CheckinDetail) =>
+    checkinWorkout(S, input(detail)).entries.map(e => e.sets.map(s => s.w))
+
+  it('kg into an lb profile: convertWeight, then snapped to the lb step of each exercise', () => {
+    const S = stateWith({ unit: 'lb' })
+    // bench 62.5 kg = 138 lb, 5 lb step: 140. A squat steps by 10 lb: 100 kg = 220.5 lb, 220.
+    const detail: CheckinDetail = { unit: 'kg', entries: [{ id: BENCH, sets: sets(62.5, 61) }, { id: SQUAT, sets: sets(100) }] }
+    expect(weights(S, detail)).toEqual([[140, 135], [220]])
+  })
+
+  it('lb into a kg profile, with the step of the routine’s own config when it sets one', () => {
+    const S = stateWith({ unit: 'kg', routines: [{ ...clone(PUSH), ex: [{ ...PUSH.ex[0], inc: 1 }, PUSH.ex[1]] }] })
+    // 135 lb = 61.25 kg; bench steps by 1 here: 61. The row by its default 5: 100 lb = 45.25 kg, 45.
+    const detail: CheckinDetail = { unit: 'lb', entries: [{ id: BENCH, sets: sets(135) }, { id: ROW, sets: sets(100) }] }
+    expect(weights(S, detail)).toEqual([[61], [45]])
+  })
+
+  it('a detail without a unit, or in the profile’s unit, is taken as it is', () => {
+    expect(weights(stateWith({ unit: 'lb' }), { entries: [{ id: BENCH, sets: sets(62.5) }] })).toEqual([[62.5]])
+    expect(weights(stateWith({ unit: 'lb' }), { unit: 'lb', entries: [{ id: BENCH, sets: sets(137) }] })).toEqual([[137]])
+    expect(weights(stateWith({ unit: 'kg' }), { unit: 'kg', entries: [{ id: BENCH, sets: sets(61) }] })).toEqual([[61]])
+  })
+
+  it('ingesting the same detail twice gives the same history', () => {
+    useStore.setState({ S: stateWith({ unit: 'lb' }) })
+    const detail: CheckinDetail = { unit: 'kg', entries: [{ id: BENCH, sets: sets(62.5, 60) }] }
+    const frozen = clone(detail)
+    ingestCheckin(input(detail))
+    const once = clone(useStore.getState().S.workouts)
+    const kept = clone(useStore.getState().S.exWeights)
+    ingestCheckin(input(detail))
+    const S = useStore.getState().S
+    expect(S.workouts.map((w: { entries: { sets: unknown }[] }) => w.entries.map(e => e.sets))).toEqual(once.map((w: { entries: { sets: unknown }[] }) => w.entries.map(e => e.sets)))
+    expect(S.workouts[0].entries[0].sets.map((s: { w: number }) => s.w)).toEqual([140, 135])
+    expect(S.exWeights).toEqual(kept)
+    expect(S.exWeights[BENCH].w).toBe(140)
+    expect(detail).toEqual(frozen)
   })
 })

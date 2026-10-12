@@ -1,4 +1,4 @@
-import { Apple, Dumbbell, Target, Weight, type LucideIcon } from 'lucide-react'
+import { Apple, Dumbbell, Moon, Target, Weight, type LucideIcon } from 'lucide-react'
 import { t, tn } from '../../lib/i18n.js'
 import { fmtDecimal } from './format'
 import { isTrainingDays } from './templates'
@@ -21,6 +21,8 @@ export function socialErrorText(code: SocialErrorCode): string {
     case 'volume_opt_in_required': return t('To join, agree to share your volume.')
     case 'nutrition_opt_in_required': return t('To take part, agree to show how many days you were on target.')
     case 'nutrition_off': return t('Turn on the Nutrition pillar to take part in this challenge.')
+    case 'sleep_opt_in_required': return t('To take part, agree to show how many nights you were on target.')
+    case 'sleep_off': return t('Turn on the Sleep pillar to take part in this challenge.')
     case 'not_found': return t('This post is no longer available.')
     case 'invalid_emoji': return t('This emoji doesn’t work here. Try another one.')
     case 'invalid_comment': return t('A comment goes from 1 to 500 characters.')
@@ -44,6 +46,11 @@ export const TEMPLATE_TEXT: Record<ChallengeTemplate, { name: () => string; rule
     name: () => t('Days on nutrition target'),
     rule: () => t('Days in the period that each person hits their nutrition target. Others only see how many, never what you ate.'),
     icon: Apple
+  },
+  sleep_nights_on_target: {
+    name: () => t('Nights on sleep target'),
+    rule: () => t('Nights in the period that each person hits their sleep target. Others only see how many, never your times, how long you slept, its quality or your notes.'),
+    icon: Moon
   }
 }
 
@@ -52,11 +59,12 @@ export const MODE_TEXT: Record<ChallengeMode, { name: () => string; detail: () =
   solo: { name: () => t('Solo'), detail: () => t('Each person has to reach the goal.') }
 }
 
-// "1 training day", "12 training days", "3 weeks", "12.5 t", "21 days on target".
+// "1 training day", "12 training days", "3 weeks", "12.5 t", "21 days on target", "21 nights on target".
 export function amountText(template: ChallengeTemplate, n: number): string {
   if (isTrainingDays(template)) return n === 1 ? t('1 training day') : tn(n, '{0} training days', n)
   if (template === 'weeks_on_target') return n === 1 ? t('1 week') : tn(n, '{0} weeks', n)
   if (template === 'nutrition_days_on_target') return n === 1 ? t('1 day on target') : tn(n, '{0} days on target', n)
+  if (template === 'sleep_nights_on_target') return n === 1 ? t('1 night on target') : tn(n, '{0} nights on target', n)
   return t('{0} t', fmtDecimal(n))
 }
 
@@ -64,7 +72,12 @@ export function amountText(template: ChallengeTemplate, n: number): string {
 export function autoTitle(template: ChallengeTemplate, target: number, days: number): string {
   if (isTrainingDays(template)) return t('{0} training days in {1} days', target, days)
   if (template === 'weeks_on_target') return t('{0} weeks on target', target)
-  if (template === 'nutrition_days_on_target') return t('{0} days on target in {1} days', target, days)
+  if (template === 'nutrition_days_on_target') {
+    return target === 1 ? t('1 day on target in {0} days', days) : t('{0} days on target in {1} days', target, days)
+  }
+  if (template === 'sleep_nights_on_target') {
+    return target === 1 ? t('1 night on target in {0} days', days) : tn(target, '{0} nights on target in {1} days', target, days)
+  }
   return t('{0} t in {1} days', fmtDecimal(target), days)
 }
 
@@ -72,4 +85,11 @@ export function autoTitle(template: ChallengeTemplate, target: number, days: num
 export const nutritionOptInText = () => ({
   label: t('Show participants how many days I was on target'),
   detail: t('They see only that number, never your meals, calories or targets.')
+})
+
+// The sleep opt-in, the same words when creating and when joining (sleep spec 6.6): only the count of
+// nights on target leaves the account.
+export const sleepOptInText = () => ({
+  label: t('Show participants how many nights I was on target'),
+  detail: t('They see only that number, never your times, how long you slept, its quality or your notes.')
 })

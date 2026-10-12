@@ -114,6 +114,14 @@ describe('My workouts', () => {
     expect(within(screen.getByRole('dialog')).getByText('50 kg × 10')).toBeTruthy()
   })
 
+  it("labels a check-in's own detail with the unit it was typed in (final review m2)", () => {
+    // posted in kg, read after the profile switched to lb, before the session synced
+    setup({ mine: [row('c1', '2026-10-07', { detail: { unit: 'kg', entries: [{ id: BENCH, sets: [{ w: 60, r: 8, done: true }] }] } })] })
+    act(() => useStore.setState((s: any) => ({ S: { ...s.S, unit: 'lb' } })))
+    fireEvent.click(day(/7 October: 1 check-in$/))
+    expect(within(screen.getByRole('dialog')).getByText('60 kg × 8')).toBeTruthy()
+  })
+
   it('opens the day it was sent to', () => {
     h.state = { day: '2026-10-09' }
     setup({ mine: [row('c3', '2026-10-09')] })

@@ -1,4 +1,5 @@
 import { useMemo, useState, type ComponentType } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useReducedMotion } from 'motion/react'
 import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart } from 'recharts'
 import type { BaseTickContentProps, DotItemDotProps } from 'recharts/types/util/types'
@@ -9,6 +10,7 @@ import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } f
 import { cn } from '@/lib/utils'
 import { t, dateLocale } from '../../lib/i18n.js'
 import NutritionSetup from '../nutrition/NutritionSetup'
+import SleepSetup from '../sleep/SleepSetup'
 import type { PillarKey, Progress } from '../gamification/types'
 import { RADAR_CARD, RADAR_CHART_HEIGHT } from './PillarRadarSkeleton'
 
@@ -34,7 +36,13 @@ const PILLAR: Record<PillarKey, { name: () => string; icon: ComponentType<{ clas
 
 // What the lock offers, per pillar that can be off. Training is always on.
 const TURN_ON: Partial<Record<PillarKey, () => string>> = {
-  nutrition: () => t('Turn on Nutrition')
+  nutrition: () => t('Turn on Nutrition'),
+  sleep: () => t('Turn on Sleep')
+}
+
+// Where an active pillar's label leads (plan decision 19): the pillar's own screen.
+const OPEN: Partial<Record<PillarKey, { path: string; label: () => string }>> = {
+  sleep: { path: '/sono', label: () => t('Open Sleep') }
 }
 
 // Shapes in the accent, the previous window as a faded outline, the vertex dots in the pillar
@@ -77,11 +85,12 @@ type Row = { pillar: PillarKey; state: AxisState; current: number | null; previo
 // Consistency per pillar over the last 4 closed weeks, with the 4 before them drawn behind.
 // Off and coming soon axes are dashed and sit at the centre; an active pillar without an active
 // week also sits at the centre, its label saying so. Tapping the chart opens the numbers; tapping
-// a lock opens that pillar's activation.
+// a lock opens that pillar's activation; the label of an active pillar with a screen opens it.
 export default function PillarRadar({ radar, enabled, released }: Props) {
   const reduce = useReducedMotion() ?? false
+  const navigate = useNavigate()
   const [detail, setDetail] = useState(false)
-  const [setup, setSetup] = useState(false)
+  const [setup, setSetup] = useState<PillarKey | null>(null)
 
   const rows: Row[] = useMemo(() => AXES.map(pillar => {
     const state = axisState(pillar, enabled, released)
@@ -93,10 +102,12 @@ export default function PillarRadar({ radar, enabled, released }: Props) {
   }), [radar, enabled, released])
 
   const description = radarDescription(radar, enabled, released)
-  const activate = () => { setDetail(false); setSetup(true) }
+  const activate = (pillar: PillarKey) => { setDetail(false); setSetup(pillar) }
+  const open = (pillar: PillarKey) => { const to = OPEN[pillar]; if (to) { setDetail(false); navigate(to.path) } }
+  const setupProps = (pillar: PillarKey) => ({ open: setup === pillar, onOpenChange: (o: boolean) => setSetup(o ? pillar : null) })
 
   const renderTick = (props: BaseTickContentProps) => (
-    <AxisTick {...(props as TickProps)} row={rows[props.index]} onActivate={activate} />
+    <AxisTick {...(props as TickProps)} row={rows[props.index]} onActivate={activate} onOpen={open} />
   )
 
   const renderDot = ({ cx, cy, index }: DotItemDotProps) => {
@@ -141,8 +152,9 @@ export default function PillarRadar({ radar, enabled, released }: Props) {
         <ChevronRight aria-hidden className="size-4 shrink-0" />
       </button>
 
-      <RadarDetail open={detail} onOpenChange={setDetail} rows={rows} onActivate={activate} />
-      <NutritionSetup open={setup} onOpenChange={setSetup} />
+      <RadarDetail open={detail} onOpenChange={setDetail} rows={rows} onActivate={activate} onOpen={open} />
+      <NutritionSetup {...setupProps('nutrition')} />
+      <SleepSetup {...setupProps('sleep')} />
     </section>
   )
 }
@@ -150,8 +162,9 @@ export default function PillarRadar({ radar, enabled, released }: Props) {
 type TickProps = BaseTickContentProps & { cx: number; cy: number; radius: number }
 
 // An axis line (dashed unless the pillar is active) and its label: icon, name and the share, or
-// the state. Text stays in the theme's text colours; the pillar colour is only on the dot.
-function AxisTick({ x, y, cx, cy, radius, textAnchor, row, onActivate }: TickProps & { row: Row; onActivate: () => void }) {
+// the state. Text stays in the theme's text colours; the pillar colour is only on the dot. An off
+// pillar's label turns it on; an active one's opens its screen, when it has one.
+function AxisTick({ x, y, cx, cy, radius, textAnchor, row, onActivate, onOpen }: TickProps & { row: Row; onActivate: (p: PillarKey) => void; onOpen: (p: PillarKey) => void }) {
   const tx = Number(x), ty = Number(y)
   const dx = tx - cx, dy = ty - cy
   const len = Math.hypot(dx, dy) || 1
@@ -162,6 +175,8 @@ function AxisTick({ x, y, cx, cy, radius, textAnchor, row, onActivate }: TickPro
   const align = textAnchor === 'end' ? 'items-end text-right' : textAnchor === 'start' ? 'items-start text-left' : 'items-center text-center'
   const { icon: Icon, name } = PILLAR[row.pillar]
   const turnOn = TURN_ON[row.pillar]
+  const opens = row.state === 'on' ? OPEN[row.pillar] : undefined
+  const button = cn('flex size-full flex-col justify-center gap-0.5 rounded-xl text-[11px] leading-tight outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50', align)
 
   const label = (
     <>
@@ -184,8 +199,13 @@ function AxisTick({ x, y, cx, cy, radius, textAnchor, row, onActivate }: TickPro
         strokeDasharray={row.state === 'on' ? undefined : '3 4'} />
       <foreignObject x={left} y={top} width={LABEL_W} height={LABEL_H} overflow="visible">
         {row.state === 'off' && turnOn ? (
-          <button type="button" data-slot="radar-activate" aria-label={turnOn()} onClick={e => { e.stopPropagation(); onActivate() }}
-            className={cn('flex size-full flex-col justify-center gap-0.5 rounded-xl text-[11px] leading-tight outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50', align)}>
+          <button type="button" data-slot="radar-activate" aria-label={turnOn()} onClick={e => { e.stopPropagation(); onActivate(row.pillar) }}
+            className={button}>
+            {label}
+          </button>
+        ) : opens ? (
+          <button type="button" data-slot="radar-open" aria-label={opens.label()} onClick={e => { e.stopPropagation(); onOpen(row.pillar) }}
+            className={button}>
             {label}
           </button>
         ) : (
@@ -196,11 +216,15 @@ function AxisTick({ x, y, cx, cy, radius, textAnchor, row, onActivate }: TickPro
   )
 }
 
-// The numbers behind the shape: each pillar in both windows, and the way to turn on one that is off.
-function RadarDetail({ open, onOpenChange, rows, onActivate }: { open: boolean; onOpenChange: (open: boolean) => void; rows: Row[]; onActivate: () => void }) {
+// The numbers behind the shape: each pillar in both windows, the way to turn on one that is off and
+// to open the screen of an active one that has it.
+function RadarDetail({ open, onOpenChange, rows, onActivate, onOpen }: {
+  open: boolean; onOpenChange: (open: boolean) => void; rows: Row[]; onActivate: (p: PillarKey) => void; onOpen: (p: PillarKey) => void
+}) {
   const cell = (row: Row, v: number | null) =>
     row.state === 'soon' ? t('Coming soon') : v != null ? pct(v) : row.state === 'off' ? t('Turned off') : t('No weeks yet')
   const off = rows.filter(r => r.state === 'off' && TURN_ON[r.pillar])
+  const screens = rows.filter(r => r.state === 'on' && OPEN[r.pillar])
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>
@@ -236,8 +260,16 @@ function RadarDetail({ open, onOpenChange, rows, onActivate }: { open: boolean; 
               })}
             </tbody>
           </table>
+          {screens.map(r => {
+            const Icon = PILLAR[r.pillar].icon
+            return (
+              <Button key={r.pillar} variant="outline" className="mt-3 h-11 w-full gap-2 rounded-xl" onClick={() => onOpen(r.pillar)}>
+                <Icon aria-hidden className="size-4" />{OPEN[r.pillar]!.label()}
+              </Button>
+            )
+          })}
           {off.map(r => (
-            <Button key={r.pillar} variant="outline" className="mt-3 h-11 w-full gap-2 rounded-xl" onClick={onActivate}>
+            <Button key={r.pillar} variant="outline" className="mt-3 h-11 w-full gap-2 rounded-xl" onClick={() => onActivate(r.pillar)}>
               <Lock aria-hidden className="size-4" />{TURN_ON[r.pillar]!()}
             </Button>
           ))}

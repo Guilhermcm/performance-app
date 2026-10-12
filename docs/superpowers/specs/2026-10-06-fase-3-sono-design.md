@@ -1,12 +1,39 @@
 # performance-app: Design da Fase 3, Sono
 
 - **Data:** 2026-10-06
-- **Status:** aprovada; execução adiada (não entra na publicação depois da 2b)
+- **Status:** aprovada em 2026-10-06; ajustada à 1c em 2026-10-12 (§0); implementada em 2026-10-12.
+  O que esta spec deixava em aberto foi fechado nas
+  [Decisões do plano](../plans/2026-10-12-fase-3-sono.md#decisões-do-plano).
 - **Roadmap:** [docs/ROADMAP.md](../../ROADMAP.md), Fase 3
 - **Base:** [spec da Fase 2](2026-10-05-fase-2-nutricao-design.md) (molde do pilar: períodos, fechamento
   em D+2, XP, streak, conquistas privadas, radar), [spec da 2b](2026-10-06-fase-2b-nutricao-design.md)
   (calendário e desafio de pilar) e [spec da Fundação](2026-10-04-performance-app-foundation-design.md)
-- **Ordem:** a execução fica para depois. A publicação em produção acontece ao fim da 2b, sem o Sono.
+- **Publicação:** `supabase/release/0021-0025_sleep.sql` e o cliente sobem no mesmo dia, pelo
+  roteiro do Sono em [docs/SETUP.md](../../SETUP.md)
+
+## 0. Ajustes depois da 1c (2026-10-12)
+
+A 1c (check-in com foto, no ar desde 2026-10-11) mudou partes do app em que o Sono encosta. O desenho
+do Sono não muda; estes ajustes valem sobre o resto da spec:
+
+1. **Migrations começam na `0021`** (a 1c ocupa a `0017` a `0020`): `0021_sleep_base`, `0022_sleep_close`,
+   `0023_sleep_progress`, `0024_sleep_challenge`, `0025_sleep_cron`. O arquivo único de publicação é
+   `supabase/release/0021-0025_sleep.sql`, gerado por `scripts/build-release-sql.mjs` com uma faixa nova.
+2. **Funções redefinidas partem do corpo da 1c.** Toda função que o Sono redefine com `create or
+   replace` parte da versão mais recente e mantém os ramos de treino (dia com check-in, desafio
+   `checkin_days`, carência de 2 dias). Versão mais recente: `0020` para `achievement_stats`,
+   `award_xp`, `challenge_progress`, `challenge_grace`, `close_challenge`, `create_challenge` e
+   `pillar_consistency`; `0019` para `close_weeks`, `get_my_progress`, `my_progress_extras` e
+   `progress_card`; `0015` para `join_challenge`. O plano inclui um teste que compara cada corpo
+   redefinido com o anterior, como os da 1c.
+3. **O pilar se chama Treino**, não Força, em todo texto e nos testes desta spec.
+4. **Home:** o cartão da manhã do Sono entra abaixo do cartão Hoje da 1c, com o mesmo estilo.
+5. **Desafio de sono não tem feed de fotos:** o detalhe de um desafio `sleep_nights_on_target` mostra
+   placar e resultado, sem o feed de check-ins que os desafios de treino ganharam na 1c.
+6. **`close_challenge`** já fecha dias de treino pendentes antes do resultado (1c); o ramo de sono fecha
+   as noites pendentes do mesmo jeito.
+7. **Independência da 1d:** a 1d (Plano com evidência) não muda o banco nem a Home; o Sono pode ser
+   planejado e executado antes, depois ou em paralelo a ela.
 
 ## 1. Entendimento e objetivo
 
@@ -162,7 +189,7 @@ Máximo semanal 600 + 150 + 50 + 90 + 70 = **960**. A noite entra na semana de `
 
 - `event_kinds` ganha `('sleep','night_logged',true)`, `('sleep','night_on_target',true)` e
   `('sleep','night_rested',true)`, todos `server_only`. O RLS já barra o cliente.
-- `reason` próprios no `xp_ledger`, sem somar em nada de Força ou Nutrição:
+- `reason` próprios no `xp_ledger`, sem somar em nada de Treino ou Nutrição:
 
 | `reason` | Evento |
 |---|---|
@@ -228,10 +255,10 @@ Noite sem registro ou fora de período quebra a sequência do "Relógio em dia".
 
 ## 6. Banco de dados
 
-Migrations depois das da 2b (a última é `0016`), uma por tarefa de banco, em ordem:
-`0017_sleep_base.sql` (perfil, períodos, metas, registros, eventos), `0018_sleep_close.sql`
-(noites, fechamento, XP, streak, conquistas), `0019_sleep_progress.sql` (cartão, extras, radar,
-histórico), `0020_sleep_challenge.sql` e `0021_sleep_cron.sql`. O plano pode juntar ou separar,
+Migrations depois das da 1c (a última é `0020`), uma por tarefa de banco, em ordem:
+`0021_sleep_base.sql` (perfil, períodos, metas, registros, eventos), `0022_sleep_close.sql`
+(noites, fechamento, XP, streak, conquistas), `0023_sleep_progress.sql` (cartão, extras, radar,
+histórico), `0024_sleep_challenge.sql` e `0025_sleep_cron.sql`. O plano pode juntar ou separar,
 mantendo a ordem.
 
 ### 6.1 Perfil, períodos e metas
@@ -368,7 +395,7 @@ Hoje e ontem vêm de `sleep_logs`, lidos direto pelo cliente.
 
 ### 6.7 Cron
 
-`0021_sleep_cron.sql`: job `close-sleep-nights` diário às 06:40 UTC chamando
+`0025_sleep_cron.sql`: job `close-sleep-nights` diário às 06:40 UTC chamando
 `close_all_sleep_nights()`, no molde de `0013_nutrition_cron.sql`. O cron de desafios já existente
 fecha os de sono pela `challenge_grace`.
 
@@ -450,7 +477,7 @@ skeleton do mesmo tamanho e entrada no precache do service worker.
   eixo ativo abre `/sono`, no desligado abre a ativação.
 - **Barra de XP da semana:** ganha o segmento do Sono.
 - **Cor do pilar:** `--pillar-sleep` já existe nos tokens; o plano roda o validador de paleta da
-  skill `dataviz` com Força, Nutrição e Sono juntos, em claro e escuro, e ajusta o passo se falhar.
+  skill `dataviz` com Treino, Nutrição e Sono juntos, em claro e escuro, e ajusta o passo se falhar.
 
 ### 7.5 Offline e sync
 
@@ -499,7 +526,7 @@ pausa, humanizer, `check-locales` e `check-source-strings --strict` passando. Co
   - fechamento: idempotência, noite sem registro fecha com `logged = false`, domingo fecha na
     terça;
   - XP por T de 3 a 7, limites de extra e descansada, bônus semanal, teto de 960, reasons próprios
-    sem tocar Força e Nutrição;
+    sem tocar Treino e Nutrição;
   - `sleep_week` com escudo e semana neutra;
   - conquistas, inclusive `sleep_clock_7` quebrado por noite sem registro;
   - `progress_card` e `get_friends` sem dado de sono além de nível e XP; `week.max` e segmento;
@@ -538,6 +565,7 @@ comparação com amigos (Fase 5).
 
 ## 13. Publicação
 
-A publicação em produção não espera esta fase: ela acontece ao fim da 2b. Quando a Fase 3 for
-executada, as migrations `0017` a `0021` e o job `close-sleep-nights` entram no passo a passo de
-`docs/SETUP.md`, e o cliente e as migrations sobem no mesmo deploy (por causa de `join_challenge`).
+As migrations `0021` a `0025`, no arquivo único `supabase/release/0021-0025_sleep.sql`, e o job
+`close-sleep-nights` sobem pelo roteiro do Sono em [docs/SETUP.md](../../SETUP.md): o SQL roda em
+produção e o merge do PR #6 vem logo em seguida, no mesmo dia (por causa de `create_challenge` e
+`join_challenge`).

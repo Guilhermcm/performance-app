@@ -37,11 +37,15 @@ describe('English display overrides', () => {
     expect(t('Too many attempts — try again {0}.', 'in 5 minutes')).toBe('Too many attempts. Try again in 5 minutes.')
     // A key without an override still renders as itself.
     expect(t('Save')).toBe('Save')
+    // The analysis group (analysis-copy.ts) is plural in English; the key stays singular because
+    // pt-BR gives it its own name there ("posterior de coxa").
+    expect(t('hamstring')).toBe('hamstrings')
   })
 
   it('does not leak into other languages', async () => {
     await setLang('pt-BR')
     expect(t('Session ended — sign in again.')).toBe(ptBR['Session ended — sign in again.'])
+    expect(t('hamstring')).toBe('posterior de coxa')
     await setLang('en')
   })
 })

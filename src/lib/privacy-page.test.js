@@ -22,8 +22,41 @@ describe('privacy policy page', () => {
 
   it('has the English version and the update date', () => {
     expect(html).toContain('id="en"')
-    expect(visible).toContain('Última atualização: 11 de outubro de 2026')
-    expect(visible).toContain('Last updated: October 11, 2026')
+    expect(visible).toContain('Última atualização: 12 de outubro de 2026')
+    expect(visible).toContain('Last updated: October 12, 2026')
+  })
+
+  it('covers the sleep pillar: what is kept, that it is optional and who sees it, in both languages', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('Pilar Sono')
+    expect(pt).toContain('O pilar Sono é opcional e vem desligado')
+    expect(pt).toContain('o horário em que deitou, o horário em que acordou, a duração, a nota de qualidade e a observação')
+    expect(pt).toContain('Só você vê seus horários, a duração, a qualidade e as observações')
+    expect(pt).toContain('Seus amigos veem o nível do pilar Sono e o XP')
+    expect(pt).toContain('suas conquistas, menos as de nutrição e de sono')
+    expect(en).toContain('Sleep pillar')
+    expect(en).toContain('The Sleep pillar is optional and starts off')
+    expect(en).toContain('the time you went to bed, the time you woke up, the duration, the quality rating and the note')
+    expect(en).toContain('Only you see your times, duration, quality and notes')
+    expect(en).toContain('Your friends see your Sleep pillar level and XP')
+    expect(en).toContain('your achievements, except the nutrition and sleep ones')
+  })
+
+  it('tells the sleep challenge needs opt-in and shows only the nights on target, in both languages', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('No desafio de noites no alvo do Sono, você só entra se aceitar compartilhar essa contagem')
+    expect(pt).toContain('quantas noites você ficou no alvo')
+    expect(en).toContain('In the Sleep nights-on-target challenge, you can only join if you agree to share that count')
+    expect(en).toContain('how many nights you were on target')
+  })
+
+  it('lists the nutrition and sleep challenge counts under consent (art. 7, I), in both languages', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('nos desafios, o volume e as contagens de dias no alvo da Nutrição e de noites no alvo do Sono, depende do seu consentimento (art. 7º, I)')
+    expect(en).toContain('in challenges, volume and the counts of Nutrition days on target and Sleep nights on target, depends on your consent (art. 7, I)')
   })
 
   it('covers the nutrition pillar and Open Food Facts in both languages', () => {

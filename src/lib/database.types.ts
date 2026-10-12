@@ -14,6 +14,7 @@ export interface Database {
           share_activity: boolean; checkin_visibility: 'friends' | 'private'; created_at: string; updated_at: string
           activity_level: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active' | null
           nutrition_pace: 'gentle' | 'standard'; nutrition_enabled: boolean; nutrition_days_per_week: number
+          sleep_enabled: boolean; sleep_nights_per_week: number
         }
         Insert: Partial<Database['public']['Tables']['profiles']['Row']> & { id: string; display_name: string }
         Update: Partial<Database['public']['Tables']['profiles']['Row']>
@@ -35,6 +36,40 @@ export interface Database {
           mode: 'auto' | 'manual'; user_id?: string
         }
         Update: Partial<Omit<Database['public']['Tables']['nutrition_targets']['Row'], 'user_id' | 'created_at'>>
+        Relationships: []
+      }
+      sleep_periods: {
+        Row: { user_id: string; started_on: string; ended_on: string | null }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      sleep_targets: {
+        Row: { user_id: string; valid_from: string; goal_min: number; bed_target: string; created_at: string }
+        Insert: { valid_from: string; goal_min: number; bed_target: string; user_id?: string }
+        Update: Partial<Omit<Database['public']['Tables']['sleep_targets']['Row'], 'user_id' | 'created_at'>>
+        Relationships: []
+      }
+      sleep_logs: {
+        Row: {
+          user_id: string; night: string; bed_time: string; wake_time: string; duration_min: number
+          quality: number | null; note: string | null; created_at: string; updated_at: string
+        }
+        Insert: {
+          night: string; bed_time: string; wake_time: string; user_id?: string
+          quality?: number | null; note?: string | null; created_at?: string; updated_at?: string
+        }
+        Update: Partial<Omit<Database['public']['Tables']['sleep_logs']['Insert'], 'user_id' | 'night'>>
+        Relationships: []
+      }
+      sleep_nights: {
+        Row: {
+          user_id: string; night: string; target: { goal_min: number; bed_target: string } | null
+          logged: boolean; duration_min: number | null; bed_diff_min: number | null; quality: number | null
+          on_target: boolean; rested: boolean; closed_at: string
+        }
+        Insert: never
+        Update: never
         Relationships: []
       }
       food_logs: {
@@ -156,7 +191,9 @@ export interface Database {
       challenges: {
         Row: {
           id: string
-          template: 'workouts_count' | 'weeks_on_target' | 'volume_total' | 'nutrition_days_on_target' | 'checkin_days'
+          template:
+            | 'workouts_count' | 'weeks_on_target' | 'volume_total' | 'nutrition_days_on_target' | 'checkin_days'
+            | 'sleep_nights_on_target'
           title: string
           mode: 'team' | 'solo'; target: number; starts_on: string; ends_on: string
           // null once the creator deleted their account; timezone is theirs, kept from then on.
@@ -170,7 +207,8 @@ export interface Database {
       challenge_members: {
         Row: {
           challenge_id: string; user_id: string; invited_by: string | null; joined_at: string | null
-          share_volume: boolean; share_nutrition: boolean; final: number | null; won: boolean | null
+          share_volume: boolean; share_nutrition: boolean; share_sleep: boolean
+          final: number | null; won: boolean | null
         }
         Insert: never
         Update: never

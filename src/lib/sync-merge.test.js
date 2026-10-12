@@ -661,3 +661,26 @@ describe('localExtras and the weigh-ins of a day both copies have', () => {
     expect(localExtras({ unit: 'lb', bodyweight: [{ d: '2026-09-27', w: convertBodyWeight(80, 'kg', 'lb'), t: 200 }] }, server).bodyweight).toBe(0)
   })
 })
+
+// Phase 1d: the applied program (`S.program`) is plan state like `week`, so the copy with the
+// newer `_ts` decides it, a cleared one (Undo) included. Routines have no tombstones, so an
+// Undo that meets an older copy still holding the program's routines gets them back.
+describe('mergeStates: the applied program', () => {
+  const program = (id, routineIds) => ({ id, variant: 0, appliedAt: 1, routineIds, prevWeek: { 1: ['r1'] }, dismissed: false })
+  it('takes S.program from the newer copy, like week', () => {
+    const local = base({ _ts: 300, week: { 1: ['p1'] }, program: program('ppl', ['p1']) })
+    const server = base({ _ts: 100, week: { 2: ['u1'] }, program: program('upper-lower', ['u1']) })
+    expect(mergeStates(local, server).program).toEqual(program('ppl', ['p1']))
+    expect(mergeStates(server, local).program).toEqual(program('ppl', ['p1']))
+    const older = base({ _ts: 50, program: program('ppl', ['p1']) })
+    expect(mergeStates(older, server).program).toEqual(program('upper-lower', ['u1']))
+  })
+  it('an Undo on the newer copy clears the program and its week, but the older copy brings the routines back', () => {
+    const undone = base({ _ts: 300, week: { 1: ['r1'] }, routines: [routine('r1')] })
+    const applied = base({ _ts: 100, week: { 1: ['p1'] }, routines: [routine('r1'), routine('p1')], program: program('ppl', ['p1']) })
+    const m = mergeStates(undone, applied)
+    expect(m.program).toBeUndefined()
+    expect(m.week).toEqual({ 1: ['r1'] })
+    expect(ids(m.routines)).toEqual(['r1', 'p1'])
+  })
+})

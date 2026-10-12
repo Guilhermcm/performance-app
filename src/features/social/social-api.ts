@@ -6,7 +6,8 @@ import type {
 const CODES: readonly SocialErrorCode[] = [
   'not_signed_in', 'no_profile', 'invite_not_found', 'invite_expired', 'invite_used', 'self_invite',
   'already_friends', 'invite_limit', 'not_friends', 'invalid_challenge', 'challenge_limit',
-  'challenge_not_found', 'challenge_closed', 'volume_opt_in_required', 'nutrition_opt_in_required', 'nutrition_off'
+  'challenge_not_found', 'challenge_closed', 'volume_opt_in_required', 'nutrition_opt_in_required', 'nutrition_off',
+  'sleep_opt_in_required', 'sleep_off'
 ]
 
 export class SocialError extends Error {
@@ -74,14 +75,16 @@ export const createChallenge = async (c: NewChallenge): Promise<string> =>
   (await rpc<{ id: string }>('create_challenge', {
     p_template: c.template, p_title: c.title, p_mode: c.mode, p_target: c.target,
     p_starts_on: c.starts_on, p_ends_on: c.ends_on, p_invitees: c.invitees, p_share_volume: c.share_volume,
-    p_share_nutrition: c.share_nutrition
+    p_share_nutrition: c.share_nutrition, p_share_sleep: c.share_sleep
   })).id
 
 // The opt-ins a template asks for when joining: volume_total shares the volume, the nutrition
-// template the count of days on target.
-export type JoinOptIns = { shareVolume?: boolean; shareNutrition?: boolean }
-export const joinChallenge = async (id: string, { shareVolume = false, shareNutrition = false }: JoinOptIns = {}): Promise<void> => {
-  await rpc<null>('join_challenge', { p_id: id, p_share_volume: shareVolume, p_share_nutrition: shareNutrition })
+// template the count of days on target, the sleep template the count of nights on target.
+export type JoinOptIns = { shareVolume?: boolean; shareNutrition?: boolean; shareSleep?: boolean }
+export const joinChallenge = async (id: string, { shareVolume = false, shareNutrition = false, shareSleep = false }: JoinOptIns = {}): Promise<void> => {
+  await rpc<null>('join_challenge', {
+    p_id: id, p_share_volume: shareVolume, p_share_nutrition: shareNutrition, p_share_sleep: shareSleep
+  })
 }
 export const leaveChallenge = async (id: string): Promise<void> => {
   await rpc<null>('leave_challenge', { p_id: id })

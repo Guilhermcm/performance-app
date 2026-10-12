@@ -1,0 +1,973 @@
+{
+  "nights": [
+    {
+      "name": "8h goal: 7h45 asleep counts",
+      "log": {
+        "bed_time": "23:00",
+        "wake_time": "06:45",
+        "quality": null
+      },
+      "target": {
+        "goal_min": 480,
+        "bed_target": "23:00"
+      },
+      "expect": {
+        "logged": true,
+        "on_target": true,
+        "rested": false,
+        "bed_diff_min": 0
+      }
+    },
+    {
+      "name": "8h goal: 7h44 asleep is off target",
+      "log": {
+        "bed_time": "23:00",
+        "wake_time": "06:44",
+        "quality": null
+      },
+      "target": {
+        "goal_min": 480,
+        "bed_target": "23:00"
+      },
+      "expect": {
+        "logged": true,
+        "on_target": false,
+        "rested": false,
+        "bed_diff_min": 0
+      }
+    },
+    {
+      "name": "23:00 target: in bed at 23:45 counts",
+      "log": {
+        "bed_time": "23:45",
+        "wake_time": "07:45",
+        "quality": null
+      },
+      "target": {
+        "goal_min": 480,
+        "bed_target": "23:00"
+      },
+      "expect": {
+        "logged": true,
+        "on_target": true,
+        "rested": false,
+        "bed_diff_min": 45
+      }
+    },
+    {
+      "name": "23:00 target: in bed at 22:15 counts",
+      "log": {
+        "bed_time": "22:15",
+        "wake_time": "06:15",
+        "quality": null
+      },
+      "target": {
+        "goal_min": 480,
+        "bed_target": "23:00"
+      },
+      "expect": {
+        "logged": true,
+        "on_target": true,
+        "rested": false,
+        "bed_diff_min": 45
+      }
+    },
+    {
+      "name": "23:00 target: in bed at 23:46 is off target",
+      "log": {
+        "bed_time": "23:46",
+        "wake_time": "07:46",
+        "quality": null
+      },
+      "target": {
+        "goal_min": 480,
+        "bed_target": "23:00"
+      },
+      "expect": {
+        "logged": true,
+        "on_target": false,
+        "rested": false,
+        "bed_diff_min": 46
+      }
+    },
+    {
+      "name": "23:00 target: in bed at 22:14 is off target",
+      "log": {
+        "bed_time": "22:14",
+        "wake_time": "06:14",
+        "quality": null
+      },
+      "target": {
+        "goal_min": 480,
+        "bed_target": "23:00"
+      },
+      "expect": {
+        "logged": true,
+        "on_target": false,
+        "rested": false,
+        "bed_diff_min": 46
+      }
+    },
+    {
+      "name": "23:30 target: in bed at 00:15 counts across midnight",
+      "log": {
+        "bed_time": "00:15",
+        "wake_time": "08:15",
+        "quality": null
+      },
+      "target": {
+        "goal_min": 480,
+        "bed_target": "23:30"
+      },
+      "expect": {
+        "logged": true,
+        "on_target": true,
+        "rested": false,
+        "bed_diff_min": 45
+      }
+    },
+    {
+      "name": "23:30 target: in bed at 00:16 is off target",
+      "log": {
+        "bed_time": "00:16",
+        "wake_time": "08:16",
+        "quality": null
+      },
+      "target": {
+        "goal_min": 480,
+        "bed_target": "23:30"
+      },
+      "expect": {
+        "logged": true,
+        "on_target": false,
+        "rested": false,
+        "bed_diff_min": 46
+      }
+    },
+    {
+      "name": "23:30 and 00:10 are 40 minutes apart",
+      "log": {
+        "bed_time": "00:10",
+        "wake_time": "08:10",
+        "quality": null
+      },
+      "target": {
+        "goal_min": 480,
+        "bed_target": "23:30"
+      },
+      "expect": {
+        "logged": true,
+        "on_target": true,
+        "rested": false,
+        "bed_diff_min": 40
+      }
+    },
+    {
+      "name": "the farthest bedtime is 720 minutes away",
+      "log": {
+        "bed_time": "11:00",
+        "wake_time": "19:00",
+        "quality": null
+      },
+      "target": {
+        "goal_min": 480,
+        "bed_target": "23:00"
+      },
+      "expect": {
+        "logged": true,
+        "on_target": false,
+        "rested": false,
+        "bed_diff_min": 720
+      }
+    },
+    {
+      "name": "on target with quality 4 is rested",
+      "log": {
+        "bed_time": "23:00",
+        "wake_time": "07:00",
+        "quality": 4
+      },
+      "target": {
+        "goal_min": 480,
+        "bed_target": "23:00"
+      },
+      "expect": {
+        "logged": true,
+        "on_target": true,
+        "rested": true,
+        "bed_diff_min": 0
+      }
+    },
+    {
+      "name": "on target with quality 3 is not rested",
+      "log": {
+        "bed_time": "23:00",
+        "wake_time": "07:00",
+        "quality": 3
+      },
+      "target": {
+        "goal_min": 480,
+        "bed_target": "23:00"
+      },
+      "expect": {
+        "logged": true,
+        "on_target": true,
+        "rested": false,
+        "bed_diff_min": 0
+      }
+    },
+    {
+      "name": "quality 5 off target is not rested",
+      "log": {
+        "bed_time": "23:00",
+        "wake_time": "06:44",
+        "quality": 5
+      },
+      "target": {
+        "goal_min": 480,
+        "bed_target": "23:00"
+      },
+      "expect": {
+        "logged": true,
+        "on_target": false,
+        "rested": false,
+        "bed_diff_min": 0
+      }
+    },
+    {
+      "name": "no log: nothing counts",
+      "log": null,
+      "target": {
+        "goal_min": 480,
+        "bed_target": "23:00"
+      },
+      "expect": {
+        "logged": false,
+        "on_target": false,
+        "rested": false,
+        "bed_diff_min": null
+      }
+    },
+    {
+      "name": "no target in force: logged only, no bedtime distance",
+      "log": {
+        "bed_time": "23:00",
+        "wake_time": "07:00",
+        "quality": 5
+      },
+      "target": null,
+      "expect": {
+        "logged": true,
+        "on_target": false,
+        "rested": false,
+        "bed_diff_min": null
+      }
+    }
+  ],
+  "weeks": [
+    {
+      "name": "T=3: seven nights on target, three rested and seven logged reach the 960 cap",
+      "target": 3,
+      "nights": [
+        {
+          "on": "2026-09-07",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": true
+          }
+        },
+        {
+          "on": "2026-09-08",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": true
+          }
+        },
+        {
+          "on": "2026-09-09",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": true
+          }
+        },
+        {
+          "on": "2026-09-10",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": false
+          }
+        },
+        {
+          "on": "2026-09-11",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": false
+          }
+        },
+        {
+          "on": "2026-09-12",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": false
+          }
+        },
+        {
+          "on": "2026-09-13",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": false
+          }
+        }
+      ],
+      "awards": [
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night",
+          "amount": 200,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_rested",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night",
+          "amount": 200,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_rested",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night",
+          "amount": 200,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_week_target",
+          "amount": 150,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_rested",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night_extra",
+          "amount": 25,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night_extra",
+          "amount": 25,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        }
+      ],
+      "total": 960
+    },
+    {
+      "name": "T=5: seven nights on target, three rested and seven logged reach the 960 cap",
+      "target": 5,
+      "nights": [
+        {
+          "on": "2026-09-07",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": true
+          }
+        },
+        {
+          "on": "2026-09-08",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": true
+          }
+        },
+        {
+          "on": "2026-09-09",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": true
+          }
+        },
+        {
+          "on": "2026-09-10",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": false
+          }
+        },
+        {
+          "on": "2026-09-11",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": false
+          }
+        },
+        {
+          "on": "2026-09-12",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": false
+          }
+        },
+        {
+          "on": "2026-09-13",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": false
+          }
+        }
+      ],
+      "awards": [
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night",
+          "amount": 120,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_rested",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night",
+          "amount": 120,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_rested",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night",
+          "amount": 120,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_rested",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night",
+          "amount": 120,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night",
+          "amount": 120,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_week_target",
+          "amount": 150,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night_extra",
+          "amount": 25,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night_extra",
+          "amount": 25,
+          "week": "2026-09-07"
+        }
+      ],
+      "total": 960
+    },
+    {
+      "name": "T=7: seven nights on target stop at 910, with no extra",
+      "target": 7,
+      "nights": [
+        {
+          "on": "2026-09-07",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": true
+          }
+        },
+        {
+          "on": "2026-09-08",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": true
+          }
+        },
+        {
+          "on": "2026-09-09",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": true
+          }
+        },
+        {
+          "on": "2026-09-10",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": false
+          }
+        },
+        {
+          "on": "2026-09-11",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": false
+          }
+        },
+        {
+          "on": "2026-09-12",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": false
+          }
+        },
+        {
+          "on": "2026-09-13",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": false
+          }
+        }
+      ],
+      "awards": [
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night",
+          "amount": 86,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_rested",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night",
+          "amount": 86,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_rested",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night",
+          "amount": 86,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_rested",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night",
+          "amount": 86,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night",
+          "amount": 86,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night",
+          "amount": 86,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night",
+          "amount": 84,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_week_target",
+          "amount": 150,
+          "week": "2026-09-07"
+        }
+      ],
+      "total": 910
+    },
+    {
+      "name": "T=5: four rested nights pay sleep_rested three times",
+      "target": 5,
+      "nights": [
+        {
+          "on": "2026-09-07",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": true
+          }
+        },
+        {
+          "on": "2026-09-08",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": true
+          }
+        },
+        {
+          "on": "2026-09-09",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": true
+          }
+        },
+        {
+          "on": "2026-09-10",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": true
+          }
+        },
+        {
+          "on": "2026-09-11",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": false
+          }
+        }
+      ],
+      "awards": [
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night",
+          "amount": 120,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_rested",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night",
+          "amount": 120,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_rested",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night",
+          "amount": 120,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_rested",
+          "amount": 30,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night",
+          "amount": 120,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night",
+          "amount": 120,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_week_target",
+          "amount": 150,
+          "week": "2026-09-07"
+        }
+      ],
+      "total": 890
+    },
+    {
+      "name": "T=3: seven nights on target pay sleep_night_extra twice",
+      "target": 3,
+      "nights": [
+        {
+          "on": "2026-09-07",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": false
+          }
+        },
+        {
+          "on": "2026-09-08",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": false
+          }
+        },
+        {
+          "on": "2026-09-09",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": false
+          }
+        },
+        {
+          "on": "2026-09-10",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": false
+          }
+        },
+        {
+          "on": "2026-09-11",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": false
+          }
+        },
+        {
+          "on": "2026-09-12",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": false
+          }
+        },
+        {
+          "on": "2026-09-13",
+          "classes": {
+            "logged": true,
+            "on_target": true,
+            "rested": false
+          }
+        }
+      ],
+      "awards": [
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night",
+          "amount": 200,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night",
+          "amount": 200,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night",
+          "amount": 200,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_week_target",
+          "amount": 150,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night_extra",
+          "amount": 25,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_night_extra",
+          "amount": 25,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        },
+        {
+          "reason": "sleep_logged",
+          "amount": 10,
+          "week": "2026-09-07"
+        }
+      ],
+      "total": 870
+    }
+  ]
+}

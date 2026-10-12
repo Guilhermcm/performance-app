@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
 import { exOr } from '../lib/exercises.js'
@@ -20,6 +20,8 @@ import { speedUnitOf } from '../lib/speed.js'
 import { POLICIES_FOR, POLICY_NAME, POLICY_DESC } from '../lib/progression.js'
 import BodyMap from '../components/BodyMap.jsx'
 import { loadOfRoutine, rankOf, MUSCLE_NAME } from '../lib/muscles.js'
+import { hasProgress, openExerciseProgress } from '../features/plan/ExerciseProgress'
+import { LoadUpBadge } from '../features/plan/LoadUpBadge'
 
 export const ROUTINE_LONG_PRESS_MS = 380
 export const ROUTINE_DRAG_SLOP = 8
@@ -331,6 +333,9 @@ export default function RoutineEdit() {
   const reorder = useRoutineReorder(r, r?.ex || [], (sourceIndex, targetSlot) => {
     edit(exercises => { reorderRoutineUnit(exercises, sourceIndex, targetSlot) })
   })
+  // The exercises with a load logged, which open their progress (spec §6). Read once per log or
+  // list change, not on every store tick.
+  const withProgress = useMemo(() => new Set((r?.ex || []).map(e => e.id).filter(exId => hasProgress(S, exId))), [S.workouts, r?.ex])
   if (!r) return null
   const move = (i, dir) => {
     // Guard before update so a stale/boundary activation cannot trigger persistence or cleanup.
@@ -458,8 +463,16 @@ export default function RoutineEdit() {
           <span className="routine-grip" data-drag-handle aria-hidden="true" title={t('Reorder exercises')}><Icon name="grip" /></span>
           <Thumb ex={ex} />
           <div className="grow"><div className={`tt ${exerciseNameClass(ex)}`}>{exerciseNameFor(ex)}</div><div className="ss">{exLine(e, S.unit, speedUnitOf(S))}</div>
-            {e.note && <div className="small dim" style={{ marginTop: 2 }}>{e.note}</div>}</div>
+            {e.note && <div className="small dim" style={{ marginTop: 2 }}>{e.note}</div>}
+            {/* "Suba a carga" (spec §6). The badge keeps its own ⓘ off the row's tap. */}
+            <LoadUpBadge S={S} cfg={e} routine={r} /></div>
           {noEquip && <span className="tag" style={{ color: 'var(--orange)', borderColor: 'var(--orange)' }} title={t('Needs {0} — not in your active profile', t(ex.eq))}><Icon name="warning" /></span>}
+          {/* A 44 px target (foundation spec) around the row's 32 px icon look. */}
+          {withProgress.has(e.id) && <button aria-label={t('Progress')} title={t('Progress')}
+            style={{ width: 44, height: 44, flex: 'none', display: 'grid', placeItems: 'center', padding: 0, border: 0, background: 'transparent', color: 'inherit' }}
+            onClick={ev => { ev.stopPropagation(); openExerciseProgress(e.id) }}>
+            <span className="iconbtn" aria-hidden="true" style={{ width: 32, height: 32, borderRadius: 8, fontSize: 15, pointerEvents: 'none' }}><Icon name="chartLine" /></span>
+          </button>}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 'none', alignItems: 'center' }}>
             {i > 0 && <button className={'iconbtn' + (linkedPrev ? ' on-ss' : '')} title={t('Superset with exercise above')} style={{ width: 32, height: 28, borderRadius: 8, fontSize: 15 }} onClick={ev => { ev.stopPropagation(); toggleLink(i) }}><Icon name="link" /></button>}
             <div style={{ display: 'flex', gap: 2 }}>

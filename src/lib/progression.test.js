@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   readSession, sessionsFor, stallCount, nextPrescription, applyPrescription, plannedOf, planChanged,
   policyFor, defaultIncrement, weightIncrement, epley1RM, deloadTarget1RM,
-  deloadFactorOf, DELOAD_FACTOR, POLICIES_FOR, DELOAD_AFTER, MAX_BW_SETS
+  deloadFactorOf, DELOAD_FACTOR, POLICIES_FOR, DELOAD_AFTER, MAX_BW_SETS, climbsReps
 } from './progression.js'
 import { entryExcluded } from './history.js'
 import { EXDB, isAssisted } from './exercises.js'
@@ -1112,5 +1112,21 @@ describe('a weight off the increment grid keeps its offset when it goes up (issu
   it('still snaps from a weight that sits on the grid', () => {
     const p = nextPrescription(hist(LIFT, [[60, 5, 5, 5]]), { id: LIFT, sets: 3, reps: 5, weight: 60, prog: 'linear', inc: 2.5 })
     expect(p.weight).toBe(62.5)
+  })
+})
+
+// Exported for the program catalog (src/features/plan/programs.ts), which stores a rep range in the
+// shape this predicate's branch reads.
+describe('climbsReps', () => {
+  it('is true for work with no load of its own, false for a loaded implement', () => {
+    expect(climbsReps({ id: '0499' })).toBe(true)   // inverted row, body weight
+    expect(climbsReps({ id: '0796' })).toBe(true)   // wheel roller
+    expect(climbsReps({ id: '1314' })).toBe(true)   // stability ball
+    expect(climbsReps({ id: '0968' })).toBe(true)   // band
+    expect(climbsReps({ id: '0025' })).toBe(false)  // barbell bench press
+    expect(climbsReps({ id: '0586' })).toBe(false)  // leverage machine leg curl
+  })
+  it('follows the per-exercise bodyweight switch', () => {
+    expect(climbsReps({ id: '0025', bodyweight: true })).toBe(true)
   })
 })

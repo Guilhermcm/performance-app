@@ -26,12 +26,14 @@ export type Leaderboard = { week_start: string; rows: LeaderboardRow[] }
 // checkin_days is the one people create now; workouts_count (which counts the same training days) and
 // volume_total only live on in challenges made before it.
 export type ChallengeTemplate = 'checkin_days' | 'workouts_count' | 'weeks_on_target' | 'volume_total' | 'nutrition_days_on_target'
+  | 'sleep_nights_on_target'
 export type ChallengeMode = 'team' | 'solo'
 export type ChallengeStatus = 'active' | 'won' | 'lost' | 'cancelled'
 export type ChallengeMember = Person & { me: boolean; joined: boolean; progress: number | null; won: boolean | null }
 
 // One entry of get_challenges (supabase/migrations/0004_social.sql, challenge_json). For a
-// nutrition challenge a member's progress is only their count of days on target (0015).
+// nutrition challenge a member's progress is only their count of days on target (0015), and for a
+// sleep challenge their count of nights on target (0024).
 export type Challenge = {
   id: string
   template: ChallengeTemplate
@@ -58,6 +60,7 @@ export type NewChallenge = {
   invitees: string[]
   share_volume: boolean
   share_nutrition: boolean
+  share_sleep: boolean
 }
 
 export type FeedItem = { id: number; at: string; day: string; user: Person; sets: number | null; prs: string[] }
@@ -143,6 +146,6 @@ export type SocialErrorCode =
   | 'not_signed_in' | 'no_profile'
   | 'invite_not_found' | 'invite_expired' | 'invite_used' | 'self_invite' | 'already_friends' | 'invite_limit'
   | 'not_friends' | 'invalid_challenge' | 'challenge_limit' | 'challenge_not_found' | 'challenge_closed'
-  | 'volume_opt_in_required' | 'nutrition_opt_in_required' | 'nutrition_off'
+  | 'volume_opt_in_required' | 'nutrition_opt_in_required' | 'nutrition_off' | 'sleep_opt_in_required' | 'sleep_off'
   | 'not_found' | 'invalid_emoji' | 'invalid_comment' | 'too_many_reactions'
   | 'network'

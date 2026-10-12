@@ -30,10 +30,10 @@ combinada a partir de outubro de 2026: **1c → 1d → 3 → 4 → 5 → 6** (a 
 | 0 | Fundação | G | — | concluída |
 | 1a | Gamificação individual | M | 0 | concluída |
 | 1b | Social | M | 1a | concluída |
-| 1c | Check-in com foto e social | M | 1b | concluída no código, aguarda SQL 0017-0020 em produção e merge do PR #4 ([spec](superpowers/specs/2026-10-06-checkin-social-design.md), [plano](superpowers/plans/2026-10-06-fase-1c-checkin.md)) |
-| 1d | Plano com evidência | M | 1c | a especificar |
+| 1c | Check-in com foto e social | M | 1b | concluída, em produção desde 2026-10-11 ([spec](superpowers/specs/2026-10-06-checkin-social-design.md), [plano](superpowers/plans/2026-10-06-fase-1c-checkin.md)) |
+| 1d | Plano com evidência | M | 1c | em produção desde 2026-10-12 (PR #6), sem SQL; falta a conferência das fontes em `docs/fontes-1d.md` ([spec](superpowers/specs/2026-10-12-fase-1d-plano-evidencia-design.md), [plano](superpowers/plans/2026-10-12-fase-1d-plano-evidencia.md)) |
 | 2 | Nutrição | G | 1a | concluída (2a e 2b) |
-| 3 | Sono | P | 1a | especificada, execução adiada ([spec](superpowers/specs/2026-10-06-fase-3-sono-design.md)) |
+| 3 | Sono | P | 1a | em produção desde 2026-10-12 (SQL 0021-0025 e PR #6) ([spec](superpowers/specs/2026-10-06-fase-3-sono-design.md), [plano](superpowers/plans/2026-10-12-fase-3-sono.md)) |
 | 4 | Hábitos + trackers | M | 1a | a especificar |
 | 5 | Painel de performance | M | 2, 3, 4 | a especificar |
 | 6 | Foco (ActivityWatch) | P | 1a | a especificar |
@@ -126,16 +126,16 @@ desafios.
 offline), veem e reagem aos posts uma da outra, completam um desafio de dias de treino, e a
 observação privada e a foto "Só eu" nunca aparecem para a outra conta (testado por RLS).
 
-**Status:** concluída no código, aguarda SQL 0017-0020 em produção e merge do PR #4. O roteiro de
-lançamento está em [docs/SETUP.md](SETUP.md): rodar `supabase/release/0017-0020_checkin.sql` e fazer
-o merge logo em seguida.
+**Status:** concluída. SQL 0017-0020 rodado em produção em 2026-10-11 (corte `training_checkin_since`
+= 2026-10-11) e PR #4 no ar no mesmo dia. O roteiro de lançamento está em [docs/SETUP.md](SETUP.md).
 
 **Pendências (depois do lançamento)**
 - Variante leve da foto (miniatura) para "Meus treinos" e para a Home: hoje as duas telas carregam
   a foto inteira, de uns 400 KB.
 - Smoke manual da câmera no iPhone (Safari e app instalado) e no Android.
-- Fase 1d: normalizar a unidade dos pesos do detalhe antes de lê-los para o progresso dos
-  exercícios (o detalhe guarda a unidade de exibição, kg ou lb).
+- Normalizar a unidade dos pesos do detalhe: feito na 1d. O detalhe guarda `unit` e a ingestão
+  converte para a unidade do perfil. Check-ins detalhados antes da 1d não têm `unit` e são lidos na
+  unidade atual do perfil.
 
 ---
 
@@ -172,6 +172,19 @@ aparecer como característica de um programa do catálogo), coach com IA.
 **Pronto quando:** alguém escolhe um programa do catálogo e ele vira o plano da semana; a análise
 mostra volume e frequência por músculo do plano atual com pelo menos uma sugestão aplicada; toda
 recomendação com número tem um ⓘ com fonte verificável.
+
+**Status:** concluída e em produção desde 2026-10-12 (PR #6), sem SQL. Falta a conferência das fontes em
+`docs/fontes-1d.md`.
+Não há migration nem SQL novo nesta fase.
+
+**Pendências (antes do merge e depois)**
+- Conferir as fontes (§7.3 da spec) pelo checklist de `docs/fontes-1d.md`: DOIs, dados impressos de
+  Pelland 2025, linhas "o que o estudo achou" e o ACSM 2009 que sustenta a regra prática do equilíbrio.
+- Revisar as traduções dos 14 pacotes que não são pt-BR nem en para os textos novos da fase.
+- Passar o humanizer nas 14 linhas "o que o estudo achou" em en e pt-BR (`refFinding` em
+  `src/features/plan/references.ts`).
+- Consolidar o progresso do exercício: `ExerciseProgress.tsx` repete a folha `ExerciseHistory`
+  (`sheets.jsx`). `openExerciseProgress` pode abrir `exerciseHistorySheet(exId)` e o arquivo sai.
 
 ---
 
@@ -233,6 +246,24 @@ perfil, diário rápido, pilar Nutrição na gamificação.
 
 **Origem:** Plees Tracker (modelo e estatísticas). Somn descartado (imaturo e dependente de sensores
 nativos).
+
+**Spec:** [2026-10-06-fase-3-sono-design.md](superpowers/specs/2026-10-06-fase-3-sono-design.md).
+**Plano:** [2026-10-12-fase-3-sono.md](superpowers/plans/2026-10-12-fase-3-sono.md).
+
+**Entregas**
+- Pilar opcional, ligado em Perfil > Sono: meta de horas, horário-alvo para deitar e noites por
+  semana; períodos ativos e semana neutra, como na Nutrição.
+- Registro da noite de manhã pelo cartão da Home, com hoje e ontem editáveis e fila offline.
+- Tela `/sono` com os números da noite e da semana (média, regularidade, débito), calendário do mês
+  e gráficos de duração e de horário de deitar.
+- Noite fechada pelo servidor em D+2, XP no molde de 960 por semana, streak semanal, conquistas
+  privadas e o eixo Sono aceso no radar.
+- Desafio `sleep_nights_on_target` com opt-in; os participantes veem só a contagem de noites no alvo.
+- Migrations `0021` a `0025`, publicadas no arquivo único `supabase/release/0021-0025_sleep.sql`, e o
+  job `close-sleep-nights`.
+
+**Status:** concluída. SQL 0021-0025 rodado em produção em 2026-10-12, com as conferências do roteiro
+de [docs/SETUP.md](SETUP.md) ok, e o PR #6 (1d e Sono) entrou no mesmo dia.
 
 ---
 

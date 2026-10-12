@@ -19,9 +19,9 @@ beforeEach(async () => {
 })
 
 describe('achievements', () => {
-  it('has the 22 public badges of the v1 catalogue and the 10 private ones of nutrition, readable by clients', async () => {
+  it('has the 22 public badges of the v1 catalogue and the 20 private ones of nutrition and sleep, readable by clients', async () => {
     const rows = await asUser(db, A, () => db.query<{ private: boolean }>('select code, private from public.achievement_catalog'))
-    expect(rows.rows).toHaveLength(32)
+    expect(rows.rows).toHaveLength(42)
     expect(rows.rows.filter(r => !r.private)).toHaveLength(22)
   })
 

@@ -1,5 +1,5 @@
 // The training detail of a check-in, in and out of the app's history (plan decision 7). The check-in
-// keeps `detail` ({ entries: [{ id, sets: [{ w, r, done }] }] }); the history gets a session in the
+// keeps `detail` ({ entries: [{ id, sets: [{ w, r, done }] }], unit }); the history gets a session in the
 // shape a finished live workout has (lib/finish-workout.js), with the check-in's id, so Stats, the
 // exercise history and the progression read it like any other workout.
 import { useStore } from '../../store/useStore.js'
@@ -10,15 +10,18 @@ import { hasCompletedWork, isWarmupRow } from '../../lib/workout-model.js'
 import { insertChronological } from '../../lib/backfill.js'
 import { stampWorkout } from '../../lib/sync-merge.js'
 import { deleteWorkout } from '../../lib/session-edit.js'
+import { convertWeight } from '../../lib/units.js'
+import { snapWeight, weightIncrement } from '../../lib/progression.js'
 import { emit } from '../gamification/events'
 import type { CheckinDetail } from './types'
 
-type Cfg = { id: string; sets?: number; reps?: number; weight?: number; mode?: string }
+type Cfg = { id: string; sets?: number; reps?: number; weight?: number; mode?: string; inc?: number }
+type Unit = 'kg' | 'lb'
 type Routine = { id: string; name: string; ex: Cfg[] }
 type Set = { w?: unknown; r?: unknown; done?: boolean }
 type Entry = { id: string; target?: Cfg | null; sets?: Set[] }
 // The app state is untyped JS; only what is read here is named.
-type AppState = { routines?: Routine[]; workouts?: Workout[]; exWeights?: Record<string, { w: number; d?: string }> }
+type AppState = { unit?: string; routines?: Routine[]; workouts?: Workout[]; exWeights?: Record<string, { w: number; d?: string }> }
 export type Workout = {
   id: string; d: string; start: number; end: number; routineIds: string[]; routineId: string | null; name: string
   bw: number | null; entries: { id: string; sets: { w: number; r: number; done: boolean }[]; topW?: number | null; rid?: string; target?: Cfg | null }[]
@@ -35,6 +38,16 @@ const num = (v: unknown): number => {
 }
 const routineOf = (S: AppState, id: string | null | undefined): Routine | null =>
   (id ? (S.routines ?? []).find(r => r.id === id) : null) ?? null
+const unitOf = (S: AppState): Unit => (S.unit === 'lb' ? 'lb' : 'kg')
+
+// A weight of a detail in the profile's unit (spec §6). A detail typed in the other unit is
+// converted and snapped to the exercise's load step in the profile's unit; one in the same unit,
+// or saved before details kept a unit, is taken as it is. The detail itself is never changed, so
+// reading it again gives the same numbers.
+function weightIn(w: number, from: Unit | undefined, to: Unit, cfg: Cfg): number {
+  if (!from || from === to || !(w > 0)) return w
+  return snapWeight(convertWeight(w, from, to), weightIncrement(cfg, to))
+}
 
 // The routine's exercises logged as weight × reps, with the sets of last time filled in (that
 // routine's own last session first, then any). An exercise never trained opens at the routine's
@@ -42,13 +55,14 @@ const routineOf = (S: AppState, id: string | null | undefined): Routine | null =
 export function draftFor(S: AppState, routineId: string | null | undefined, initial?: CheckinDetail | null): DraftEntry[] {
   const r = routineOf(S, routineId)
   if (!r) return []
+  const unit = unitOf(S)
   const given = new Map((initial?.entries ?? []).map(e => [e.id, e]))
   const seen = new Set<string>()
   return r.ex
     .filter(cfg => modeOf(cfg) === 'reps' && !seen.has(cfg.id) && !!seen.add(cfg.id))
     .map(cfg => {
       const mine = given.get(cfg.id)
-      if (mine) return { id: cfg.id, on: true, sets: mine.sets.map(s => ({ w: num(s.w), r: num(s.r) })) }
+      if (mine) return { id: cfg.id, on: true, sets: mine.sets.map(s => ({ w: weightIn(num(s.w), initial?.unit, unit, cfg), r: num(s.r) })) }
       const last = lastEntryFor(S, cfg.id, r.id) as { sets: Set[] } | null
       const sets = last?.sets?.length
         ? last.sets.map(s => ({ w: num(s.w), r: num(s.r) }))
@@ -57,18 +71,21 @@ export function draftFor(S: AppState, routineId: string | null | undefined, init
     })
 }
 
-// What the check-in keeps: the exercises on, with the sets that have reps.
-export function detailOf(draft: DraftEntry[]): CheckinDetail | null {
+// The unit weights are typed in right now: the profile's.
+const currentUnit = (): Unit => unitOf(useStore.getState().S as AppState)
+
+// What the check-in keeps: the exercises on, with the sets that have reps, and the unit they are in.
+export function detailOf(draft: DraftEntry[], unit: Unit = currentUnit()): CheckinDetail | null {
   const entries = draft
     .filter(e => e.on)
     .map(e => ({ id: e.id, sets: e.sets.filter(s => s.r > 0).map(s => ({ w: s.w, r: s.r, done: true as const })) }))
     .filter(e => e.sets.length)
-  return entries.length ? { entries } : null
+  return entries.length ? { entries, unit } : null
 }
 
 // The detail of a finished live workout: its done work sets of weight × reps. Warm-ups, timed holds
 // and cardio stay in the workout only.
-export function detailOfWorkout(w: { id?: string; entries?: Entry[] } | null | undefined): CheckinDetail | null {
+export function detailOfWorkout(w: { id?: string; entries?: Entry[] } | null | undefined, unit: Unit = currentUnit()): CheckinDetail | null {
   const entries = (w?.entries ?? [])
     .filter(e => modeOf(e.target ?? { id: e.id }) === 'reps')
     .map(e => ({
@@ -76,7 +93,7 @@ export function detailOfWorkout(w: { id?: string; entries?: Entry[] } | null | u
       sets: (e.sets ?? []).filter(s => hasCompletedWork(s) && !isWarmupRow(s)).map(s => ({ w: num(s.w), r: num(s.r), done: true as const })).filter(s => s.r > 0)
     }))
     .filter(e => e.sets.length)
-  return entries.length ? { entries } : null
+  return entries.length ? { entries, unit } : null
 }
 
 export type CheckinWorkoutInput = {
@@ -101,9 +118,10 @@ export function checkinWorkout(S: AppState, input: CheckinWorkoutInput): Workout
   const end = endAt.getTime()
   const start = durationMin && durationMin > 0 ? end - durationMin * 60000 : end
   const cfgOf = (exId: string) => r?.ex.find(c => c.id === exId)
+  const unit = unitOf(S)
   const entries = detail.entries.map(e => ({
     id: e.id,
-    sets: e.sets.map(s => ({ w: num(s.w), r: num(s.r), done: true })),
+    sets: e.sets.map(s => ({ w: weightIn(num(s.w), detail.unit, unit, cfgOf(e.id) ?? { id: e.id }), r: num(s.r), done: true })),
     target: { ...(cfgOf(e.id) ?? { id: e.id, mode: 'reps' }) },
     ...(r ? { rid: r.id } : {})
   }))

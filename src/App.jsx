@@ -31,11 +31,16 @@ import { useProfile } from './features/profile/useProfile.ts'
 import { useProgress, startProgressSync } from './features/gamification/useProgress.ts'
 import { useSocial } from './features/social/useSocial.ts'
 import { useNutrition, startNutritionSync } from './features/nutrition/useNutrition.ts'
+import { useSleep, startSleepSync } from './features/sleep/useSleep.ts'
 import { useCheckins, startCheckinSync } from './features/checkin/useCheckins.ts'
 import CheckinFlow from './features/checkin/CheckinFlow.tsx'
 import MyTrainings from './features/checkin/MyTrainings.tsx'
+import ProgramsScreen from './features/plan/ProgramsScreen.tsx'
+import ProgramDetail from './features/plan/ProgramDetail.tsx'
+import AnalysisScreen from './features/plan/AnalysisScreen.tsx'
 import NutritionScreen from './features/nutrition/NutritionScreen.tsx'
 import NutritionHistoryScreen from './features/nutrition/HistoryScreen.tsx'
+import SleepScreen from './features/sleep/SleepScreen.tsx'
 import SocialScreen from './features/social/SocialScreen.tsx'
 import ChallengeDetail from './features/social/ChallengeDetail.tsx'
 import InviteScreen, { InviteRoute } from './features/social/InviteScreen.tsx'
@@ -153,7 +158,7 @@ function Shell() {
 
   // The profile in memory belongs to whoever is signed in; signing out drops it.
   useEffect(() => {
-    if (!user) { useProfile.getState().reset(); useProgress.getState().reset(); useSocial.getState().reset(); useNutrition.getState().reset(); useCheckins.getState().reset() }
+    if (!user) { useProfile.getState().reset(); useProgress.getState().reset(); useSocial.getState().reset(); useNutrition.getState().reset(); useSleep.getState().reset(); useCheckins.getState().reset() }
   }, [user?.id])
   // No tab bar while the profile loads or the onboarding is on screen (a guest has no profile).
   const profileReady = useProfile(s => s.status === 'ready' && !s.onboarding) || !user
@@ -174,6 +179,12 @@ function Shell() {
     if (!user || !profileReady) return
     void useNutrition.getState().bind(user.id)
     return startNutritionSync()
+  }, [user?.id, profileReady])
+  // Sleep: same shape as the diary (saved copy, queued nights sent, pull on focus and reconnect).
+  useEffect(() => {
+    if (!user || !profileReady) return
+    void useSleep.getState().bind(user.id)
+    return startSleepSync()
   }, [user?.id, profileReady])
   // Check-ins: my recent ones and the notices at once, the photo queue sent, and again on focus
   // and reconnect. The feed loads when the Social tab asks for it.
@@ -216,6 +227,9 @@ function Shell() {
                 <Route path="/plan" element={<Plan />} />
                 <Route path="/plan/r/:id" element={<RoutineEdit />} />
                 <Route path="/plan/treinos" element={<MyTrainings />} />
+                <Route path="/plan/programas" element={<ProgramsScreen />} />
+                <Route path="/plan/programas/:id" element={<ProgramDetail />} />
+                <Route path="/plan/analise" element={<AnalysisScreen />} />
                 <Route path="/workout" element={<Workout />} />
                 <Route path="/stats" element={<Stats />} />
                 <Route path="/history" element={<History />} />
@@ -227,6 +241,7 @@ function Shell() {
                 <Route path="/conquistas" element={<AchievementsScreen />} />
                 <Route path="/nutricao" element={<NutritionScreen />} />
                 <Route path="/nutricao/historico" element={<NutritionHistoryScreen />} />
+                <Route path="/sono" element={<SleepScreen />} />
                 <Route path="/social" element={<Navigate to="/social/feed" replace />} />
                 <Route path="/social/desafios/:id" element={<ChallengeDetail />} />
                 <Route path="/social/:section" element={<SocialScreen />} />

@@ -4,12 +4,13 @@
 
 1. Crie um projeto em https://supabase.com/dashboard (região: São Paulo, South America).
 2. SQL Editor → em um projeto novo, cole e rode, em ordem, cada arquivo de `supabase/migrations/`,
-   de `0001_init.sql` a `0020_checkin_feed.sql`, um por consulta. Antes de rodar a `0013`, ative
+   de `0001_init.sql` a `0025_sleep_cron.sql`, um por consulta. Antes de rodar a `0013`, ative
    o `pg_cron` (veja a seção 7). Em um projeto que já tem `0001` a `0006`, siga o roteiro abaixo; em
-   um que já tem até a `0016`, siga o roteiro do check-in.
+   um que já tem até a `0016`, siga o roteiro do check-in; em um que já tem até a `0020`, siga o
+   roteiro do Sono.
    A `0006` cria a exclusão de conta pelo próprio app (Perfil > Excluir minha conta) e precisa rodar
    como `postgres`, o usuário padrão do SQL Editor, porque apaga a linha da conta em `auth.users`.
-   As `0007` a `0020` também rodam como `postgres`: as funções que fecham os dias e pagam o XP
+   As `0007` a `0025` também rodam como `postgres`: as funções que fecham os dias e pagam o XP
    escrevem como dono das tabelas.
 3. Project Settings → API: copie `Project URL` e a chave `anon public`.
 
@@ -152,6 +153,66 @@ Revise a lista e apague as fotos pelo painel (Storage → `checkins` → selecio
 Delete). Não apague com `delete from storage.objects`: isso remove só a linha de índice e deixa o
 arquivo no armazenamento.
 
+### Roteiro: banco de produção que já tem a 0001 a 0020 (Sono)
+
+Use este roteiro para levar um banco que já roda o check-in (`0001` a `0020`) até a `0025`, as
+migrations do pilar Sono (fase 3). Rode o SQL e faça o merge no mesmo dia, nesta ordem:
+
+1. Rode o SQL em produção (passos abaixo).
+2. Faça o merge do PR #6 (que leva a 1d e o Sono) logo em seguida, para o cliente novo ir ao ar.
+
+A ordem vem da `0024`. Ela apaga as versões de `create_challenge` e `join_challenge` e cria as novas,
+com o parâmetro `p_share_sleep boolean default false` no fim. O cliente novo já manda
+`p_share_sleep`, então criar ou aceitar um desafio só funciona nele depois do SQL: não publique o
+cliente antes. O cliente da 1c, que fica no ar enquanto o roteiro corre, continua funcionando. Ele
+chama as duas funções por parâmetros nomeados, sem `p_share_sleep`, e o valor padrão cobre a falta;
+só não oferece o Sono. O painel de desafios dele, porém, quebra ao receber um desafio de um modelo
+que não conhece, como o de noites no alvo: por isso o primeiro desafio de Sono só sai depois que
+todos reabrirem o app (passo 5). A spec (§13) pede o SQL e o cliente no mesmo deploy, então não deixe o merge
+para outro dia.
+
+O que muda no banco quando a `0021` a `0025` rodam:
+
+- Os perfis que já existem ganham `sleep_enabled = false` e `sleep_nights_per_week = 5`. O Sono
+  começa desligado para todo mundo, e nada muda para quem não ligar o pilar.
+- Entram as tabelas `sleep_periods`, `sleep_targets`, `sleep_logs` e `sleep_nights`, com RLS. O
+  pilar `sleep`, que já existia no banco sem uso, passa a render XP e a aparecer no radar, nas
+  conquistas e nos desafios.
+- As funções que a 1c tinha redefinido (`award_xp`, `challenge_progress`, `close_challenge`,
+  `get_my_progress` e outras) são redefinidas de novo a partir do corpo da 1c, com os ramos de treino
+  intactos: dia com check-in, desafio `checkin_days` e carência de 2 dias.
+
+Passo a passo:
+
+1. Confira que o `pg_cron` está ativo (Supabase → Database → Extensions → `pg_cron`). A `0025`
+   agenda o job `close-sleep-nights`. Sem a extensão, a migration segue sem agendar o job; nada
+   quebra, mas as noites de quem some só fecham quando a pessoa abre o app.
+2. No SQL Editor, rode o arquivo único `supabase/release/0021-0025_sleep.sql` inteiro, numa consulta
+   só. Ou rode as cinco migrations em ordem, uma por consulta: `0021_sleep_base.sql`,
+   `0022_sleep_close.sql`, `0023_sleep_progress.sql`, `0024_sleep_challenge.sql` e
+   `0025_sleep_cron.sql`. Pare no primeiro erro e resolva a causa antes de seguir. O arquivo único é
+   gerado por `node scripts/build-release-sql.mjs`, então não edite à mão (um teste confere que está
+   em dia).
+3. Confira o resultado:
+   - `select proname, count(*) from pg_proc where proname in ('create_challenge','join_challenge') group by 1;`
+     deve devolver `1` para cada função. Um `2` indica uma migration pela metade.
+   - `select relname, relrowsecurity from pg_class where relname in ('sleep_logs','sleep_nights','sleep_periods','sleep_targets');`
+     deve devolver as quatro tabelas, todas com `true`.
+   - `select jobname, schedule, command from cron.job where jobname = 'close-sleep-nights';` deve
+     devolver `close-sleep-nights | 40 6 * * * | select public.close_all_sleep_nights()` (o conjunto
+     completo está na seção 7).
+4. Se o app disser que não achou a função logo depois ("Could not find the function"), recarregue o
+   cache da API: `notify pgrst, 'reload schema';`.
+5. Faça o merge do PR #6 e o deploy do cliente novo. Depois do deploy, peça ao grupo para fechar e
+   abrir o app, e só crie o primeiro desafio de Sono depois que todos tiverem reaberto. Um app
+   instalado que ficou aberto durante o deploy ainda roda o cliente antigo: ele continua
+   funcionando, pelo valor padrão dos parâmetros nomeados, mas só mostra o Sono depois de reaberto.
+   O painel de desafios desse cliente quebra quando aparece um desafio de noites no alvo.
+6. Faça o smoke da spec (§10) com duas contas: ligue o pilar em Perfil > Sono; registre a noite pelo
+   cartão da manhã na Home, no celular; edite a noite de ontem; dois dias depois, veja o XP da noite
+   chegar; depois que a semana fechar, veja o eixo Sono aceso no radar; e crie um desafio de noites
+   no alvo entre as duas contas, aceitando compartilhar a contagem nas duas.
+
 ## 2. Google OAuth
 
 1. https://console.cloud.google.com → crie um projeto → APIs & Services → OAuth consent screen:
@@ -199,13 +260,16 @@ conquistas em dia para quem passa dias sem abrir.
 
 1. Supabase → Database → Extensions → procure `pg_cron` → Enable.
 2. SQL Editor → rode de novo `supabase/migrations/0003_gamification_cron.sql`,
-   `supabase/migrations/0005_social_cron.sql`, `supabase/migrations/0013_nutrition_cron.sql` e o bloco
-   de cron no fim de `supabase/migrations/0019_training_days.sql`.
+   `supabase/migrations/0005_social_cron.sql`, `supabase/migrations/0013_nutrition_cron.sql`, o bloco
+   de cron no fim de `supabase/migrations/0019_training_days.sql` e
+   `supabase/migrations/0025_sleep_cron.sql`.
 3. Confira com `select jobname, schedule, command from cron.job order by jobname;`. O resultado
-   esperado tem quatro linhas: `close-challenges | 15 6 * * * | select public.close_all_challenges()`,
+   esperado tem cinco linhas: `close-challenges | 15 6 * * * | select public.close_all_challenges()`,
    `close-nutrition-days | 30 6 * * * | select public.close_all_nutrition_days()`,
+   `close-sleep-nights | 40 6 * * * | select public.close_all_sleep_nights()`,
    `close-training-days | 45 5 * * * | select public.close_all_training_days()` e
-   `close-weeks | 0 6 * * * | select public.close_all_weeks()` (06:15, 06:30, 05:45 e 06:00 UTC).
+   `close-weeks | 0 6 * * * | select public.close_all_weeks()` (06:15, 06:30, 06:40, 05:45 e 06:00
+   UTC).
 
 Sem o `pg_cron` nada quebra. O streak de quem sumiu só é atualizado quando a pessoa abre o app de
 novo.
@@ -219,6 +283,12 @@ o XP desses dias e roda antes do `close-weeks`, para a semana ser julgada com os
 Com a Nutrição é igual: o app fecha os dias e as semanas pendentes quando abre. O job
 `close-nutrition-days` fecha os dias de quem está com o pilar ligado e não abriu o app, paga o XP
 desses dias, a meta da semana e as conquistas, e mantém o streak de nutrição em dia.
+
+Com o Sono, também. O job `close-sleep-nights` roda às 06:40 UTC e fecha as noites de quem está com o
+pilar ligado e não abriu o app (a noite D fecha no começo de D+2, no fuso da pessoa). Ele paga o XP
+dessas noites, a meta da semana e as conquistas, e mantém o streak de sono em dia. Os desafios de
+sono não dependem dele: o `close-challenges` espera a carência e fecha as noites pendentes de quem
+participa antes de dar o resultado.
 
 ## 8. Tabela TACO (busca local de alimentos)
 

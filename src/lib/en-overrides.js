@@ -19,8 +19,6 @@ export const EN_OVERRIDES = {
   'Freestyle workout — add your first exercise.': 'Freestyle workout. Add your first exercise.',
   'Rest over — next set!': 'Rest over. Next set!',
   '{0} — in progress': '{0} in progress',
-  'Set up your weekly routine to get going — or load a ready-made starter plan.': 'Set up your weekly routine to get going, or load a ready-made starter plan.',
-  'The new plan will be scheduled on {0}. Existing routines are kept — only those days of the weekly plan change.': 'The new plan will be scheduled on {0}. Existing routines are kept, and only those days of the weekly plan change.',
   'Activity — last 12 months': 'Activity in the last 12 months',
   'Note (optional) — loading cues, "bar only then +1 plate/side each set", anything worth remembering here': 'Note (optional): loading cues, "bar only then +1 plate/side each set", anything worth remembering here',
   'No exercises yet — add your first one.': 'No exercises yet. Add your first one.',
@@ -206,6 +204,8 @@ export const EN_OVERRIDES = {
   'Session ended — sign in again.': 'Session ended. Sign in again.',
   'Replaces your current Mon–Sun assignments.': 'Replaces your current Monday to Sunday assignments.',
   'People in this challenge see how many tonnes you lift. Never the load of each exercise.': 'People in this challenge see how many tonnes you lift, but not the load of each exercise.',
+  // The analysis group (src/features/plan/analysis-copy.ts) is plural in English; the key stays singular.
+  'hamstring': 'hamstrings',
 }
 
 export default EN_OVERRIDES

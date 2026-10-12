@@ -1,10 +1,10 @@
 // The example profile behind the demo build (see demo.js). Imported dynamically, so it stays
 // out of the bundle self-hosters ship.
 import { isoOf, uid } from './format.js'
-import { starterRoutines } from './starter.js'
+import { programRoutines } from '../features/plan/programs'
 import { modeOf } from './history.js'
 
-// Starting weight and weekly increment per exercise of the starter plan (kg).
+// Starting weight and weekly increment per exercise of the PPL program (kg).
 // Chest dips are body-weight only here, so they log reps at 0 added weight.
 const PROG = {
   '0025': [60, 1.25], '0047': [45, 1], '0426': [20, 0.5], '0334': [10, 0.25], '0241': [25, 0.75], '0251': [0, 0],
@@ -56,12 +56,12 @@ const at = (date, h, m) => { const d = new Date(date); d.setHours(h, m, 0, 0); r
 // straddle two points and average itself away in both.
 const monday = date => { const d = new Date(date); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); d.setHours(12, 0, 0, 0); return +d }
 
-// A full example profile: 12 weeks of Mon/Wed/Fri sessions on the starter plan, with linear
+// A full example profile: 12 weeks of Mon/Wed/Fri sessions on the PPL program, with linear
 // progression, the odd missed session, twice-weekly weigh-ins trending toward the goal, and
 // per-set effort ratings on most (not all) of it.
 export function buildDemoState() {
   const rnd = rng(20260723)
-  const [push, pull, legs] = starterRoutines()
+  const [push, pull, legs] = programRoutines('ppl')
   const byWeekday = { 1: push, 3: pull, 5: legs }
 
   const nowH = new Date().getHours()

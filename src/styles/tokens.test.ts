@@ -4,7 +4,7 @@ import { describe, it, expect } from 'vitest'
 const css = readFileSync(new URL('./tokens.css', import.meta.url), 'utf8')
 const REQUIRED = ['--background', '--foreground', '--card', '--card-foreground', '--primary',
   '--primary-foreground', '--muted', '--muted-foreground', '--border', '--input', '--ring',
-  '--destructive', '--pillar-strength', '--pillar-nutrition', '--pillar-sleep', '--pillar-habits',
+  '--destructive', '--chart-bar', '--pillar-strength', '--pillar-nutrition', '--pillar-sleep', '--pillar-habits',
   '--radius', '--ease-out', '--dur-1', '--dur-2', '--dur-3']
 
 const block = (selector: string) => {

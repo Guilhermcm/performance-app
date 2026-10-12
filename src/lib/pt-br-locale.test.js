@@ -41,7 +41,7 @@ describe('Brazilian Portuguese locale', () => {
     // has to be taught is a number nobody reads. What the numbers stood for is asserted above.
     // If the hash fails, review the changed keys and wording before accepting a new one. From
     // frontend/: node scripts/pt-br-inheritance-fingerprint.mjs --list
-    expect(fingerprint, 'pt-PT inheritance changed; review the inherited pt-BR wording').toBe('d44419626279bfe0defd5f4b76b952b51cddd75569a05ed5a227188e40ba39dc')
+    expect(fingerprint, 'pt-PT inheritance changed; review the inherited pt-BR wording').toBe('b0d9213e30305c0ebc5c2f901200044ce78e64ba9d1ec8f1e8a00f3ffa62bc2a')
   })
 
   test('does not leak European Portuguese UI terms', () => {
@@ -59,7 +59,7 @@ describe('Brazilian Portuguese locale', () => {
     expect(ptBR['resistance band']).toBe('faixa elástica')
     expect(ptBR.soleus).toBe('sóleo')
     expect(ptBR.Unpair).toBe('Desvincular')
-    expect(ptBR['Choose starter plan']).toBe('Escolha um plano inicial')
+    expect(ptBR['See programs']).toBe('Ver programas')
     // The sign-in e-mail's strings are overridden, not inherited: pt-PT says palavra-passe and «».
     expect(ptBR['Wrong name, e-mail or password.']).toBe('Nome, e-mail ou senha incorretos.')
     expect(ptBR['Sign-in e-mail']).toBe('E-mail de login')

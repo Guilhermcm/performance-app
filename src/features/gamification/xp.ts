@@ -1,4 +1,5 @@
 import type { DayClass } from '@/features/nutrition/types'
+import type { NightClass } from '@/features/sleep/types'
 
 // The XP rules of the strength pillar (shown as Treino), mirrored from
 // supabase/migrations/0002_gamification.sql (session_xp, level_for, award_xp, close_weeks) and, since
@@ -197,6 +198,58 @@ export function nutritionWeekAwards(
     if (d.classes.balanced && c.balanced < NUTRITION_BALANCED_LIMIT) {
       c.balanced++
       pay('nutrition_balanced', NUTRITION_BALANCED_XP)
+    }
+  }
+  return out
+}
+
+// Sleep pillar (spec 4.2), mirrored from the sleep branch of award_xp in 0022_sleep_close.sql.
+// Same shape as nutrition: on-target nights up to the T-th pay sessionXp(T, i), the T-th also pays
+// the weekly bonus, extras are capped, a rested night pays a capped bonus and every logged night
+// pays a little. The weekly cap is the same 960.
+export const SLEEP_EXTRA_XP = 25
+export const SLEEP_EXTRA_LIMIT = 2
+export const SLEEP_RESTED_XP = 30
+export const SLEEP_RESTED_LIMIT = 3
+export const SLEEP_LOGGED_XP = 10
+
+export type SleepReason =
+  | 'sleep_night'
+  | 'sleep_night_extra'
+  | 'sleep_week_target'
+  | 'sleep_rested'
+  | 'sleep_logged'
+
+// Nights in closing order (oldest first). Per night the order is logged, on target (with the
+// weekly bonus on the T-th), rested, as the cron emits the events.
+// Contract: pass only nights that had a target in force. The server emits no events for a night
+// with target null (it is not evaluated and pays nothing), but classifyNight(log, null) still says
+// logged, so the caller must filter those nights out first.
+export function sleepWeekAwards(
+  nights: { on: string; classes: Omit<NightClass, 'bed_diff_min'> }[],
+  target: number,
+): { reason: SleepReason; amount: number; week: string }[] {
+  const weeks = new Map<string, { nights: number; extras: number; rested: number }>()
+  const out: { reason: SleepReason; amount: number; week: string }[] = []
+  for (const n of nights) {
+    const week = weekStartOf(n.on)
+    const c = weeks.get(week) ?? { nights: 0, extras: 0, rested: 0 }
+    weeks.set(week, c)
+    const pay = (reason: SleepReason, amount: number) => out.push({ reason, amount, week })
+    if (n.classes.logged) pay('sleep_logged', SLEEP_LOGGED_XP)
+    if (n.classes.on_target) {
+      if (c.nights < target) {
+        c.nights++
+        pay('sleep_night', sessionXp(target, c.nights))
+        if (c.nights === target) pay('sleep_week_target', WEEK_TARGET_BONUS)
+      } else if (c.extras < SLEEP_EXTRA_LIMIT) {
+        c.extras++
+        pay('sleep_night_extra', SLEEP_EXTRA_XP)
+      }
+    }
+    if (n.classes.rested && c.rested < SLEEP_RESTED_LIMIT) {
+      c.rested++
+      pay('sleep_rested', SLEEP_RESTED_XP)
     }
   }
   return out

@@ -12,9 +12,10 @@ import { useProgress } from '../gamification/useProgress'
 import { useProfile } from '../profile/useProfile'
 import { useCheckins } from '../checkin/useCheckins'
 import NutritionSetup from '../nutrition/NutritionSetup'
+import SleepSetup from '../sleep/SleepSetup'
 import { joinChallenge, leaveChallenge, toSocialError } from './social-api'
 import { useSocial } from './useSocial'
-import { MODE_TEXT, TEMPLATE_TEXT, amountText, nutritionOptInText, socialErrorText } from './labels'
+import { MODE_TEXT, TEMPLATE_TEXT, amountText, nutritionOptInText, sleepOptInText, socialErrorText } from './labels'
 import { canJoin, challengeShare, isTrainingDays, rankMembers, resultOn } from './templates'
 import { fmtShortDay } from './format'
 import { statusLine } from './ChallengesPanel'
@@ -26,11 +27,12 @@ import type { Challenge } from './types'
 
 // /social/desafios/:id: the rule, where the team (or I) stand against the goal, each member, and
 // the one action that fits: join or decline an invitation, leave (after a confirmation), or the
-// result once it ended. After the last day there is no action at all. A nutrition challenge counts
-// closed days only (up to the day before yesterday) and gives its result later; joining it asks for
-// the opt-in, and with the pillar off the join button opens the pillar's setup instead. A training
-// days challenge (checkin_days, and workouts_count made before it) counts closed days too, shows a
-// ranked scoreboard with my position, and the check-ins of its members below.
+// result once it ended. After the last day there is no action at all. A nutrition or sleep
+// challenge counts closed days (or nights) only, up to the day before yesterday, and gives its
+// result later; joining it asks for the opt-in, and with the pillar off the join button opens the
+// pillar's setup instead. A training days challenge (checkin_days, and workouts_count made before
+// it) counts closed days too, shows a ranked scoreboard with my position, and the check-ins of its
+// members below. A sleep challenge shows the same scoreboard with no feed: only counts are shared.
 export default function ChallengeDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -39,8 +41,10 @@ export default function ChallengeDetail() {
   const [leaving, setLeaving] = useState(false)
   const [shareVolume, setShareVolume] = useState(false)
   const [shareNutrition, setShareNutrition] = useState(false)
+  const [shareSleep, setShareSleep] = useState(false)
   const [setupOpen, setSetupOpen] = useState(false)
   const nutritionOn = useProfile(s => s.profile?.nutrition_enabled ?? false)
+  const sleepOn = useProfile(s => s.profile?.sleep_enabled ?? false)
   useEffect(() => { void useSocial.getState().load('challenges') }, [])
   const c = res.data?.find(x => x.id === id) ?? null
   const today = todayISO()
@@ -92,15 +96,24 @@ export default function ChallengeDetail() {
   const joinable = canJoin(c, today)
   const needsVolume = joinable && c.template === 'volume_total'
   const nutrition = c.template === 'nutrition_days_on_target'
+  const sleep = c.template === 'sleep_nights_on_target'
   const training = isTrainingDays(c.template)
-  // Both count closed days only, and the result comes after the last of them closes.
-  const closedDays = nutrition || training
+  // All three count closed days (or nights) only, and the result comes after the last of them closes.
+  const closedDays = nutrition || sleep || training
+  // A ranked scoreboard with positions; the other templates list their members.
+  const scored = training || sleep
   const ranking = rankMembers(c)
   const joinedCount = ranking.filter(r => r.pos !== null).length
   const myPos = ranking.find(r => r.member.me)?.pos ?? null
   const needsNutrition = joinable && nutrition
-  const blocked = (needsVolume && !shareVolume) || (needsNutrition && !shareNutrition)
-  const optIn = nutritionOptInText()
+  const needsSleep = joinable && sleep
+  const blocked = (needsVolume && !shareVolume) || (needsNutrition && !shareNutrition) || (needsSleep && !shareSleep)
+  // The pillar a join needs, whether it is on, and its opt-in.
+  const pillar = needsNutrition
+    ? { on: nutritionOn, id: 'join-nutrition', text: nutritionOptInText(), share: shareNutrition, set: setShareNutrition, turnOn: t('Turn on the Nutrition pillar to join') }
+    : needsSleep
+      ? { on: sleepOn, id: 'join-sleep', text: sleepOptInText(), share: shareSleep, set: setShareSleep, turnOn: t('Turn on the Sleep pillar to join') }
+      : null
 
   return page(
     <>
@@ -135,18 +148,18 @@ export default function ChallengeDetail() {
             <div className="h-full rounded-full bg-primary transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
               style={{ width: `${challengeShare(c) * 100}%` }} />
           </div>
-          {training && myPos !== null && joinedCount > 1 && (
+          {scored && myPos !== null && joinedCount > 1 && (
             <p className="mt-3 text-sm font-medium tabular-nums">{t('Position {0} of {1}', myPos, joinedCount)}</p>
           )}
         </section>
       )}
 
-      <section aria-label={training ? t('Scoreboard') : t('Members')} className="mt-6">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">{training ? t('Scoreboard') : t('Members')}</h2>
+      <section aria-label={scored ? t('Scoreboard') : t('Members')} className="mt-6">
+        <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">{scored ? t('Scoreboard') : t('Members')}</h2>
         <ul className="mt-2 flex list-none flex-col gap-2 p-0">
-          {(training ? ranking : c.members.map(member => ({ member, pos: null }))).map(({ member: m, pos }) => (
+          {(scored ? ranking : c.members.map(member => ({ member, pos: null }))).map(({ member: m, pos }) => (
             <li key={m.id} className={cn('flex min-h-14 items-center gap-3 rounded-2xl px-3 py-2', m.me ? 'bg-primary/10' : 'bg-card')}>
-              {training && (
+              {scored && (
                 <span aria-label={pos !== null ? t('Position {0}', pos) : undefined} role={pos !== null ? 'img' : undefined}
                   className="w-5 shrink-0 text-center font-mono text-sm font-semibold tabular-nums text-muted-foreground">
                   {pos !== null ? pos : ''}
@@ -202,22 +215,24 @@ export default function ChallengeDetail() {
                       <Switch id="join-volume" checked={shareVolume} onCheckedChange={setShareVolume} />
                     </div>
                   )}
-                  {needsNutrition && nutritionOn && (
+                  {pillar?.on && (
                     <div className="flex items-start gap-3 rounded-2xl border border-border p-3">
-                      <label htmlFor="join-nutrition" className="flex-1 cursor-pointer">
-                        <span className="block text-[15px] font-medium">{optIn.label}</span>
-                        <span className="block text-xs leading-snug text-muted-foreground">{optIn.detail}</span>
+                      <label htmlFor={pillar.id} className="flex-1 cursor-pointer">
+                        <span className="block text-[15px] font-medium">{pillar.text.label}</span>
+                        <span className="block text-xs leading-snug text-muted-foreground">{pillar.text.detail}</span>
                       </label>
-                      <Switch id="join-nutrition" checked={shareNutrition} onCheckedChange={setShareNutrition} />
+                      <Switch id={pillar.id} checked={pillar.share} onCheckedChange={pillar.set} />
                     </div>
                   )}
-                  {needsNutrition && !nutritionOn ? (
+                  {pillar && !pillar.on ? (
                     <Button className="h-12 rounded-2xl text-[15px] font-semibold" onClick={() => setSetupOpen(true)}>
-                      {t('Turn on the Nutrition pillar to join')}
+                      {pillar.turnOn}
                     </Button>
                   ) : (
                     <Button className="h-12 gap-2 rounded-2xl text-[15px] font-semibold" disabled={busy || blocked} aria-busy={busy}
-                      onClick={() => act(() => joinChallenge(c.id, { shareVolume: needsVolume && shareVolume, shareNutrition: needsNutrition && shareNutrition }), t('You joined the challenge'))}>
+                      onClick={() => act(() => joinChallenge(c.id, {
+                        shareVolume: needsVolume && shareVolume, shareNutrition: needsNutrition && shareNutrition, shareSleep: needsSleep && shareSleep
+                      }), t('You joined the challenge'))}>
                       {busy && <LoaderCircle aria-hidden className="size-5 animate-spin motion-reduce:animate-none" />}{t('Join challenge')}
                     </Button>
                   )}
@@ -241,6 +256,7 @@ export default function ChallengeDetail() {
         </div>
       )}
       {needsNutrition && <NutritionSetup open={setupOpen} onOpenChange={setSetupOpen} />}
+      {needsSleep && <SleepSetup open={setupOpen} onOpenChange={setSetupOpen} />}
     </>
   )
 }

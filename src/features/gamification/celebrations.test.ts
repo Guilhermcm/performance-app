@@ -1,10 +1,10 @@
 // @vitest-environment happy-dom
 import { describe, it, expect } from 'vitest'
-import { celebrationsSince, completeMarker, dayResultToast, markerOf, trainingDayToast } from './celebrations'
+import { celebrationsSince, completeMarker, dayResultToast, markerOf, sleepNightToast, trainingDayToast } from './celebrations'
 import { setLang } from '../../lib/i18n.js'
 import { progressOf } from './test-progress'
 import { levelFor } from './xp'
-import type { NutritionProgress, Progress } from './types'
+import type { NutritionProgress, Progress, SleepProgress } from './types'
 
 const badge = (code: string) => ({ code, unlocked_at: '2026-10-07T20:00:00Z' })
 
@@ -17,6 +17,17 @@ const withNutrition = (nxp: number, n: Partial<NutritionProgress> = {}, over: Pa
   progressOf(700, {}, {
     pillars: { strength: { ...levelFor(700), xp: 700 }, nutrition: { ...levelFor(nxp), xp: nxp } },
     nutrition: nutrition(n), ...over
+  })
+
+const sleep = (over: Partial<SleepProgress> = {}): SleepProgress => ({
+  target: 5, on_target: 2, logged: 3, streak: { current: 1, best: 1, shields: 0 }, confirms_on: '2026-10-09',
+  last_closed: null, last_week: null, ...over
+})
+// Strength 700 XP; sleep at `sxp` XP.
+const withSleep = (sxp: number, s: Partial<SleepProgress> = {}, over: Partial<Progress> = {}) =>
+  progressOf(700, {}, {
+    pillars: { strength: { ...levelFor(700), xp: 700 }, sleep: { ...levelFor(sxp), xp: sxp } },
+    sleep: sleep(s), ...over
   })
 
 describe('celebrations', () => {
@@ -67,8 +78,8 @@ describe('celebrations', () => {
     const now = withNutrition(400, { last_week: { start: '2026-09-28', target_hit: true } })
     const old = { level: now.level.level, codes: [] }
     const done = completeMarker(old, now)
-    expect(done.pillarLevels).toEqual({ strength: now.level.level, nutrition: levelFor(400).level })
-    expect(done.weekTargets).toEqual({ nutrition: '2026-09-28' })
+    expect(done.pillarLevels).toEqual({ strength: now.level.level, nutrition: levelFor(400).level, sleep: 1 })
+    expect(done.weekTargets).toEqual({ nutrition: '2026-09-28', sleep: null })
     expect(celebrationsSince(done, now)).toEqual([])
     // A complete marker is left as it is.
     const seen = markerOf(withNutrition(90))
@@ -77,9 +88,82 @@ describe('celebrations', () => {
 
   it('reads a cached progress from an older build without pillars or nutrition', () => {
     const old = { ...progressOf(700), pillars: undefined, nutrition: undefined } as unknown as Progress
-    expect(markerOf(old)).toEqual({ level: old.level.level, codes: [], pillarLevels: {}, weekTargets: {} })
+    expect(markerOf(old)).toEqual({ level: old.level.level, codes: [], pillarLevels: { sleep: 1 }, weekTargets: { sleep: null } })
     expect(celebrationsSince(markerOf(old), old)).toEqual([])
     expect(dayResultToast(old, null)).toBeNull()
+    expect(sleepNightToast(old, null)).toBeNull()
+  })
+
+  it('celebrates the sleep pillar reaching a new level', () => {
+    const seen = markerOf(withSleep(90))
+    const now = withSleep(400)
+    expect(celebrationsSince(seen, now)).toEqual([{ kind: 'pillar_level', pillar: 'sleep', level: levelFor(400).level }])
+  })
+
+  it('celebrates the sleep weekly goal once per new week, after nutrition', () => {
+    const seen = markerOf(withSleep(90))
+    const hit = withSleep(90, { last_week: { start: '2026-09-28', target_hit: true } })
+    expect(celebrationsSince(seen, hit)).toEqual([{ kind: 'week_target', pillar: 'sleep', week_start: '2026-09-28' }])
+    expect(celebrationsSince(markerOf(hit), hit)).toEqual([])
+    const next = withSleep(90, { last_week: { start: '2026-10-05', target_hit: true } })
+    expect(celebrationsSince(markerOf(hit), next)).toEqual([{ kind: 'week_target', pillar: 'sleep', week_start: '2026-10-05' }])
+    const missed = withSleep(90, { last_week: { start: '2026-10-05', target_hit: false } })
+    expect(celebrationsSince(markerOf(hit), missed)).toEqual([])
+    const both = withSleep(90, { last_week: { start: '2026-09-28', target_hit: true } },
+      { nutrition: nutrition({ last_week: { start: '2026-09-28', target_hit: true } }) })
+    expect(celebrationsSince(seen, both).map(c => c.kind === 'week_target' && c.pillar)).toEqual(['nutrition', 'sleep'])
+  })
+
+  it('completes a marker from before the sleep pillar without celebrating it', () => {
+    const now = withSleep(400, { last_week: { start: '2026-09-28', target_hit: true } })
+    // Saved by the nutrition-era build: both maps there, no sleep in either.
+    const old = { level: now.level.level, codes: [], pillarLevels: { strength: now.level.level }, weekTargets: {} }
+    const done = completeMarker(old, now)
+    expect(done.pillarLevels).toEqual({ strength: now.level.level, sleep: levelFor(400).level })
+    expect(done.weekTargets).toEqual({ sleep: '2026-09-28' })
+    expect(celebrationsSince(done, now)).toEqual([])
+    // A marker with sleep and no week yet is complete: the first sleep week is still celebrated.
+    const fresh = markerOf(withSleep(90))
+    expect(fresh.weekTargets).toEqual({ sleep: null })
+    expect(completeMarker(fresh, now)).toBe(fresh)
+    expect(celebrationsSince(fresh, withSleep(90, { last_week: { start: '2026-09-28', target_hit: true } })))
+      .toEqual([{ kind: 'week_target', pillar: 'sleep', week_start: '2026-09-28' }])
+  })
+})
+
+describe('sleepNightToast', () => {
+  // 2026-10-03 is a Saturday, 2026-10-05 a Monday. The night is the day of waking up.
+  const closed = (over: Partial<NonNullable<SleepProgress['last_closed']>> = {}) =>
+    withSleep(90, { last_closed: { night: '2026-10-03', logged: true, on_target: true, rested: false, xp: 130, ...over } })
+
+  it('names the weekday and the XP of a night on target', () => {
+    expect(sleepNightToast(closed(), '2026-10-02')).toEqual({ text: 'Saturday on target, +130 XP', night: '2026-10-03' })
+  })
+
+  it('says a night off target was logged, with its XP', () => {
+    expect(sleepNightToast(closed({ on_target: false, xp: 10 }), null)).toEqual({ text: 'Saturday logged, +10 XP', night: '2026-10-03' })
+    // A night with no goal in force pays nothing: no XP in the sentence.
+    expect(sleepNightToast(closed({ on_target: false, xp: 0 }), null)?.text).toBe('Saturday logged')
+  })
+
+  it('reads naturally in Brazilian Portuguese', async () => {
+    await setLang('pt-BR')
+    try {
+      expect(sleepNightToast(closed(), null)?.text).toBe('Sábado no alvo, +130 XP')
+      expect(sleepNightToast(closed({ on_target: false, xp: 10 }), null)?.text).toBe('Sábado registrado, +10 XP')
+      const monday = withSleep(90, { last_closed: { night: '2026-10-05', logged: true, on_target: false, rested: false, xp: 10 } })
+      expect(sleepNightToast(monday, null)?.text).toBe('Segunda-feira registrada, +10 XP')
+    } finally {
+      await setLang('en')
+    }
+  })
+
+  it('stays quiet for a night already shown, a night without a log or no closed night', () => {
+    expect(sleepNightToast(closed(), '2026-10-03')).toBeNull()
+    expect(sleepNightToast(closed(), '2026-10-04')).toBeNull()
+    expect(sleepNightToast(closed({ logged: false, on_target: false, xp: 0 }), null)).toBeNull()
+    expect(sleepNightToast(withSleep(90), null)).toBeNull()
+    expect(sleepNightToast(progressOf(700), null)).toBeNull()
   })
 })
 

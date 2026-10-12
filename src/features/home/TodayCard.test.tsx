@@ -146,7 +146,7 @@ describe('TodayCard with check-ins', () => {
     expect(screen.getByText('Workout logged. Check in so the day counts.')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Post a check-in' }))
     expect(h.openCheckinCamera).toHaveBeenCalledWith({
-      routineId: 'r1', fromWorkout: 'w1', detail: { entries: [{ id: '0025', sets: [{ w: 60, r: 8, done: true }] }] }
+      routineId: 'r1', fromWorkout: 'w1', detail: { entries: [{ id: '0025', sets: [{ w: 60, r: 8, done: true }] }], unit: 'kg' }
     })
   })
 

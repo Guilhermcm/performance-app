@@ -67,7 +67,25 @@ describe('useProgress', () => {
     await useProgress.getState().load('u1')
     expect(useProgress.getState().pending).toEqual([])
     const seen = JSON.parse(localStorage.getItem('perf_celebrated_v1')!).value
-    expect(seen.pillarLevels).toEqual({ strength: 3, nutrition: 2 })
+    expect(seen.pillarLevels).toEqual({ strength: 3, nutrition: 2, sleep: 1 })
+  })
+
+  it('completes a marker saved before the sleep pillar without celebrating sleep', async () => {
+    const slept = progressOf(400, {}, {
+      pillars: { strength: { level: 3, into: 50, need: 200, xp: 400 }, sleep: { level: 2, into: 0, need: 150, xp: 100 } },
+      sleep: {
+        target: 5, on_target: 5, logged: 6, streak: { current: 1, best: 1, shields: 0 }, confirms_on: '2026-10-09',
+        last_closed: null, last_week: { start: '2026-09-28', target_hit: true }
+      }
+    })
+    const old = { level: slept.level.level, codes: [], pillarLevels: { strength: 3 }, weekTargets: {} }
+    localStorage.setItem('perf_celebrated_v1', JSON.stringify({ userId: 'u1', value: old }))
+    api.fetchProgress.mockResolvedValue(slept)
+    await useProgress.getState().load('u1')
+    expect(useProgress.getState().pending).toEqual([])
+    const seen = JSON.parse(localStorage.getItem('perf_celebrated_v1')!).value
+    expect(seen.pillarLevels).toEqual({ strength: 3, sleep: 2 })
+    expect(seen.weekTargets).toEqual({ sleep: '2026-09-28' })
   })
 
   it('runs one follow-up when asked during a refresh', async () => {

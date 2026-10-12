@@ -22,6 +22,7 @@ import { RTL_LANGS } from '../lib/i18n-core.js'
 import { DEFAULT_TEMPLATE_ID } from '../lib/structuralBalanceTemplates.js'
 
 import { WC_DEFAULT } from '../lib/workout-controls.js'
+import { markPlanEdited } from '../features/plan/program-state.ts'
 
 const KEY = 'gym_state_v1'
 // Where the saved copy stands with the server: the revision it descends from, and its own `_ts`
@@ -951,6 +952,8 @@ export const useStore = create((set, get) => {
       const prev = get().S
       const S = clone(prev)
       mut(S)
+      // An edit of the plan hides the applied program's banner and Undo (phase 1d, decision 4).
+      markPlanEdited(prev, S)
       stampRoutines(prev.routines, S.routines)
       stampCustomEx(prev.customEx, S.customEx)
       persist(S, push)

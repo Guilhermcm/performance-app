@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, useReducedMotion } from 'motion/react'
-import { Apple, CalendarCheck, Crown, type LucideIcon } from 'lucide-react'
+import { Apple, CalendarCheck, Crown, Moon, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { t } from '../../../lib/i18n.js'
 import { achievementByCode, type AchievementCode } from '../achievements'
@@ -16,7 +16,14 @@ type View = { eyebrow: string; title: string; detail: string; xp: number; icon: 
 
 // The pillars with a level-up card (celebrations.ts); another one falls back to the plain level.
 const PILLAR_LEVEL: Partial<Record<PillarKey, { title: (level: number) => string; icon: LucideIcon; tone: string }>> = {
-  nutrition: { title: level => t('Nutrition level {0}', level), icon: Apple, tone: 'bg-pillar-nutrition/15 text-pillar-nutrition' }
+  nutrition: { title: level => t('Nutrition level {0}', level), icon: Apple, tone: 'bg-pillar-nutrition/15 text-pillar-nutrition' },
+  sleep: { title: level => t('Sleep level {0}', level), icon: Moon, tone: 'bg-pillar-sleep/15 text-pillar-sleep' }
+}
+
+// The pillars with a weekly goal card; both pay the same bonus (spec 5.1).
+const WEEK_TARGET: Record<'nutrition' | 'sleep', { title: () => string; detail: () => string; tone: string }> = {
+  nutrition: { title: () => t('Nutrition goal met'), detail: () => t('You hit your target on enough days last week.'), tone: 'bg-pillar-nutrition/15 text-pillar-nutrition' },
+  sleep: { title: () => t('Sleep goal met'), detail: () => t('You hit your target on enough nights last week.'), tone: 'bg-pillar-sleep/15 text-pillar-sleep' }
 }
 
 function viewOf(c: Celebration): View {
@@ -35,10 +42,10 @@ function viewOf(c: Celebration): View {
     }
   }
   if (c.kind === 'week_target') {
+    const w = WEEK_TARGET[c.pillar]
     return {
-      eyebrow: t('Weekly goal met'), title: t('Nutrition goal met'),
-      detail: t('You hit your target on enough days last week.'), xp: WEEK_TARGET_BONUS,
-      icon: <span className="grid size-20 place-items-center rounded-3xl bg-pillar-nutrition/15 text-pillar-nutrition"><CalendarCheck className="size-10" strokeWidth={1.75} /></span>
+      eyebrow: t('Weekly goal met'), title: w.title(), detail: w.detail(), xp: WEEK_TARGET_BONUS,
+      icon: <span className={cn('grid size-20 place-items-center rounded-3xl', w.tone)}><CalendarCheck className="size-10" strokeWidth={1.75} /></span>
     }
   }
   const text = ACHIEVEMENT_TEXT[c.code as AchievementCode]

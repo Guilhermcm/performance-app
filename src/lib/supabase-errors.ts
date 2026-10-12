@@ -1,9 +1,11 @@
 // Tells a write the server refused for good from one that only needs another try. Shared by the
-// offline queues (nutrition, check-in): a refused op is dropped with its reason, anything else
+// offline queues (nutrition, sleep, check-in): a refused op is dropped with its reason, anything else
 // stops the queue and stays in it.
-export type NutritionErrorCode = 'day_closed' | 'too_many_items' | 'too_many_checkins' | 'item_immutable' | 'network'
+export type NutritionErrorCode = 'day_closed' | 'night_closed' | 'too_many_items' | 'too_many_checkins' | 'item_immutable' | 'network'
 
-export type RefusedReason = 'day_closed' | 'refused'
+// A closed day (diary) or night (sleep) gets its own reason so the screen can say so; the rest is 'refused'.
+export type RefusedReason = 'day_closed' | 'night_closed' | 'refused'
+const CLOSED: readonly string[] = ['day_closed', 'night_closed']
 
 export class NutritionError extends Error {
   readonly code: NutritionErrorCode
@@ -18,16 +20,16 @@ export class NutritionError extends Error {
     this.name = 'NutritionError'
     this.code = code
     this.refused = extra.refused ?? (code !== 'network')
-    this.reason = extra.reason ?? (code === 'day_closed' ? 'day_closed' : this.refused ? 'refused' : null)
+    this.reason = extra.reason ?? (CLOSED.includes(code) ? (code as RefusedReason) : this.refused ? 'refused' : null)
     this.sqlstate = extra.sqlstate ?? null
     this.detail = extra.detail ?? ''
   }
 }
 
-// The triggers of 0009_nutrition_diary.sql and 0017_checkins.sql raise their typed errors (P0001)
+// The triggers of 0009_nutrition_diary.sql, 0017_checkins.sql and 0021_sleep_base.sql raise their typed errors (P0001)
 // with the code as the message. These are the codes a caller can tell apart.
-const KNOWN: readonly NutritionErrorCode[] = ['day_closed', 'too_many_items', 'too_many_checkins', 'item_immutable']
-const P0001_REFUSALS = ['day_closed', 'too_many_items', 'too_many_checkins', 'too_many_foods', 'too_many_measures', 'item_immutable', 'import_forbidden']
+const KNOWN: readonly NutritionErrorCode[] = ['day_closed', 'night_closed', 'too_many_items', 'too_many_checkins', 'item_immutable']
+const P0001_REFUSALS = ['day_closed', 'night_closed', 'too_many_items', 'too_many_checkins', 'too_many_foods', 'too_many_measures', 'item_immutable', 'import_forbidden']
 
 const messageOf = (e: unknown) => {
   const m = (e as { message?: unknown } | null)?.message
@@ -51,7 +53,7 @@ export function classify(e: unknown): NutritionError {
   const code: NutritionErrorCode = known ?? 'network'
   return new NutritionError(code, {
     refused, sqlstate, detail,
-    reason: !refused ? null : detail === 'day_closed' ? 'day_closed' : 'refused'
+    reason: !refused ? null : CLOSED.includes(detail) ? (detail as RefusedReason) : 'refused'
   })
 }
 

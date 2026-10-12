@@ -8,13 +8,17 @@ vi.mock('react-router-dom', () => ({ useNavigate: () => h.nav }))
 import { ProgressHero } from './ProgressHero'
 import { useProgress } from '../gamification/useProgress'
 import { progressOf } from '../gamification/test-progress'
+import { useProfile } from '../profile/useProfile'
 
 const realRefresh = useProgress.getState().refresh
 const ready = (p = progressOf(400, { xp: 400, workouts: 2 }, { streak: { current: 3, best: 5, shields: 1 } }), over = {}) =>
   useProgress.setState({ status: 'ready', progress: p, userId: 'u1', ...over })
 
 beforeEach(() => { localStorage.clear(); useProgress.getState().reset(); h.nav.mockClear() })
-afterEach(() => { cleanup(); useProgress.setState({ refresh: realRefresh }) })
+afterEach(() => { cleanup(); useProgress.setState({ refresh: realRefresh }); useProfile.setState({ profile: null }) })
+const pillarsOn = (nutrition: boolean, sleep: boolean) =>
+  useProfile.setState({ profile: { id: 'u1', timezone: 'America/Sao_Paulo', nutrition_enabled: nutrition, sleep_enabled: sleep } as never })
+const seg = (c: HTMLElement, k: string) => c.querySelector(`[data-slot="week-segment"][data-pillar="${k}"]`) as HTMLElement | null
 
 describe('ProgressHero', () => {
   it('shows a skeleton until the first answer', () => {
@@ -94,10 +98,52 @@ describe('ProgressHero', () => {
     expect(container.querySelector('[data-pillar="nutrition"]')).toBeNull()
   })
 
+  it('splits the week bar into training, nutrition, sleep and bonus, each with its name', () => {
+    pillarsOn(true, true)
+    ready(progressOf(950, { xp: 640, max: 2880, pillars: { strength: 300, nutrition: 170, sleep: 120, bonus: 50 } }))
+    const { container } = render(<ProgressHero />)
+    expect(screen.getByText('640 of 2,880 XP')).toBeTruthy()
+    expect(seg(container, 'sleep')!.style.width).toBe(`${(120 / 2880) * 100}%`)
+    expect([...container.querySelectorAll<HTMLElement>('[data-slot="week-segment"]')].map(e => e.dataset.pillar))
+      .toEqual(['strength', 'nutrition', 'sleep', 'bonus'])
+    const legend = screen.getByRole('list', { name: 'XP this week by pillar' })
+    expect(within(legend).getAllByRole('listitem').map(li => li.textContent)).toEqual(['Training300', 'Nutrition170', 'Sleep120', 'Bonus50'])
+  })
+
+  it('names the pillars that are on, not the ones the maximum suggests', () => {
+    // Sleep alone raises the maximum to 1,920 too: that is not nutrition.
+    pillarsOn(false, true)
+    ready(progressOf(950, { xp: 300, max: 1920, pillars: { strength: 300, nutrition: 0, sleep: 0, bonus: 0 } }))
+    const { container } = render(<ProgressHero />)
+    const legend = screen.getByRole('list', { name: 'XP this week by pillar' })
+    expect(within(legend).getByText('Sleep')).toBeTruthy()
+    expect(within(legend).queryByText('Nutrition')).toBeNull()
+    expect(container.querySelector('[data-pillar="nutrition"]')).toBeNull()
+    // No sleep XP yet: in the legend at 0, no empty sliver in the bar.
+    expect(seg(container, 'sleep')).toBeNull()
+  })
+
+  it('still shows a pillar that earned XP this week after it was turned off', () => {
+    pillarsOn(false, false)
+    ready(progressOf(950, { xp: 400, max: 1920, pillars: { strength: 300, nutrition: 0, sleep: 100, bonus: 0 } }))
+    const { container } = render(<ProgressHero />)
+    expect(seg(container, 'sleep')).toBeTruthy()
+    expect(container.querySelector('[data-pillar="nutrition"]')).toBeNull()
+  })
+
+  it('reads a cached week without sleep from an older build', () => {
+    pillarsOn(true, true)
+    ready(progressOf(950, { xp: 470, max: 1920, pillars: { strength: 300, nutrition: 170, bonus: 0 } }))
+    const { container } = render(<ProgressHero />)
+    expect(seg(container, 'nutrition')!.style.width).toBe(`${(170 / 1920) * 100}%`)
+    expect(seg(container, 'sleep')).toBeNull()
+    expect(within(screen.getByRole('list', { name: 'XP this week by pillar' })).getByText('Sleep')).toBeTruthy()
+  })
+
   it('opens the achievements', () => {
     ready()
     render(<ProgressHero />)
-    expect(screen.getByText('0 of 32 unlocked')).toBeTruthy()
+    expect(screen.getByText('0 of 42 unlocked')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /Achievements/ }))
     expect(h.nav).toHaveBeenCalledWith('/conquistas')
   })

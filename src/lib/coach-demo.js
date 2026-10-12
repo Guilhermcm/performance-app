@@ -77,7 +77,7 @@ function buildReview(S) {
   }
 }
 
-/** A small, honest starter plan for the demo's creation flow. */
+/** A small, honest first plan for the demo's creation flow. */
 function buildPlan(S, intake) {
   const pick = (bp, eq) => EXDB.find(e => e.bp === bp && (!eq || e.eq === eq)) || EXDB.find(e => e.bp === bp)
   const days = intake?.preferredDays?.length ? intake.preferredDays.slice(0, 3) : [1, 3, 5]
