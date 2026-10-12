@@ -16,6 +16,7 @@ import { openCheckinCamera } from '../features/checkin/open-checkin'
 import { useCheckins } from '../features/checkin/useCheckins'
 import { useWeekTraining } from '../features/checkin/week'
 import { ProgramBanner } from '../features/plan/ProgramBanner'
+import { AnalysisCard } from '../features/plan/AnalysisCard'
 
 export default function Plan() {
   const nav = useNavigate()
@@ -109,6 +110,9 @@ export default function Plan() {
         <Icon name="chevronRight" className="chev" />
       </div>
     </div>
+
+    {/* The plan analysis (phase 1d, spec 5.8): the week in one line, or a program to start with. */}
+    <AnalysisCard />
 
     {/* The tab bar's center is the check-in now (phase 1c), so a workout in progress, or an edit
         of a saved one, is picked up here. */}

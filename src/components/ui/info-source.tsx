@@ -20,9 +20,10 @@ function useNarrow() {
   return narrow
 }
 
-function Sources({ refs }: { refs: SourceId[] }) {
+function Sources({ refs, note }: { refs: SourceId[]; note?: string }) {
   return (
     <ul className="flex flex-col gap-4">
+      {note && <li className="text-sm">{note}</li>}
       {refs.map(id => {
         if (id === RULE_OF_THUMB) return <li key={id} className="text-sm">{refFinding(id)}</li>
         const ref = REFS[id]
@@ -41,8 +42,9 @@ function Sources({ refs }: { refs: SourceId[] }) {
 }
 
 // The ⓘ that opens the source of a recommendation: a balloon above the icon, or a sheet from the bottom
-// on a narrow screen. Tap-only, no hover.
-export function InfoSource({ refs, label }: { refs: SourceId[]; label?: string }) {
+// on a narrow screen. Tap-only, no hover. `note` is the app's own explanation (an estimate with no
+// study behind it), shown above the references, if any.
+export function InfoSource({ refs, label, note }: { refs: SourceId[]; label?: string; note?: string }) {
   const narrow = useNarrow()
   const [open, setOpen] = React.useState(false)
   const name = label ?? t('See source')
@@ -64,7 +66,7 @@ export function InfoSource({ refs, label }: { refs: SourceId[]; label?: string }
             </Button>
           </div>
           <DrawerDescription className="sr-only">{name}</DrawerDescription>
-          <div className="max-h-[60vh] overflow-y-auto px-4 pb-2"><Sources refs={refs} /></div>
+          <div className="max-h-[60vh] overflow-y-auto px-4 pb-2"><Sources refs={refs} note={note} /></div>
         </DrawerContent>
       </Drawer>
     )
@@ -90,7 +92,7 @@ export function InfoSource({ refs, label }: { refs: SourceId[]; label?: string }
               <X aria-hidden className="size-5" />
             </Button>
           </PopoverPrimitive.Close>
-          <div className="max-h-[60vh] overflow-y-auto pr-10"><Sources refs={refs} /></div>
+          <div className="max-h-[60vh] overflow-y-auto pr-10"><Sources refs={refs} note={note} /></div>
           <PopoverPrimitive.Arrow className="fill-popover" />
         </PopoverPrimitive.Content>
       </PopoverPrimitive.Portal>

@@ -36,6 +36,7 @@ import CheckinFlow from './features/checkin/CheckinFlow.tsx'
 import MyTrainings from './features/checkin/MyTrainings.tsx'
 import ProgramsScreen from './features/plan/ProgramsScreen.tsx'
 import ProgramDetail from './features/plan/ProgramDetail.tsx'
+import AnalysisScreen from './features/plan/AnalysisScreen.tsx'
 import NutritionScreen from './features/nutrition/NutritionScreen.tsx'
 import NutritionHistoryScreen from './features/nutrition/HistoryScreen.tsx'
 import SocialScreen from './features/social/SocialScreen.tsx'
@@ -220,6 +221,7 @@ function Shell() {
                 <Route path="/plan/treinos" element={<MyTrainings />} />
                 <Route path="/plan/programas" element={<ProgramsScreen />} />
                 <Route path="/plan/programas/:id" element={<ProgramDetail />} />
+                <Route path="/plan/analise" element={<AnalysisScreen />} />
                 <Route path="/workout" element={<Workout />} />
                 <Route path="/stats" element={<Stats />} />
                 <Route path="/history" element={<History />} />

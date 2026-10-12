@@ -60,6 +60,21 @@ describe('InfoSource', () => {
     }
   })
 
+  it('takes a note of its own, shown with no reference and no link', async () => {
+    render(<InfoSource refs={[]} note="The app adds rest and 40 s per set." label="How the time is estimated" />)
+    fireEvent.click(screen.getByRole('button', { name: 'How the time is estimated' }))
+    const dialog = await screen.findByRole('dialog')
+    expect(dialog.textContent).toContain('The app adds rest and 40 s per set.')
+    expect(screen.queryByRole('link')).toBeNull()
+  })
+
+  it('shows a note on the narrow sheet too (375 px)', async () => {
+    setWidth(375)
+    render(<InfoSource refs={[]} note="The app adds rest and 40 s per set." />)
+    open()
+    expect((await screen.findByRole('dialog')).textContent).toContain('The app adds rest and 40 s per set.')
+  })
+
   it('shows what the study found', async () => {
     render(<InfoSource refs={['grgic2018freq']} />)
     open()
