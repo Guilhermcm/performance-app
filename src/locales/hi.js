@@ -2520,4 +2520,6 @@ export default {
   "Could not load your nights.": "आपकी रातें लोड नहीं हो सकीं।",
   "Sleep was off this month, so no night counts here.": "इस महीने नींद बंद थी, इसलिए यहाँ कोई रात नहीं गिनी जाती।",
   "Sleep stats": "नींद के आँकड़े",
+  "15 minutes earlier": "15 मिनट पहले",
+  "15 minutes later": "15 मिनट बाद",
 }

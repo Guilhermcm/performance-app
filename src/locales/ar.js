@@ -2573,4 +2573,6 @@ export default {
   "Could not load your nights.": "تعذّر تحميل لياليك.",
   "Sleep was off this month, so no night counts here.": "كان النوم متوقفًا هذا الشهر، لذا لا تُحتسب أي ليلة هنا.",
   "Sleep stats": "أرقام النوم",
+  "15 minutes earlier": "قبل 15 دقيقة",
+  "15 minutes later": "بعد 15 دقيقة",
 }

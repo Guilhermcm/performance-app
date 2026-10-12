@@ -2520,4 +2520,6 @@ export default {
   "Could not load your nights.": "Gecelerin yüklenemedi.",
   "Sleep was off this month, so no night counts here.": "Uyku bu ay kapalıydı, bu yüzden burada hiçbir gece sayılmıyor.",
   "Sleep stats": "Uyku sayıları",
+  "15 minutes earlier": "15 dakika önce",
+  "15 minutes later": "15 dakika sonra",
 }

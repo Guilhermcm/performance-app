@@ -5,11 +5,11 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { cn } from '@/lib/utils'
 import { t } from '../../lib/i18n.js'
 import { useProfile } from '../profile/useProfile'
-import { useLocalNow } from './use-local-now'
+import { useLocalNow, type LocalNow } from './use-local-now'
 import { useSleep } from './useSleep'
 import { QUALITY_LABEL } from './labels'
 import { TimeWheel } from './TimeWheel'
-import { durationMin, fmtClock, shiftClock, toMinutes, validDuration } from './time'
+import { durationMin, fmtClock, fromMinutes, shiftClock, toMinutes, validDuration } from './time'
 import type { SleepLog } from './types'
 
 // With no night to start from and no goal yet, the defaults of the setup (spec 3.1).
@@ -33,14 +33,17 @@ type Start = { bed: string; wake: string; quality: number | null; note: string }
 
 // Where the form starts (spec 4.3): the night being edited; else the times of the given log or of
 // the last night logged in the past 14 days; else bed at the bedtime target and wake after the goal.
-function startOf(night: string, initial: SleepLog | undefined): Start {
+// A prefilled wake-up for today's night that has not happened yet starts at now (rounded down to
+// 5 minutes), so an early morning opens ready to save. An edit keeps its own times.
+function startOf(night: string, initial: SleepLog | undefined, now: LocalNow): Start {
   if (initial?.night === night) return { bed: initial.bed_time, wake: initial.wake_time, quality: initial.quality, note: initial.note ?? '' }
   const s = useSleep.getState()
   const last = initial ?? s.lastLogged(night)
-  if (last) return { bed: last.bed_time, wake: last.wake_time, quality: null, note: '' }
-  const target = s.targetOn(night)
-  const bed = target?.bed_target ?? DEFAULT_BED
-  return { bed, wake: shiftClock(bed, target?.goal_min ?? DEFAULT_GOAL), quality: null, note: '' }
+  const target = last ? null : s.targetOn(night)
+  const bed = last?.bed_time ?? target?.bed_target ?? DEFAULT_BED
+  let wake = last?.wake_time ?? shiftClock(bed, target?.goal_min ?? DEFAULT_GOAL)
+  if (night === now.today && toMinutes(wake) > now.minutes) wake = fromMinutes(now.minutes - (now.minutes % 5))
+  return { bed, wake, quality: null, note: '' }
 }
 
 // One night's log: the two times (each opens the wheel), then the optional quality and note. The
@@ -48,7 +51,7 @@ function startOf(night: string, initial: SleepLog | undefined): Start {
 export function SleepLogForm({ night, initial, onSaved }: Props) {
   const timezone = useProfile(s => s.profile?.timezone)
   const now = useLocalNow(timezone)
-  const [start] = useState(() => startOf(night, initial))
+  const [start] = useState(() => startOf(night, initial, now))
   const editing = initial?.night === night
   const [bed, setBed] = useState(start.bed)
   const [wake, setWake] = useState(start.wake)

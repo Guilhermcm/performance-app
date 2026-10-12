@@ -2523,4 +2523,6 @@ export default {
   "Could not load your nights.": "Nem sikerült betölteni az éjszakáidat.",
   "Sleep was off this month, so no night counts here.": "Ebben a hónapban az Alvás ki volt kapcsolva, ezért itt egy éjszaka sem számít.",
   "Sleep stats": "Alvási számok",
+  "15 minutes earlier": "15 perccel korábban",
+  "15 minutes later": "15 perccel később",
 }

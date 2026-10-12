@@ -6,7 +6,7 @@ import { SleepLogForm } from './SleepLogForm'
 import { useSleep } from './useSleep'
 import { useProfile } from '../profile/useProfile'
 import { setLang } from '../../lib/i18n.js'
-import { logOf, targetOf } from './test-sleep'
+import { logOf, nightOf, targetOf } from './test-sleep'
 import type { Profile } from '../profile/types'
 import type { SleepLog } from './types'
 
@@ -67,7 +67,7 @@ describe('SleepLogForm', () => {
     fireEvent.click(bed)
     expect(bed.getAttribute('aria-expanded')).toBe('true')
     const wheel = screen.getByRole('group', { name: 'Went to bed' })
-    fireEvent.click(within(wheel).getByRole('button', { name: '+15' }))
+    fireEvent.click(within(wheel).getByRole('button', { name: '15 minutes later' }))
     expect(bed.textContent).toContain('23:15')
     fireEvent.click(button('Confirm'))
     expect(saveNight.mock.calls[0][0]).toMatchObject({ bed_time: '23:15', wake_time: '07:00' })
@@ -83,10 +83,11 @@ describe('SleepLogForm', () => {
   })
 
   it('does not take a wake-up time later than now for last night', () => {
-    // 07:30 now: waking at 08:00 today has not happened yet.
-    render(<SleepLogForm night={TODAY} initial={logOf({ bed_time: '23:00', wake_time: '08:00' })} />)
+    // 07:30 now: waking at 08:00 today has not happened yet. An edit keeps its own times.
+    render(<SleepLogForm night={TODAY} initial={logOf({ night: TODAY, bed_time: '23:00', wake_time: '08:00' })} />)
+    expect(screen.getByRole('button', { name: /Woke up/ }).textContent).toContain('08:00')
     expect(screen.getByRole('alert').textContent).toBe('The wake-up time can’t be later than now')
-    expect(button('Confirm').disabled).toBe(true)
+    expect(button('Save').disabled).toBe(true)
     cleanup()
     // The same times on yesterday's night are fine.
     render(<SleepLogForm night={YESTERDAY} initial={logOf({ bed_time: '23:00', wake_time: '08:00' })} />)
@@ -122,5 +123,29 @@ describe('SleepLogForm', () => {
     expect(screen.getByText('16/140')).toBeTruthy()
     fireEvent.click(button('Confirm'))
     expect(saveNight.mock.calls[0][0]).toMatchObject({ note: 'woke up once' })
+  })
+
+  it('starts last night’s wake-up at now when the prefill has not happened yet', () => {
+    // 04:00 and 06:02 in Sao Paulo, with a 23:00 bedtime and an 8h goal (07:00).
+    for (const [utc, shown] of [['2026-10-07T07:00:00Z', '04:00'], ['2026-10-07T09:02:00Z', '06:00']] as const) {
+      vi.setSystemTime(new Date(utc))
+      saveNight.mockClear()
+      render(<SleepLogForm night={TODAY} />)
+      expect(screen.getByRole('button', { name: /Woke up/ }).textContent).toContain(shown)
+      expect(screen.queryByRole('alert')).toBeNull()
+      expect(button('Confirm').disabled).toBe(false)
+      fireEvent.click(button('Confirm'))
+      expect(saveNight).toHaveBeenCalledWith({ night: TODAY, bed_time: '23:00', wake_time: shown, quality: null, note: null })
+      cleanup()
+    }
+  })
+
+  it('also starts at now from a last night that woke up later than now', () => {
+    vi.setSystemTime(new Date('2026-10-07T09:00:00Z')) // 06:00
+    useSleep.setState({ closed: [nightOf({ night: '2026-10-04', bed_time: '23:50', wake_time: '07:25' })] })
+    render(<SleepLogForm night={TODAY} />)
+    expect(screen.getByRole('button', { name: /Went to bed/ }).textContent).toContain('23:50')
+    expect(screen.getByRole('button', { name: /Woke up/ }).textContent).toContain('06:00')
+    expect(screen.queryByRole('alert')).toBeNull()
   })
 })

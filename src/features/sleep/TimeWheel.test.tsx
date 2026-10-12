@@ -1,10 +1,10 @@
 // @vitest-environment happy-dom
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { useState } from 'react'
-import { render, screen, fireEvent, cleanup, within } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, within, act } from '@testing-library/react'
 import { TimeWheel } from './TimeWheel'
 
-afterEach(cleanup)
+afterEach(() => { cleanup(); vi.useRealTimers() })
 
 // A wheel that keeps its own value, so a test reads what a person would see after each step.
 function Harness({ start }: { start: string }) {
@@ -36,10 +36,10 @@ describe('TimeWheel', () => {
 
   it('moves 15 minutes with the buttons, across midnight', () => {
     render(<Harness start="00:05" />)
-    fireEvent.click(screen.getByRole('button', { name: '−15' }))
+    fireEvent.click(screen.getByRole('button', { name: '15 minutes earlier' }))
     expect(value()).toBe('23:50')
-    fireEvent.click(screen.getByRole('button', { name: '+15' }))
-    fireEvent.click(screen.getByRole('button', { name: '+15' }))
+    fireEvent.click(screen.getByRole('button', { name: '15 minutes later' }))
+    fireEvent.click(screen.getByRole('button', { name: '15 minutes later' }))
     expect(value()).toBe('00:20')
   })
 
@@ -64,5 +64,23 @@ describe('TimeWheel', () => {
     render(<Harness start="07:35" />)
     const active = hours().getAttribute('aria-activedescendant')
     expect(active && document.getElementById(active)?.textContent).toBe('07')
+  })
+
+  it('leaves a value off the 5 minute grid alone until the person scrolls', () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    render(<Harness start="23:07" />)
+    const col = minutes()
+    expect(within(col).queryByRole('option', { selected: true })).toBeNull()
+    // The column's own scroll (to the row nearest the value) settles without picking anything.
+    col.scrollTop = 44
+    fireEvent.scroll(col)
+    act(() => { vi.advanceTimersByTime(500) })
+    expect(value()).toBe('23:07')
+    // A finger scroll that comes to rest on a row picks it.
+    fireEvent.touchStart(col)
+    col.scrollTop = 88
+    fireEvent.scroll(col)
+    act(() => { vi.advanceTimersByTime(500) })
+    expect(value()).toBe('23:10')
   })
 })

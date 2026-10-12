@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -18,9 +18,14 @@ const longDate = (iso: string) =>
 // One night in a sheet (spec 4.4): today's and yesterday's can be logged, changed or deleted;
 // an older night has closed on the server and only says so.
 export function SleepLogSheet({ night, open, onOpenChange }: Props) {
-  // A fresh form each time the sheet opens; the closing animation keeps the last one.
+  // A fresh form each time the sheet opens; the closing animation keeps the last one. The session
+  // moves in the render where `open` turns true (not in an effect), so the body mounts once.
   const [session, setSession] = useState(0)
-  useEffect(() => { if (open) setSession(n => n + 1) }, [open])
+  const [wasOpen, setWasOpen] = useState(open)
+  if (open !== wasOpen) {
+    setWasOpen(open)
+    if (open) setSession(n => n + 1)
+  }
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[92dvh]">
@@ -36,6 +41,15 @@ function SheetBody({ night, onClose }: { night: string; onClose: () => void }) {
   const editable = night === today || night === shiftDay(today, -1)
   const log = useSleep(s => s.logs[night])
   const [asking, setAsking] = useState(false)
+  // Focus goes to Cancel when the question opens, and back to the delete button when it is cancelled.
+  const cancelRef = useRef<HTMLButtonElement>(null)
+  const deleteRef = useRef<HTMLButtonElement>(null)
+  const backToDelete = useRef(false)
+  useEffect(() => {
+    if (asking) cancelRef.current?.focus()
+    else if (backToDelete.current) { backToDelete.current = false; deleteRef.current?.focus() }
+  }, [asking])
+  const cancel = () => { backToDelete.current = true; setAsking(false) }
 
   const remove = () => {
     useSleep.getState().removeNight(night)
@@ -69,12 +83,12 @@ function SheetBody({ night, onClose }: { night: string; onClose: () => void }) {
           <div role="alertdialog" aria-labelledby="sleep-delete-question" className="flex flex-col gap-3 rounded-2xl bg-secondary/70 p-4">
             <p id="sleep-delete-question" className="text-[15px] font-semibold leading-snug">{t('Delete this night?')}</p>
             <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" className="h-12 rounded-xl" onClick={() => setAsking(false)}>{t('Cancel')}</Button>
+              <Button ref={cancelRef} variant="outline" className="h-12 rounded-xl" onClick={cancel}>{t('Cancel')}</Button>
               <Button variant="destructive" className="h-12 rounded-xl" onClick={remove}>{t('Delete')}</Button>
             </div>
           </div>
         ) : (
-          <Button variant="ghost" className="h-11 gap-2 self-center rounded-xl text-destructive hover:text-destructive" onClick={() => setAsking(true)}>
+          <Button ref={deleteRef} variant="ghost" className="h-11 gap-2 self-center rounded-xl text-destructive hover:text-destructive" onClick={() => setAsking(true)}>
             <Trash2 aria-hidden className="size-4" />{t('Delete this night')}
           </Button>
         ))}

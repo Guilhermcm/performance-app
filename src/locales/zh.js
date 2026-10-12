@@ -2520,4 +2520,6 @@ export default {
   "Could not load your nights.": "无法加载你的夜晚记录。",
   "Sleep was off this month, so no night counts here.": "这个月睡眠功能处于关闭状态，所以这里没有计入任何一晚。",
   "Sleep stats": "睡眠数据",
+  "15 minutes earlier": "提前 15 分钟",
+  "15 minutes later": "推后 15 分钟",
 }

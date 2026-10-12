@@ -2520,4 +2520,6 @@ export default {
   "Could not load your nights.": "Impossibile caricare le tue notti.",
   "Sleep was off this month, so no night counts here.": "Sonno era disattivato questo mese, quindi qui non conta nessuna notte.",
   "Sleep stats": "Numeri del sonno",
+  "15 minutes earlier": "15 minuti prima",
+  "15 minutes later": "15 minuti dopo",
 }

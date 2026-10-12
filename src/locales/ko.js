@@ -2520,4 +2520,6 @@ export default {
   "Could not load your nights.": "밤 기록을 불러오지 못했어요.",
   "Sleep was off this month, so no night counts here.": "이번 달에는 수면 기능이 꺼져 있어서 여기서 세는 밤이 없어요.",
   "Sleep stats": "수면 수치",
+  "15 minutes earlier": "15분 앞당기기",
+  "15 minutes later": "15분 늦추기",
 }

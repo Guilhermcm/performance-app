@@ -24,7 +24,7 @@ export function TimeWheel({ value, onChange, label }: Props) {
   return (
     <div role="group" aria-label={label} className="flex items-center justify-between gap-2 rounded-2xl bg-secondary/60 p-2">
       <Button type="button" variant="outline" className="h-12 min-w-12 rounded-xl px-2 font-mono text-[15px] tabular-nums"
-        onClick={() => onChange(shiftClock(value, -STEP))}>−15</Button>
+        aria-label={t('15 minutes earlier')} onClick={() => onChange(shiftClock(value, -STEP))}>−15</Button>
       <div className="flex items-center gap-1">
         <Column label={t('Hours')} options={HOURS} pos={hour} onPick={i => onChange(fromMinutes(i * 60 + minute))} />
         <span aria-hidden className="font-mono text-2xl font-semibold text-muted-foreground">:</span>
@@ -33,7 +33,7 @@ export function TimeWheel({ value, onChange, label }: Props) {
         <Column label={t('Minutes')} options={MINUTES} pos={minute / 5} onPick={i => onChange(fromMinutes(hour * 60 + i * 5))} />
       </div>
       <Button type="button" variant="outline" className="h-12 min-w-12 rounded-xl px-2 font-mono text-[15px] tabular-nums"
-        onClick={() => onChange(shiftClock(value, STEP))}>+15</Button>
+        aria-label={t('15 minutes later')} onClick={() => onChange(shiftClock(value, STEP))}>+15</Button>
     </div>
   )
 }
@@ -44,6 +44,9 @@ function Column({ label, options, pos, onPick }: ColumnProps) {
   const id = useId()
   const list = useRef<HTMLUListElement>(null)
   const settle = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  // Set by a finger, a pointer or a wheel on the column. Only such a scroll picks a row: the
+  // column's own scroll to the value (on open, or after ±15) never changes the value by itself.
+  const touched = useRef(false)
   const n = options.length
   const selected = Number.isInteger(pos) ? pos : -1
   const rowHeight = () => (list.current?.querySelector('li') as HTMLElement | null)?.offsetHeight || ROW
@@ -59,14 +62,18 @@ function Column({ label, options, pos, onPick }: ColumnProps) {
 
   // A finger scroll picks the row it comes to rest on.
   const onScroll = () => {
+    if (!touched.current) return
     clearTimeout(settle.current)
     settle.current = setTimeout(() => {
+      touched.current = false
       const el = list.current
       if (!el) return
       const i = Math.min(n - 1, Math.max(0, Math.round(el.scrollTop / rowHeight())))
       if (i !== selected) onPick(i)
     }, SETTLE_MS)
   }
+
+  const onTouch = () => { touched.current = true }
 
   const onKeyDown = (e: KeyboardEvent<HTMLUListElement>) => {
     const next = e.key === 'ArrowDown' ? (Math.floor(pos) + 1) % n
@@ -84,6 +91,7 @@ function Column({ label, options, pos, onPick }: ColumnProps) {
       {/* The band the chosen row sits in. */}
       <span aria-hidden className="pointer-events-none absolute inset-x-0 top-11 h-11 rounded-xl bg-background" />
       <ul ref={list} role="listbox" aria-label={label} tabIndex={0} onKeyDown={onKeyDown} onScroll={onScroll}
+        onPointerDown={onTouch} onTouchStart={onTouch} onWheel={onTouch}
         aria-activedescendant={selected >= 0 ? `${id}-${selected}` : undefined}
         className="relative m-0 h-33 w-16 list-none snap-y snap-mandatory overflow-y-auto overscroll-contain rounded-xl p-0 py-11 outline-none [scrollbar-width:none] focus-visible:ring-[3px] focus-visible:ring-ring/50 [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_bottom,transparent,black_35%,black_65%,transparent)]">
         {options.map((o, i) => (

@@ -2568,4 +2568,6 @@ export default {
   "Could not load your nights.": "Не удалось загрузить ночи.",
   "Sleep was off this month, so no night counts here.": "В этом месяце «Сон» был выключен, поэтому здесь не учитывается ни одна ночь.",
   "Sleep stats": "Показатели сна",
+  "15 minutes earlier": "На 15 минут раньше",
+  "15 minutes later": "На 15 минут позже",
 }

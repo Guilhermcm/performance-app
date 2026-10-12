@@ -2531,4 +2531,6 @@ export default {
   "Could not load your nights.": "โหลดข้อมูลการนอนของคุณไม่ได้",
   "Sleep was off this month, so no night counts here.": "เดือนนี้ปิดการนอนไว้ จึงไม่มีคืนใดนับที่นี่",
   "Sleep stats": "ตัวเลขการนอน",
+  "15 minutes earlier": "เร็วขึ้น 15 นาที",
+  "15 minutes later": "ช้าลง 15 นาที",
 }

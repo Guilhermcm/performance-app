@@ -1911,6 +1911,8 @@ export const PT_BR_OVERRIDES = {
   "Could not load your nights.": "Não foi possível carregar suas noites.",
   "Sleep was off this month, so no night counts here.": "O Sono estava desligado neste mês, então nenhuma noite conta aqui.",
   "Sleep stats": "Números do sono",
+  "15 minutes earlier": "15 minutos antes",
+  "15 minutes later": "15 minutos depois",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }
