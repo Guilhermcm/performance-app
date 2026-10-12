@@ -200,9 +200,10 @@ begin
         'night', v_night.night, 'logged', v_night.logged, 'on_target', v_night.on_target,
         'rested', v_night.rested,
         'xp', coalesce((
-          select sum(l.amount) from public.xp_ledger l join public.activity_events e on e.id = l.event_id
+          select sum(l.amount)::int from public.xp_ledger l join public.activity_events e on e.id = l.event_id
            where l.user_id = p_user and e.user_id = p_user and e.pillar = 'sleep'
-             and e.occurred_on = v_night.night), 0)) end,
+             and e.source_ref = 'sleep:' || to_char(v_night.night, 'YYYY-MM-DD')
+             and l.pillar = 'sleep'), 0)) end,
       'last_week', case when v_lw < v_sfirst then null else jsonb_build_object(
         'start', v_lw,
         'target_hit', exists (select 1 from public.xp_ledger

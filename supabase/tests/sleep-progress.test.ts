@@ -135,6 +135,8 @@ describe('the owner sleep block', () => {
       last_closed: { night: '2026-10-09', logged: true, on_target: true, rested: false, xp: 280 },
       last_week: null,
     })
+    // The same XP the night history reports for that night.
+    expect((await nights(A, '2026-10-09', '2026-10-09')).nights[0].xp).toBe(280)
     // Monday: the week of 05/10 still has Sunday open; the new week has nothing closed.
     await at('2026-10-12')
     p = await progress()
@@ -172,8 +174,8 @@ describe('the owner sleep block', () => {
     const closed = async () => (await sql<{ night: string }>(db,
       `select to_char(night, 'YYYY-MM-DD') as night from public.sleep_nights where user_id = $1 order by night`, [A]))
       .map(r => r.night)
-    // Monday: no night closes, yet the week's T is frozen.
-    expect(await frozen()).toEqual([])
+    // Monday: turning the pillar on froze the week's T; reading progress keeps it, closing nothing.
+    expect(await frozen()).toEqual([{ target: 5 }])
     await progress()
     expect(await frozen()).toEqual([{ target: 5 }])
     expect(await closed()).toEqual([])

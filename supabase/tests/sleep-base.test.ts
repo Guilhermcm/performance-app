@@ -122,6 +122,56 @@ describe('sleep profile', () => {
   })
 })
 
+describe('sleep T when the pillar is turned on', () => {
+  const monday = '2026-10-05'
+  const turnOn = (nights: number) =>
+    asA('update public.profiles set sleep_enabled = true, sleep_nights_per_week = $1 where id = $2', [nights, A])
+  const progressT = async () =>
+    (await asUser(db, A, () => db.query<{ p: any }>('select public.get_my_progress() as p'))).rows[0].p.sleep.target
+  const paidSleepXp = () =>
+    sql(db, `insert into public.xp_ledger (user_id, pillar, amount, reason, event_id, week_start)
+             values ($1, 'sleep', 10, 'test_sleep_night', null, $2)`, [A, monday])
+
+  beforeEach(async () => { await setClock(db, monday + 'T15:00:00Z') })
+
+  it('applies the chosen T to the running week', async () => {
+    await turnOn(3)
+    expect(await target(A, monday, 'sleep')).toBe(3)
+    expect(await progressT()).toBe(3)
+  })
+
+  it('applies it even when the progress already froze the old T', async () => {
+    await asUser(db, A, () => db.query('select public.get_my_progress()'))
+    expect(await target(A, monday, 'sleep')).toBe(5)
+    await turnOn(3)
+    expect(await target(A, monday, 'sleep')).toBe(3)
+    expect(await progressT()).toBe(3)
+  })
+
+  it('applies it when a profile is created with the pillar on', async () => {
+    await makeUser(db, B, { sleep_enabled: true, sleep_nights_per_week: 4 })
+    expect(await target(B, monday, 'sleep')).toBe(4)
+  })
+
+  it('keeps the frozen T once sleep XP was paid in the week', async () => {
+    await turnOn(5)
+    await setClock(db, '2026-10-07T15:00:00Z')
+    await enableSleep(db, A, false)
+    await paidSleepXp()
+    await turnOn(3)
+    expect(await target(A, monday, 'sleep')).toBe(5)
+    expect(await progressT()).toBe(5)
+    expect(await target(A, '2026-10-12', 'sleep')).toBe(3)
+  })
+
+  it('leaves the other pillars alone', async () => {
+    await turnOn(3)
+    const r = await sql(db, `select pillar::text as pillar, target from public.weekly_targets
+                              where user_id = $1 order by pillar`, [A])
+    expect(r).toEqual([{ pillar: 'sleep', target: 3 }])
+  })
+})
+
 describe('sleep targets', () => {
   const insTarget = (day: string, goal = 480, bed = '23:00') =>
     asA('insert into public.sleep_targets (valid_from, goal_min, bed_target) values ($1, $2, $3)', [day, goal, bed])

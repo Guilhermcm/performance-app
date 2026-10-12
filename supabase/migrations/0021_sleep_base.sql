@@ -29,6 +29,7 @@ create function public.profiles_sleep_period() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare
   v_today date := public.local_today(new.id);
+  v_week  date;
 begin
   if new.sleep_enabled then
     if tg_op = 'UPDATE' and old.sleep_enabled then return null; end if;
@@ -38,6 +39,15 @@ begin
     if not found then
       insert into public.sleep_periods (user_id, started_on) values (new.id, v_today)
       on conflict (user_id, started_on) do update set ended_on = null;
+    end if;
+    -- The T chosen when turning the pillar on counts from the running week, unless sleep XP was
+    -- already paid in it (then the frozen value stays, so nothing paid is judged twice).
+    v_week := public.local_week_start(new.id);
+    if not exists (select 1 from public.xp_ledger
+                    where user_id = new.id and pillar = 'sleep' and week_start = v_week) then
+      insert into public.weekly_targets (user_id, pillar, week_start, target)
+      values (new.id, 'sleep', v_week, new.sleep_nights_per_week)
+      on conflict (user_id, pillar, week_start) do update set target = excluded.target;
     end if;
   else
     update public.sleep_periods set ended_on = v_today - 1
