@@ -1669,6 +1669,20 @@ export const PT_BR_OVERRIDES = {
   "Check-in saved.": "Check-in salvo.",
   "Could not save the check-in. Try again.": "Não deu para salvar o check-in. Tente de novo.",
   "Show friends my workouts from before check-ins": "Mostrar aos amigos meus treinos de antes dos check-ins",
+  'See source': 'Ver fonte',
+  'More weekly sets gave more muscle growth, with returns that shrink as volume rises.': 'Mais séries por semana deram mais ganho de músculo, com retorno cada vez menor.',
+  'Training each muscle twice a week gave more hypertrophy than once.': 'Treinar cada músculo 2 vezes por semana deu mais hipertrofia que 1 vez.',
+  'More weekly volume gave more muscle and strength, with returns that shrink as volume rises.': 'Mais volume semanal deu mais músculo e força, com retorno cada vez menor.',
+  'Position stand on how to progress resistance training in healthy adults.': 'Posição oficial sobre como progredir o treino de força em adultos saudáveis.',
+  'The general recommendation for adults includes muscle-strengthening activity every week.': 'A recomendação geral para adultos inclui atividade de fortalecimento muscular toda semana.',
+  'More weekly sets gave more strength, with returns that shrink as volume rises.': 'Mais séries por semana deram mais ganho de força, com retorno cada vez menor.',
+  'In trained men, longer rest between sets helped strength and muscle on multi-joint exercises.': 'Em homens treinados, descansar mais entre as séries ajudou força e músculo nos exercícios multiarticulares.',
+  'Muscle grew across a wide range of repetitions.': 'O músculo cresceu com uma faixa ampla de repetições.',
+  'With the same weekly volume, training more often made no clear difference to strength.': 'Com o mesmo volume semanal, treinar mais vezes não fez diferença clara na força.',
+  'Adding repetitions or adding load both worked for progressing.': 'Aumentar as repetições ou a carga funcionou para progredir.',
+  'Short workouts built on multi-joint exercises can build strength and muscle.': 'Treinos curtos baseados em exercícios multiarticulares podem dar força e músculo.',
+  'Longer rest between sets helped strength gains on multi-joint exercises.': 'Descansar mais entre as séries ajudou o ganho de força nos exercícios multiarticulares.',
+  'Rule of thumb for building a workout, with no study number behind it.': 'Regra prática de montagem de treino, sem número de estudo.',
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }
