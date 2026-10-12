@@ -60,7 +60,7 @@ export type PlanState = {
 }
 
 // Single-joint work rests 90 s; everything else is a compound.
-const ISOLATION = new Set(['0586', '0334', '0031', '0294', '0585', '0241', '0605', '0594', '0313', '0175', '0276'])
+export const ISOLATION = new Set(['0586', '0334', '0031', '0294', '0585', '0241', '0605', '0594', '0313', '0175', '0276'])
 
 // Hypertrophy and health slot: a range, rest by kind of exercise.
 const hyp = (ex: string, sets: number, reps: number, repsMax: number, alt?: string[]): Slot =>
