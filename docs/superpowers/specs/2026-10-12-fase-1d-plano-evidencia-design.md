@@ -417,3 +417,72 @@ Sem migration. Sem mudança em RLS. Nada novo no servidor.
 7. Telas da análise.
 8. Progresso, selo e unidade do detalhe.
 9. Documentação (ROADMAP) e revisão final.
+
+## 12. Decisões do plano e do controlador
+
+Escolhas feitas ao escrever o plano e ao executá-lo. Onde diferem do texto acima, valem estas.
+
+### 12.1 Decisões do plano
+
+- **Conferência das fontes.** O plano não espera a conferência humana para começar. O checklist fica
+  em `docs/fontes-1d.md` e o conteúdo entra como está na spec. As linhas "o que o estudo achou" usam
+  só fatos sem número além dos que constam no resumo verificado, sem tamanho de efeito. Quem revisar
+  o PR confere o checklist antes do merge.
+- **Equilíbrio sem fonte confirmada.** O ⓘ do equilíbrio usa a entrada especial `rule-of-thumb`.
+  Ela não é uma referência: o texto diz "Regra prática de montagem de treino, sem número de estudo".
+  Fica assim até a conferência confirmar o ACSM 2009.
+- **Entrada dos programas.** A rota `/plan/programas` mostra a lista e o sugerido, e
+  `/plan/programas/:id` mostra o detalhe. O `starterPlanSheet` sai. Plan.jsx, Settings.jsx e
+  HomeCards.tsx passam a abrir `/plan/programas`.
+- **Estado do programa aplicado.** `S.program = { id, variant, appliedAt, routineIds, prevWeek,
+  dismissed }`. Com `dismissed: true` a faixa some. Editar qualquer rotina ou a agenda também esconde
+  a faixa, porque o `update` do Plano marca `dismissed`.
+- **Última sugestão aplicada.** O estado fica só na memória da tela e não sincroniza. O Desfazer vale
+  enquanto a tela está aberta.
+- **Gráfico da análise.** Barras horizontais por grupo, com a faixa recomendada como banda neutra e o
+  valor em texto ao lado. A paleta foi validada com `validate_palette.js` da skill `dataviz`, no claro
+  e no escuro. Há também uma tabela alternativa ("Ver como tabela").
+
+### 12.2 Decisões do controlador
+
+**Que mudam o comportamento do produto**
+
+- **Faixa de repetições guardada na convenção do app.** Exercício com carga guarda
+  `{ reps: topo, repsMin: base }`. Exercício de peso do corpo guarda `{ reps, repsMax }`. Exercício
+  fixo guarda só `{ reps }`. Os dados do programa seguem `{ reps: base, repsMax?: topo }`, e a
+  exportação para a rotina converte (`slotToCfg`). Assim o `progression.js` lê a faixa certa.
+- **Faixas preenchidas em Superior/Inferior e PPL.** Os programas tinham repetições fixas e agora
+  têm faixa: 8 vira 8 a 12, 10 vira 10 a 12, 12 vira 12 a 15 e panturrilha de 15 vira 12 a 15. O 5×5
+  continua com 5 fixas, progressão linear e 180 s de descanso.
+- **Descanso.** Exercício de isolamento descansa 90 s. Os demais compostos de hipertrofia e de saúde
+  descansam 120 s. Compostos de força com repetição fixa descansam 180 s.
+- **Isolamento nos programas de saúde.** Também descansa 90 s, a mesma regra de todo lugar. O
+  programa de saúde de 3 dias fica em cerca de 30 a 31 min, dentro do "cerca de 35" da spec.
+- **Personalizado sem músculo explícito e cardio ficam fora do volume.** Exercício criado pela pessoa
+  sem músculo informado entra em "sem músculo conhecido" (§5.2 e §9). Cardio não é volume de
+  resistência e fica fora do volume e da frequência, mas continua contando nos minutos.
+- **"Posterior de coxa" só na análise.** O nome vale apenas nas telas da análise, com chave de texto
+  própria. A biblioteca de exercícios continua dizendo "Isquiotibiais".
+- **Texto da dica de frequência.** A dica diz a regra real: treinar o músculo em 2 dias da semana ou
+  mais, com pelo menos 2 séries em cada dia.
+- **Prefixos dos programas.** Os nomes das rotinas criadas levam o prefixo do programa: Full Body,
+  Upper/Lower, PPL, 5×5, PHUL, Short e Health. O separador é ` · `, como em `PPL · Push`, e os nomes
+  não são traduzidos.
+
+**De processo e de escopo**
+
+- A frase do usuário "plano 1d, executa" valeu como aprovação da spec e do plano. Não houve pausa
+  para revisar o plano. O custo seria refazer, se a pessoa quisesse revisar antes.
+- A conferência do §7.3 roda em paralelo, por uma pessoa. O código entrega o conteúdo da spec e as
+  linhas das fontes evitam número não confirmado. Uma referência pode precisar de troca depois.
+- Os padrões menores do implementador foram aceitos: PHUL com os slots de repetição fixa em
+  progressão linear, programas de saúde em A/B/A, PPL de 6 dias na agenda e listas de referências
+  por programa.
+- Desfazer o programa contra a união de rotinas fica para o aviso da faixa. Os achados de menor
+  gravidade das revisões foram corrigidos em lotes, e os restantes foram aceitos ou levados para a
+  revisão final.
+- O programa aplicado esconde a faixa em qualquer edição de rotina ou de semana no app todo. Terminar
+  um treino não conta como edição.
+- Máquinas assistidas recebem `{ reps, repsMax }` por `climbsReps`, e a sugestão de adicionar
+  exercício não escolhe exercício assistido (ou usa o formato com carga).
+- Fica anotado, sem correção: o alerta de "repetido" ainda dispara para cardio em 3 ou mais dias.

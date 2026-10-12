@@ -31,7 +31,7 @@ combinada a partir de outubro de 2026: **1c → 1d → 3 → 4 → 5 → 6** (a 
 | 1a | Gamificação individual | M | 0 | concluída |
 | 1b | Social | M | 1a | concluída |
 | 1c | Check-in com foto e social | M | 1b | concluída, em produção desde 2026-10-11 ([spec](superpowers/specs/2026-10-06-checkin-social-design.md), [plano](superpowers/plans/2026-10-06-fase-1c-checkin.md)) |
-| 1d | Plano com evidência | M | 1c | spec em revisão ([spec](superpowers/specs/2026-10-12-fase-1d-plano-evidencia-design.md)) |
+| 1d | Plano com evidência | M | 1c | concluída no código, sem SQL; aguarda a conferência das fontes em `docs/fontes-1d.md` e o merge ([spec](superpowers/specs/2026-10-12-fase-1d-plano-evidencia-design.md), [plano](superpowers/plans/2026-10-12-fase-1d-plano-evidencia.md)) |
 | 2 | Nutrição | G | 1a | concluída (2a e 2b) |
 | 3 | Sono | P | 1a | especificada e ajustada à 1c, falta o plano ([spec](superpowers/specs/2026-10-06-fase-3-sono-design.md)) |
 | 4 | Hábitos + trackers | M | 1a | a especificar |
@@ -171,6 +171,16 @@ aparecer como característica de um programa do catálogo), coach com IA.
 **Pronto quando:** alguém escolhe um programa do catálogo e ele vira o plano da semana; a análise
 mostra volume e frequência por músculo do plano atual com pelo menos uma sugestão aplicada; toda
 recomendação com número tem um ⓘ com fonte verificável.
+
+**Status:** concluída no código, sem SQL; aguarda a conferência das fontes em `docs/fontes-1d.md` e o merge.
+Não há migration nem SQL novo nesta fase.
+
+**Pendências (antes do merge e depois)**
+- Conferir as fontes (§7.3 da spec) pelo checklist de `docs/fontes-1d.md`: DOIs, dados impressos de
+  Pelland 2025, linhas "o que o estudo achou" e o ACSM 2009 que sustenta a regra prática do equilíbrio.
+- Revisar as traduções dos 14 pacotes que não são pt-BR nem en para os textos novos da fase.
+- Passar o humanizer nas 14 linhas "o que o estudo achou" em en e pt-BR (`refFinding` em
+  `src/features/plan/references.ts`).
 
 ---
 
