@@ -14,6 +14,21 @@ const REDEFINED: { fn: string; base: string; in: string; changed: string[] }[] =
   { fn: 'award_xp', base: '0020_checkin_feed.sql', in: '0022_sleep_close.sql', changed: [] },
   // The last line of protein_best_run gains a comma: the sleep metrics follow it.
   { fn: 'achievement_stats', base: '0020_checkin_feed.sql', in: '0022_sleep_close.sql', changed: [') lengths), 0)'] },
+  // The active-week test gains the sleep case: nutrition moves to its own when.
+  {
+    fn: 'pillar_consistency', base: '0020_checkin_feed.sql', in: '0023_sleep_progress.sql',
+    changed: ['else public.nutrition_week_active(p_user, w::date) end;'],
+  },
+  {
+    fn: 'progress_card', base: '0019_training_days.sql', in: '0023_sleep_progress.sql',
+    changed: ["'max', 960 * (1 + public.nutrition_week_active(p_user, v_week)::int),"],
+  },
+  // The nutrition radar point is no longer the last one: the sleep one follows it.
+  {
+    fn: 'my_progress_extras', base: '0019_training_days.sql', in: '0023_sleep_progress.sql',
+    changed: ["'previous', public.pillar_consistency(p_user, 'nutrition', 1))))"],
+  },
+  { fn: 'get_my_progress', base: '0019_training_days.sql', in: '0023_sleep_progress.sql', changed: [] },
 ]
 
 describe('redefined function bodies', () => {

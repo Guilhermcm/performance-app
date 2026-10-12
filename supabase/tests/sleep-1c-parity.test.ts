@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import type { PGlite } from '@electric-sql/pglite'
-import { freshDb } from './helpers/db'
+import { freshDb, asUser } from './helpers/db'
 import { A, makeUser, setClock, withoutEventWindow, ledger, sql } from './helpers/game'
 import { addCheckin } from './helpers/checkin'
 import { closeAs, enableNutrition, setTarget } from './helpers/nutrition'
@@ -69,6 +69,43 @@ describe('achievement_stats (0022)', () => {
       workouts: 1, nutrition_logged_days: 1, nutrition_on_target_days: 1, protein_best_run: 1,
       sleep_logged_nights: 0, sleep_on_target_nights: 0, sleep_week_targets: 0, sleep_best_streak: 0,
       sleep_clock_best_run: 0,
+    })
+  })
+})
+
+describe('progress (0023)', () => {
+  const progress = async () =>
+    (await asUser(db, A, () => db.query<{ p: any }>('select public.get_my_progress() as p'))).rows[0].p
+
+  it('still closes training days and shows the Treino week', async () => {
+    await addCheckin(db, A, { day: '2026-10-05' })
+    await setClock(db, '2026-10-07T15:00:00Z')   // Wednesday: Monday closes
+    const p = await progress()
+    const [{ xp }] = await sql(db, 'select public.session_xp(3, 1) as xp')
+    expect(p.week.pillars.strength).toBe(10 + xp)
+    expect(p.week.workouts).toBe(1)
+    expect(p.training.last_closed).toEqual({ day: '2026-10-05', detailed: false, xp: 10 + xp })
+    expect(p.training.confirms_on).toBe('2026-10-09')
+  })
+
+  it('still computes the Treino and Nutrition radar', async () => {
+    let n = 0
+    const xpRow = (pillar: string, amount: number, week: string) =>
+      sql(db,
+        `insert into public.xp_ledger (user_id, pillar, amount, reason, event_id, week_start)
+         values ($1, $2, $3, $4, null, $5)`,
+        [A, pillar, amount, `test_${++n}`, week])
+    // Wednesday 04/11: closed weeks 26/10 back to 05/10. Treino since 19/10, Nutrition from 29/10.
+    await setClock(db, '2026-11-04T15:00:00Z')
+    await sql(db, `update public.profiles set created_at = '2026-10-19T15:00:00Z' where id = $1`, [A])
+    await xpRow('strength', 960, '2026-10-19')
+    await xpRow('strength', 480, '2026-10-26')
+    await sql(db, `insert into public.nutrition_periods (user_id, started_on) values ($1, '2026-10-29')`, [A])
+    await xpRow('nutrition', 480, '2026-10-26')
+    expect((await progress()).radar).toEqual({
+      strength: { current: 0.75, previous: null },
+      nutrition: { current: 0.5, previous: null },
+      sleep: { current: null, previous: null },
     })
   })
 })
