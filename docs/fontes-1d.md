@@ -8,8 +8,8 @@ sai do catálogo, e a recomendação que dependia só dela sai ou perde o númer
 ## Checklist (spec §7.3)
 
 - [ ] 1. Cada DOI abre o artigo certo em doi.org.
-- [ ] 2. Pelland 2025: volume, edição e páginas impressos e a lista de autores.
-- [ ] 3. As linhas "o que o estudo achou" (escritas a partir dos resumos, sem número que não esteja no resumo).
+- [ ] 2. Pelland 2025: volume, edição e páginas impressos e a lista de autores. Até lá, a citação mostra só o nome da revista ("Sports Med"); preencher `journal` em `references.ts` com volume, edição e páginas.
+- [ ] 3. As linhas "o que o estudo achou" (escritas a partir dos resumos, sem número que não esteja no resumo). A linha do acsm2009 foi reescrita como conclusão, sem número: "Adultos saudáveis devem progredir aumentando a carga ou o volume aos poucos." Conferir se o texto do ACSM 2009 sustenta isso.
 - [ ] 4. As três faixas semanais da spec §5.2 e a recomendação de frequência.
 - [ ] 5. A recomendação de saúde geral da OMS para fortalecimento muscular (texto exato).
 - [ ] 6. Se o ACSM 2009 recomenda equilíbrio entre grupos opostos (spec §5.4). Se não, o ⓘ do equilíbrio continua como "regra prática".

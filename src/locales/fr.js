@@ -2292,7 +2292,7 @@ export default {
   'More weekly sets gave more muscle growth, with returns that shrink as volume rises.': 'Plus de séries par semaine ont donné plus de croissance musculaire, avec un rendement qui diminue.',
   'Training each muscle twice a week gave more hypertrophy than once.': 'Entraîner chaque muscle deux fois par semaine a donné plus d\'hypertrophie qu\'une seule fois.',
   'More weekly volume gave more muscle and strength, with returns that shrink as volume rises.': 'Plus de volume hebdomadaire a donné plus de muscle et de force, avec un rendement qui diminue.',
-  'Position stand on how to progress resistance training in healthy adults.': 'Prise de position officielle sur la progression en musculation chez l\'adulte en bonne santé.',
+  'Healthy adults should keep progressing by adding load or volume a little at a time.': 'Les adultes en bonne santé devraient progresser en augmentant la charge ou le volume petit à petit.',
   'The general recommendation for adults includes muscle-strengthening activity every week.': 'La recommandation générale pour les adultes inclut une activité de renforcement musculaire chaque semaine.',
   'More weekly sets gave more strength, with returns that shrink as volume rises.': 'Plus de séries par semaine ont donné plus de force, avec un rendement qui diminue.',
   'In trained men, longer rest between sets helped strength and muscle on multi-joint exercises.': 'Chez des hommes entraînés, un repos plus long entre les séries a aidé la force et le muscle sur les exercices polyarticulaires.',

@@ -228,7 +228,8 @@ export function plannedOf(cfg) {
 // bosu (isLoadedEq). Only a loaded implement logged at 0 is a weight nobody typed in. An
 // assistance machine at 0 is the one exception on a stack: no help left is where its own
 // progression leads (issue #232), and from there the work is a plain pull-up or dip.
-const climbsReps = cfg => isBw(cfg) || !isLoadedEq(cfg.id) || isAssisted(cfg)
+// Exported so the program catalog stores a rep range in the shape this branch reads.
+export const climbsReps = cfg => isBw(cfg) || !isLoadedEq(cfg.id) || isAssisted(cfg)
 
 const PLAN_KEYS = ['sets', 'reps', 'repsMin', 'sec']
 const samePlan = (a, b) => PLAN_KEYS.every(k => (a[k] ?? null) === (b[k] ?? null))

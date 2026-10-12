@@ -162,6 +162,13 @@ describe('slotToCfg', () => {
     expect(slotToCfg({ ex: '0043', sets: 4, reps: 5, restSec: 180, prog: 'linear' })).toEqual({ id: '0043', sets: 4, reps: 5, weight: 0, restSec: 180, prog: 'linear' })
   })
 
+  it('gives unloaded equipment the rep-climbing shape progression uses (review M8)', () => {
+    // a wheel roller and a stability ball carry no load of their own, so progression climbs reps
+    expect(slotToCfg({ ex: '0796', sets: 3, reps: 8, repsMax: 12, restSec: 90 })).toEqual({ id: '0796', sets: 3, reps: 8, repsMax: 12, weight: 0, restSec: 90 })
+    expect(slotToCfg({ ex: '1314', sets: 3, reps: 10, repsMax: 15, restSec: 90 })).toEqual({ id: '1314', sets: 3, reps: 10, repsMax: 15, weight: 0, restSec: 90 })
+    expect(slotToCfg({ ex: '0968', sets: 2, reps: 12, repsMax: 15, restSec: 90 })).toEqual({ id: '0968', sets: 2, reps: 12, repsMax: 15, weight: 0, restSec: 90 })
+  })
+
   it('judges bodyweight on the exercise actually used, an alternate included', () => {
     const slot: Slot = { ex: '2330', sets: 3, reps: 10, repsMax: 12, restSec: 120, alt: ['0499'] }
     expect(slotToCfg(slot, '0499')).toEqual({ id: '0499', sets: 3, reps: 10, repsMax: 12, weight: 0, restSec: 120 })
@@ -319,5 +326,52 @@ describe('undoProgram', () => {
     const S = before()
     expect(undoProgram(S)).toEqual({ kept: [] })
     expect(S).toEqual(before())
+  })
+
+  it('drops a date rescheduled to a removed routine, through deleteRoutine (review M1)', () => {
+    const S = before()
+    applyProgram(S, 'ppl')
+    const pull = S.program!.routineIds[1]
+    S.dayPlan = { '2026-10-14': 'old', '2026-10-15': pull }
+    undoProgram(S)
+    expect(S.dayPlan).toEqual({ '2026-10-14': 'old' })
+    expect(S.routines.map(r => r.id)).toEqual(['old'])
+  })
+
+  it('keeps a routine of the session in progress, like a trained one (review M1)', () => {
+    const S = before()
+    applyProgram(S, 'ppl')
+    const [push, , legs] = S.program!.routineIds
+    S.active = { routineIds: [legs], entries: [] }
+    S.dayPlan = { '2026-10-15': legs }
+    expect(undoProgram(S).kept).toEqual([legs])
+    expect(S.routines.map(r => r.id)).toEqual(['old', legs])
+    expect(S.routines.map(r => r.id)).not.toContain(push)
+    expect(S.dayPlan).toEqual({ '2026-10-15': legs })
+    expect(S.week).toEqual({ 1: ['old'], 2: ['old'] })
+  })
+})
+
+describe('variant resolution (review M3)', () => {
+  it('clamps an out-of-range variant and stores the one it applied', () => {
+    const S = before()
+    applyProgram(S, 'ppl', 9)
+    expect(S.program!.variant).toBe(1)
+    expect(Object.keys(S.week).map(Number)).toEqual([1, 2, 3, 4, 5, 6])
+
+    const F = before()
+    applyProgram(F, 'full-body-beginner', 3)
+    expect(F.program!.variant).toBe(0)
+    expect(Object.keys(F.week).map(Number)).toEqual([1, 3, 5])
+
+    const N = before()
+    applyProgram(N, 'ppl', -2)
+    expect(N.program!.variant).toBe(0)
+    expect(Object.keys(N.week).map(Number)).toEqual([1, 3, 5])
+  })
+
+  it('buildProgram schedules the clamped variant too', () => {
+    const { week } = buildProgram({ routines: [], week: {} }, 'ppl', 7)
+    expect(Object.keys(week)).toHaveLength(6)
   })
 })

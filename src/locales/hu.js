@@ -2295,7 +2295,7 @@ export default {
   'More weekly sets gave more muscle growth, with returns that shrink as volume rises.': 'A heti több sorozat nagyobb izomnövekedést hozott, egyre kisebb hozammal.',
   'Training each muscle twice a week gave more hypertrophy than once.': 'Ha minden izmot hetente kétszer edzettek, az nagyobb hipertrófiát adott, mint az egyszeri.',
   'More weekly volume gave more muscle and strength, with returns that shrink as volume rises.': 'A nagyobb heti volumen több izmot és erőt hozott, egyre kisebb hozammal.',
-  'Position stand on how to progress resistance training in healthy adults.': 'Hivatalos állásfoglalás arról, hogyan fokozható az erőedzés egészséges felnőtteknél.',
+  'Healthy adults should keep progressing by adding load or volume a little at a time.': 'Az egészséges felnőttek a terhelés vagy a mennyiség fokozatos növelésével fejlődjenek tovább.',
   'The general recommendation for adults includes muscle-strengthening activity every week.': 'Az általános ajánlás felnőtteknek minden héten tartalmaz izomerősítő tevékenységet.',
   'More weekly sets gave more strength, with returns that shrink as volume rises.': 'A heti több sorozat több erőt hozott, egyre kisebb hozammal.',
   'In trained men, longer rest between sets helped strength and muscle on multi-joint exercises.': 'Edzett férfiaknál a hosszabb pihenő a sorozatok között segítette az erőt és az izmot az összetett gyakorlatoknál.',

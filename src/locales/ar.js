@@ -2345,7 +2345,7 @@ export default {
   'More weekly sets gave more muscle growth, with returns that shrink as volume rises.': 'زيادة عدد المجموعات الأسبوعية أعطت نموًا أكبر للعضلات، لكن المكسب يتناقص.',
   'Training each muscle twice a week gave more hypertrophy than once.': 'تدريب كل عضلة مرتين في الأسبوع أعطى تضخمًا أكبر من مرة واحدة.',
   'More weekly volume gave more muscle and strength, with returns that shrink as volume rises.': 'الحجم الأسبوعي الأكبر أعطى عضلات وقوة أكثر، لكن المكسب يتناقص.',
-  'Position stand on how to progress resistance training in healthy adults.': 'موقف رسمي حول كيفية التدرج في تمارين المقاومة لدى البالغين الأصحاء.',
+  'Healthy adults should keep progressing by adding load or volume a little at a time.': 'ينبغي للبالغين الأصحاء أن يتقدموا بزيادة الحمل أو الحجم تدريجيًا.',
   'The general recommendation for adults includes muscle-strengthening activity every week.': 'التوصية العامة للبالغين تشمل نشاطًا لتقوية العضلات كل أسبوع.',
   'More weekly sets gave more strength, with returns that shrink as volume rises.': 'زيادة عدد المجموعات الأسبوعية أعطت قوة أكبر، لكن المكسب يتناقص.',
   'In trained men, longer rest between sets helped strength and muscle on multi-joint exercises.': 'عند الرجال المدرَّبين، ساعدت الراحة الأطول بين المجموعات على القوة والعضلات في التمارين متعددة المفاصل.',

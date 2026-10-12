@@ -2292,7 +2292,7 @@ export default {
   'More weekly sets gave more muscle growth, with returns that shrink as volume rises.': '每周组数越多，肌肉增长越多，但收益会递减。',
   'Training each muscle twice a week gave more hypertrophy than once.': '每块肌肉每周练两次，比练一次增肌更多。',
   'More weekly volume gave more muscle and strength, with returns that shrink as volume rises.': '每周训练量越大，肌肉和力量增长越多，但收益会递减。',
-  'Position stand on how to progress resistance training in healthy adults.': '关于健康成年人如何循序渐进进行力量训练的官方立场声明。',
+  'Healthy adults should keep progressing by adding load or volume a little at a time.': '健康成年人应逐步增加负荷或训练量，持续进步。',
   'The general recommendation for adults includes muscle-strengthening activity every week.': '面向成年人的一般建议包括每周进行增强肌肉的活动。',
   'More weekly sets gave more strength, with returns that shrink as volume rises.': '每周组数越多，力量增长越多，但收益会递减。',
   'In trained men, longer rest between sets helped strength and muscle on multi-joint exercises.': '在有训练基础的男性中，组间休息更长对多关节动作的力量和肌肉有帮助。',

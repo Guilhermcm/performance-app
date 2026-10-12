@@ -2312,7 +2312,7 @@ export default {
   'More weekly sets gave more muscle growth, with returns that shrink as volume rises.': 'Mehr Sätze pro Woche brachten mehr Muskelwachstum, mit abnehmendem Zugewinn.',
   'Training each muscle twice a week gave more hypertrophy than once.': 'Jeden Muskel zweimal pro Woche zu trainieren brachte mehr Hypertrophie als einmal.',
   'More weekly volume gave more muscle and strength, with returns that shrink as volume rises.': 'Mehr Wochenvolumen brachte mehr Muskeln und Kraft, mit abnehmendem Zugewinn.',
-  'Position stand on how to progress resistance training in healthy adults.': 'Offizielle Stellungnahme dazu, wie man das Krafttraining bei gesunden Erwachsenen steigert.',
+  'Healthy adults should keep progressing by adding load or volume a little at a time.': 'Gesunde Erwachsene sollten Fortschritte machen, indem sie Gewicht oder Umfang nach und nach steigern.',
   'The general recommendation for adults includes muscle-strengthening activity every week.': 'Die allgemeine Empfehlung für Erwachsene umfasst jede Woche muskelkräftigende Aktivität.',
   'More weekly sets gave more strength, with returns that shrink as volume rises.': 'Mehr Sätze pro Woche brachten mehr Kraft, mit abnehmendem Zugewinn.',
   'In trained men, longer rest between sets helped strength and muscle on multi-joint exercises.': 'Bei trainierten Männern halfen längere Pausen zwischen den Sätzen Kraft und Muskeln bei Mehrgelenkübungen.',

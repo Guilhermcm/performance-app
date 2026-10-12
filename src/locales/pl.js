@@ -2318,7 +2318,7 @@ export default {
   'More weekly sets gave more muscle growth, with returns that shrink as volume rises.': 'Więcej serii tygodniowo dało większy wzrost mięśni, z coraz mniejszym zyskiem.',
   'Training each muscle twice a week gave more hypertrophy than once.': 'Trenowanie każdego mięśnia dwa razy w tygodniu dało większą hipertrofię niż raz.',
   'More weekly volume gave more muscle and strength, with returns that shrink as volume rises.': 'Większa objętość tygodniowa dała więcej mięśni i siły, z coraz mniejszym zyskiem.',
-  'Position stand on how to progress resistance training in healthy adults.': 'Oficjalne stanowisko o tym, jak progresować w treningu siłowym u zdrowych dorosłych.',
+  'Healthy adults should keep progressing by adding load or volume a little at a time.': 'Zdrowi dorośli powinni robić postępy, stopniowo zwiększając obciążenie lub objętość.',
   'The general recommendation for adults includes muscle-strengthening activity every week.': 'Ogólne zalecenie dla dorosłych obejmuje co tydzień aktywność wzmacniającą mięśnie.',
   'More weekly sets gave more strength, with returns that shrink as volume rises.': 'Więcej serii tygodniowo dało więcej siły, z coraz mniejszym zyskiem.',
   'In trained men, longer rest between sets helped strength and muscle on multi-joint exercises.': 'U wytrenowanych mężczyzn dłuższa przerwa między seriami pomogła w sile i mięśniach w ćwiczeniach wielostawowych.',

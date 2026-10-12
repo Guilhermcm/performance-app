@@ -10,6 +10,15 @@ const setWidth = (w: number) => Object.defineProperty(window, 'innerWidth', { co
 beforeEach(() => setWidth(1024))
 afterEach(async () => { cleanup(); await setLang('en') })
 
+// happy-dom never plays the sheet's slide-out, so the closed Drawer would stay mounted (and keep the
+// focus) waiting for an animationend that a browser fires. End it the way a browser would.
+const endSheetAnimation = () => {
+  for (const slot of ['drawer-content', 'drawer-overlay']) {
+    const el = document.querySelector(`[data-slot="${slot}"]`)
+    if (el) fireEvent.animationEnd(el)
+  }
+}
+
 const open = () => {
   const button = screen.getByRole('button', { name: 'See source' })
   fireEvent.click(button)
@@ -103,6 +112,40 @@ describe('InfoSource', () => {
     expect(document.querySelector('[data-slot="drawer-content"]')).not.toBeNull()
     expect(document.querySelector('[data-slot="popover-content"]')).toBeNull()
     expect(dialog.textContent).toContain(REFS.schoenfeld2017.authors)
+  })
+
+  it('closes the sheet on Escape and gives the focus back to the button (375 px)', async () => {
+    setWidth(375)
+    render(<InfoSource refs={['schoenfeld2017']} />)
+    const button = open()
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape', code: 'Escape' })
+    await waitFor(() => expect(dialog.getAttribute('data-state')).toBe('closed'))
+    endSheetAnimation()
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    await waitFor(() => expect(document.activeElement).toBe(button))
+  })
+
+  it('closes the sheet with the X (375 px)', async () => {
+    setWidth(375)
+    render(<InfoSource refs={['schoenfeld2017']} />)
+    const button = open()
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+    await waitFor(() => expect(dialog.getAttribute('data-state')).toBe('closed'))
+    endSheetAnimation()
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    await waitFor(() => expect(document.activeElement).toBe(button))
+  })
+
+  it('names the year once in the citation line (review M6)', async () => {
+    render(<InfoSource refs={['schoenfeld2017']} />)
+    open()
+    const dialog = await screen.findByRole('dialog')
+    const ref = REFS.schoenfeld2017
+    const line = [...dialog.querySelectorAll('p')].find(p => p.textContent?.startsWith(ref.authors))!
+    expect(line.textContent).toBe(`${ref.authors} (${ref.year}). ${ref.title}. ${ref.journal}`)
+    expect(line.textContent!.split(String(ref.year))).toHaveLength(2)
   })
 
   it('shows the rule of thumb text with no link', async () => {

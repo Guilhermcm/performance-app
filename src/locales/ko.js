@@ -2292,7 +2292,7 @@ export default {
   'More weekly sets gave more muscle growth, with returns that shrink as volume rises.': '주당 세트가 많을수록 근육이 더 늘었지만, 늘어나는 폭은 점점 줄었습니다.',
   'Training each muscle twice a week gave more hypertrophy than once.': '각 근육을 주 두 번 훈련하면 한 번보다 비대 효과가 더 컸습니다.',
   'More weekly volume gave more muscle and strength, with returns that shrink as volume rises.': '주당 볼륨이 클수록 근육과 힘이 더 늘었지만, 늘어나는 폭은 점점 줄었습니다.',
-  'Position stand on how to progress resistance training in healthy adults.': '건강한 성인의 근력 운동을 어떻게 단계적으로 발전시킬지에 대한 공식 입장.',
+  'Healthy adults should keep progressing by adding load or volume a little at a time.': '건강한 성인은 무게나 볼륨을 조금씩 늘려 가며 발전해야 합니다.',
   'The general recommendation for adults includes muscle-strengthening activity every week.': '성인을 위한 일반 권고에는 매주 근력 강화 활동이 포함됩니다.',
   'More weekly sets gave more strength, with returns that shrink as volume rises.': '주당 세트가 많을수록 힘이 더 늘었지만, 늘어나는 폭은 점점 줄었습니다.',
   'In trained men, longer rest between sets helped strength and muscle on multi-joint exercises.': '훈련된 남성에서 세트 사이 휴식이 길수록 다관절 운동에서 힘과 근육에 도움이 됐습니다.',

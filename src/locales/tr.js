@@ -2292,7 +2292,7 @@ export default {
   'More weekly sets gave more muscle growth, with returns that shrink as volume rises.': 'Haftada daha fazla set daha fazla kas büyümesi sağladı, ama kazanç giderek azaldı.',
   'Training each muscle twice a week gave more hypertrophy than once.': 'Her kası haftada iki kez çalıştırmak, bir kezden daha fazla hipertrofi sağladı.',
   'More weekly volume gave more muscle and strength, with returns that shrink as volume rises.': 'Daha yüksek haftalık hacim daha fazla kas ve güç sağladı, ama kazanç giderek azaldı.',
-  'Position stand on how to progress resistance training in healthy adults.': 'Sağlıklı yetişkinlerde direnç antrenmanında nasıl ilerleneceğine dair resmi duruş bildirisi.',
+  'Healthy adults should keep progressing by adding load or volume a little at a time.': 'Sağlıklı yetişkinler yükü veya hacmi yavaş yavaş artırarak ilerlemeli.',
   'The general recommendation for adults includes muscle-strengthening activity every week.': 'Yetişkinler için genel öneri, her hafta kas güçlendirici aktivite içerir.',
   'More weekly sets gave more strength, with returns that shrink as volume rises.': 'Haftada daha fazla set daha fazla güç sağladı, ama kazanç giderek azaldı.',
   'In trained men, longer rest between sets helped strength and muscle on multi-joint exercises.': 'Antrenmanlı erkeklerde setler arasında daha uzun dinlenmek, çok eklemli hareketlerde güce ve kasa yardımcı oldu.',

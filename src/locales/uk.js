@@ -2316,7 +2316,7 @@ export default {
   'More weekly sets gave more muscle growth, with returns that shrink as volume rises.': 'Більше підходів на тиждень давало більший ріст м\'язів, але віддача зменшувалася.',
   'Training each muscle twice a week gave more hypertrophy than once.': 'Тренування кожного м\'яза двічі на тиждень дало більше гіпертрофії, ніж один раз.',
   'More weekly volume gave more muscle and strength, with returns that shrink as volume rises.': 'Більший тижневий обсяг давав більше м\'язів і сили, але віддача зменшувалася.',
-  'Position stand on how to progress resistance training in healthy adults.': 'Офіційна позиція про те, як прогресувати в силових тренуваннях у здорових дорослих.',
+  'Healthy adults should keep progressing by adding load or volume a little at a time.': 'Здоровим дорослим варто прогресувати, поступово збільшуючи навантаження або обсяг.',
   'The general recommendation for adults includes muscle-strengthening activity every week.': 'Загальна рекомендація для дорослих включає вправи для зміцнення м\'язів щотижня.',
   'More weekly sets gave more strength, with returns that shrink as volume rises.': 'Більше підходів на тиждень давало більше сили, але віддача зменшувалася.',
   'In trained men, longer rest between sets helped strength and muscle on multi-joint exercises.': 'У тренованих чоловіків довший відпочинок між підходами допомагав силі та м\'язам у багатосуглобових вправах.',

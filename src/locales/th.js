@@ -2303,7 +2303,7 @@ export default {
   'More weekly sets gave more muscle growth, with returns that shrink as volume rises.': 'ทำเซตต่อสัปดาห์มากขึ้นช่วยให้กล้ามเนื้อโตขึ้น แต่ผลที่ได้เพิ่มน้อยลงเรื่อย ๆ',
   'Training each muscle twice a week gave more hypertrophy than once.': 'ฝึกกล้ามเนื้อแต่ละมัดสัปดาห์ละสองครั้งให้การเติบโตมากกว่าครั้งเดียว',
   'More weekly volume gave more muscle and strength, with returns that shrink as volume rises.': 'ปริมาณต่อสัปดาห์ที่มากขึ้นให้กล้ามเนื้อและความแข็งแรงมากขึ้น แต่ผลที่ได้เพิ่มน้อยลงเรื่อย ๆ',
-  'Position stand on how to progress resistance training in healthy adults.': 'จุดยืนอย่างเป็นทางการเรื่องการเพิ่มระดับการฝึกด้วยแรงต้านในผู้ใหญ่สุขภาพดี',
+  'Healthy adults should keep progressing by adding load or volume a little at a time.': 'ผู้ใหญ่ที่สุขภาพดีควรพัฒนาโดยค่อย ๆ เพิ่มน้ำหนักหรือปริมาณการฝึก',
   'The general recommendation for adults includes muscle-strengthening activity every week.': 'คำแนะนำทั่วไปสำหรับผู้ใหญ่รวมกิจกรรมเสริมสร้างกล้ามเนื้อทุกสัปดาห์',
   'More weekly sets gave more strength, with returns that shrink as volume rises.': 'ทำเซตต่อสัปดาห์มากขึ้นให้ความแข็งแรงมากขึ้น แต่ผลที่ได้เพิ่มน้อยลงเรื่อย ๆ',
   'In trained men, longer rest between sets helped strength and muscle on multi-joint exercises.': 'ในผู้ชายที่ฝึกมาแล้ว การพักระหว่างเซตนานขึ้นช่วยเรื่องความแข็งแรงและกล้ามเนื้อในท่าที่ใช้หลายข้อต่อ',

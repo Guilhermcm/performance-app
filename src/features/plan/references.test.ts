@@ -47,7 +47,8 @@ describe('reference catalog', () => {
       title: 'Dose-response relationship between weekly resistance training volume and increases in muscle mass: a systematic review and meta-analysis',
     })
     expect(REFS.pelland2025.year).toBe(2025)
-    expect(REFS.plotkin2022.journal).toBe('PeerJ 2022;10:e14142')
+    expect(REFS.plotkin2022.journal).toBe('PeerJ 10:e14142')
+    expect(REFS.schoenfeld2017.journal).toBe('J Sports Sci 35(11):1073-1082')
   })
 })
 
@@ -64,8 +65,22 @@ describe('refFinding', () => {
     for (const id of [...IDS, RULE_OF_THUMB] as const) expect(refFinding(id), id).not.toMatch(/\d/)
   })
 
+  it('states a conclusion for acsm2009, not a description of the paper (review M7)', () => {
+    expect(refFinding('acsm2009')).toBe('Healthy adults should keep progressing by adding load or volume a little at a time.')
+  })
+
   it('names the rule of thumb as such', () => {
     expect(RULE_OF_THUMB).toBe('rule-of-thumb')
     expect(refFinding(RULE_OF_THUMB)).toMatch(/rule of thumb/i)
+  })
+})
+
+describe('citation fields (review M6)', () => {
+  it('keeps the year out of journal, so the citation line names it once', () => {
+    for (const id of IDS) expect(REFS[id].journal, id).not.toContain(String(REFS[id].year))
+  })
+
+  it('has no date written in one language', () => {
+    for (const id of IDS) expect(REFS[id].journal, id).not.toMatch(/online|dez\.|\d{1,2} [a-z]{3}\./i)
   })
 })

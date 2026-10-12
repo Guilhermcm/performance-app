@@ -8,8 +8,10 @@
 // with fixed reps; the Upper/Lower and PPL ranges come from the old starter reps (8 → 8 to 12,
 // 10 → 10 to 12, 12 → 12 to 15, calves 15 → 12 to 15).
 import { uid } from '@/lib/format.js'
-import { EXIDX, isBodyweightEq } from '@/lib/exercises.js'
+import { EXIDX } from '@/lib/exercises.js'
 import { exAvailable } from '@/lib/equipment.js'
+import { climbsReps } from '@/lib/progression.js'
+import { deleteRoutine } from '@/lib/routines.js'
 import type { AnalysisProfile } from './goal'
 import type { RefId } from './references'
 
@@ -51,6 +53,8 @@ export type PlanState = {
   routines: { id: string; [k: string]: unknown }[]
   week: Week
   workouts?: { routineIds?: string[]; routineId?: string | null; [k: string]: unknown }[]
+  active?: { routineIds?: string[]; [k: string]: unknown } | null
+  dayPlan?: Record<string, string>
   program?: AppliedProgram
   [k: string]: unknown
 }
@@ -191,12 +195,14 @@ export const PROGRAMS: Record<ProgramId, Program> = {
 }
 
 // One slot as a routine exercise, for the exercise actually used (the slot's own or an
-// alternate): bodyweight is judged on that one. Task 5 reuses this to add an exercise.
+// alternate). Whether its range climbs to a repsMax ceiling is judged on that exercise with
+// progression's own predicate (climbsReps: body weight, unloaded equipment such as a band or an
+// ab wheel, or an assistance machine). Task 5 reuses this to add an exercise.
 export function slotToCfg(slot: Slot, exId: string = slot.ex): RoutineEx {
   const range = slot.repsMax != null && slot.repsMax > slot.reps
   const reps = !range
     ? { reps: slot.reps }
-    : isBodyweightEq(exId)
+    : climbsReps({ id: exId })
       ? { reps: slot.reps, repsMax: slot.repsMax }
       : { reps: slot.repsMax as number, repsMin: slot.reps }
   return { id: exId, sets: slot.sets, ...reps, weight: 0, restSec: slot.restSec, ...(slot.prog ? { prog: slot.prog } : {}) }
@@ -207,6 +213,13 @@ const CATALOG = EXIDX as Record<string, { eq?: string } | undefined>
 const usable = (S: unknown, id: string) => {
   const ex = CATALOG[id]
   return !!ex && exAvailable(S, ex)
+}
+
+// A valid variant index: out of range or not a number clamps to the nearest one.
+export function resolveVariant(id: ProgramId, variant = 0): number {
+  const last = PROGRAMS[id].variants.length - 1
+  const v = Math.trunc(Number(variant))
+  return Number.isFinite(v) ? Math.min(Math.max(v, 0), last) : 0
 }
 
 // Fresh routines (new ids) and the week of one variant. Under an active equipment profile, an
@@ -230,7 +243,7 @@ export function buildProgram(S: unknown, id: ProgramId, variant = 0): { routines
   }))
   const byKey = new Map(program.routines.map((r, i) => [r.key, routines[i].id]))
   const week: Record<number, string[]> = {}
-  for (const [day, key] of (program.variants[variant] ?? program.variants[0]).schedule) {
+  for (const [day, key] of program.variants[resolveVariant(id, variant)].schedule) {
     week[day] = [...(week[day] ?? []), byKey.get(key) as string]
   }
   return { routines, week, missing }
@@ -243,6 +256,7 @@ export const programRoutines = (id: ProgramId): Routine[] => buildProgram({}, id
 // the week for its schedule and remembers the week it replaced. Routines already there and the
 // date-specific changes of S.dayPlan stay as they are.
 export function applyProgram(S: PlanState, id: ProgramId, variant = 0): void {
+  variant = resolveVariant(id, variant)
   const { routines, week } = buildProgram(S, id, variant)
   const prevWeek = JSON.parse(JSON.stringify(S.week ?? {})) as Week
   S.routines.push(...routines)
@@ -252,17 +266,22 @@ export function applyProgram(S: PlanState, id: ProgramId, variant = 0): void {
 
 const trainedOn = (S: PlanState, routineId: string) =>
   (S.workouts ?? []).some(w => (Array.isArray(w.routineIds) && w.routineIds.includes(routineId)) || w.routineId === routineId)
+  || (Array.isArray(S.active?.routineIds) && S.active.routineIds.includes(routineId))
 
 // Undo the last applied program: the week comes back, the program's routines that were never
-// trained go, and a routine with a logged workout stays in the list, off the schedule. `kept`
+// trained go (through deleteRoutine, so a date rescheduled to one goes too), and a routine with
+// a logged workout or in the session in progress stays in the list, off the schedule. `kept`
 // names those, so the screen can say so.
+//
+// Undo restores the week and drops the routines whatever happened since the apply, edits
+// included. The guard lives in the UI: callers must offer Undo only while
+// `!S.program.dismissed` (editing a routine or the week marks it dismissed, plan decision 4).
 export function undoProgram(S: PlanState): { kept: string[] } {
   const program = S.program
   if (!program) return { kept: [] }
-  const ids = new Set(program.routineIds)
   const kept = program.routineIds.filter(rid => trainedOn(S, rid))
+  for (const rid of program.routineIds) if (!kept.includes(rid)) deleteRoutine(S, rid)
   S.week = JSON.parse(JSON.stringify(program.prevWeek ?? {})) as Week
-  S.routines = S.routines.filter(r => !ids.has(r.id) || kept.includes(r.id))
   delete S.program
   return { kept }
 }

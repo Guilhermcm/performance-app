@@ -2292,7 +2292,7 @@ export default {
   'More weekly sets gave more muscle growth, with returns that shrink as volume rises.': 'हफ्ते में ज़्यादा सेट से मांसपेशियाँ ज़्यादा बढ़ीं, पर फ़ायदा धीरे-धीरे घटता गया।',
   'Training each muscle twice a week gave more hypertrophy than once.': 'हर मांसपेशी को हफ्ते में दो बार करने पर एक बार की तुलना में ज़्यादा हाइपरट्रॉफी मिली।',
   'More weekly volume gave more muscle and strength, with returns that shrink as volume rises.': 'ज़्यादा साप्ताहिक वॉल्यूम से ज़्यादा मांसपेशी और ताकत मिली, पर फ़ायदा धीरे-धीरे घटता गया।',
-  'Position stand on how to progress resistance training in healthy adults.': 'स्वस्थ वयस्कों में रेज़िस्टेंस ट्रेनिंग में आगे कैसे बढ़ें, इस पर आधिकारिक रुख।',
+  'Healthy adults should keep progressing by adding load or volume a little at a time.': 'स्वस्थ वयस्कों को धीरे-धीरे वज़न या वॉल्यूम बढ़ाकर आगे बढ़ना चाहिए।',
   'The general recommendation for adults includes muscle-strengthening activity every week.': 'वयस्कों के लिए सामान्य सिफ़ारिश में हर हफ्ते मांसपेशियाँ मज़बूत करने वाली गतिविधि शामिल है।',
   'More weekly sets gave more strength, with returns that shrink as volume rises.': 'हफ्ते में ज़्यादा सेट से ज़्यादा ताकत मिली, पर फ़ायदा धीरे-धीरे घटता गया।',
   'In trained men, longer rest between sets helped strength and muscle on multi-joint exercises.': 'प्रशिक्षित पुरुषों में सेट के बीच ज़्यादा आराम से मल्टी-जॉइंट व्यायामों में ताकत और मांसपेशी को मदद मिली।',
