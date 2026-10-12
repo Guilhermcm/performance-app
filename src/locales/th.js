@@ -2431,4 +2431,11 @@ export default {
   "These count toward the time, not toward the sets.": "นับในเวลา แต่ไม่นับในเซ็ต",
   "{0}: added with {1} sets": "{0}: เพิ่มด้วย {1} เซ็ต",
   "{0}: {1} → {2} sets": "{0}: {1} → {2} เซ็ต",
+  // --- exercise progress and load up (phase 1d) ---
+  "Next workout: {0}": "การฝึกครั้งถัดไป: {0}",
+  "Why raise the load": "ทำไมต้องเพิ่มน้ำหนัก",
+  "You did every rep last time, so the load can go up.": "ครั้งที่แล้วคุณทำครบทุกครั้ง จึงเพิ่มน้ำหนักได้",
+  "suggested {0}": "แนะนำ {0}",
+  "Heaviest load": "น้ำหนักสูงสุด",
+  "Progress": "ความก้าวหน้า",
 }

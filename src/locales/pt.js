@@ -2420,4 +2420,11 @@ export default {
   "These count toward the time, not toward the sets.": "Contam para o tempo, mas não para as séries.",
   "{0}: added with {1} sets": "{0}: entra com {1} séries",
   "{0}: {1} → {2} sets": "{0}: {1} → {2} séries",
+  // --- exercise progress and load up (phase 1d) ---
+  "Next workout: {0}": "Próximo treino: {0}",
+  "Why raise the load": "Porquê subir a carga",
+  "You did every rep last time, so the load can go up.": "Fizeste todas as repetições da última vez, por isso a carga pode subir.",
+  "suggested {0}": "sugerido {0}",
+  "Heaviest load": "Maior carga",
+  "Progress": "Progresso",
 }

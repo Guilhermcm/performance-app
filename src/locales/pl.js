@@ -2452,4 +2452,11 @@ export default {
   "{0} exercises with no known muscle|one": "{0} ćwiczenie bez znanego mięśnia",
   "{0} exercises with no known muscle|few": "{0} ćwiczenia bez znanego mięśnia",
   "{0} exercises with no known muscle|many": "{0} ćwiczeń bez znanego mięśnia",
+  // --- exercise progress and load up (phase 1d) ---
+  "Next workout: {0}": "Następny trening: {0}",
+  "Why raise the load": "Dlaczego zwiększyć ciężar",
+  "You did every rep last time, so the load can go up.": "Ostatnio zrobiłeś wszystkie powtórzenia, więc ciężar może pójść w górę.",
+  "suggested {0}": "sugerowane {0}",
+  "Heaviest load": "Największy ciężar",
+  "Progress": "Postęp",
 }

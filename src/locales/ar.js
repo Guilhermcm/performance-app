@@ -2473,4 +2473,11 @@ export default {
   "These count toward the time, not toward the sets.": "تُحتسب في الوقت، لا في المجموعات.",
   "{0}: added with {1} sets": "{0}: أُضيف مع {1} مجموعات",
   "{0}: {1} → {2} sets": "{0}: {1} → {2} مجموعات",
+  // --- exercise progress and load up (phase 1d) ---
+  "Next workout: {0}": "التمرين القادم: {0}",
+  "Why raise the load": "لماذا نزيد الوزن",
+  "You did every rep last time, so the load can go up.": "أكملت كل التكرارات في المرة الماضية، لذا يمكن زيادة الوزن.",
+  "suggested {0}": "المقترح {0}",
+  "Heaviest load": "أعلى وزن",
+  "Progress": "التقدّم",
 }

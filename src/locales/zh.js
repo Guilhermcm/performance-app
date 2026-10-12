@@ -2420,4 +2420,11 @@ export default {
   "These count toward the time, not toward the sets.": "计入时间，但不计入组数。",
   "{0}: added with {1} sets": "{0}：新增 {1} 组",
   "{0}: {1} → {2} sets": "{0}：{1} → {2} 组",
+  // --- exercise progress and load up (phase 1d) ---
+  "Next workout: {0}": "下次训练：{0}",
+  "Why raise the load": "为什么要加重",
+  "You did every rep last time, so the load can go up.": "上次每组都完成了所有次数，可以加重了。",
+  "suggested {0}": "建议 {0}",
+  "Heaviest load": "最大重量",
+  "Progress": "进步",
 }

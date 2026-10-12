@@ -2450,4 +2450,11 @@ export default {
   "{0} exercises with no known muscle|one": "{0} вправа без відомого м’яза",
   "{0} exercises with no known muscle|few": "{0} вправи без відомого м’яза",
   "{0} exercises with no known muscle|many": "{0} вправ без відомого м’яза",
+  // --- exercise progress and load up (phase 1d) ---
+  "Next workout: {0}": "Наступне тренування: {0}",
+  "Why raise the load": "Чому варто підвищити вагу",
+  "You did every rep last time, so the load can go up.": "Минулого разу ви зробили всі повторення, тож вагу можна підвищити.",
+  "suggested {0}": "рекомендовано {0}",
+  "Heaviest load": "Найбільша вага",
+  "Progress": "Прогрес",
 }

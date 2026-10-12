@@ -2420,4 +2420,11 @@ export default {
   "These count toward the time, not toward the sets.": "ये समय में गिने जाते हैं, सेट में नहीं।",
   "{0}: added with {1} sets": "{0}: {1} सेट के साथ जोड़ा गया",
   "{0}: {1} → {2} sets": "{0}: {1} → {2} सेट",
+  // --- exercise progress and load up (phase 1d) ---
+  "Next workout: {0}": "अगला वर्कआउट: {0}",
+  "Why raise the load": "वज़न क्यों बढ़ाएँ",
+  "You did every rep last time, so the load can go up.": "पिछली बार आपने सारे रेप्स पूरे किए, इसलिए वज़न बढ़ सकता है।",
+  "suggested {0}": "सुझाया गया {0}",
+  "Heaviest load": "सबसे ज़्यादा वज़न",
+  "Progress": "प्रगति",
 }

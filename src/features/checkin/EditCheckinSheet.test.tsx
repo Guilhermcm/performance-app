@@ -123,7 +123,7 @@ describe('editing a posted check-in', () => {
     fireEvent.change(within(detail).getByLabelText('Set 1 · Weight (kg)'), { target: { value: '65' } })
     fireEvent.click(within(detail).getByRole('button', { name: 'Save' }))
     await act(async () => { fireEvent.click(save()) })
-    const next = { entries: [{ id: BENCH, sets: [{ w: 65, r: 8, done: true }] }] }
+    const next = { entries: [{ id: BENCH, sets: [{ w: 65, r: 8, done: true }] }], unit: 'kg' as const }
     expect(edit).toHaveBeenCalledWith('c1', { detail: next }, expect.anything())
     const w = (useStore.getState() as { S: { workouts: { id: string; entries: { sets: { w: number }[] }[] }[] } }).S.workouts.find(x => x.id === 'c1')!
     expect(w.entries[0].sets[0].w).toBe(65)

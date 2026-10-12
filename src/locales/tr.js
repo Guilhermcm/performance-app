@@ -2420,4 +2420,11 @@ export default {
   "These count toward the time, not toward the sets.": "Bunlar süreye sayılır, setlere sayılmaz.",
   "{0}: added with {1} sets": "{0}: {1} setle eklendi",
   "{0}: {1} → {2} sets": "{0}: {1} → {2} set",
+  // --- exercise progress and load up (phase 1d) ---
+  "Next workout: {0}": "Sonraki antrenman: {0}",
+  "Why raise the load": "Ağırlık neden artıyor",
+  "You did every rep last time, so the load can go up.": "Geçen sefer tüm tekrarları yaptın, ağırlığı artırabilirsin.",
+  "suggested {0}": "önerilen {0}",
+  "Heaviest load": "En yüksek ağırlık",
+  "Progress": "İlerleme",
 }

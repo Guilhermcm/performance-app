@@ -6,6 +6,7 @@ import { useProfile } from '../profile/useProfile'
 import { setLang } from '../../lib/i18n.js'
 import type { Alert, PlanAnalysis } from './analysis'
 import { AnalysisCard, analysisSummary } from './AnalysisCard'
+import { groupLabel } from './analysis-copy'
 
 const h = vi.hoisted(() => ({ nav: vi.fn() }))
 vi.mock('react-router-dom', () => ({ useNavigate: () => h.nav }))
@@ -29,6 +30,13 @@ beforeEach(() => {
 })
 afterEach(async () => { cleanup(); useProfile.setState({ profile: null }); await setLang('en') })
 
+describe('the hamstrings group in English', () => {
+  it('is plural, as a label too', async () => {
+    await setLang('en')
+    expect(groupLabel('hamstrings')).toBe('Hamstrings')
+  })
+})
+
 describe('analysisSummary', () => {
   it('counts the alerts and names the first one', () => {
     const a = analysisWith([{ kind: 'low', group: 'chest' }, { kind: 'long', routineId: 'r' }])
@@ -40,7 +48,7 @@ describe('analysisSummary', () => {
   })
 
   it.each([
-    [{ kind: 'missing', group: 'hamstrings' }, 'hamstring with no sets'],
+    [{ kind: 'missing', group: 'hamstrings' }, 'hamstrings with no sets'],
     [{ kind: 'low', group: 'biceps' }, 'biceps below ideal'],
     [{ kind: 'high', group: 'triceps' }, 'triceps with little extra gain'],
     [{ kind: 'frequency', group: 'quads' }, 'quads with low frequency'],

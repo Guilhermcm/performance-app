@@ -2420,4 +2420,11 @@ export default {
   "These count toward the time, not toward the sets.": "시간에는 포함되지만 세트에는 포함되지 않습니다.",
   "{0}: added with {1} sets": "{0}: {1}세트로 추가",
   "{0}: {1} → {2} sets": "{0}: {1} → {2}세트",
+  // --- exercise progress and load up (phase 1d) ---
+  "Next workout: {0}": "다음 운동: {0}",
+  "Why raise the load": "무게를 올리는 이유",
+  "You did every rep last time, so the load can go up.": "지난번에 모든 반복을 해냈으니 무게를 올려도 됩니다.",
+  "suggested {0}": "추천 {0}",
+  "Heaviest load": "최고 중량",
+  "Progress": "진행 상황",
 }

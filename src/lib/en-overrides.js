@@ -204,6 +204,8 @@ export const EN_OVERRIDES = {
   'Session ended — sign in again.': 'Session ended. Sign in again.',
   'Replaces your current Mon–Sun assignments.': 'Replaces your current Monday to Sunday assignments.',
   'People in this challenge see how many tonnes you lift. Never the load of each exercise.': 'People in this challenge see how many tonnes you lift, but not the load of each exercise.',
+  // The analysis group (src/features/plan/analysis-copy.ts) is plural in English; the key stays singular.
+  'hamstring': 'hamstrings',
 }
 
 export default EN_OVERRIDES

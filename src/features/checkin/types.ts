@@ -4,8 +4,10 @@ export type CheckinActivity = (typeof CHECKIN_ACTIVITIES)[number]
 
 export type CheckinVisibility = 'friends' | 'private'
 
-// What "detalhar treino" keeps: the sets that were done, per exercise (plan decision 7).
-export type CheckinDetail = { entries: { id: string; sets: { w: number; r: number; done: true }[] }[] }
+// What "detalhar treino" keeps: the sets that were done, per exercise (plan decision 7), and the
+// unit their weights were typed in (phase 1d). A detail saved before that has no unit and is read
+// in the profile's unit.
+export type CheckinDetail = { entries: { id: string; sets: { w: number; r: number; done: true }[] }[]; unit?: 'kg' | 'lb' }
 
 // A row of public.checkins as the client writes it. user_id, created_at and updated_at are
 // filled by the database (user_id defaults to auth.uid() and RLS checks it), so they are optional

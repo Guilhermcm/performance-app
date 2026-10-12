@@ -2423,4 +2423,11 @@ export default {
   "These count toward the time, not toward the sets.": "Az időbe beleszámítanak, a sorozatokba nem.",
   "{0}: added with {1} sets": "{0}: új, {1} sorozattal",
   "{0}: {1} → {2} sets": "{0}: {1} → {2} sorozat",
+  // --- exercise progress and load up (phase 1d) ---
+  "Next workout: {0}": "Következő edzés: {0}",
+  "Why raise the load": "Miért nő a súly",
+  "You did every rep last time, so the load can go up.": "Legutóbb minden ismétlést megcsináltál, így emelheted a súlyt.",
+  "suggested {0}": "javasolt {0}",
+  "Heaviest load": "Legnagyobb súly",
+  "Progress": "Fejlődés",
 }

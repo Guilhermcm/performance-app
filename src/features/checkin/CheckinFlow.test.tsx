@@ -236,7 +236,7 @@ describe('the check-in panel', () => {
     expect(screen.getByText('Workout detailed')).toBeTruthy()
     fireEvent.click(postButton()!)
     await settle()
-    expect(post.mock.calls[0][0].detail).toEqual({ entries: [{ id: BENCH, sets: [{ w: 45, r: 8, done: true }] }] })
+    expect(post.mock.calls[0][0].detail).toEqual({ entries: [{ id: BENCH, sets: [{ w: 45, r: 8, done: true }] }], unit: 'kg' })
     const S = useStore.getState().S
     expect(S.workouts.map((w: { id: string }) => w.id)).toEqual(['w1', 'c1'])
     expect(S.workouts[1]).toMatchObject({ d: '2026-10-10', routineId: 'r1', entries: [{ id: BENCH, sets: [{ w: 45, r: 8, done: true }] }] })
