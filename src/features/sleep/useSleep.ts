@@ -11,7 +11,7 @@ import { t } from '../../lib/i18n.js'
 import type { SleepHistory, SleepLog, SleepNight, SleepPeriod, SleepTarget, SleepWeek } from './types'
 
 // The closed nights kept on the phone: the widest range get_sleep_nights answers, ending today.
-const CLOSED_DAYS = 62
+export const CLOSED_DAYS = 62
 // How far back the morning card looks for the times to start from.
 const LAST_LOGGED_DAYS = 14
 // History months kept on the phone; the most recent stay.

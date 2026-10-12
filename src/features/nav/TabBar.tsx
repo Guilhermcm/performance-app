@@ -14,8 +14,9 @@ type TabKey = 'home' | 'plan' | 'nutrition' | 'social'
 // The tab a route lights: screens reached from a tab keep it lit. Stats left the bar (Phase 2a)
 // and opens from the Plan and Home headers, so it and its screens light Plan. So does the live
 // workout, which left the center of the bar for the check-in (phase 1c) and is resumed from the Plan.
+// Sleep has no tab: it opens from Home and the profile, and lights Home.
 const TAB_OF: Record<string, TabKey> = {
-  home: 'home', settings: 'home', perfil: 'home', conquistas: 'home',
+  home: 'home', settings: 'home', perfil: 'home', conquistas: 'home', sono: 'home',
   plan: 'plan', library: 'plan', muscles: 'plan', stats: 'plan', history: 'plan', 'structural-balance': 'plan', workout: 'plan',
   nutricao: 'nutrition',
   social: 'social', convite: 'social'

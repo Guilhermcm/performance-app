@@ -98,6 +98,13 @@ describe('TabBar', () => {
     expect(h.nav).toHaveBeenCalledWith('/nutricao')
   })
 
+  it('lights Home on the Sleep screen, which opens from Home and the profile', () => {
+    h.path = '/sono'
+    render(<TabBar />)
+    expect(tab(/Home/).className).toBe('on')
+    expect(tab(/Nutrition/).className).toBe('')
+  })
+
   it('counts unread notices and pending invitations on the social tab', () => {
     useCheckins.setState({ unread: 3 })
     render(<TabBar />)

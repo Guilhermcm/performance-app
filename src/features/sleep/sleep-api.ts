@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { classify } from '@/lib/supabase-errors'
-import type { SleepHistory, SleepLog, SleepTarget } from './types'
+import type { SleepHistory, SleepLog, SleepPeriod, SleepTarget } from './types'
 
 const fail = (e: unknown): never => { throw classify(e) }
 
@@ -62,6 +62,13 @@ export async function fetchNights(from: string, to: string): Promise<SleepHistor
   if (res.error) fail(res.error)
   const d = res.data as Partial<SleepHistory> | null
   return { nights: d?.nights ?? [], weeks: d?.weeks ?? [], periods: d?.periods ?? [] }
+}
+
+// Every period the pillar was on, oldest first: the calendar goes back to the first one, which
+// get_sleep_nights only returns for the range it was asked about.
+export async function fetchPeriods(): Promise<SleepPeriod[]> {
+  const rows = await run<Row[]>(supabase.from('sleep_periods').select('started_on, ended_on').order('started_on', { ascending: true }) as never)
+  return (rows ?? []).map(r => ({ started_on: r.started_on as string, ended_on: (r.ended_on as string | null) ?? null }))
 }
 
 export type SleepErrorCode = 'night_closed' | 'invalid_duration' | 'network' | 'refused'

@@ -1889,6 +1889,28 @@ export const PT_BR_OVERRIDES = {
   "Delete this night?": "Excluir esta noite?",
   "Night saved": "Noite salva",
   "Night deleted": "Noite excluída",
+  // --- sleep screen (phase 3) ---
+  "Log your first night": "Registre sua primeira noite",
+  "went to bed {0} · woke up {1}": "deitou {0} · acordou {1}",
+  "To confirm": "A confirmar",
+  "+{0} to confirm": "+{0} a confirmar",
+  "Average sleep": "Duração média",
+  "Regularity": "Regularidade",
+  "Sleep debt": "Débito de sono",
+  "Nights on target": "Noites no alvo",
+  "last 7 days": "últimos 7 dias",
+  "last 14 days": "últimos 14 dias",
+  "30 days: {0}": "30 dias: {0}",
+  "stable": "estável",
+  "ok": "ok",
+  "irregular": "irregular",
+  "Too few nights to measure": "Poucas noites para medir",
+  "No nights logged": "Sem noites registradas",
+  "Goal that night": "Meta da noite",
+  "No goal": "Sem meta",
+  "Could not load your nights.": "Não foi possível carregar suas noites.",
+  "Sleep was off this month, so no night counts here.": "O Sono estava desligado neste mês, então nenhuma noite conta aqui.",
+  "Sleep stats": "Números do sono",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }
