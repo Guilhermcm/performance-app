@@ -43,7 +43,7 @@ vi.mock('../lib/push.js', () => ({ pushSupported: () => false, enablePush: vi.fn
 vi.mock('../lib/wakelock.js', () => ({ wakeLockSupported: () => false }))
 vi.mock('../lib/mobile.js', () => ({ MOBILE: false, isAndroid: () => Promise.resolve(false), shareExport: vi.fn(), syncReminder: vi.fn() }))
 vi.mock('../sheets.jsx', () => ({
-  starterPlanSheet: vi.fn(), confirmSheet: vi.fn(), importFromApp: vi.fn(),
+  confirmSheet: vi.fn(), importFromApp: vi.fn(),
   importFromHevy: vi.fn(), equipmentProfileSheet: vi.fn(),
   dayAssignSheet: vi.fn(), dayAddRoutineSheet: vi.fn(), planToolsSheet: vi.fn(),
 }))
@@ -66,7 +66,8 @@ afterEach(() => {
 })
 
 const segButton = label => [...host.querySelectorAll('.seg button')].find(b => b.textContent === label)
-const dayRows = () => [...host.querySelectorAll('.item .tt')].map(e => e.textContent)
+// The week's rows: the Plan's entry rows above them (Programs, My workouts) carry a test id.
+const dayRows = () => [...host.querySelectorAll('.item:not([data-testid]) .tt')].map(e => e.textContent)
 
 describe('Settings — week starts on', () => {
   const mount = () => act(() => root.render(<Settings />))
@@ -111,7 +112,7 @@ describe('Plan — the week schedule follows the setting', () => {
     mocks.S.week = { 0: 'r1' }        // Sunday
     mocks.S.weekStart = 0
     mount()
-    const rows = [...host.querySelectorAll('.item')]
+    const rows = [...host.querySelectorAll('.item:not([data-testid])')]
     expect(rows[0].querySelector('.tt').textContent).toBe('Sunday')
     expect(rows[0].textContent).toContain('Push')
     expect(rows[1].textContent).not.toContain('Push')

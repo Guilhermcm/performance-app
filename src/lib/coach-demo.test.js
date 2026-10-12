@@ -123,7 +123,7 @@ describe('coach-demo — the job machine', () => {
   })
 })
 
-describe('coach-demo — the starter plan', () => {
+describe('coach-demo — the first plan', () => {
   it('schedules the preferred days round-robin across the two routines', () => {
     const p = think(() => demoPlan(state(), { preferredDays: [2, 4, 6, 0], equipment: [] }))
     expect(Object.keys(p.bundle.week).map(Number).sort((a, b) => a - b)).toEqual([2, 4, 6])   // sliced to 3

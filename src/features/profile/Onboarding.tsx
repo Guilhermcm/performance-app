@@ -6,23 +6,15 @@ import { Progress } from '@/components/ui/progress'
 import { useStore } from '../../store/useStore.js'
 import { t, getLang } from '../../lib/i18n.js'
 import { todayISO } from '../../lib/format.js'
-import { loadStarterPlan } from '../../sheets.jsx'
 import { emit } from '../gamification/events'
-import { useProfile } from './useProfile'
+import { useProfile, type ProgramSuggestion } from './useProfile'
 import { validateProfileInput } from './profile-api'
 import { applyProfileToState } from './profile-apply'
-import { suggestStarterPlan, type StarterPlanId } from './starter-suggest'
+import { suggestProgram } from '../plan/suggest-program'
+import { applyProgram, type PlanState } from '../plan/programs'
+import { programCopy } from '../plan/program-copy'
 import { NameField, BodyFields, GoalFields, EquipmentField, GOAL_LABEL, LEVEL_LABEL } from './ProfileFields'
 import type { ProfileInput } from './types'
-
-// The same names and blurbs the Plan's starter-plan chooser shows (sheets.jsx PLAN_COPY), so the
-// suggestion and the plan that lands in Plan read the same.
-const PLAN_COPY: Record<StarterPlanId, () => { name: string; about: string }> = {
-  ppl: () => ({ name: t('Push / Pull / Legs'), about: t('Push, pull and legs each get their own day.') }),
-  'upper-lower': () => ({ name: t('Upper / Lower'), about: t('Upper body twice, lower body twice.') }),
-  'full-body': () => ({ name: t('Full Body'), about: t('Three sessions, the whole body each time.') }),
-  '5x5': () => ({ name: t('5×5'), about: t('Five sets of five on the main barbell lifts.') })
-}
 
 // Fields each step validates before moving on; the rest are checked where they are edited.
 const STEP_FIELDS: (keyof ProfileInput)[][] = [
@@ -64,8 +56,9 @@ export default function Onboarding() {
   }, [step])
 
   // Leaving the suggestion screen ends the onboarding; ProfileGate then shows the app on Home.
-  const leave = (plan: StarterPlanId | null) => {
-    if (plan) loadStarterPlan(plan)
+  // The program is applied the way the Programs screen applies it, so the Plan shows its banner.
+  const leave = (plan: ProgramSuggestion | null) => {
+    if (plan) useStore.getState().update((s: PlanState) => applyProgram(s, plan.id, plan.variant))
     window.location.hash = '#/home'
     finishOnboarding()
   }
@@ -106,7 +99,7 @@ export default function Onboarding() {
         Object.assign(s, applyProfileToState(s, created, { today, withWeight: !!created.weight_kg }))
       })
       if (created.weight_kg) emit('weight_logged', { w: created.weight_kg }, today, today)
-      setSuggestion(suggestStarterPlan({ days: created.days_per_week, level: created.level, goal: created.goal }))
+      setSuggestion(suggestProgram({ days: created.days_per_week, level: created.level, goal: created.goal }))
     } catch {
       setSaveError(true)
     } finally {
@@ -132,7 +125,7 @@ export default function Onboarding() {
   }
 
   if (suggestion) {
-    const plan = PLAN_COPY[suggestion]()
+    const plan = programCopy(suggestion.id)
     const enter = (delay: number) => ({
       initial: reduce ? { opacity: 0 } : { opacity: 0, y: 16 },
       animate: { opacity: 1, y: 0 },
@@ -151,7 +144,7 @@ export default function Onboarding() {
             <p className="font-mono text-xs font-medium uppercase tracking-[0.2em] text-primary">{t('Your starting point')}</p>
             <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
               <h1 className="text-4xl font-semibold leading-tight tracking-tight text-balance">{plan.name}</h1>
-              <p className="mt-2 text-base leading-relaxed text-muted-foreground text-pretty">{plan.about}</p>
+              <p className="mt-2 text-base leading-relaxed text-muted-foreground text-pretty">{plan.forWho}</p>
               {tags.length > 0 && (
                 <ul className="mt-5 flex list-none flex-wrap gap-2">
                   {tags.map(tag => (
@@ -165,7 +158,7 @@ export default function Onboarding() {
             </p>
           </motion.section>
           <motion.div {...enter(0.08)} className="flex flex-col gap-2">
-            <Button size="lg" className={CTA} onClick={() => leave(suggestion)}>{t('Use this plan')}</Button>
+            <Button size="lg" className={CTA} onClick={() => leave(suggestion)}>{t('Use this program')}</Button>
             <Button size="lg" variant="ghost" className="h-12 w-full rounded-2xl text-base text-muted-foreground" onClick={() => leave(null)}>
               {t('Skip for now')}
             </Button>

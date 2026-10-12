@@ -57,7 +57,7 @@ vi.mock('../lib/push.js', () => ({ pushSupported: () => false, enablePush: vi.fn
 vi.mock('../lib/wakelock.js', () => ({ wakeLockSupported: () => false }))
 vi.mock('../lib/mobile.js', () => ({ MOBILE: false, isAndroid: () => Promise.resolve(false), shareExport: vi.fn(), shareExportBlob: vi.fn(), syncReminder: vi.fn() }))
 vi.mock('../sheets.jsx', () => ({
-  starterPlanSheet: vi.fn(), confirmSheet: (...a) => mocks.confirmSheet(...a), importFromApp: vi.fn(),
+  confirmSheet: (...a) => mocks.confirmSheet(...a), importFromApp: vi.fn(),
   importFromHevy: vi.fn(), equipmentProfileSheet: vi.fn(), menuSheet: (...a) => mocks.menuSheet(...a), askAddDeviceData: vi.fn(),
 }))
 

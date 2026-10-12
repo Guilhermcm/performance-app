@@ -5,8 +5,8 @@
 //
 // Numbers the spec leaves open follow the controller's rulings for Task 2: rest is 90 s for
 // isolation work, 120 s for hypertrophy and health compounds and 180 s for strength compounds
-// with fixed reps; the Upper/Lower and PPL ranges come from the old starter reps (8 → 8 to 12,
-// 10 → 10 to 12, 12 → 12 to 15, calves 15 → 12 to 15).
+// with fixed reps; the Upper/Lower and PPL ranges come from the fixed reps of the plans the app
+// shipped before (8 → 8 to 12, 10 → 10 to 12, 12 → 12 to 15, calves 15 → 12 to 15).
 import { uid } from '@/lib/format.js'
 import { EXIDX } from '@/lib/exercises.js'
 import { exAvailable } from '@/lib/equipment.js'

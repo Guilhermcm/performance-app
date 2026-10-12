@@ -1,10 +1,12 @@
 import { create } from 'zustand'
 import { fetchProfile, createProfile, updateProfile } from './profile-api'
-import type { StarterPlanId } from './starter-suggest'
+import type { ProgramId } from '../plan/programs'
 import type { Profile, ProfileInput } from './types'
 
 const CACHE = 'perf_profile_v1'
 type Status = 'idle' | 'loading' | 'missing' | 'ready' | 'error'
+// The program the onboarding suggests at its end (suggestProgram, spec §4.3).
+export type ProgramSuggestion = { id: ProgramId; variant: number }
 
 interface ProfileStore {
   status: Status
@@ -13,11 +15,11 @@ interface ProfileStore {
   // True from the moment the profile is created until the user leaves the plan suggestion:
   // status is already 'ready' then, and ProfileGate must keep the onboarding on screen.
   onboarding: boolean
-  suggestion: StarterPlanId | null
+  suggestion: ProgramSuggestion | null
   load(userId: string): Promise<void>
   create(input: Partial<ProfileInput>): Promise<Profile>
   save(patch: Partial<ProfileInput>): Promise<Profile>
-  setSuggestion(id: StarterPlanId): void
+  setSuggestion(suggestion: ProgramSuggestion): void
   finishOnboarding(): void
   reset(): void
 }
@@ -63,8 +65,8 @@ export const useProfile = create<ProfileStore>((set, get) => ({
     return profile
   },
 
-  setSuggestion(id) {
-    set({ suggestion: id })
+  setSuggestion(suggestion) {
+    set({ suggestion })
   },
 
   finishOnboarding() {

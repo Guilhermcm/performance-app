@@ -19,8 +19,6 @@ export const EN_OVERRIDES = {
   'Freestyle workout — add your first exercise.': 'Freestyle workout. Add your first exercise.',
   'Rest over — next set!': 'Rest over. Next set!',
   '{0} — in progress': '{0} in progress',
-  'Set up your weekly routine to get going — or load a ready-made starter plan.': 'Set up your weekly routine to get going, or load a ready-made starter plan.',
-  'The new plan will be scheduled on {0}. Existing routines are kept — only those days of the weekly plan change.': 'The new plan will be scheduled on {0}. Existing routines are kept, and only those days of the weekly plan change.',
   'Activity — last 12 months': 'Activity in the last 12 months',
   'Note (optional) — loading cues, "bar only then +1 plate/side each set", anything worth remembering here': 'Note (optional): loading cues, "bar only then +1 plate/side each set", anything worth remembering here',
   'No exercises yet — add your first one.': 'No exercises yet. Add your first one.',

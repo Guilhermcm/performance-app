@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { DAYN, weekOrder, weekStartOf, uid, exCount, routineCount } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
-import { dayAssignSheet, dayAddRoutineSheet, starterPlanSheet, planToolsSheet, confirmSheet, startFlow } from '../sheets.jsx'
+import { dayAssignSheet, dayAddRoutineSheet, planToolsSheet, confirmSheet, startFlow } from '../sheets.jsx'
 import Icon from '../components/Icon.jsx'
 import { Button } from '../components/ui.jsx'
 import SwipeToDelete from '../components/SwipeToDelete.jsx'
@@ -15,6 +15,7 @@ import { coachAvailable } from '../lib/coach.js'
 import { openCheckinCamera } from '../features/checkin/open-checkin'
 import { useCheckins } from '../features/checkin/useCheckins'
 import { useWeekTraining } from '../features/checkin/week'
+import { ProgramBanner } from '../features/plan/ProgramBanner'
 
 export default function Plan() {
   const nav = useNavigate()
@@ -81,6 +82,9 @@ export default function Plan() {
       <Icon name="chevronRight" className="coach-cta-chev" />
     </button>}
 
+    {/* The applied program, with Undo until the plan is edited (phase 1d, spec 4.5). */}
+    <ProgramBanner />
+
     {/* My workouts (phase 1c, spec 5.3): the calendar of check-ins, with this week's training days
         toward the Treino goal, counted on this phone before the server confirms them. */}
     {week && <div className="list" style={{ marginBottom: 14 }}>
@@ -93,6 +97,18 @@ export default function Plan() {
         <Icon name="chevronRight" className="chev" />
       </div>
     </div>}
+
+    {/* The program catalog (phase 1d, spec 4.4), for an empty plan and a full one alike. */}
+    <div className="list" style={{ marginBottom: 14 }}>
+      <div className="item" data-testid="programs-entry" {...tappable(() => nav('/plan/programas'))}>
+        <span className="lrow-i"><Icon name="sparkles" /></span>
+        <div className="grow" style={{ minWidth: 0 }}>
+          <div className="tt">{t('Programs')}</div>
+          <div className="ss">{t('Ready-made plans, with the evidence behind them')}</div>
+        </div>
+        <Icon name="chevronRight" className="chev" />
+      </div>
+    </div>
 
     {/* The tab bar's center is the check-in now (phase 1c), so a workout in progress, or an edit
         of a saved one, is picked up here. */}
@@ -174,8 +190,8 @@ export default function Plan() {
             onClick={ev => { ev.stopPropagation(); moveRoutine(i, 1) }}><Icon name="chevronDown" /></button>
         </div>}
         <Icon name="chevronRight" className="chev" /></SwipeToDelete>)}</div> : <>
-        <div className="empty"><div className="ico"><Icon name="clipboard" /></div>{t('No routines yet.')}<br />{t('Create one or load the starter plan.')}</div>
-        <Button icon="sparkles" onClick={starterPlanSheet}>{t('Load starter plan')}</Button>
+        <div className="empty"><div className="ico"><Icon name="clipboard" /></div>{t('No routines yet.')}<br />{t('Create one or pick a program.')}</div>
+        <Button icon="sparkles" onClick={() => nav('/plan/programas')}>{t('See programs')}</Button>
       </>}
       {/* A freestyle session, or several routines at once, start from the workout screen. */}
       {!S.active && <div style={{ display: 'flex', justifyContent: 'center', marginTop: 10 }}>

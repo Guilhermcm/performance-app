@@ -36,7 +36,7 @@ vi.mock('../lib/api.js', () => ({ api: vi.fn(), IS_ANDROID: false }))
 vi.mock('../lib/wakelock.js', () => ({ wakeLockSupported: () => false }))
 vi.mock('../lib/mobile.js', () => ({ MOBILE: false, shareExport: vi.fn(), shareExportBlob: vi.fn() }))
 vi.mock('../sheets.jsx', () => ({
-  starterPlanSheet: vi.fn(), confirmSheet: vi.fn(), importFromApp: vi.fn(), importFromHevy: vi.fn(),
+  confirmSheet: vi.fn(), importFromApp: vi.fn(), importFromHevy: vi.fn(),
   equipmentProfileSheet: vi.fn(), plateInventorySheet: vi.fn(), menuSheet: (...a) => mocks.menuSheet(...a),
 }))
 
@@ -76,6 +76,14 @@ describe('Settings — profile', () => {
     useProfile.setState({ profile: null })
     mount()
     expect(rows().some(r => r.textContent.startsWith('Profile'))).toBe(false)
+  })
+
+  it('the Programs row in Data goes to /plan/programas (phase 1d)', () => {
+    mount()
+    const row = rows().find(r => r.textContent.startsWith('Programs'))
+    expect(row).toBeTruthy()
+    act(() => { row.click() })
+    expect(mocks.nav).toHaveBeenCalledWith('/plan/programas')
   })
 
   it('a unit switch also updates the profile', () => {

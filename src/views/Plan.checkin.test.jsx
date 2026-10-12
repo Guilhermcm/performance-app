@@ -21,7 +21,7 @@ vi.mock('../store/useStore.js', () => {
 vi.mock('react-router-dom', () => ({ useNavigate: () => mocks.nav }))
 vi.mock('../lib/mobile.js', () => ({ MOBILE: false, isAndroid: () => Promise.resolve(false), shareExport: vi.fn(), syncReminder: vi.fn() }))
 const sheets = vi.hoisted(() => ({
-  starterPlanSheet: vi.fn(), dayAssignSheet: vi.fn(), dayAddRoutineSheet: vi.fn(), planToolsSheet: vi.fn(), confirmSheet: vi.fn(), startFlow: vi.fn(),
+  dayAssignSheet: vi.fn(), dayAddRoutineSheet: vi.fn(), planToolsSheet: vi.fn(), confirmSheet: vi.fn(), startFlow: vi.fn(),
 }))
 vi.mock('../sheets.jsx', () => sheets)
 const flow = vi.hoisted(() => ({ openCheckinCamera: vi.fn() }))

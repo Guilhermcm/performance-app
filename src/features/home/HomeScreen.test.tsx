@@ -6,7 +6,7 @@ const h = vi.hoisted(() => ({ nav: vi.fn(), bwSheet: vi.fn(), weighInsSheet: vi.
 vi.mock('react-router-dom', () => ({ useNavigate: () => h.nav }))
 vi.mock('../../sheets.jsx', () => ({
   bwSheet: h.bwSheet, weighInsSheet: h.weighInsSheet, goalSheet: h.goalSheet, bwDeltaColor: () => '',
-  dayOverrideSheet: vi.fn(), calendarSheet: vi.fn(), startFlow: vi.fn(), starterPlanSheet: vi.fn()
+  dayOverrideSheet: vi.fn(), calendarSheet: vi.fn(), startFlow: vi.fn()
 }))
 vi.mock('../../components/LineChart.jsx', () => ({ default: () => null }))
 

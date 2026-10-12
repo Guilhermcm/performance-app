@@ -4,32 +4,32 @@ import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/re
 
 const h = vi.hoisted(() => ({
   create: vi.fn(async (input: any) => ({ id: 'u1', equipment: [], unit: 'kg', locale: 'pt-BR', weight_kg: null, ...input })),
-  update: vi.fn((fn: (s: any) => void) => fn({})),
-  loadStarterPlan: vi.fn(),
+  state: { routines: [], week: {} } as any,
+  update: vi.fn((fn: (s: any) => void) => fn(h.state)),
   emit: vi.fn(),
   finishOnboarding: vi.fn(),
-  suggestion: null as string | null
+  suggestion: null as { id: string; variant: number } | null
 }))
 vi.mock('./useProfile', () => ({
   useProfile: (sel?: any) => {
-    const s = { create: h.create, suggestion: h.suggestion, setSuggestion: (id: string) => { h.suggestion = id }, finishOnboarding: h.finishOnboarding }
+    const s = { create: h.create, suggestion: h.suggestion, setSuggestion: (s: { id: string; variant: number }) => { h.suggestion = s }, finishOnboarding: h.finishOnboarding }
     return sel ? sel(s) : s
   }
 }))
 vi.mock('../../store/useStore.js', () => ({
   useStore: Object.assign((sel: any) => sel({ user: { id: 'u1', name: 'Ana Souza' }, update: h.update, S: {} }), { getState: () => ({ update: h.update, S: {} }) })
 }))
-vi.mock('../../sheets.jsx', () => ({ loadStarterPlan: h.loadStarterPlan }))
 vi.mock('../gamification/events', () => ({ emit: h.emit }))
-vi.mock('../../lib/equipment.js', () => ({ ALL_EQUIPMENT: ['barbell', 'dumbbell', 'body weight'] }))
+vi.mock('../../lib/equipment.js', () => ({ ALL_EQUIPMENT: ['barbell', 'dumbbell', 'body weight'], exAvailable: () => true }))
 
 import Onboarding from './Onboarding'
 
 const next = () => fireEvent.click(screen.getByRole('button', { name: /continue/i }))
 
 beforeEach(() => {
-  ;[h.create, h.update, h.loadStarterPlan, h.emit, h.finishOnboarding].forEach(f => f.mockClear())
+  ;[h.create, h.update, h.emit, h.finishOnboarding].forEach(f => f.mockClear())
   h.suggestion = null
+  h.state = { routines: [], week: {} }
 })
 afterEach(cleanup)
 
@@ -68,7 +68,7 @@ describe('Onboarding', () => {
     expect(h.create.mock.calls[0][0]).toMatchObject({ display_name: 'Ana Souza', weight_kg: 70, goal: 'strength', level: 'beginner', days_per_week: 3, equipment: ['barbell'] })
     expect(h.update).toHaveBeenCalled()
     expect(h.emit).toHaveBeenCalledWith('weight_logged', expect.any(Object), expect.any(String), expect.any(String))
-    await waitFor(() => expect(h.suggestion).toBe('5x5'))
+    await waitFor(() => expect(h.suggestion).toEqual({ id: 'strength-5x5', variant: 0 }))
   })
 
   it('shows an error and stays on the last step when saving fails', async () => {
@@ -82,20 +82,31 @@ describe('Onboarding', () => {
     expect(h.suggestion).toBe(null)
   })
 
-  it('shows the suggestion and loads the plan', () => {
-    h.suggestion = '5x5'
+  it('shows the suggested program by its catalog name and applies it', () => {
+    h.suggestion = { id: 'strength-5x5', variant: 0 }
     render(<Onboarding />)
-    expect(screen.getByText('5×5')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: /use this plan/i }))
-    expect(h.loadStarterPlan).toHaveBeenCalledWith('5x5')
+    expect(screen.getByRole('heading', { name: 'Strength 5×5' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /use this program/i }))
+    expect(h.state.program).toMatchObject({ id: 'strength-5x5', variant: 0 })
+    expect(h.state.routines.map((r: any) => r.name)).toEqual(['5×5 · A', '5×5 · B', '5×5 · C'])
     expect(h.finishOnboarding).toHaveBeenCalled()
   })
 
+  it('applies the suggested variant (PPL 6x)', () => {
+    h.suggestion = { id: 'ppl', variant: 1 }
+    render(<Onboarding />)
+    expect(screen.getByRole('heading', { name: 'Push / Pull / Legs' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /use this program/i }))
+    expect(h.state.program).toMatchObject({ id: 'ppl', variant: 1 })
+    expect(Object.keys(h.state.week)).toHaveLength(6)
+  })
+
   it('can skip the suggestion', () => {
-    h.suggestion = 'ppl'
+    h.suggestion = { id: 'ppl', variant: 0 }
     render(<Onboarding />)
     fireEvent.click(screen.getByRole('button', { name: /skip/i }))
-    expect(h.loadStarterPlan).not.toHaveBeenCalled()
+    expect(h.state.program).toBeUndefined()
+    expect(h.state.routines).toEqual([])
     expect(h.finishOnboarding).toHaveBeenCalled()
   })
 })
