@@ -2369,8 +2369,8 @@ export default {
   "Three lifts per session, 5 sets of 5. When you complete every set, the load goes up next time.": "Три упражнения за тренировку, 5 подходов по 5. Выполнили все подходы, и в следующий раз вес растёт.",
   "Few reps with a heavy load train strength. Rest 3 min between sets, since longer rest helped strength on multi-joint lifts. You train the whole body 3 times a week.": "Мало повторов с большим весом развивают силу. Отдыхайте 3 мин между подходами: долгий отдых помогал силе в многосуставных. Всё тело работает 3 раза в неделю.",
   "If you already train and want both strength and muscle, with 4 days a week.": "Если вы уже тренируетесь и хотите и силу, и мышцы, 4 дня в неделю.",
-  "Two heavy days with 5 to 8 reps and two lighter days with 8 to 15. You train each muscle twice a week.": "Два тяжёлых дня по 5-8 повторов и два полегче по 8-15. Каждая мышца работает дважды в неделю.",
-  "On heavy days you rest 3 min and add load when you complete the sets. On lighter days, 3 or 4 sets of 8 to 15 reps build muscle, with 2 min of rest on multi-joint lifts.": "В тяжёлые дни отдых 3 мин, а вес растёт, когда вы выполнили все подходы. В лёгкие дни 3 или 4 подхода по 8-15 повторов строят мышцы, отдых 2 мин в многосуставных.",
+  "Two heavy days with 5 to 10 reps and two lighter days with 8 to 15. You train each muscle twice a week.": "Два тяжёлых дня по 5-10 повторов и два полегче по 8-15. Каждая мышца работает дважды в неделю.",
+  "On heavy days you rest 3 min on the main lifts and add load when you complete the sets. On lighter days, 3 or 4 sets of 8 to 15 reps build muscle, with 2 min of rest on multi-joint lifts.": "В тяжёлые дни отдых 3 мин в базовых упражнениях, а вес растёт, когда вы выполнили все подходы. В лёгкие дни 3 или 4 подхода по 8-15 повторов строят мышцы, отдых 2 мин в многосуставных.",
   "For weeks with little time: 2 short sessions.": "Для недель, когда мало времени: 2 короткие тренировки.",
   "Four multi-joint exercises per session, each working several muscles at once.": "Четыре многосуставных упражнения за тренировку, каждое нагружает несколько мышц сразу.",
   "Short workouts built on multi-joint exercises can build strength and muscle. 2 or 3 sets of 8 to 12 reps, 2 min of rest, and the whole body in every session.": "Короткие тренировки на многосуставных упражнениях могут дать силу и мышцы. 2 или 3 подхода по 8-12 повторов, 2 мин отдыха и всё тело за каждую тренировку.",
@@ -2460,4 +2460,6 @@ export default {
   "suggested {0}": "рекомендуется {0}",
   "Heaviest load": "Максимальный вес",
   "Progress": "Прогресс",
+  "App rule": "Правило приложения",
+  "The app’s own rule, with no study behind it: it flags an exercise that shows up on 3 or more days of the week, so you can think about varying it.": "Собственное правило приложения, без исследования за ним: оно отмечает упражнение, которое стоит в 3 или более днях недели, чтобы вы подумали, как его разнообразить.",
 }

@@ -4,10 +4,11 @@
 // the screen can offer Undo with restoreRoutines.
 // Only the group alerts have a suggestion: too little (add sets, or add an exercise when no
 // exercise has the group as its main muscle), none at all (add an exercise) and too much (take
-// sets away). Long sessions, imbalance and repeated exercises are told in words, not changed.
+// sets from the exercises whose main group it is). Long sessions, imbalance and repeated
+// exercises are told in words, not changed.
 import { EXIDX, isAssisted } from '@/lib/exercises.js'
 import { exAvailable } from '@/lib/equipment.js'
-import { analyzePlan, exerciseGroupWeights, type Group, type PlanInput } from './analysis'
+import { analyzePlan, exerciseGroupWeights, exerciseMainGroup, type Group, type PlanInput } from './analysis'
 import { RANGES, type AnalysisProfile } from './goal'
 import { ISOLATION, slotToCfg, type Routine } from './programs'
 import { estimateMinutes } from './time'
@@ -100,21 +101,29 @@ function addSets(S: SuggestionState, group: Group, weekly: number, min: number):
   return changes
 }
 
-function removeSets(S: SuggestionState, group: Group, weekly: number, max: number): Change[] {
-  let excess = weekly - max
+// Takes sets only from the exercises that exist for the group (its main group, final review I1),
+// never below 2 sets, and never so far that another group the exercise trains falls under the
+// profile minimum (review M4). Nothing that qualifies gives no suggestion.
+function removeSets(S: SuggestionState, group: Group, weekly: Record<Group, number>, max: number, min: number): Change[] {
+  let excess = weekly[group] - max
+  const totals = { ...weekly }
   const changes: Change[] = []
-  // the exercises that train the group as a side effect give first, then the ones that exist for it
-  for (const main of [false, true]) {
-    for (const { routine, times } of scheduled(S)) {
-      for (const { ex, weight } of exercisesFor(S, routine, group)) {
-        if (excess <= 0) return changes
-        if ((weight === 1) !== main) continue
-        const room = sets(ex) - FLOOR_SETS
-        if (room <= 0) continue
-        const take = Math.min(room, Math.ceil(excess / (times * weight)))
-        changes.push({ routineId: routine.id, exId: ex.id, from: sets(ex), to: sets(ex) - take })
-        excess -= take * times * weight
+  for (const { routine, times } of scheduled(S)) {
+    for (const { ex, weight } of exercisesFor(S, routine, group)) {
+      if (excess <= 0) return changes
+      if (exerciseMainGroup(S, ex.id) !== group) continue
+      let take = Math.min(sets(ex) - FLOOR_SETS, Math.ceil(excess / (times * weight)))
+      const weights = exerciseGroupWeights(S, ex.id)
+      for (const g of GROUPS) {
+        const w = weights[g] ?? 0
+        if (g === group || !(w > 0)) continue
+        // how many sets this exercise can give before g goes under the minimum
+        take = Math.min(take, Math.floor((totals[g] - min) / (times * w)))
       }
+      if (take <= 0) continue
+      changes.push({ routineId: routine.id, exId: ex.id, from: sets(ex), to: sets(ex) - take })
+      for (const g of GROUPS) totals[g] -= take * times * (weights[g] ?? 0)
+      excess -= take * times * weight
     }
   }
   return changes
@@ -167,7 +176,8 @@ export function suggestionsFor(S: SuggestionState, profile: AnalysisProfile): Su
         if (s) out.push(s)
       }
     } else if (alert.kind === 'high') {
-      const changes = removeSets(S, group, weekly, max)
+      const totals = Object.fromEntries(GROUPS.map(g => [g, analysis.groups[g].sets])) as Record<Group, number>
+      const changes = removeSets(S, group, totals, max, min)
       if (changes.length) out.push({ kind: 'remove-sets', group, changes })
     }
   }

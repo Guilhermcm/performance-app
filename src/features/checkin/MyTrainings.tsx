@@ -287,10 +287,11 @@ function CheckinEntry({ row, onSaved }: { row: MyCheckin; onSaved: (row: Checkin
 
 // The detailed session of a check-in, per exercise: "60 kg × 8 · 62.5 kg × 6". The history session
 // comes first (written by the check-in, or the live workout linked to it, both through
-// workoutOfCheckin); a detail whose session is not on this phone is read from the check-in.
+// workoutOfCheckin); a detail whose session is not on this phone is read from the check-in, in
+// the unit it was typed in (a detail from before phase 1d has none and reads in the profile's).
 function sessionSets(S: Record<string, any>, row: CheckinRow): { id: string; text: string }[] {
-  const unit = S.unit || 'kg'
   const session = workoutOfCheckin(S, row.id)
+  const unit = (session ? null : row.detail?.unit) ?? (S.unit || 'kg')
   const entries: CheckinDetail['entries'] = session
     ? session.entries.map(e => ({ id: e.id, sets: e.sets.filter(s => s.done && Number(s.r) > 0).map(s => ({ w: Number(s.w) || 0, r: Number(s.r), done: true as const })) }))
     : row.detail?.entries ?? []

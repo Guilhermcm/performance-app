@@ -186,6 +186,21 @@ export function matchesMuscleGroups(ex, requested) {
   return wanted.some(group => groups.has(group))
 }
 
+/**
+ * The secondary muscles an exercise's metadata names outright, as canonical slugs: the dataset's
+ * `sm` list (through smOf, so the catalogue additions count), or, for an entry with no `sm`, its
+ * explicit secondaries. The long tail that musclesOf derives at its supporting weight from the
+ * compound-lift overlay, the `mg` field or a body part is not here. The plan analysis credits
+ * only these (phase 1d); musclesOf and the muscle maps keep their own weights.
+ */
+export function namedSecondariesOf(entry) {
+  const ex = metadataOf(entry)
+  if (!ex || typeof ex !== 'object') return []
+  const sm = smOf(ex)
+  if (sm.length) return canonicalUnique(sm)
+  return canonicalUnique(explicitPartsOf(ex)?.secondary)
+}
+
 /** Muscles one exercise trains: { slug: 0…1 }. Duplicate metadata never adds load twice. */
 export function musclesOf(ex) {
   if (!ex) return {}

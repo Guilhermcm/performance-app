@@ -49,6 +49,17 @@ describe('ProgramDetail', () => {
     for (const ref of PROGRAMS['strength-5x5'].refs) expect(pop.textContent).toContain(REFS[ref].title)
   })
 
+  it('explains the minutes of the program and of each routine with the time ⓘ (final review m3)', () => {
+    h.id = 'ppl'
+    render(<ProgramDetail />)
+    const buttons = screen.getAllByRole('button', { name: 'How the time is estimated' })
+    // one beside the program minutes on top, one on the routines heading
+    expect(buttons).toHaveLength(2)
+    expect(within(screen.getByRole('region', { name: 'Routines' })).getByRole('button', { name: 'How the time is estimated' })).toBeTruthy()
+    fireEvent.click(buttons[0])
+    expect(screen.getByRole('dialog').textContent).toContain('40 s')
+  })
+
   it('lists the routines with their exercises as sets × range', () => {
     h.id = 'full-body-beginner'
     render(<ProgramDetail />)

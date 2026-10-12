@@ -40,8 +40,8 @@ export function programCopy(id: ProgramId): ProgramCopy {
     case 'power-hypertrophy': return {
       name: t('Strength and hypertrophy'),
       forWho: t('If you already train and want both strength and muscle, with 4 days a week.'),
-      expect: t('Two heavy days with 5 to 8 reps and two lighter days with 8 to 15. You train each muscle twice a week.'),
-      why: t('On heavy days you rest 3 min and add load when you complete the sets. On lighter days, 3 or 4 sets of 8 to 15 reps build muscle, with 2 min of rest on multi-joint lifts.'),
+      expect: t('Two heavy days with 5 to 10 reps and two lighter days with 8 to 15. You train each muscle twice a week.'),
+      why: t('On heavy days you rest 3 min on the main lifts and add load when you complete the sets. On lighter days, 3 or 4 sets of 8 to 15 reps build muscle, with 2 min of rest on multi-joint lifts.'),
     }
     case 'short-2x': return {
       name: t('Short workout'),

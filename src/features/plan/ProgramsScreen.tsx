@@ -12,6 +12,7 @@ import { LEVEL_LABEL } from '../profile/ProfileFields'
 import { profileOf, type AnalysisProfile } from './goal'
 import { PROGRAMS, type ProgramId } from './programs'
 import { suggestProgram } from './suggest-program'
+import { TimeInfo } from './TimeInfo'
 import { PROFILE_LABEL, programCopy, programDays, programMinutes, suggestionReason } from './program-copy'
 
 export const PROGRAM_IDS = Object.keys(PROGRAMS) as ProgramId[]
@@ -61,7 +62,11 @@ export default function ProgramsScreen() {
       </section>
 
       <section aria-labelledby="programs-all" className="flex flex-col gap-3">
-        <h2 id="programs-all" className="text-sm font-medium text-muted-foreground">{t('All programs')}</h2>
+        <div className="flex min-h-11 items-center justify-between gap-2">
+          <h2 id="programs-all" className="text-sm font-medium text-muted-foreground">{t('All programs')}</h2>
+          {/* the minutes on the cards; the ⓘ stays out of the card buttons */}
+          <TimeInfo />
+        </div>
         <ToggleGroup type="single" spacing={2} className="flex-wrap" aria-label={t('Main goal')} value={goal}
           onValueChange={v => v && setGoal(v as typeof goal)}>
           <ToggleGroupItem value="all" variant="outline" className={CHIP}>{t('All')}</ToggleGroupItem>

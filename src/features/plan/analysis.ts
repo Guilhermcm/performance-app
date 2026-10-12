@@ -1,11 +1,13 @@
 // The plan analysis engine (spec §5): what the week of routines asks of each muscle group.
 // Pure: it reads the schedule (S.week) and the routines, never the workout history, so it works
 // for a person with no workouts yet. The numbers it uses are the global rules of phase 1d:
-// the main muscle of an exercise counts 1 set and any other muscle it trains counts 0.5
-// (musclesOf is untouched, its 0.4 weight is for the muscle maps), and a weekday counts for a
-// group from 2 fractional sets on.
+// a muscle at full weight in musclesOf counts 1 set, a secondary muscle the exercise's metadata
+// names outright (the dataset's `sm`, or a custom's explicit secondaries) counts 0.5, and the
+// rest of the supporting long tail counts nothing (musclesOf is untouched, its 0.4 weight is for
+// the muscle maps). A weekday counts for a group from 2 fractional sets on. Push against pull is
+// counted from each exercise's main group only (final review I1).
 import { EXIDX, isCardio } from '@/lib/exercises.js'
-import { hasExplicitMuscleMetadata, musclesOf } from '@/lib/muscles.js'
+import { hasExplicitMuscleMetadata, musclesOf, namedSecondariesOf } from '@/lib/muscles.js'
 import { RANGES, type AnalysisProfile } from './goal'
 import { estimateMinutes, type TimedRoutine } from './time'
 
@@ -59,17 +61,24 @@ const LONG_MINUTES = 75
 const REPEATED_DAYS = 3
 const BALANCE_RATIO = 2 / 3
 
-// Fractional sets per group for one exercise: the biggest weight among the muscles of a group
-// wins, so an exercise that trains abs and obliques does not count the abs twice.
-function groupWeights(ex: object | undefined): Partial<Record<Group, number>> {
-  const out: Partial<Record<Group, number>> = {}
-  const weights = musclesOf(ex) as Record<string, number>
-  for (const [slug, weight] of Object.entries(weights)) {
+// Fractional sets per group for one exercise: 1 for a muscle at full weight, 0.5 for a secondary
+// the metadata names, nothing for the rest. The biggest weight among the muscles of a group wins,
+// so an exercise that trains abs and obliques does not count the abs twice. The main group is the
+// group of the first full-weight muscle, in the order the metadata lists them (a squat lists the
+// quads before the glutes), and null when that muscle has no bar.
+type Counted = { weights: Partial<Record<Group, number>>; main: Group | null }
+function groupWeights(ex: object | undefined): Counted {
+  const weights: Partial<Record<Group, number>> = {}
+  let main: Group | null = null
+  const named = new Set(namedSecondariesOf(ex) as string[])
+  for (const [slug, weight] of Object.entries(musclesOf(ex) as Record<string, number>)) {
     const group = GROUP_OF[slug as MuscleSlug]
+    if (weight === 1 && main === null) main = group ?? null
     if (!group || !(weight > 0)) continue
-    out[group] = Math.max(out[group] ?? 0, weight === 1 ? 1 : 0.5)
+    const counted = weight === 1 ? 1 : named.has(slug) ? 0.5 : 0
+    if (counted > 0) weights[group] = Math.max(weights[group] ?? 0, counted)
   }
-  return out
+  return { weights, main }
 }
 
 type Customs = ReadonlyMap<string, object>
@@ -79,15 +88,15 @@ const customsOf = (S: Pick<PlanInput, 'customEx'>): Customs =>
 // How the analysis counts one exercise: cardio only takes time; an exercise with no known muscle
 // (a custom one that names none, or an id found nowhere) stays out of the volume; any other gives
 // its groups 1 or 0.5 per set.
-function classify(customs: Customs, id: string): { kind: 'cardio' | 'unknown' | 'counted'; weights: Partial<Record<Group, number>> } {
+function classify(customs: Customs, id: string): { kind: 'cardio' | 'unknown' | 'counted' } & Counted {
   const exercise = customs.get(id) ?? (EXIDX as Record<string, object | undefined>)[id]
   // A custom exercise that names no muscle only has its body part to go by; that guess stays out.
   const isCustom = customs.has(id) || (exercise as { custom?: boolean } | undefined)?.custom === true
-  if (isCardio(exercise)) return { kind: 'cardio', weights: {} }
+  if (isCardio(exercise)) return { kind: 'cardio', weights: {}, main: null }
   if (Object.keys(musclesOf(exercise) as object).length === 0 || (isCustom && !hasExplicitMuscleMetadata(exercise))) {
-    return { kind: 'unknown', weights: {} }
+    return { kind: 'unknown', weights: {}, main: null }
   }
-  return { kind: 'counted', weights: groupWeights(exercise) }
+  return { kind: 'counted', ...groupWeights(exercise) }
 }
 
 // The fractional sets one set of the exercise gives each group, under the analysis rules (empty for
@@ -95,6 +104,15 @@ function classify(customs: Customs, id: string): { kind: 'cardio' | 'unknown' | 
 export function exerciseGroupWeights(S: Pick<PlanInput, 'customEx'>, id: string): Partial<Record<Group, number>> {
   return classify(customsOf(S), id).weights
 }
+
+// The one group the exercise exists for (null for cardio, an unknown exercise, or a main muscle
+// with no bar). Push against pull and the remove-sets suggestion read it.
+export function exerciseMainGroup(S: Pick<PlanInput, 'customEx'>, id: string): Group | null {
+  return classify(customsOf(S), id).main
+}
+
+const PUSH: ReadonlySet<Group> = new Set(['chest', 'shoulders', 'triceps'])
+const PULL: ReadonlySet<Group> = new Set(['back', 'biceps'])
 
 export function analyzePlan(S: PlanInput, profile: AnalysisProfile): PlanAnalysis {
   const routines = new Map((S.routines ?? []).map(r => [r.id, r]))
@@ -107,6 +125,8 @@ export function analyzePlan(S: PlanInput, profile: AnalysisProfile): PlanAnalysi
   const minutes: { routineId: string; minutes: number }[] = []
   const exerciseDays = new Map<string, Set<number>>()
   let scheduled = 0
+  let push = 0
+  let pull = 0
 
   for (let day = 0; day < 7; day++) {
     const dayTotal = {} as Record<Group, number>
@@ -120,7 +140,7 @@ export function analyzePlan(S: PlanInput, profile: AnalysisProfile): PlanAnalysi
         scheduled++
         // Cardio trains no muscle group worth a bar, it only takes time; it is not a repeated
         // exercise either (a bike on 3 days is not a lift to swap).
-        const { kind, weights } = classify(customs, e.id)
+        const { kind, weights, main } = classify(customs, e.id)
         if (kind === 'cardio') continue
         const days = exerciseDays.get(e.id) ?? new Set<number>()
         days.add(day)
@@ -131,6 +151,8 @@ export function analyzePlan(S: PlanInput, profile: AnalysisProfile): PlanAnalysi
         }
         const sets = Number(e.sets) || 0
         for (const g of GROUPS) dayTotal[g] += sets * (weights[g] ?? 0)
+        if (main && PUSH.has(main)) push += sets
+        if (main && PULL.has(main)) pull += sets
       }
     }
     for (const g of GROUPS) {
@@ -149,12 +171,11 @@ export function analyzePlan(S: PlanInput, profile: AnalysisProfile): PlanAnalysi
     groups[g] = { sets, days: dayHits[g], status }
   }
 
-  const balance = {
-    push: total.chest + total.shoulders + total.triceps,
-    pull: total.back + total.biceps,
-    quads: total.quads,
-    hamstrings: total.hamstrings,
-  }
+  // Push and pull: every set of an exercise counts once, on the side of its main group, so a row
+  // never feeds the push side through the shoulders it also works. Quads against hamstrings keep
+  // the fractional group totals (a squat's main group is the quads, and the hamstrings its sm
+  // names are real work on that side).
+  const balance = { push, pull, quads: total.quads, hamstrings: total.hamstrings }
 
   const empty = scheduled === 0
   const alerts: Alert[] = []

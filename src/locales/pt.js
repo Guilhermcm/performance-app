@@ -2342,8 +2342,8 @@ export default {
   "Three lifts per session, 5 sets of 5. When you complete every set, the load goes up next time.": "Três exercícios por treino, 5 séries de 5. Quando completas todas as séries, a carga sobe no treino seguinte.",
   "Few reps with a heavy load train strength. Rest 3 min between sets, since longer rest helped strength on multi-joint lifts. You train the whole body 3 times a week.": "Poucas repetições com carga alta treinam força. Descansa 3 min entre as séries, porque descansar mais ajudou a força nos multiarticulares. Treinas o corpo todo 3 vezes por semana.",
   "If you already train and want both strength and muscle, with 4 days a week.": "Para quem já treina e quer força e músculo, com 4 dias por semana.",
-  "Two heavy days with 5 to 8 reps and two lighter days with 8 to 15. You train each muscle twice a week.": "Dois dias pesados, de 5 a 8 repetições, e dois mais leves, de 8 a 15. Treinas cada músculo 2 vezes por semana.",
-  "On heavy days you rest 3 min and add load when you complete the sets. On lighter days, 3 or 4 sets of 8 to 15 reps build muscle, with 2 min of rest on multi-joint lifts.": "Nos dias pesados, descansas 3 min e sobes a carga quando completas as séries. Nos dias leves, 3 ou 4 séries de 8 a 15 repetições constroem músculo, com 2 min de descanso nos multiarticulares.",
+  "Two heavy days with 5 to 10 reps and two lighter days with 8 to 15. You train each muscle twice a week.": "Dois dias pesados, de 5 a 10 repetições, e dois mais leves, de 8 a 15. Treinas cada músculo 2 vezes por semana.",
+  "On heavy days you rest 3 min on the main lifts and add load when you complete the sets. On lighter days, 3 or 4 sets of 8 to 15 reps build muscle, with 2 min of rest on multi-joint lifts.": "Nos dias pesados, descansas 3 min nos básicos e sobes a carga quando completas as séries. Nos dias leves, 3 ou 4 séries de 8 a 15 repetições constroem músculo, com 2 min de descanso nos multiarticulares.",
   "For weeks with little time: 2 short sessions.": "Para semanas com pouco tempo: 2 treinos curtos.",
   "Four multi-joint exercises per session, each working several muscles at once.": "Quatro exercícios multiarticulares por treino, cada um trabalhando vários músculos de uma vez.",
   "Short workouts built on multi-joint exercises can build strength and muscle. 2 or 3 sets of 8 to 12 reps, 2 min of rest, and the whole body in every session.": "Treinos curtos com exercícios multiarticulares podem dar força e músculo. São 2 ou 3 séries de 8 a 12 repetições, 2 min de descanso e o corpo todo em cada treino.",
@@ -2427,4 +2427,6 @@ export default {
   "suggested {0}": "sugerido {0}",
   "Heaviest load": "Maior carga",
   "Progress": "Progresso",
+  "App rule": "Regra da app",
+  "The app’s own rule, with no study behind it: it flags an exercise that shows up on 3 or more days of the week, so you can think about varying it.": "Regra da própria app, sem estudo por trás: assinala o exercício que aparece em 3 dias ou mais da semana, para pensares em variar.",
 }

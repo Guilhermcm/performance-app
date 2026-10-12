@@ -15,6 +15,7 @@ import { useStore } from '../../store/useStore.js'
 import { LEVEL_LABEL } from '../profile/ProfileFields'
 import { PROGRAMS, buildProgram, resolveVariant, type PlanState, type ProgramId, type Slot } from './programs'
 import { estimateMinutes } from './time'
+import { TimeInfo } from './TimeInfo'
 import { startProgram } from './program-actions'
 import { PROFILE_LABEL, pplOnceNote, programCopy, programDays, programMinutes, scheduleText } from './program-copy'
 import { useSuggestion } from './ProgramsScreen'
@@ -61,10 +62,12 @@ function Detail({ id }: { id: ProgramId }) {
           </Button>
         </div>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">{copy.name}</h1>
-        <ul className="mt-3 flex list-none flex-wrap gap-2">
+        <ul className="mt-3 flex list-none flex-wrap items-center gap-2">
           {[program.goals.map(g => PROFILE_LABEL[g]()).join(', '), LEVEL_LABEL[program.level](), programDays(id), t('About {0} min', programMinutes(id, variant))].map(tag => (
             <li key={tag} className="rounded-full bg-muted px-3 py-1.5 text-sm font-medium tabular-nums">{tag}</li>
           ))}
+          {/* beside the minutes, the last tag */}
+          <li className="-my-2 -ms-2"><TimeInfo /></li>
         </ul>
       </header>
 
@@ -97,7 +100,10 @@ function Detail({ id }: { id: ProgramId }) {
       )}
 
       <section aria-labelledby="program-routines" className="flex flex-col gap-3">
-        <h2 id="program-routines" className="text-lg font-semibold tracking-tight">{t('Routines')}</h2>
+        <div className="flex min-h-11 items-center justify-between gap-2">
+          <h2 id="program-routines" className="text-lg font-semibold tracking-tight">{t('Routines')}</h2>
+          <TimeInfo />
+        </div>
         {program.routines.map((r, i) => (
           <article key={r.key} aria-labelledby={`routine-${r.key}`} className="rounded-2xl border border-border bg-card px-4 py-3">
             <div className="flex items-baseline justify-between gap-3">

@@ -3,7 +3,7 @@ import { EXIDX, EXDB, smOf } from './exercises.js'
 import { LANGS, DERIVED_LOCALES } from './i18n-core.js'
 import {
   MUSCLE_NAME, exerciseMuscleSnapshot, hasExplicitMuscleMetadata, levelsOf, loadOf,
-  loadOfWorkouts, matchesMuscleGroups, muscleBalanceWindow, muscleGroupsOf, musclesOf, rankOf
+  loadOfWorkouts, matchesMuscleGroups, muscleBalanceWindow, muscleGroupsOf, musclesOf, namedSecondariesOf, rankOf
 } from './muscles.js'
 
 describe('multi-muscle exercise metadata', () => {
@@ -78,6 +78,30 @@ describe('catalogue secondary muscles', () => {
   })
 })
 
+
+describe('secondaries the metadata names outright (plan analysis, phase 1d)', () => {
+  it('reads the dataset sm list through smOf, not the overlay long tail', () => {
+    // the overlay adds biceps to the bench press and chest/triceps to the seated row; sm does not
+    expect(namedSecondariesOf(EXIDX['0025'])).toEqual(['triceps', 'deltoids'])
+    expect(namedSecondariesOf(EXIDX['1323'])).toEqual(['biceps', 'forearm'])
+    // smOf carries the conservative catalogue additions
+    expect(namedSecondariesOf(EXIDX['0027'])).toEqual(['biceps', 'forearm', 'deltoids'])
+  })
+
+  it('falls back to explicit secondaries when there is no sm list', () => {
+    expect(namedSecondariesOf({ primaries: ['chest'], secondaries: ['triceps', 'not-a-muscle', 'triceps'] })).toEqual(['triceps'])
+  })
+
+  it('names nothing for a target, a main group or a body part alone', () => {
+    expect(namedSecondariesOf({ tg: 'pectorals', mg: 'triceps' })).toEqual([])
+    expect(namedSecondariesOf({ bp: 'upper legs' })).toEqual([])
+    expect(namedSecondariesOf(null)).toEqual([])
+  })
+
+  it('reads a deleted custom exercise from its history snapshot', () => {
+    expect(namedSecondariesOf({ muscleSnapshot: { primaries: ['gluteal'], secondaries: ['hamstring'] } })).toEqual(['hamstring'])
+  })
+})
 
 describe('catalogue secondary additions', () => {
   it('enriches the muscle map without mutating the raw dataset', () => {

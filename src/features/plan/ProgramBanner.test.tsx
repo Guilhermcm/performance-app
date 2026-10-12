@@ -6,6 +6,7 @@ import { setLang } from '../../lib/i18n.js'
 import { applyProgram, undoProgram } from './programs'
 import { ProgramBanner } from './ProgramBanner'
 import { useUndoneRoutines } from './program-actions'
+import { useCheckins } from '../checkin/useCheckins'
 
 const h = vi.hoisted(() => ({ toast: vi.fn() }))
 vi.mock('sonner', () => ({ toast: h.toast }))
@@ -22,6 +23,7 @@ const update = (fn: (s: AnyState) => void) => act(() => useStore.getState().upda
 beforeEach(() => {
   h.toast.mockClear(); vi.mocked(undoProgram).mockClear()
   useUndoneRoutines.setState({ ids: [] })
+  useCheckins.setState({ mine: [] })
   useStore.setState((s: AnyState) => ({ S: { ...s.S, routines: [{ id: 'mine', name: 'Mine', emoji: 'star', ex: [] }], week: { 2: ['mine'] }, workouts: [], program: undefined, active: null }, user: null }))
 })
 afterEach(async () => { cleanup(); localStorage.clear(); await setLang('en') })
@@ -74,6 +76,17 @@ describe('ProgramBanner', () => {
     expect(S().program).toBeUndefined()
     expect(h.toast).toHaveBeenLastCalledWith('Program undone', { description: '1 routine with workouts stayed in the list.' })
     expect(banner()).toBeNull()
+  })
+
+  it('Undo keeps a routine one of my check-ins names (final review m1)', () => {
+    update(s => applyProgram(s as never, 'ppl', 0))
+    const pull = S().program.routineIds[1]
+    // a photo check-in posted as "PPL · Pull" without a detail: no workout, only the routine_id
+    act(() => useCheckins.setState({ mine: [{ id: 'c1', day: '2026-10-12', activity: 'strength', routine_id: pull, routine_name: 'PPL · Pull' } as never] }))
+    render(<ProgramBanner />)
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }))
+    expect(S().routines.map((r: AnyState) => r.id)).toContain(pull)
+    expect(h.toast).toHaveBeenLastCalledWith('Program undone', { description: '1 routine with workouts stayed in the list.' })
   })
 
   it('says so plainly when a routine removed by Undo comes back through sync', () => {

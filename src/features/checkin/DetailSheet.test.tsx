@@ -70,6 +70,15 @@ describe('DetailSheet', () => {
       expect(within(group(/bent over row/i)).queryByText(/suggested/)).toBeNull()
     })
 
+    it('has the ⓘ of the load badge beside the suggestion (final review m3)', () => {
+      withLast(allReps)
+      render(<DetailSheet open routineId="r1" onOpenChange={onOpenChange} onConfirm={onConfirm} />)
+      const bench = group(/bench press/i)
+      fireEvent.click(within(bench).getByRole('button', { name: 'Why raise the load' }))
+      expect(screen.getAllByRole('dialog').some(d => d.textContent?.includes('You did every rep last time'))).toBe(true)
+      expect(within(group(/bent over row/i)).queryByRole('button', { name: 'Why raise the load' })).toBeNull()
+    })
+
     it('reads "sugerido 62,5 kg" in pt-BR', async () => {
       await setLang('pt-BR')
       withLast(allReps)

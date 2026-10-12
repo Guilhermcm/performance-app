@@ -290,6 +290,16 @@ describe('AnalysisScreen: alerts and Apply', () => {
     expect(S().routines[0].ex.map((e: AnyState) => e.sets).slice(0, 2)).toEqual([5, 5])
   })
 
+  it('the repeated alert has an ⓘ that says it is the app’s own rule (final review m3)', () => {
+    setS({ routines: [structuredClone(PUSH)], week: { 1: ['push'], 3: ['push'], 5: ['push'] } })
+    render(<AnalysisScreen />)
+    const repeated = screen.getByRole('article', { name: `${name('0025')} is on 3 or more days of the week` })
+    fireEvent.click(within(repeated).getByRole('button', { name: 'App rule' }))
+    const pop = screen.getByRole('dialog')
+    expect(pop.textContent).toContain('with no study behind it')
+    expect(within(pop).queryByRole('link')).toBeNull()
+  })
+
   it('a balanced plan has no alerts', () => {
     // strength, with no frequency alert: a plan whose every group sits in 6 to 12 is balanced
     goal('strength')

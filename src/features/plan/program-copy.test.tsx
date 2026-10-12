@@ -24,7 +24,14 @@ describe('programCopy', () => {
 
   it('says, in "why", the rest and the reps of each program', () => {
     for (const id of IDS) expect(programCopy(id).why, id).toMatch(/\d+ min/)
-    for (const id of IDS) expect(programCopy(id).why + programCopy(id).expect, id).toMatch(/\d+ to \d+|5 sets of 5|5 to 8/)
+    for (const id of IDS) expect(programCopy(id).why + programCopy(id).expect, id).toMatch(/\d+ to \d+|5 sets of 5/)
+  })
+
+  it('PHUL states the real ranges and rest of its heavy days (final review m4)', () => {
+    const phul = programCopy('power-hypertrophy')
+    // heavy days: 5 to 8 on the main lifts, 8 to 10 on the accessories, 90 s rest on those
+    expect(phul.expect).toContain('5 to 10 reps')
+    expect(phul.why).toContain('rest 3 min on the main lifts')
   })
 
   it('is translated in pt-BR', async () => {

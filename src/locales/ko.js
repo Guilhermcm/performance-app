@@ -2342,8 +2342,8 @@ export default {
   "Three lifts per session, 5 sets of 5. When you complete every set, the load goes up next time.": "운동마다 세 가지 리프트, 5회 5세트. 모든 세트를 마치면 다음에 무게가 올라갑니다.",
   "Few reps with a heavy load train strength. Rest 3 min between sets, since longer rest helped strength on multi-joint lifts. You train the whole body 3 times a week.": "무거운 무게로 적은 횟수를 하면 근력이 늘어납니다. 세트 사이에 3분 쉬세요. 다관절 운동에서는 더 길게 쉬는 편이 근력에 도움이 됐습니다. 전신을 주 3회 훈련합니다.",
   "If you already train and want both strength and muscle, with 4 days a week.": "이미 운동을 하고 있고 근력과 근육을 모두 원하는 분, 주 4일.",
-  "Two heavy days with 5 to 8 reps and two lighter days with 8 to 15. You train each muscle twice a week.": "5~8회의 무거운 날 이틀, 8~15회의 가벼운 날 이틀. 각 근육을 주 2회 훈련합니다.",
-  "On heavy days you rest 3 min and add load when you complete the sets. On lighter days, 3 or 4 sets of 8 to 15 reps build muscle, with 2 min of rest on multi-joint lifts.": "무거운 날은 3분 쉬고, 세트를 모두 마치면 무게를 올립니다. 가벼운 날은 8~15회 3~4세트로 근육을 키우며, 다관절 운동은 2분 쉽니다.",
+  "Two heavy days with 5 to 10 reps and two lighter days with 8 to 15. You train each muscle twice a week.": "5~10회의 무거운 날 이틀, 8~15회의 가벼운 날 이틀. 각 근육을 주 2회 훈련합니다.",
+  "On heavy days you rest 3 min on the main lifts and add load when you complete the sets. On lighter days, 3 or 4 sets of 8 to 15 reps build muscle, with 2 min of rest on multi-joint lifts.": "무거운 날은 주요 운동에서 3분 쉬고, 세트를 모두 마치면 무게를 올립니다. 가벼운 날은 8~15회 3~4세트로 근육을 키우며, 다관절 운동은 2분 쉽니다.",
   "For weeks with little time: 2 short sessions.": "시간이 부족한 주를 위한 짧은 운동 2회.",
   "Four multi-joint exercises per session, each working several muscles at once.": "운동마다 다관절 운동 네 가지, 각각 여러 근육을 한 번에 씁니다.",
   "Short workouts built on multi-joint exercises can build strength and muscle. 2 or 3 sets of 8 to 12 reps, 2 min of rest, and the whole body in every session.": "다관절 운동 위주의 짧은 운동으로도 근력과 근육을 키울 수 있습니다. 8~12회 2~3세트, 2분 휴식, 매번 전신.",
@@ -2427,4 +2427,6 @@ export default {
   "suggested {0}": "추천 {0}",
   "Heaviest load": "최고 중량",
   "Progress": "진행 상황",
+  "App rule": "앱 규칙",
+  "The app’s own rule, with no study behind it: it flags an exercise that shows up on 3 or more days of the week, so you can think about varying it.": "연구 근거 없는 앱 자체 규칙입니다. 한 주에 3일 이상 나오는 운동을 표시해, 바꿔 볼지 생각해 볼 수 있게 합니다.",
 }

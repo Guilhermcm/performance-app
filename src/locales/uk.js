@@ -2366,8 +2366,8 @@ export default {
   "Three lifts per session, 5 sets of 5. When you complete every set, the load goes up next time.": "Три вправи за тренування, 5 підходів по 5. Виконали всі підходи, і наступного разу вага зростає.",
   "Few reps with a heavy load train strength. Rest 3 min between sets, since longer rest helped strength on multi-joint lifts. You train the whole body 3 times a week.": "Мало повторів із великою вагою розвивають силу. Відпочивайте 3 хв між підходами: довший відпочинок допомагав силі в багатосуглобових. Усе тіло працює 3 рази на тиждень.",
   "If you already train and want both strength and muscle, with 4 days a week.": "Якщо ви вже тренуєтеся і хочете і силу, і м’язи, 4 дні на тиждень.",
-  "Two heavy days with 5 to 8 reps and two lighter days with 8 to 15. You train each muscle twice a week.": "Два важкі дні по 5 до 8 повторів і два легші по 8 до 15. Кожен м’яз працює двічі на тиждень.",
-  "On heavy days you rest 3 min and add load when you complete the sets. On lighter days, 3 or 4 sets of 8 to 15 reps build muscle, with 2 min of rest on multi-joint lifts.": "У важкі дні відпочинок 3 хв, а вага зростає, коли ви виконали всі підходи. У легші дні 3 або 4 підходи по 8 до 15 повторів будують м’язи, відпочинок 2 хв у багатосуглобових.",
+  "Two heavy days with 5 to 10 reps and two lighter days with 8 to 15. You train each muscle twice a week.": "Два важкі дні по 5 до 10 повторів і два легші по 8 до 15. Кожен м’яз працює двічі на тиждень.",
+  "On heavy days you rest 3 min on the main lifts and add load when you complete the sets. On lighter days, 3 or 4 sets of 8 to 15 reps build muscle, with 2 min of rest on multi-joint lifts.": "У важкі дні відпочинок 3 хв у базових вправах, а вага зростає, коли ви виконали всі підходи. У легші дні 3 або 4 підходи по 8 до 15 повторів будують м’язи, відпочинок 2 хв у багатосуглобових.",
   "For weeks with little time: 2 short sessions.": "Для тижнів, коли мало часу: 2 короткі тренування.",
   "Four multi-joint exercises per session, each working several muscles at once.": "Чотири багатосуглобові вправи за тренування, кожна навантажує кілька м’язів одразу.",
   "Short workouts built on multi-joint exercises can build strength and muscle. 2 or 3 sets of 8 to 12 reps, 2 min of rest, and the whole body in every session.": "Короткі тренування на багатосуглобових вправах можуть дати силу і м’язи. 2 або 3 підходи по 8 до 12 повторів, 2 хв відпочинку і все тіло на кожному тренуванні.",
@@ -2457,4 +2457,6 @@ export default {
   "suggested {0}": "рекомендовано {0}",
   "Heaviest load": "Найбільша вага",
   "Progress": "Прогрес",
+  "App rule": "Правило застосунку",
+  "The app’s own rule, with no study behind it: it flags an exercise that shows up on 3 or more days of the week, so you can think about varying it.": "Власне правило застосунку, без дослідження за ним: воно позначає вправу, яка є в 3 або більше днях тижня, щоб ви подумали, як її урізноманітнити.",
 }

@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 import { create } from 'zustand'
 import { t, tn } from '../../lib/i18n.js'
 import { useStore } from '../../store/useStore.js'
+import { useCheckins } from '../checkin/useCheckins'
 import { applyProgram, undoProgram, type PlanState, type ProgramId } from './programs'
 
 type Store = { S: PlanState; update(fn: (s: PlanState) => void): void }
@@ -28,8 +29,11 @@ export function undoAppliedProgram(appliedAt?: number): boolean {
     toast(t('Nothing to undo'))
     return false
   }
+  // A routine named by one of my check-ins was trained even when no workout was logged for it.
+  // The store holds my last WINDOW_DAYS days of check-ins, the queued ones included.
+  const checkedIn = useCheckins.getState().mine.map(r => r.routine_id)
   let kept: string[] = []
-  update(s => { kept = undoProgram(s).kept })
+  update(s => { kept = undoProgram(s, checkedIn).kept })
   useUndoneRoutines.setState({ ids: program.routineIds.filter(id => !kept.includes(id)) })
   toast(t('Program undone'), kept.length ? { description: keptText(kept.length) } : undefined)
   return true

@@ -2342,8 +2342,8 @@ export default {
   "Three lifts per session, 5 sets of 5. When you complete every set, the load goes up next time.": "Antrenman başına üç hareket, 5x5. Tüm setleri tamamladığında bir sonraki sefer ağırlık artar.",
   "Few reps with a heavy load train strength. Rest 3 min between sets, since longer rest helped strength on multi-joint lifts. You train the whole body 3 times a week.": "Ağır yükle az tekrar kuvvet geliştirir. Setler arasında 3 dk dinlen, çünkü uzun dinlenme çok eklemlilerde kuvvete yardım etti. Tüm vücudu haftada 3 kez çalıştırırsın.",
   "If you already train and want both strength and muscle, with 4 days a week.": "Zaten antrenman yapıyor, hem kuvvet hem kas istiyorsan, haftada 4 gün.",
-  "Two heavy days with 5 to 8 reps and two lighter days with 8 to 15. You train each muscle twice a week.": "5 ila 8 tekrarlı iki ağır gün ve 8 ila 15 tekrarlı iki hafif gün. Her kası haftada iki kez çalıştırırsın.",
-  "On heavy days you rest 3 min and add load when you complete the sets. On lighter days, 3 or 4 sets of 8 to 15 reps build muscle, with 2 min of rest on multi-joint lifts.": "Ağır günlerde 3 dk dinlenir, setleri tamamlayınca ağırlığı artırırsın. Hafif günlerde 8 ila 15 tekrarlık 3 ya da 4 set kas yapar; çok eklemlilerde 2 dk dinlenme.",
+  "Two heavy days with 5 to 10 reps and two lighter days with 8 to 15. You train each muscle twice a week.": "5 ila 10 tekrarlı iki ağır gün ve 8 ila 15 tekrarlı iki hafif gün. Her kası haftada iki kez çalıştırırsın.",
+  "On heavy days you rest 3 min on the main lifts and add load when you complete the sets. On lighter days, 3 or 4 sets of 8 to 15 reps build muscle, with 2 min of rest on multi-joint lifts.": "Ağır günlerde temel hareketlerde 3 dk dinlenir, setleri tamamlayınca ağırlığı artırırsın. Hafif günlerde 8 ila 15 tekrarlık 3 ya da 4 set kas yapar; çok eklemlilerde 2 dk dinlenme.",
   "For weeks with little time: 2 short sessions.": "Az zamanlı haftalar için: 2 kısa antrenman.",
   "Four multi-joint exercises per session, each working several muscles at once.": "Antrenman başına dört çok eklemli hareket, her biri birkaç kası birden çalıştırır.",
   "Short workouts built on multi-joint exercises can build strength and muscle. 2 or 3 sets of 8 to 12 reps, 2 min of rest, and the whole body in every session.": "Çok eklemli hareketlere dayalı kısa antrenmanlar kuvvet ve kas kazandırabilir. 8 ila 12 tekrarlık 2 ya da 3 set, 2 dk dinlenme ve her antrenmanda tüm vücut.",
@@ -2427,4 +2427,6 @@ export default {
   "suggested {0}": "önerilen {0}",
   "Heaviest load": "En yüksek ağırlık",
   "Progress": "İlerleme",
+  "App rule": "Uygulama kuralı",
+  "The app’s own rule, with no study behind it: it flags an exercise that shows up on 3 or more days of the week, so you can think about varying it.": "Uygulamanın kendi kuralı, arkasında bir çalışma yok: haftanın 3 veya daha fazla gününde yer alan bir egzersizi işaretler, böylece onu çeşitlendirmeyi düşünebilirsin.",
 }

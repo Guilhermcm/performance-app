@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { analyzePlan, BIG_GROUPS, exerciseGroupWeights, GROUP_OF, type Alert, type Group } from './analysis'
+import { analyzePlan, BIG_GROUPS, exerciseGroupWeights, exerciseMainGroup, GROUP_OF, type Alert, type Group } from './analysis'
 import { estimateMinutes } from './time'
 import { EXIDX } from '@/lib/exercises.js'
 import { musclesOf } from '@/lib/muscles.js'
@@ -21,22 +21,32 @@ const BICEPS = custom('c-biceps', ['biceps'])
 const kinds = (alerts: Alert[]) => alerts.map(a => a.kind)
 
 describe('analyzePlan volume', () => {
-  it('counts the primary muscle as 1 set and each secondary as 0.5', () => {
-    const weights = musclesOf((EXIDX as Record<string, object>)['0025']) as Record<string, number>
-    const groupOf = GROUP_OF as Record<string, Group | undefined>
+  it('counts the primary muscle as 1 set and each secondary the dataset names (sm) as 0.5', () => {
+    // bench press: sm names triceps and shoulders; the overlay's biceps is long tail and gives 0
     const S = plan({ 1: ['push'] }, [routine('push', [{ id: '0025', sets: 3 }])])
     const a = analyzePlan(S, 'hypertrophy')
-    const expected: Partial<Record<Group, number>> = {}
-    for (const [slug, w] of Object.entries(weights)) {
-      const g = groupOf[slug]
-      if (g) expected[g] = Math.max(expected[g] ?? 0, 3 * (w === 1 ? 1 : 0.5))
-    }
-    expect(expected.chest).toBe(3)
-    for (const g of Object.keys(a.groups) as Group[]) expect(a.groups[g].sets).toBe(expected[g] ?? 0)
-    // the secondary muscles of the bench press show up as halves
-    const secondary = Object.entries(weights).filter(([slug, w]) => w !== 1 && groupOf[slug])
-    expect(secondary.length).toBeGreaterThan(0)
-    for (const [slug] of secondary) expect(a.groups[groupOf[slug]!].sets).toBe(1.5)
+    const sets = Object.fromEntries(Object.entries(a.groups).map(([g, v]) => [g, v.sets]))
+    expect(sets).toEqual({ chest: 3, back: 0, shoulders: 1.5, biceps: 0, triceps: 1.5, quads: 0, hamstrings: 0, glutes: 0, calves: 0, abs: 0 })
+  })
+
+  it('gives no credit to the long tail of the muscle overlay (final review I1)', () => {
+    // seated row: the overlay lists chest, triceps and deltoids at 0.4, sm names biceps and forearms only
+    const weights = musclesOf((EXIDX as Record<string, object>)['1323']) as Record<string, number>
+    expect(weights).toMatchObject({ chest: 0.4, triceps: 0.4, deltoids: 0.4 })
+    const a = analyzePlan(plan({ 1: ['pull'] }, [routine('pull', [{ id: '1323', sets: 3 }])]), 'hypertrophy')
+    expect(a.groups.back.sets).toBe(3)
+    expect(a.groups.biceps.sets).toBe(1.5)
+    expect(a.groups.chest.sets).toBe(0)
+    expect(a.groups.triceps.sets).toBe(0)
+    expect(a.groups.shoulders.sets).toBe(0)
+  })
+
+  it('gives no credit to a muscle known only from the target or main group fields', () => {
+    // musclesOf gives mg 0.4, but nothing names triceps as a secondary
+    const tgmg = { id: 'c-tgmg', n: 'Press', custom: true, bp: 'chest', tg: 'pectorals', mg: 'triceps' }
+    const a = analyzePlan(plan({ 1: ['a'] }, [routine('a', [{ id: 'c-tgmg', sets: 3 }])], [tgmg]), 'hypertrophy')
+    expect(a.groups.chest.sets).toBe(3)
+    expect(a.groups.triceps.sets).toBe(0)
   })
 
   it('reads a legacy scalar week day as a one-routine day', () => {
@@ -142,11 +152,9 @@ describe('analyzePlan alerts', () => {
   })
 
   const pushPull = (push: number, pull: number) => {
-    // push = chest only, pull = upper-back only; push 9 and pull 5.5 need a secondary half set
-    const pullWhole = Math.floor(pull)
-    const ex: Ex[] = [{ id: 'c-chest', sets: push }, { id: 'c-back', sets: pullWhole }]
-    if (pull !== pullWhole) ex.push({ id: 'c-back-sec', sets: 1 })
-    const S = plan({ 1: ['a'] }, [routine('a', ex)], [CHEST, custom('c-back', ['upper-back']), custom('c-back-sec', ['trapezius'], ['upper-back'])])
+    // push = chest only, pull = upper-back only; every set counts for its main group
+    const ex: Ex[] = [{ id: 'c-chest', sets: push }, { id: 'c-back', sets: pull }]
+    const S = plan({ 1: ['a'] }, [routine('a', ex)], [CHEST, custom('c-back', ['upper-back'])])
     return analyzePlan(S, 'hypertrophy')
   }
 
@@ -156,11 +164,23 @@ describe('analyzePlan alerts', () => {
     expect(kinds(a.alerts)).not.toContain('balance-push-pull')
   })
 
-  it('alerts push/pull at push 9 and pull 5.5', () => {
-    const a = pushPull(9, 5.5)
-    // pull 5.5 is 5 primary sets of back plus one half-set secondary
-    expect(a.balance.push).toBe(9)
+  it('alerts push/pull at push 9 and pull 5', () => {
+    const a = pushPull(9, 5)
+    expect(a.balance).toMatchObject({ push: 9, pull: 5 })
     expect(a.alerts).toContainEqual({ kind: 'balance-push-pull' })
+  })
+
+  it('counts push and pull from the main group of each exercise only (final review I1)', () => {
+    // 3 sets of bench (main chest) and 3 of pulldown (main back): the triceps and shoulders the
+    // bench names, and the biceps and rear delts of the pulldown, do not move either side
+    const S = plan({ 1: ['a'] }, [routine('a', [{ id: '0025', sets: 3 }, { id: '2330', sets: 3 }])])
+    const a = analyzePlan(S, 'hypertrophy')
+    expect(a.groups.shoulders.sets).toBeGreaterThan(0)
+    expect(a.balance).toMatchObject({ push: 3, pull: 3 })
+    expect(kinds(a.alerts)).not.toContain('balance-push-pull')
+    // a pulldown no longer feeds the push side through its secondary shoulders
+    const pullOnly = analyzePlan(plan({ 1: ['a'] }, [routine('a', [{ id: '2330', sets: 4 }])]), 'hypertrophy')
+    expect(pullOnly.balance).toMatchObject({ push: 0, pull: 4 })
   })
 
   it('alerts quads against hamstrings, and not when both sides are 0', () => {
@@ -310,5 +330,26 @@ describe('review T5-T6 follow-ups', () => {
     expect(exerciseGroupWeights(S, '2138')).toEqual({})
     expect(exerciseGroupWeights(S, 'c-bare')).toEqual({})
     expect(exerciseGroupWeights(S, 'nope')).toEqual({})
+  })
+})
+
+describe('exerciseMainGroup (final review I1)', () => {
+  it('is the group of the first muscle the metadata lists at full weight', () => {
+    const S = { customEx: [CHEST_SEC, custom('c-trap', ['trapezius'])] }
+    expect(exerciseMainGroup(S, '0025')).toBe('chest')
+    expect(exerciseMainGroup(S, '2330')).toBe('back')
+    expect(exerciseMainGroup(S, '0426')).toBe('shoulders')
+    expect(exerciseMainGroup(S, '0043')).toBe('quads') // squat: quadriceps, gluteal, adductors
+    expect(exerciseMainGroup(S, '0739')).toBe('quads') // leg press
+    expect(exerciseMainGroup(S, '0085')).toBe('glutes') // romanian deadlift: gluteal, hamstring
+    expect(exerciseMainGroup(S, '0586')).toBe('hamstrings')
+    expect(exerciseMainGroup(S, 'c-chest-sec')).toBe('triceps')
+  })
+
+  it('is null for cardio, an unknown exercise and one whose main muscle has no bar', () => {
+    const S = { customEx: [custom('c-trap', ['trapezius'], ['upper-back'])] }
+    expect(exerciseMainGroup(S, '2138')).toBeNull()
+    expect(exerciseMainGroup(S, 'nope')).toBeNull()
+    expect(exerciseMainGroup(S, 'c-trap')).toBeNull()
   })
 })

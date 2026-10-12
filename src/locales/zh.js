@@ -2342,8 +2342,8 @@ export default {
   "Three lifts per session, 5 sets of 5. When you complete every set, the load goes up next time.": "每次训练三个动作，5 组每组 5 次。所有组都完成后，下次加重量。",
   "Few reps with a heavy load train strength. Rest 3 min between sets, since longer rest helped strength on multi-joint lifts. You train the whole body 3 times a week.": "大重量、少次数练力量。组间休息 3 分钟，因为多关节动作休息更久对力量有帮助。每周练全身 3 次。",
   "If you already train and want both strength and muscle, with 4 days a week.": "适合已经在训练、力量和肌肉都想要的人，每周 4 天。",
-  "Two heavy days with 5 to 8 reps and two lighter days with 8 to 15. You train each muscle twice a week.": "两个大重量日，每组 5 到 8 次；两个较轻的日子，每组 8 到 15 次。每块肌肉每周练 2 次。",
-  "On heavy days you rest 3 min and add load when you complete the sets. On lighter days, 3 or 4 sets of 8 to 15 reps build muscle, with 2 min of rest on multi-joint lifts.": "大重量日休息 3 分钟，完成所有组后加重量。较轻的日子用 3 到 4 组、每组 8 到 15 次来增肌，多关节动作休息 2 分钟。",
+  "Two heavy days with 5 to 10 reps and two lighter days with 8 to 15. You train each muscle twice a week.": "两个大重量日，每组 5 到 10 次；两个较轻的日子，每组 8 到 15 次。每块肌肉每周练 2 次。",
+  "On heavy days you rest 3 min on the main lifts and add load when you complete the sets. On lighter days, 3 or 4 sets of 8 to 15 reps build muscle, with 2 min of rest on multi-joint lifts.": "大重量日的主项休息 3 分钟，完成所有组后加重量。较轻的日子用 3 到 4 组、每组 8 到 15 次来增肌，多关节动作休息 2 分钟。",
   "For weeks with little time: 2 short sessions.": "适合时间紧的周：2 次短时训练。",
   "Four multi-joint exercises per session, each working several muscles at once.": "每次训练 4 个多关节动作，每个动作同时练到多块肌肉。",
   "Short workouts built on multi-joint exercises can build strength and muscle. 2 or 3 sets of 8 to 12 reps, 2 min of rest, and the whole body in every session.": "以多关节动作为主的短时训练也能增长力量和肌肉。每组 8 到 12 次，做 2 到 3 组，休息 2 分钟，每次都练全身。",
@@ -2427,4 +2427,6 @@ export default {
   "suggested {0}": "建议 {0}",
   "Heaviest load": "最大重量",
   "Progress": "进步",
+  "App rule": "应用规则",
+  "The app’s own rule, with no study behind it: it flags an exercise that shows up on 3 or more days of the week, so you can think about varying it.": "这是应用自己的规则，没有研究依据：一个动作在一周中出现 3 天或以上时会被标出，方便你考虑换一换。",
 }

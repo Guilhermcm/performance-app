@@ -2353,8 +2353,8 @@ export default {
   "Three lifts per session, 5 sets of 5. When you complete every set, the load goes up next time.": "เซสชันละสามท่า 5 เซ็ต เซ็ตละ 5 ครั้ง ถ้าทำครบทุกเซ็ต ครั้งหน้าน้ำหนักจะเพิ่มขึ้น",
   "Few reps with a heavy load train strength. Rest 3 min between sets, since longer rest helped strength on multi-joint lifts. You train the whole body 3 times a week.": "ทำจำนวนครั้งน้อยด้วยน้ำหนักมากช่วยสร้างความแข็งแรง พัก 3 นาทีระหว่างเซ็ต เพราะการพักนานขึ้นช่วยความแข็งแรงในท่าหลายข้อต่อ คุณฝึกทั้งตัวสัปดาห์ละ 3 ครั้ง",
   "If you already train and want both strength and muscle, with 4 days a week.": "ถ้าคุณฝึกอยู่แล้วและต้องการทั้งความแข็งแรงและกล้ามเนื้อ สัปดาห์ละ 4 วัน",
-  "Two heavy days with 5 to 8 reps and two lighter days with 8 to 15. You train each muscle twice a week.": "วันหนักสองวัน 5 ถึง 8 ครั้ง และวันเบากว่าสองวัน 8 ถึง 15 ครั้ง คุณฝึกแต่ละกล้ามเนื้อสัปดาห์ละสองครั้ง",
-  "On heavy days you rest 3 min and add load when you complete the sets. On lighter days, 3 or 4 sets of 8 to 15 reps build muscle, with 2 min of rest on multi-joint lifts.": "วันหนักพัก 3 นาที และเพิ่มน้ำหนักเมื่อทำครบทุกเซ็ต วันเบา 3 หรือ 4 เซ็ต เซ็ตละ 8 ถึง 15 ครั้งช่วยสร้างกล้ามเนื้อ พัก 2 นาทีในท่าหลายข้อต่อ",
+  "Two heavy days with 5 to 10 reps and two lighter days with 8 to 15. You train each muscle twice a week.": "วันหนักสองวัน 5 ถึง 10 ครั้ง และวันเบากว่าสองวัน 8 ถึง 15 ครั้ง คุณฝึกแต่ละกล้ามเนื้อสัปดาห์ละสองครั้ง",
+  "On heavy days you rest 3 min on the main lifts and add load when you complete the sets. On lighter days, 3 or 4 sets of 8 to 15 reps build muscle, with 2 min of rest on multi-joint lifts.": "วันหนักพัก 3 นาทีในท่าหลัก และเพิ่มน้ำหนักเมื่อทำครบทุกเซ็ต วันเบา 3 หรือ 4 เซ็ต เซ็ตละ 8 ถึง 15 ครั้งช่วยสร้างกล้ามเนื้อ พัก 2 นาทีในท่าหลายข้อต่อ",
   "For weeks with little time: 2 short sessions.": "สำหรับสัปดาห์ที่มีเวลาน้อย: 2 เซสชันสั้น ๆ",
   "Four multi-joint exercises per session, each working several muscles at once.": "เซสชันละสี่ท่าแบบหลายข้อต่อ แต่ละท่าใช้กล้ามเนื้อหลายมัดพร้อมกัน",
   "Short workouts built on multi-joint exercises can build strength and muscle. 2 or 3 sets of 8 to 12 reps, 2 min of rest, and the whole body in every session.": "การฝึกสั้น ๆ ด้วยท่าหลายข้อต่อช่วยสร้างความแข็งแรงและกล้ามเนื้อได้ 2 หรือ 3 เซ็ต เซ็ตละ 8 ถึง 12 ครั้ง พัก 2 นาที และฝึกทั้งตัวทุกครั้ง",
@@ -2438,4 +2438,6 @@ export default {
   "suggested {0}": "แนะนำ {0}",
   "Heaviest load": "น้ำหนักสูงสุด",
   "Progress": "ความก้าวหน้า",
+  "App rule": "กฎของแอป",
+  "The app’s own rule, with no study behind it: it flags an exercise that shows up on 3 or more days of the week, so you can think about varying it.": "กฎของแอปเอง ไม่มีงานวิจัยรองรับ แอปจะทำเครื่องหมายท่าที่อยู่ใน 3 วันขึ้นไปของสัปดาห์ เพื่อให้คุณลองคิดเรื่องการเปลี่ยนท่า",
 }

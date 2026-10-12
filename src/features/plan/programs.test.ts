@@ -4,6 +4,8 @@ import {
   type PlanState, type ProgramId, type Slot,
 } from './programs'
 import { REFS } from './references'
+import { analyzePlan, exerciseMainGroup, type Alert } from './analysis'
+import { suggestionsFor } from './suggestions'
 import { EXIDX } from '@/lib/exercises.js'
 import { musclesOf } from '@/lib/muscles.js'
 import { GLYPHS } from '@/lib/glyphs.js'
@@ -146,6 +148,16 @@ describe('program catalog (spec §4.2)', () => {
       for (const ref of p.refs) expect(REFS, `${p.id} ${ref}`).toHaveProperty(ref)
     }
     expect(PROGRAMS['short-2x'].refs).toContain('iversen2021')
+  })
+})
+
+describe('program refs (final review m4)', () => {
+  it('5×5 cites the rep-continuum source for "few reps with a heavy load"', () => {
+    expect(PROGRAMS['strength-5x5'].refs).toContain('schoenfeld2021')
+  })
+
+  it('lists each reference once', () => {
+    for (const p of Object.values(PROGRAMS)) expect(new Set(p.refs).size, p.id).toBe(p.refs.length)
   })
 })
 
@@ -322,6 +334,18 @@ describe('undoProgram', () => {
     expect(undoProgram(S).kept).toEqual([legs])
   })
 
+  it('keeps a routine named by one of my check-ins, posted without a detail (final review m1)', () => {
+    const S = before()
+    applyProgram(S, 'ppl')
+    const [push, pull, legs] = S.program!.routineIds
+    // a photo check-in without a detail logs no workout, only its routine_id
+    const { kept } = undoProgram(S, [pull, null, 'not-a-program-routine'])
+    expect(kept).toEqual([pull])
+    expect(S.routines.map(r => r.id)).toEqual(['old', pull])
+    expect(S.routines.map(r => r.id)).not.toContain(push)
+    expect(S.routines.map(r => r.id)).not.toContain(legs)
+  })
+
   it('does nothing without an applied program', () => {
     const S = before()
     expect(undoProgram(S)).toEqual({ kept: [] })
@@ -373,5 +397,76 @@ describe('variant resolution (review M3)', () => {
   it('buildProgram schedules the clamped variant too', () => {
     const { week } = buildProgram({ routines: [], week: {} }, 'ppl', 7)
     expect(Object.keys(week)).toHaveLength(6)
+  })
+})
+
+// Spec §10 and final review I1: the app's own catalog, analysed in each profile it is made for,
+// must not contradict itself. Every alert left over is listed here with the reason it is accepted.
+describe('each program analysed in its own profile (final review I1)', () => {
+  // Every program has at most one abs slot, so 'low abs' and 'frequency abs' are expected. The
+  // other lines are content questions for the human check (docs/fontes-1d.md, "Textos dos
+  // programas"); the code does not change program content to silence them.
+  const ACCEPTED: Record<string, string[]> = {
+    // 1 set over the health top of 10: the same program is the beginner hypertrophy plan
+    'full-body-beginner 3x health': ['low abs', 'high shoulders', 'high glutes'],
+    // beginner volume (2 to 3 sets per exercise) sits under the hypertrophy minimum of 10; triceps
+    // reach 2 sets on day B only
+    'full-body-beginner 3x hypertrophy': ['low chest', 'low back', 'low biceps', 'low triceps', 'low quads',
+      'low hamstrings', 'low calves', 'low abs', 'frequency triceps', 'frequency abs'],
+    // 8 direct chest sets and 9 arm sets: 1 to 2 under the minimum
+    'upper-lower 4x hypertrophy': ['low chest', 'low biceps', 'low triceps', 'low abs', 'frequency abs'],
+    // 3 days: every group once a week by design (the detail says so); triceps, hamstrings and
+    // calves half a set to 1 set under the minimum
+    'ppl 3x hypertrophy': ['low triceps', 'low hamstrings', 'low calves', 'low abs', 'frequency chest',
+      'frequency back', 'frequency biceps', 'frequency triceps', 'frequency quads', 'frequency hamstrings',
+      'frequency glutes', 'frequency calves', 'frequency abs'],
+    // 6 days doubles the 3-day volume; rows and pulldowns add biceps and rear delts on top
+    'ppl 6x hypertrophy': ['low abs', 'high back', 'high shoulders', 'high biceps'],
+    // three lifts at 5×5: back, shoulders and glutes 15 over the strength top of 12; no calf work
+    'strength-5x5 3x strength': ['low calves', 'low abs', 'high back', 'high shoulders', 'high glutes'],
+    // the strength range (6 to 12) reads PHUL's two hypertrophy days as extra volume
+    'power-hypertrophy 4x strength': ['low abs', 'high back', 'high shoulders', 'high quads', 'high hamstrings',
+      'high glutes', 'high calves'],
+    // 7 chest sets: bench and incline only
+    'power-hypertrophy 4x hypertrophy': ['low chest', 'low abs', 'frequency abs'],
+    // 2 short days: no direct arm, calf or abs work by design; chest from one press
+    'short-2x 2x health': ['low chest', 'low biceps', 'low triceps', 'low calves', 'low abs'],
+    // no direct arm work by design: biceps and triceps 3, 1 under the health minimum of 4
+    'health-3x 3x health': ['low biceps', 'low triceps'],
+  }
+  const cases = (Object.keys(PROGRAMS) as ProgramId[]).flatMap(id =>
+    PROGRAMS[id].variants.flatMap((v, variant) =>
+      PROGRAMS[id].goals.map(profile => ({ id, variant, days: v.days, profile }))))
+  const label = (a: Alert) => [a.kind, a.group].filter(Boolean).join(' ')
+
+  it.each(cases)('$id $days× in $profile: no balance or missing alert, the rest accepted', ({ id, variant, days, profile }) => {
+    const { routines, week } = buildProgram({}, id, variant)
+    const alerts = analyzePlan({ routines, week }, profile).alerts.map(label)
+    expect(alerts.filter(a => a.startsWith('balance'))).toEqual([])
+    expect(alerts.filter(a => a.startsWith('missing'))).toEqual([])
+    expect(alerts).toEqual(ACCEPTED[`${id} ${days}x ${profile}`] ?? [])
+  })
+
+  it.each(cases)('$id $days× in $profile: no suggestion lowers an exercise of another main group', ({ id, variant, profile }) => {
+    const { routines, week } = buildProgram({}, id, variant)
+    const S = { routines, week, customEx: [] }
+    for (const s of suggestionsFor(S, profile)) {
+      if (s.kind !== 'remove-sets') continue
+      for (const c of s.changes) expect(exerciseMainGroup(S, c.exId), `${s.group}: ${c.exId}`).toBe(s.group)
+    }
+  })
+
+  it('PPL 6× biceps: Apply lowers only the curls, never the presses, pulldowns or rows', () => {
+    const { routines, week } = buildProgram({}, 'ppl', 1)
+    const S = { routines, week, customEx: [] }
+    const biceps = suggestionsFor(S, 'hypertrophy').filter(s => s.group === 'biceps')
+    for (const s of biceps) for (const c of s.changes) expect(['0031', '0313']).toContain(c.exId)
+  })
+
+  it('5×5 glutes: Apply never lowers the squat', () => {
+    const { routines, week } = buildProgram({}, 'strength-5x5')
+    const S = { routines, week, customEx: [] }
+    const glutes = suggestionsFor(S, 'strength').filter(s => s.group === 'glutes')
+    for (const s of glutes) for (const c of s.changes) expect(c.exId).not.toBe('0043')
   })
 })

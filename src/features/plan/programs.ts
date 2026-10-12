@@ -70,7 +70,8 @@ const str = (ex: string, sets: number, reps: number, prog?: Policy): Slot =>
   ({ ex, sets, reps, restSec: 180, ...(prog ? { prog } : {}) })
 
 const HYPERTROPHY_REFS: RefId[] = ['schoenfeld2017', 'schoenfeld2016', 'schoenfeld2021', 'schoenfeld2016rest', 'plotkin2022']
-const STRENGTH_REFS: RefId[] = ['ralston2017', 'grgic2018freq', 'grgic2018rest']
+// schoenfeld2021 backs "few reps with a heavy load train strength" (the rep continuum)
+const STRENGTH_REFS: RefId[] = ['ralston2017', 'schoenfeld2021', 'grgic2018freq', 'grgic2018rest']
 
 export const PROGRAMS: Record<ProgramId, Program> = {
   'full-body-beginner': {
@@ -164,7 +165,7 @@ export const PROGRAMS: Record<ProgramId, Program> = {
         hyp('0739', 3, 10, 15), hyp('1459', 3, 10, 12), hyp('0585', 3, 12, 15), hyp('0586', 3, 12, 15), hyp('0594', 4, 12, 15),
       ] },
     ],
-    refs: [...STRENGTH_REFS, ...HYPERTROPHY_REFS],
+    refs: [...new Set([...STRENGTH_REFS, ...HYPERTROPHY_REFS])],
   },
   'short-2x': {
     id: 'short-2x', prefix: 'Short', goals: ['health'], level: 'beginner', prog: 'double',
@@ -270,16 +271,18 @@ const trainedOn = (S: PlanState, routineId: string) =>
 
 // Undo the last applied program: the week comes back, the program's routines that were never
 // trained go (through deleteRoutine, so a date rescheduled to one goes too), and a routine with
-// a logged workout or in the session in progress stays in the list, off the schedule. `kept`
-// names those, so the screen can say so.
+// a logged workout, in the session in progress, or named by one of the person's check-ins stays
+// in the list, off the schedule. `checkedIn` holds the routine_id of those check-ins (a photo
+// check-in without a detail logs no workout); the caller reads them from its check-in store.
+// `kept` names the routines that stay, so the screen can say so.
 //
 // Undo restores the week and drops the routines whatever happened since the apply, edits
 // included. The guard lives in the UI: callers must offer Undo only while
 // `!S.program.dismissed` (editing a routine or the week marks it dismissed, plan decision 4).
-export function undoProgram(S: PlanState): { kept: string[] } {
+export function undoProgram(S: PlanState, checkedIn: ReadonlyArray<string | null | undefined> = []): { kept: string[] } {
   const program = S.program
   if (!program) return { kept: [] }
-  const kept = program.routineIds.filter(rid => trainedOn(S, rid))
+  const kept = program.routineIds.filter(rid => trainedOn(S, rid) || checkedIn.includes(rid))
   for (const rid of program.routineIds) if (!kept.includes(rid)) deleteRoutine(S, rid)
   S.week = JSON.parse(JSON.stringify(program.prevWeek ?? {})) as Week
   delete S.program

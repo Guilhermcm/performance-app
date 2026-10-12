@@ -2345,8 +2345,8 @@ export default {
   "Three lifts per session, 5 sets of 5. When you complete every set, the load goes up next time.": "Edzésenként három gyakorlat, 5 sorozat 5 ismétléssel. Ha minden sorozatot megcsinálsz, legközelebb nő a súly.",
   "Few reps with a heavy load train strength. Rest 3 min between sets, since longer rest helped strength on multi-joint lifts. You train the whole body 3 times a week.": "Kevés ismétlés nagy súllyal az erőt fejleszti. Sorozatok között 3 perc a pihenő, mert a hosszabb pihenő segítette az erőt a többízületi gyakorlatokban. Az egész testet hetente 3 alkalommal edzed.",
   "If you already train and want both strength and muscle, with 4 days a week.": "Ha már edzel, és erőt és izmot is szeretnél, heti 4 nappal.",
-  "Two heavy days with 5 to 8 reps and two lighter days with 8 to 15. You train each muscle twice a week.": "Két nehéz nap 5 és 8 közötti ismétléssel, és két könnyebb 8 és 15 között. Minden izmot hetente kétszer edzel.",
-  "On heavy days you rest 3 min and add load when you complete the sets. On lighter days, 3 or 4 sets of 8 to 15 reps build muscle, with 2 min of rest on multi-joint lifts.": "A nehéz napokon 3 perc a pihenő, és nő a súly, ha megvannak a sorozatok. A könnyebb napokon 3 vagy 4 sorozat 8 és 15 közötti ismétléssel épít izmot, többízületieknél 2 perc pihenővel.",
+  "Two heavy days with 5 to 10 reps and two lighter days with 8 to 15. You train each muscle twice a week.": "Két nehéz nap 5 és 10 közötti ismétléssel, és két könnyebb 8 és 15 között. Minden izmot hetente kétszer edzel.",
+  "On heavy days you rest 3 min on the main lifts and add load when you complete the sets. On lighter days, 3 or 4 sets of 8 to 15 reps build muscle, with 2 min of rest on multi-joint lifts.": "A nehéz napokon az alapgyakorlatoknál 3 perc a pihenő, és nő a súly, ha megvannak a sorozatok. A könnyebb napokon 3 vagy 4 sorozat 8 és 15 közötti ismétléssel épít izmot, többízületieknél 2 perc pihenővel.",
   "For weeks with little time: 2 short sessions.": "Szűkös hetekre: 2 rövid edzés.",
   "Four multi-joint exercises per session, each working several muscles at once.": "Edzésenként négy többízületi gyakorlat, mindegyik több izmot dolgoztat egyszerre.",
   "Short workouts built on multi-joint exercises can build strength and muscle. 2 or 3 sets of 8 to 12 reps, 2 min of rest, and the whole body in every session.": "A többízületi gyakorlatokra épülő rövid edzések erőt és izmot is építhetnek. 2 vagy 3 sorozat 8 és 12 közötti ismétléssel, 2 perc pihenő, és minden edzésen az egész test.",
@@ -2430,4 +2430,6 @@ export default {
   "suggested {0}": "javasolt {0}",
   "Heaviest load": "Legnagyobb súly",
   "Progress": "Fejlődés",
+  "App rule": "Az app szabálya",
+  "The app’s own rule, with no study behind it: it flags an exercise that shows up on 3 or more days of the week, so you can think about varying it.": "Az app saját szabálya, tanulmány nélkül: jelzi azt a gyakorlatot, amely a hét 3 vagy több napján szerepel, hogy elgondolkodhass a változtatásán.",
 }

@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { InfoSource } from '@/components/ui/info-source'
+import { TimeInfo } from './TimeInfo'
 import { cn } from '@/lib/utils'
 import { dateLocale, exerciseNameClass, exerciseNameFor, t } from '../../lib/i18n.js'
 import { EXIDX, exOr } from '../../lib/exercises.js'
@@ -193,8 +194,7 @@ export default function AnalysisScreen() {
           )}
 
           <Part id="time" title={t('Time per routine')}
-            info={<InfoSource refs={[]} label={t('How the time is estimated')}
-              note={t('The app’s estimate: each set counts its own rest plus 40 s to do it. With no rest set, it counts 90 s. Each workout adds 5 min to warm up.')} />}>
+            info={<TimeInfo />}>
             <ul className="flex list-none flex-col">
               {analysis.minutes.map(m => (
                 <li key={m.routineId} data-testid={`minutes-${m.routineId}`} className="flex min-h-9 items-center justify-between gap-3 border-t border-border text-sm first:border-t-0">
@@ -353,7 +353,16 @@ function AlertItem({ S, alert, analysis, suggestion, onApply }: {
   const title = alertTitle(S, alert, analysis)
   return (
     <article aria-labelledby={id} className="flex flex-col gap-1 rounded-2xl border border-border bg-card px-4 py-3 text-card-foreground">
-      <h3 id={id} className="text-[15px] font-semibold">{title.node}</h3>
+      {alert.kind === 'repeated' ? (
+        <div className="-my-1 flex items-center justify-between gap-2">
+          <h3 id={id} className="text-[15px] font-semibold">{title.node}</h3>
+          {/* "3 or more days" is the app's own rule */}
+          <InfoSource refs={[]} label={t('App rule')}
+            note={t('The app’s own rule, with no study behind it: it flags an exercise that shows up on 3 or more days of the week, so you can think about varying it.')} />
+        </div>
+      ) : (
+        <h3 id={id} className="text-[15px] font-semibold">{title.node}</h3>
+      )}
       <p className="text-sm text-muted-foreground">{alertHint(alert)}</p>
       {suggestion && (
         <Button variant="outline" className="mt-2 h-11 self-start rounded-xl" aria-label={`${t('Apply')}: ${title.text}`}

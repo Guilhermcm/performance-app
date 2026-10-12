@@ -2395,8 +2395,8 @@ export default {
   "Three lifts per session, 5 sets of 5. When you complete every set, the load goes up next time.": "ثلاثة تمارين في كل حصة، 5 مجموعات من 5. حين تكمل كل المجموعات، يزيد الحمل في المرة التالية.",
   "Few reps with a heavy load train strength. Rest 3 min between sets, since longer rest helped strength on multi-joint lifts. You train the whole body 3 times a week.": "تكرارات قليلة بحمل ثقيل تبني القوة. استرح 3 د بين المجموعات، لأن الراحة الأطول ساعدت القوة في التمارين المركبة. تمرّن الجسم كله 3 مرات في الأسبوع.",
   "If you already train and want both strength and muscle, with 4 days a week.": "إن كنت تتمرن بالفعل وتريد القوة والعضلات معًا، مع 4 أيام في الأسبوع.",
-  "Two heavy days with 5 to 8 reps and two lighter days with 8 to 15. You train each muscle twice a week.": "يومان ثقيلان من 5 إلى 8 تكرارات، ويومان أخف من 8 إلى 15. تمرّن كل عضلة مرتين في الأسبوع.",
-  "On heavy days you rest 3 min and add load when you complete the sets. On lighter days, 3 or 4 sets of 8 to 15 reps build muscle, with 2 min of rest on multi-joint lifts.": "في الأيام الثقيلة تستريح 3 د وتزيد الحمل حين تكمل المجموعات. في الأيام الأخف، 3 أو 4 مجموعات من 8 إلى 15 تكرارًا تبني العضلات، مع استراحة 2 د في التمارين المركبة.",
+  "Two heavy days with 5 to 10 reps and two lighter days with 8 to 15. You train each muscle twice a week.": "يومان ثقيلان من 5 إلى 10 تكرارات، ويومان أخف من 8 إلى 15. تمرّن كل عضلة مرتين في الأسبوع.",
+  "On heavy days you rest 3 min on the main lifts and add load when you complete the sets. On lighter days, 3 or 4 sets of 8 to 15 reps build muscle, with 2 min of rest on multi-joint lifts.": "في الأيام الثقيلة تستريح 3 د في التمارين الأساسية وتزيد الحمل حين تكمل المجموعات. في الأيام الأخف، 3 أو 4 مجموعات من 8 إلى 15 تكرارًا تبني العضلات، مع استراحة 2 د في التمارين المركبة.",
   "For weeks with little time: 2 short sessions.": "للأسابيع قليلة الوقت: حصتان قصيرتان.",
   "Four multi-joint exercises per session, each working several muscles at once.": "أربعة تمارين مركبة في كل حصة، كل منها يشغّل عدة عضلات معًا.",
   "Short workouts built on multi-joint exercises can build strength and muscle. 2 or 3 sets of 8 to 12 reps, 2 min of rest, and the whole body in every session.": "التمارين القصيرة القائمة على تمارين مركبة يمكن أن تبني القوة والعضلات. 2 أو 3 مجموعات من 8 إلى 12 تكرارًا، واستراحة 2 د، والجسم كله في كل حصة.",
@@ -2480,4 +2480,6 @@ export default {
   "suggested {0}": "المقترح {0}",
   "Heaviest load": "أعلى وزن",
   "Progress": "التقدّم",
+  "App rule": "قاعدة التطبيق",
+  "The app’s own rule, with no study behind it: it flags an exercise that shows up on 3 or more days of the week, so you can think about varying it.": "قاعدة خاصة بالتطبيق، بلا دراسة وراءها: تنبّه إلى التمرين الذي يظهر في 3 أيام أو أكثر من الأسبوع، لتفكر في تنويعه.",
 }

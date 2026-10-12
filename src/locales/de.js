@@ -2362,8 +2362,8 @@ export default {
   "Three lifts per session, 5 sets of 5. When you complete every set, the load goes up next time.": "Drei Übungen pro Einheit, 5 Sätze à 5. Schaffst du alle Sätze, steigt das Gewicht beim nächsten Mal.",
   "Few reps with a heavy load train strength. Rest 3 min between sets, since longer rest helped strength on multi-joint lifts. You train the whole body 3 times a week.": "Wenige Wiederholungen mit hohem Gewicht trainieren Kraft. Pausiere 3 Min. zwischen den Sätzen, denn längere Pausen halfen der Kraft bei Mehrgelenkübungen. Du trainierst den ganzen Körper 3 Mal pro Woche.",
   "If you already train and want both strength and muscle, with 4 days a week.": "Wenn du schon trainierst und Kraft und Muskeln willst, mit 4 Tagen pro Woche.",
-  "Two heavy days with 5 to 8 reps and two lighter days with 8 to 15. You train each muscle twice a week.": "Zwei schwere Tage mit 5 bis 8 Wiederholungen und zwei leichtere mit 8 bis 15. Du trainierst jeden Muskel zweimal pro Woche.",
-  "On heavy days you rest 3 min and add load when you complete the sets. On lighter days, 3 or 4 sets of 8 to 15 reps build muscle, with 2 min of rest on multi-joint lifts.": "An schweren Tagen pausierst du 3 Min. und erhöhst das Gewicht, wenn du die Sätze schaffst. An leichteren Tagen bauen 3 oder 4 Sätze mit 8 bis 15 Wiederholungen Muskeln auf, mit 2 Min. Pause bei Mehrgelenkübungen.",
+  "Two heavy days with 5 to 10 reps and two lighter days with 8 to 15. You train each muscle twice a week.": "Zwei schwere Tage mit 5 bis 10 Wiederholungen und zwei leichtere mit 8 bis 15. Du trainierst jeden Muskel zweimal pro Woche.",
+  "On heavy days you rest 3 min on the main lifts and add load when you complete the sets. On lighter days, 3 or 4 sets of 8 to 15 reps build muscle, with 2 min of rest on multi-joint lifts.": "An schweren Tagen pausierst du 3 Min. bei den Grundübungen und erhöhst das Gewicht, wenn du die Sätze schaffst. An leichteren Tagen bauen 3 oder 4 Sätze mit 8 bis 15 Wiederholungen Muskeln auf, mit 2 Min. Pause bei Mehrgelenkübungen.",
   "For weeks with little time: 2 short sessions.": "Für Wochen mit wenig Zeit: 2 kurze Einheiten.",
   "Four multi-joint exercises per session, each working several muscles at once.": "Vier Mehrgelenkübungen pro Einheit, jede trainiert mehrere Muskeln auf einmal.",
   "Short workouts built on multi-joint exercises can build strength and muscle. 2 or 3 sets of 8 to 12 reps, 2 min of rest, and the whole body in every session.": "Kurze Einheiten mit Mehrgelenkübungen können Kraft und Muskeln aufbauen. 2 oder 3 Sätze mit 8 bis 12 Wiederholungen, 2 Min. Pause und jedes Mal der ganze Körper.",
@@ -2447,4 +2447,6 @@ export default {
   "suggested {0}": "empfohlen {0}",
   "Heaviest load": "Höchstes Gewicht",
   "Progress": "Fortschritt",
+  "App rule": "Regel der App",
+  "The app’s own rule, with no study behind it: it flags an exercise that shows up on 3 or more days of the week, so you can think about varying it.": "Eine eigene Regel der App, ohne Studie dahinter: Sie markiert eine Übung, die an 3 oder mehr Tagen der Woche vorkommt, damit du überlegen kannst, sie abzuwandeln.",
 }

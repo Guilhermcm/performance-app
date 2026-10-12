@@ -58,6 +58,15 @@ describe('ProgramsScreen', () => {
     expect(fb.textContent).toContain('Beginner')
   })
 
+  it('explains the minutes on the cards with the time ⓘ, outside the cards (final review m3)', () => {
+    render(<ProgramsScreen />)
+    const all = screen.getByRole('region', { name: 'All programs' })
+    const info = within(all).getByRole('button', { name: 'How the time is estimated' })
+    expect(info.closest('[data-program]')).toBeNull()
+    fireEvent.click(info)
+    expect(screen.getByRole('dialog').textContent).toContain('40 s')
+  })
+
   it('filters by goal and by days', () => {
     render(<ProgramsScreen />)
     const list = screen.getByRole('region', { name: 'All programs' })

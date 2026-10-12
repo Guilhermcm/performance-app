@@ -169,22 +169,79 @@ describe('high group: remove-sets', () => {
     { id: '0241', sets: 12 }, // main: 12
   ])])
 
-  it('takes first from the exercises where the group is secondary, never below 2 sets', () => {
+  it('lowers only the exercises whose main group is the alert group (final review I1)', () => {
     const a = analyzePlan(heavy(), 'strength')
+    // bench and overhead press add 1.5 and 1 through the triceps their sm names
     expect(a.groups.triceps.sets).toBe(14.5)
     const s = only(suggestionsFor(heavy(), 'strength'), 'triceps')
     expect(s.kind).toBe('remove-sets')
-    expect(s.changes).toEqual([
-      { routineId: 'a', exId: '0025', from: 3, to: 2 },
-      { routineId: 'a', exId: '0241', from: 12, to: 10 },
-    ])
+    expect(s.changes).toEqual([{ routineId: 'a', exId: '0241', from: 12, to: 9 }])
   })
 
   it('stops once the group is back at the maximum', () => {
     const S = state({ 1: ['a'] }, [routine('a', [{ id: '0025', sets: 6 }, { id: '0241', sets: 10 }])])
     // triceps: 3 + 10 = 13, one over the strength maximum of 12
     const s = only(suggestionsFor(S, 'strength'), 'triceps')
-    expect(s.changes).toEqual([{ routineId: 'a', exId: '0025', from: 6, to: 4 }])
+    expect(s.changes).toEqual([{ routineId: 'a', exId: '0241', from: 10, to: 9 }])
+  })
+
+  it('makes no remove-sets when only exercises of another main group carry the excess', () => {
+    // 26 bench sets give triceps 13, over 12, but the bench exists for the chest
+    const S = state({ 1: ['a'] }, [routine('a', [{ id: '0025', sets: 13 }, { id: '0047', sets: 13 }])])
+    const a = analyzePlan(S, 'strength')
+    expect(a.groups.triceps.status).toBe('high')
+    const list = suggestionsFor(S, 'strength')
+    expect(for_(list, 'triceps')).toEqual([])
+    // the chest alert still lowers the chest exercises
+    expect(only(list, 'chest').kind).toBe('remove-sets')
+  })
+
+  it('never lowers an exercise when another group it trains would drop below the minimum (review M4)', () => {
+    // strength: glutes 14 (over 12), hamstrings exactly at the minimum of 6
+    const S = state({ 1: ['a'] }, [routine('a', [{ id: 'c-hinge', sets: 6 }, { id: 'c-glute', sets: 8 }])], {
+      customEx: [
+        { id: 'c-hinge', n: 'Hinge', custom: true, bp: 'upper legs', primaries: ['gluteal', 'hamstring'], secondaries: [] },
+        customFor('c-glute', 'gluteal'),
+      ],
+    })
+    const a = analyzePlan(S, 'strength')
+    expect(a.groups.glutes.sets).toBe(14)
+    expect(a.groups.hamstrings.sets).toBe(6)
+    const s = only(suggestionsFor(S, 'strength'), 'glutes')
+    expect(s.changes).toEqual([{ routineId: 'a', exId: 'c-glute', from: 8, to: 6 }])
+  })
+
+  it('makes no suggestion when every exercise of the group would take another below the minimum', () => {
+    // strength: glutes 14 (over 12); the hinge also gives the hamstrings their 6 sets, the minimum,
+    // and the glute exercise is already at the 2-set floor
+    const S = state({ 1: ['a'] }, [routine('a', [{ id: 'c-hinge', sets: 12 }, { id: 'c-glute', sets: 2 }])], {
+      customEx: [
+        { id: 'c-hinge', n: 'Hinge', custom: true, bp: 'upper legs', primaries: ['gluteal'], secondaries: ['hamstring'] },
+        customFor('c-glute', 'gluteal'),
+      ],
+    })
+    const a = analyzePlan(S, 'strength')
+    expect(a.groups.glutes.sets).toBe(14)
+    expect(a.groups.hamstrings.sets).toBe(6)
+    expect(for_(suggestionsFor(S, 'strength'), 'glutes')).toEqual([])
+  })
+
+  it('takes only the sets the other groups can spare', () => {
+    // same plan with hamstrings at 7: the hinge can give 2 sets (hamstrings 6), not the 2 the glutes ask
+    // plus more, so it stops at the glutes maximum
+    const S = state({ 1: ['a'] }, [routine('a', [{ id: 'c-hinge', sets: 14 }])], {
+      customEx: [{ id: 'c-hinge', n: 'Hinge', custom: true, bp: 'upper legs', primaries: ['gluteal'], secondaries: ['hamstring'] }],
+    })
+    // glutes 14 → 12 needs 2 sets; hamstrings 7 → 6 allows 2 sets
+    expect(only(suggestionsFor(S, 'strength'), 'glutes').changes).toEqual([{ routineId: 'a', exId: 'c-hinge', from: 14, to: 12 }])
+    const tight = clone(S)
+    tight.routines[0].ex.push({ id: 'c-glute', sets: 4 })
+    tight.customEx.push(customFor('c-glute', 'gluteal'))
+    // glutes 18 needs 6 sets off; the hinge can spare 2 (hamstrings 7 → 6), the glute exercise 2 (floor)
+    expect(only(suggestionsFor(tight, 'strength'), 'glutes').changes).toEqual([
+      { routineId: 'a', exId: 'c-hinge', from: 14, to: 12 },
+      { routineId: 'a', exId: 'c-glute', from: 4, to: 2 },
+    ])
   })
 
   it('leaves no exercise with fewer than 2 sets', () => {
@@ -250,7 +307,7 @@ describe('applySuggestion and restoreRoutines', () => {
     const before = clone(S.routines)
     const s = only(suggestionsFor(S, 'strength'), 'triceps')
     const snapshot = applySuggestion(S, s)
-    expect(S.routines[0].ex.map(e => e.sets)).toEqual([2, 2, 10])
+    expect(S.routines[0].ex.map(e => e.sets)).toEqual([3, 2, 9])
     restoreRoutines(S, snapshot)
     expect(S.routines).toEqual(before)
   })

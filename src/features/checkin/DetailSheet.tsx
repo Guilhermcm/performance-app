@@ -3,6 +3,7 @@ import { Check, Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Input } from '@/components/ui/input'
+import { InfoSource } from '@/components/ui/info-source'
 import { cn } from '@/lib/utils'
 import { t, exerciseNameFor, exerciseNameClass } from '../../lib/i18n.js'
 import { EXIDX, exOr } from '../../lib/exercises.js'
@@ -102,7 +103,12 @@ export default function DetailSheet({ open, onOpenChange, routineId, initial, po
                   </span>
                 </button>
                 {up !== undefined && (
-                  <span id={hintId} className="shrink-0 text-sm font-medium tabular-nums text-primary">{t('suggested {0}', `${fmtNum(up)} ${unit}`)}</span>
+                  <span className="inline-flex shrink-0 items-center">
+                    <span id={hintId} className="text-sm font-medium tabular-nums text-primary">{t('suggested {0}', `${fmtNum(up)} ${unit}`)}</span>
+                    {/* the same source as the load badge on the routine list */}
+                    <InfoSource refs={['plotkin2022']} label={t('Why raise the load')}
+                      note={t('You did every rep last time, so the load can go up.')} />
+                  </span>
                 )}
                 </div>
                 {row.on && (

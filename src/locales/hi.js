@@ -2342,8 +2342,8 @@ export default {
   "Three lifts per session, 5 sets of 5. When you complete every set, the load goes up next time.": "हर सेशन में तीन लिफ़्ट, 5 के 5 सेट। सारे सेट पूरे करने पर अगली बार वज़न बढ़ता है।",
   "Few reps with a heavy load train strength. Rest 3 min between sets, since longer rest helped strength on multi-joint lifts. You train the whole body 3 times a week.": "भारी वज़न के साथ कम रेप्स शक्ति बढ़ाते हैं। सेट के बीच 3 मिनट आराम करें, क्योंकि लंबे आराम से मल्टी-जॉइंट लिफ़्ट्स में शक्ति बढ़ी। आप पूरे शरीर को हफ़्ते में 3 बार ट्रेन करते हैं।",
   "If you already train and want both strength and muscle, with 4 days a week.": "अगर आप पहले से ट्रेनिंग करते हैं और शक्ति व मांसपेशी दोनों चाहते हैं, हफ़्ते में 4 दिन।",
-  "Two heavy days with 5 to 8 reps and two lighter days with 8 to 15. You train each muscle twice a week.": "दो भारी दिन 5 से 8 रेप्स के, और दो हल्के दिन 8 से 15 के। आप हर मांसपेशी को हफ़्ते में दो बार ट्रेन करते हैं।",
-  "On heavy days you rest 3 min and add load when you complete the sets. On lighter days, 3 or 4 sets of 8 to 15 reps build muscle, with 2 min of rest on multi-joint lifts.": "भारी दिनों में 3 मिनट आराम करें और सेट पूरे होने पर वज़न बढ़ाएँ। हल्के दिनों में 8 से 15 रेप्स के 3 या 4 सेट मांसपेशी बनाते हैं, मल्टी-जॉइंट में 2 मिनट आराम के साथ।",
+  "Two heavy days with 5 to 10 reps and two lighter days with 8 to 15. You train each muscle twice a week.": "दो भारी दिन 5 से 10 रेप्स के, और दो हल्के दिन 8 से 15 के। आप हर मांसपेशी को हफ़्ते में दो बार ट्रेन करते हैं।",
+  "On heavy days you rest 3 min on the main lifts and add load when you complete the sets. On lighter days, 3 or 4 sets of 8 to 15 reps build muscle, with 2 min of rest on multi-joint lifts.": "भारी दिनों में मुख्य लिफ़्ट्स पर 3 मिनट आराम करें और सेट पूरे होने पर वज़न बढ़ाएँ। हल्के दिनों में 8 से 15 रेप्स के 3 या 4 सेट मांसपेशी बनाते हैं, मल्टी-जॉइंट में 2 मिनट आराम के साथ।",
   "For weeks with little time: 2 short sessions.": "कम समय वाले हफ़्तों के लिए: 2 छोटे सेशन।",
   "Four multi-joint exercises per session, each working several muscles at once.": "हर सेशन में चार मल्टी-जॉइंट एक्सरसाइज़, हर एक कई मांसपेशियों को साथ चलाती है।",
   "Short workouts built on multi-joint exercises can build strength and muscle. 2 or 3 sets of 8 to 12 reps, 2 min of rest, and the whole body in every session.": "मल्टी-जॉइंट एक्सरसाइज़ वाले छोटे वर्कआउट शक्ति और मांसपेशी बना सकते हैं। 8 से 12 रेप्स के 2 या 3 सेट, 2 मिनट आराम, और हर सेशन में पूरा शरीर।",
@@ -2427,4 +2427,6 @@ export default {
   "suggested {0}": "सुझाया गया {0}",
   "Heaviest load": "सबसे ज़्यादा वज़न",
   "Progress": "प्रगति",
+  "App rule": "ऐप का नियम",
+  "The app’s own rule, with no study behind it: it flags an exercise that shows up on 3 or more days of the week, so you can think about varying it.": "यह ऐप का अपना नियम है, इसके पीछे कोई अध्ययन नहीं: जो एक्सरसाइज़ हफ़्ते में 3 या ज़्यादा दिन आती है, उसे यह चिह्नित करता है ताकि आप उसे बदलने के बारे में सोच सकें।",
 }
