@@ -9,9 +9,10 @@ import type { NewChallenge } from './types'
 const today = '2026-10-05'
 const draft = (over: Partial<NewChallenge> = {}): NewChallenge => ({
   template: 'checkin_days', title: 'Outubro forte', mode: 'team', target: 6,
-  starts_on: '2026-10-05', ends_on: '2026-10-18', invitees: ['b'], share_volume: false, share_nutrition: false, ...over
+  starts_on: '2026-10-05', ends_on: '2026-10-18', invitees: ['b'], share_volume: false, share_nutrition: false, share_sleep: false, ...over
 })
 const NUT = 'nutrition_days_on_target' as const
+const SLEEP = 'sleep_nights_on_target' as const
 
 describe('calendar helpers', () => {
   it('count days and weeks like the database', () => {
@@ -111,7 +112,7 @@ describe('progress helpers', () => {
 
 describe('checkin_days (training days)', () => {
   it('is the template people create, for teams and for solo; the old ones are not offered', () => {
-    expect(TEMPLATES).toEqual(['checkin_days', 'weeks_on_target', 'nutrition_days_on_target'])
+    expect(TEMPLATES).toEqual(['checkin_days', 'weeks_on_target', 'nutrition_days_on_target', 'sleep_nights_on_target'])
     expect(TEMPLATES).not.toContain('workouts_count')
     expect(TEMPLATES).not.toContain('volume_total')
     expect(MODES.checkin_days).toEqual(['team', 'solo'])
@@ -130,8 +131,8 @@ describe('checkin_days (training days)', () => {
     expect(checkChallenge(draft({ mode: 'solo', target: 10 }), today)).toBeNull()
   })
 
-  it('asks for neither opt-in nor the Nutrition pillar', () => {
-    expect(checkChallenge(draft({ share_volume: false, share_nutrition: false }), today, { nutritionOn: false })).toBeNull()
+  it('asks for no opt-in and for neither the Nutrition nor the Sleep pillar', () => {
+    expect(checkChallenge(draft({ share_volume: false, share_nutrition: false }), today, { nutritionOn: false, sleepOn: false })).toBeNull()
   })
 })
 
@@ -186,11 +187,78 @@ describe('nutrition_days_on_target', () => {
   })
 
   it('gives the result two days later for templates paid by closed days, as challenge_grace does', () => {
-    expect(GRACE).toEqual({ checkin_days: 2, workouts_count: 2, weeks_on_target: 2, volume_total: 0, nutrition_days_on_target: 2 })
+    expect(GRACE).toEqual({
+      checkin_days: 2, workouts_count: 2, weeks_on_target: 2, volume_total: 0, nutrition_days_on_target: 2, sleep_nights_on_target: 2
+    })
     // ends_on 2026-10-18: its last day closes at the start of the 20th, the challenge on the 21st.
     expect(resultOn(challengeOf({ template: NUT }))).toBe('2026-10-21')
     expect(resultOn(challengeOf())).toBe('2026-10-21')
     expect(resultOn(challengeOf({ template: 'checkin_days' }))).toBe('2026-10-21')
     expect(resultOn(challengeOf({ template: 'volume_total' }))).toBe('2026-10-19')
+  })
+})
+
+// The same rules as create_challenge in supabase/migrations/0024_sleep_challenge.sql;
+// supabase/tests/challenge-rules-parity.test.ts runs both against the same cases.
+describe('sleep_nights_on_target', () => {
+  const sleep = (over: Partial<NewChallenge> = {}) => draft({ template: SLEEP, target: 10, share_sleep: true, ...over })
+  const on = { sleepOn: true }
+
+  it('is a template for teams and for solo, a night at a time', () => {
+    expect(TEMPLATES).toContain(SLEEP)
+    expect(MODES[SLEEP]).toEqual(['team', 'solo'])
+    expect(TARGET_STEP[SLEEP]).toBe(1)
+  })
+
+  it('bounds the goal by the nights of the period, times the people in a team', () => {
+    expect(targetRange(SLEEP, '2026-10-05', '2026-10-11', 'solo', 1)).toEqual({ min: 1, max: 7 })
+    expect(targetRange(SLEEP, '2026-10-05', '2026-10-11', 'team', 1)).toEqual({ min: 1, max: 14 })
+    expect(targetRange(SLEEP, '2026-10-05', '2026-10-11', 'team', 2)).toEqual({ min: 1, max: 21 })
+    expect(targetRange(SLEEP, '2026-10-05', '2027-01-04', 'solo', 19)).toEqual({ min: 1, max: 92 })
+    expect(targetRange(SLEEP, '2026-10-05', '2027-01-04', 'team', 19)).toEqual({ min: 1, max: 1840 })
+  })
+
+  it('suggests the weekly nights on target over the period, per person in a team', () => {
+    expect(suggestedTarget(SLEEP, 'solo', '2026-10-05', '2026-11-03', 5, 2)).toBe(21)
+    expect(suggestedTarget(SLEEP, 'team', '2026-10-05', '2026-11-03', 5, 2)).toBe(42)
+    expect(suggestedTarget(SLEEP, 'solo', '2026-10-05', '2026-10-11', 7, 1)).toBe(7)
+    expect(suggestedTarget(SLEEP, 'solo', '2026-10-05', '2026-11-03', 3, 1)).toBe(13)
+  })
+
+  it('accepts the edges', () => {
+    expect(checkChallenge(sleep(), today, on)).toBeNull()
+    expect(checkChallenge(sleep({ mode: 'solo', target: 14 }), today, on)).toBeNull()
+    expect(checkChallenge(sleep({ mode: 'team', target: 28 }), today, on)).toBeNull()
+    expect(checkChallenge(sleep({ mode: 'team', target: 42, invitees: ['b', 'c'] }), today, on)).toBeNull()
+  })
+
+  it.each([
+    [{ mode: 'solo', target: 15 }, 'target'],
+    [{ mode: 'team', target: 29 }, 'target'],
+    [{ mode: 'team', target: 43, invitees: ['b', 'c'] }, 'target'],
+    [{ target: 0 }, 'target'],
+    [{ target: 2.5 }, 'target'],
+    [{ ends_on: '2027-01-05' }, 'dates'],
+    [{ share_sleep: false }, 'sleep']
+  ] as [Partial<NewChallenge>, string][])('refuses %j as %s', (over, problem) => {
+    expect(checkChallenge(sleep(over), today, on)).toBe(problem)
+  })
+
+  it('needs the pillar on, before the opt-in, as the server checks them', () => {
+    expect(checkChallenge(sleep(), today, { sleepOn: false })).toBe('sleep_off')
+    expect(checkChallenge(sleep({ share_sleep: false }), today)).toBe('sleep_off')
+    // The shape comes first, as on the server.
+    expect(checkChallenge(sleep({ target: 0, share_sleep: false }), today)).toBe('target')
+    // Nutrition does not open the sleep template, nor the sleep opt-in the nutrition one.
+    expect(checkChallenge(sleep({ share_nutrition: true }), today, { nutritionOn: true })).toBe('sleep_off')
+    expect(checkChallenge(draft({ template: NUT, target: 10, share_sleep: true }), today, { nutritionOn: true, sleepOn: true })).toBe('nutrition')
+    // The other templates do not care about the pillar.
+    expect(checkChallenge(draft(), today, { sleepOn: false })).toBeNull()
+  })
+
+  it('gives the result two days after the last night, as challenge_grace does', () => {
+    expect(GRACE[SLEEP]).toBe(2)
+    // ends_on 2026-10-18: that night closes at the start of the 20th, the challenge on the 21st.
+    expect(resultOn(challengeOf({ template: SLEEP }))).toBe('2026-10-21')
   })
 })

@@ -2558,4 +2558,17 @@ export default {
   "Thursday logged": "Csütörtök: rögzítve",
   "Friday logged": "Péntek: rögzítve",
   "Saturday logged": "Szombat: rögzítve",
+  // --- sleep challenge (phase 3) ---
+  "To take part, agree to show how many nights you were on target.": "A részvételhez járulj hozzá, hogy látszódjon, hány éjszakán voltál a célban.",
+  "Turn on the Sleep pillar to take part in this challenge.": "Kapcsold be az Alvás pillért, hogy részt vehess ebben a kihívásban.",
+  "Nights on sleep target": "Éjszakák az alvási célban",
+  "Nights in the period that each person hits their sleep target. Others only see how many, never your times or how long you slept.": "Az időszak éjszakái, amikor valaki eléri az alvási célját. A többiek csak a számot látják, az időpontjaidat és azt, mennyit aludtál, soha.",
+  "{0} nights on target in {1} days": "{0} éjszaka a célban {1} nap alatt",
+  "1 night on target in {0} days": "1 éjszaka a célban {0} nap alatt",
+  "Show participants how many nights I was on target": "Mutassa a résztvevőknek, hány éjszakán voltam a célban",
+  "They see only that number, never your times, how long you slept or your notes.": "Csak ezt a számot látják, az időpontjaidat, az alvásod hosszát és a jegyzeteidet soha.",
+  "Turn on the Sleep pillar to create this challenge.": "Kapcsold be az Alvás pillért a kihívás létrehozásához.",
+  "Agree to show your nights on target to create this challenge.": "A kihívás létrehozásához járulj hozzá, hogy látszódjanak a célban töltött éjszakáid.",
+  "Only for people with the Sleep pillar on.": "Csak annak, akinél be van kapcsolva az Alvás pillér.",
+  "Turn on the Sleep pillar to join": "Kapcsold be az Alvás pillért a csatlakozáshoz",
 }

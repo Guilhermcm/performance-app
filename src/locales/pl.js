@@ -2602,4 +2602,17 @@ export default {
   "Thursday logged": "Czwartek: zapisano",
   "Friday logged": "Piątek: zapisano",
   "Saturday logged": "Sobota: zapisano",
+  // --- sleep challenge (phase 3) ---
+  "To take part, agree to show how many nights you were on target.": "Aby dołączyć, zgódź się pokazywać, ile nocy byłeś w celu.",
+  "Turn on the Sleep pillar to take part in this challenge.": "Włącz filar Sen, aby wziąć udział w tym wyzwaniu.",
+  "Nights on sleep target": "Noce w celu snu",
+  "Nights in the period that each person hits their sleep target. Others only see how many, never your times or how long you slept.": "Noce okresu, w których każda osoba trafia w swój cel snu. Inni widzą tylko ile, nigdy twoich godzin ani tego, jak długo spałeś.",
+  "{0} nights on target in {1} days": "Noce w celu: {0} w {1} dni",
+  "1 night on target in {0} days": "Noce w celu: 1 w {0} dni",
+  "Show participants how many nights I was on target": "Pokazuj uczestnikom, ile nocy byłem w celu",
+  "They see only that number, never your times, how long you slept or your notes.": "Widzą tylko tę liczbę, nigdy twoich godzin, długości snu ani notatek.",
+  "Turn on the Sleep pillar to create this challenge.": "Włącz filar Sen, aby utworzyć to wyzwanie.",
+  "Agree to show your nights on target to create this challenge.": "Zgódź się pokazywać swoje noce w celu, aby utworzyć to wyzwanie.",
+  "Only for people with the Sleep pillar on.": "Tylko dla osób z włączonym filarem Sen.",
+  "Turn on the Sleep pillar to join": "Włącz filar Sen, aby dołączyć",
 }

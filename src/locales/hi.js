@@ -2555,4 +2555,17 @@ export default {
   "Thursday logged": "गुरुवार: दर्ज",
   "Friday logged": "शुक्रवार: दर्ज",
   "Saturday logged": "शनिवार: दर्ज",
+  // --- sleep challenge (phase 3) ---
+  "To take part, agree to show how many nights you were on target.": "हिस्सा लेने के लिए यह दिखाने की सहमति दें कि आप कितनी रातें लक्ष्य पर रहे।",
+  "Turn on the Sleep pillar to take part in this challenge.": "इस चैलेंज में हिस्सा लेने के लिए नींद स्तंभ चालू करें।",
+  "Nights on sleep target": "नींद लक्ष्य वाली रातें",
+  "Nights in the period that each person hits their sleep target. Others only see how many, never your times or how long you slept.": "अवधि की वे रातें जब हर व्यक्ति अपने नींद लक्ष्य पर रहा। दूसरे सिर्फ़ गिनती देखते हैं, आपके समय या आप कितना सोए, यह कभी नहीं।",
+  "{0} nights on target in {1} days": "{1} दिन में लक्ष्य पर {0} रातें",
+  "1 night on target in {0} days": "{0} दिन में लक्ष्य पर 1 रात",
+  "Show participants how many nights I was on target": "प्रतिभागियों को दिखाएं कि मैं कितनी रातें लक्ष्य पर रहा",
+  "They see only that number, never your times, how long you slept or your notes.": "वे सिर्फ़ यही संख्या देखते हैं, आपके समय, नींद की अवधि या नोट्स कभी नहीं।",
+  "Turn on the Sleep pillar to create this challenge.": "यह चैलेंज बनाने के लिए नींद स्तंभ चालू करें।",
+  "Agree to show your nights on target to create this challenge.": "यह चैलेंज बनाने के लिए अपनी लक्ष्य वाली रातें दिखाने की सहमति दें।",
+  "Only for people with the Sleep pillar on.": "सिर्फ़ उनके लिए जिनका नींद स्तंभ चालू है।",
+  "Turn on the Sleep pillar to join": "जुड़ने के लिए नींद स्तंभ चालू करें",
 }

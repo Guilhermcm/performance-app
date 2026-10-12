@@ -1946,6 +1946,19 @@ export const PT_BR_OVERRIDES = {
   "Thursday logged": "Quinta-feira registrada",
   "Friday logged": "Sexta-feira registrada",
   "Saturday logged": "Sábado registrado",
+  // --- sleep challenge (phase 3) ---
+  "To take part, agree to show how many nights you were on target.": "Para participar, aceite mostrar quantas noites você ficou no alvo.",
+  "Turn on the Sleep pillar to take part in this challenge.": "Ative o pilar Sono para participar deste desafio.",
+  "Nights on sleep target": "Noites no alvo de sono",
+  "Nights in the period that each person hits their sleep target. Others only see how many, never your times or how long you slept.": "Noites do período em que cada pessoa bate o alvo de sono. Os outros só veem quantas, nunca seus horários nem quanto você dormiu.",
+  "{0} nights on target in {1} days": "{0} noites no alvo em {1} dias",
+  "1 night on target in {0} days": "1 noite no alvo em {0} dias",
+  "Show participants how many nights I was on target": "Mostrar aos participantes quantas noites fiquei no alvo",
+  "They see only that number, never your times, how long you slept or your notes.": "Eles veem só esse número, nunca seus horários, quanto você dormiu ou suas anotações.",
+  "Turn on the Sleep pillar to create this challenge.": "Ative o pilar Sono para criar este desafio.",
+  "Agree to show your nights on target to create this challenge.": "Aceite mostrar suas noites no alvo para criar este desafio.",
+  "Only for people with the Sleep pillar on.": "Só para quem está com o pilar Sono ligado.",
+  "Turn on the Sleep pillar to join": "Ative o pilar Sono para participar",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

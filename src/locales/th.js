@@ -2566,4 +2566,17 @@ export default {
   "Thursday logged": "วันพฤหัสบดี บันทึกแล้ว",
   "Friday logged": "วันศุกร์ บันทึกแล้ว",
   "Saturday logged": "วันเสาร์ บันทึกแล้ว",
+  // --- sleep challenge (phase 3) ---
+  "To take part, agree to show how many nights you were on target.": "หากต้องการเข้าร่วม ให้ยอมรับการแสดงจำนวนคืนที่คุณถึงเป้า",
+  "Turn on the Sleep pillar to take part in this challenge.": "เปิดการนอนเพื่อเข้าร่วมชาเลนจ์นี้",
+  "Nights on sleep target": "จำนวนคืนที่ถึงเป้าการนอน",
+  "Nights in the period that each person hits their sleep target. Others only see how many, never your times or how long you slept.": "คืนในช่วงเวลาที่แต่ละคนทำได้ตามเป้าการนอน คนอื่นจะเห็นแค่จำนวนคืน ไม่เห็นเวลาหรือว่าคุณนอนนานแค่ไหน",
+  "{0} nights on target in {1} days": "ถึงเป้า {0} คืนใน {1} วัน",
+  "1 night on target in {0} days": "ถึงเป้า 1 คืนใน {0} วัน",
+  "Show participants how many nights I was on target": "แสดงให้ผู้เข้าร่วมเห็นว่าฉันถึงเป้ากี่คืน",
+  "They see only that number, never your times, how long you slept or your notes.": "พวกเขาเห็นแค่ตัวเลขนี้ ไม่เห็นเวลา ระยะเวลาการนอน หรือบันทึกของคุณ",
+  "Turn on the Sleep pillar to create this challenge.": "เปิดการนอนเพื่อสร้างชาเลนจ์นี้",
+  "Agree to show your nights on target to create this challenge.": "ยอมรับการแสดงจำนวนคืนที่ถึงเป้าเพื่อสร้างชาเลนจ์นี้",
+  "Only for people with the Sleep pillar on.": "สำหรับคนที่เปิดการนอนเท่านั้น",
+  "Turn on the Sleep pillar to join": "เปิดการนอนเพื่อเข้าร่วม",
 }

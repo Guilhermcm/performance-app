@@ -2608,4 +2608,17 @@ export default {
   "Thursday logged": "الخميس: تم التسجيل",
   "Friday logged": "الجمعة: تم التسجيل",
   "Saturday logged": "السبت: تم التسجيل",
+  // --- sleep challenge (phase 3) ---
+  "To take part, agree to show how many nights you were on target.": "للمشاركة، وافق على إظهار عدد الليالي التي كنت فيها ضمن الهدف.",
+  "Turn on the Sleep pillar to take part in this challenge.": "فعّل محور النوم للمشاركة في هذا التحدي.",
+  "Nights on sleep target": "ليالٍ ضمن هدف النوم",
+  "Nights in the period that each person hits their sleep target. Others only see how many, never your times or how long you slept.": "ليالي الفترة التي يحقق فيها كل شخص هدف النوم الخاص به. يرى الآخرون العدد فقط، ولا يرون أبدًا مواعيدك أو مدة نومك.",
+  "{0} nights on target in {1} days": "{0} ليالٍ ضمن الهدف خلال {1} يومًا",
+  "1 night on target in {0} days": "ليلة واحدة ضمن الهدف خلال {0} يومًا",
+  "Show participants how many nights I was on target": "إظهار عدد الليالي التي كنت فيها ضمن الهدف للمشاركين",
+  "They see only that number, never your times, how long you slept or your notes.": "يرون هذا الرقم فقط، ولا يرون أبدًا مواعيدك أو مدة نومك أو ملاحظاتك.",
+  "Turn on the Sleep pillar to create this challenge.": "فعّل محور النوم لإنشاء هذا التحدي.",
+  "Agree to show your nights on target to create this challenge.": "وافق على إظهار لياليك ضمن الهدف لإنشاء هذا التحدي.",
+  "Only for people with the Sleep pillar on.": "فقط لمن فعّل محور النوم.",
+  "Turn on the Sleep pillar to join": "فعّل محور النوم للمشاركة",
 }

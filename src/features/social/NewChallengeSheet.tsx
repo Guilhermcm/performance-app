@@ -13,9 +13,10 @@ import { todayISO } from '../../lib/format.js'
 import { useProgress } from '../gamification/useProgress'
 import { useProfile } from '../profile/useProfile'
 import NutritionSetup from '../nutrition/NutritionSetup'
+import SleepSetup from '../sleep/SleepSetup'
 import { createChallenge, toSocialError } from './social-api'
 import { useSocial } from './useSocial'
-import { MODE_TEXT, TEMPLATE_TEXT, amountText, autoTitle, nutritionOptInText, socialErrorText } from './labels'
+import { MODE_TEXT, TEMPLATE_TEXT, amountText, autoTitle, nutritionOptInText, sleepOptInText, socialErrorText } from './labels'
 import { fmtShortDay } from './format'
 import {
   DURATIONS, MAX_INVITEES, MODES, TARGET_STEP, TEMPLATES, addDays, checkChallenge, clampTarget, nextMonday,
@@ -27,21 +28,27 @@ import { InviteButton } from './InviteButton'
 import type { ChallengeMode, ChallengeTemplate, NewChallenge } from './types'
 
 type Start = 'today' | 'monday'
+type Pillar = 'nutrition' | 'sleep'
 const NUTRITION: ChallengeTemplate = 'nutrition_days_on_target'
+const SLEEP: ChallengeTemplate = 'sleep_nights_on_target'
 const DEFAULT: ChallengeTemplate = 'checkin_days'
+// The templates that need a pillar on, and that pillar.
+const PILLAR_OF: Partial<Record<ChallengeTemplate, Pillar>> = { [NUTRITION]: 'nutrition', [SLEEP]: 'sleep' }
 
 // A challenge from a template with parameters, in one bottom sheet: what counts (training days
 // first; the workouts and total volume templates are no longer offered), format, duration and
-// start, goal (suggested until touched), who joins, the nutrition opt-in and a name that writes
-// itself until edited. The same rules as the server decide whether it can be
-// sent. With the Nutrition pillar off, the nutrition template is listed off, with a way to turn the
-// pillar on (the same setup the Nutrition tab opens); once on, it is picked.
+// start, goal (suggested until touched), who joins, the nutrition or sleep opt-in and a name that
+// writes itself until edited. The same rules as the server decide whether it can be sent. With
+// the Nutrition (or Sleep) pillar off, its template is listed off, with a way to turn the pillar on
+// (the same setup the pillar's own screen opens); once on, it is picked.
 export default function NewChallengeSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const navigate = useNavigate()
   const friends = useSocial(s => s.friends.data) ?? []
   const weeklyWorkouts = useProgress(s => s.progress?.week.target ?? 3)
   const nutritionOn = useProfile(s => s.profile?.nutrition_enabled ?? false)
   const weeklyDays = useProfile(s => s.profile?.nutrition_days_per_week ?? 5)
+  const sleepOn = useProfile(s => s.profile?.sleep_enabled ?? false)
+  const weeklyNights = useProfile(s => s.profile?.sleep_nights_per_week ?? 5)
   const today = todayISO()
   const [template, setTemplate] = useState<ChallengeTemplate>(DEFAULT)
   const [mode, setMode] = useState<ChallengeMode>('team')
@@ -51,43 +58,49 @@ export default function NewChallengeSheet({ open, onClose }: { open: boolean; on
   const [target, setTarget] = useState<number | null>(null)
   const [title, setTitle] = useState<string | null>(null)
   const [shareNutrition, setShareNutrition] = useState(false)
-  const [setupOpen, setSetupOpen] = useState(false)
-  // Asked for the pillar from here: the nutrition template is picked once it is on.
-  const [wantNutrition, setWantNutrition] = useState(false)
+  const [shareSleep, setShareSleep] = useState(false)
+  const [setup, setSetup] = useState<Pillar | null>(null)
+  // Asked for a pillar from here: its template is picked once it is on.
+  const [want, setWant] = useState<Pillar | null>(null)
   const [busy, setBusy] = useState(false)
+  const pillarOn = (p: Pillar) => (p === 'nutrition' ? nutritionOn : sleepOn)
 
   useEffect(() => {
     if (!open) return
     setTemplate(DEFAULT); setMode('team'); setDays(30); setStart('today')
-    setPicked([]); setTarget(null); setTitle(null); setShareNutrition(false)
-    setWantNutrition(false)
+    setPicked([]); setTarget(null); setTitle(null); setShareNutrition(false); setShareSleep(false)
+    setWant(null)
   }, [open])
   useEffect(() => {
-    if (!nutritionOn || !wantNutrition) return
-    setWantNutrition(false); setTemplate(NUTRITION); setTarget(null)
-  }, [nutritionOn, wantNutrition])
+    if (want === 'nutrition' && nutritionOn) { setWant(null); setTemplate(NUTRITION); setTarget(null) }
+    if (want === 'sleep' && sleepOn) { setWant(null); setTemplate(SLEEP); setTarget(null) }
+  }, [nutritionOn, sleepOn, want])
 
   const effMode: ChallengeMode = MODES[template].includes(mode) ? mode : 'solo'
   const startsOn = start === 'today' ? today : nextMonday(today)
   const endsOn = addDays(startsOn, days - 1)
   const range = targetRange(template, startsOn, endsOn, effMode, picked.length)
-  const weekly = template === NUTRITION ? weeklyDays : weeklyWorkouts
+  const weekly = template === NUTRITION ? weeklyDays : template === SLEEP ? weeklyNights : weeklyWorkouts
   const goal = target === null
     ? suggestedTarget(template, effMode, startsOn, endsOn, weekly, picked.length + 1)
     : clampTarget(target, range)
   const name = title ?? autoTitle(template, goal, days)
   const draft: NewChallenge = {
     template, title: name, mode: effMode, target: goal, starts_on: startsOn, ends_on: endsOn,
-    invitees: picked, share_volume: false, share_nutrition: shareNutrition
+    invitees: picked, share_volume: false, share_nutrition: shareNutrition, share_sleep: template === SLEEP && shareSleep
   }
-  const problem = checkChallenge(draft, today, { nutritionOn })
+  const problem = checkChallenge(draft, today, { nutritionOn, sleepOn })
   // Why the button is off, shown before anyone taps it.
   const hint = problem === 'title' ? t('Give the challenge a name.')
     : problem === 'invitees' ? (friends.length === 0 ? t('Add a friend to create challenges.') : t('Pick at least one friend.'))
     : problem === 'nutrition_off' ? t('Turn on the Nutrition pillar to create this challenge.')
     : problem === 'nutrition' ? t('Agree to show your days on target to create this challenge.')
+    : problem === 'sleep_off' ? t('Turn on the Sleep pillar to create this challenge.')
+    : problem === 'sleep' ? t('Agree to show your nights on target to create this challenge.')
     : ''
-  const optIn = nutritionOptInText()
+  const optIn = template === SLEEP
+    ? { id: 'share-sleep', text: sleepOptInText(), on: shareSleep, set: setShareSleep }
+    : { id: 'share-nutrition', text: nutritionOptInText(), on: shareNutrition, set: setShareNutrition }
 
   // A new shape gets a new suggested goal.
   const reshape = (change: () => void) => { change(); setTarget(null) }
@@ -125,9 +138,11 @@ export default function NewChallengeSheet({ open, onClose }: { open: boolean; on
                 const tx = TEMPLATE_TEXT[k]
                 const Icon = tx.icon
                 const on = k === template
-                const off = k === NUTRITION && !nutritionOn
+                const pillar = PILLAR_OF[k]
+                const off = !!pillar && !pillarOn(pillar)
+                const why = `${pillar}-off-why`
                 const radio = (
-                  <button key={k} type="button" role="radio" aria-checked={on} disabled={off} aria-describedby={off ? 'nutrition-off-why' : undefined}
+                  <button key={k} type="button" role="radio" aria-checked={on} disabled={off} aria-describedby={off ? why : undefined}
                     onClick={() => reshape(() => setTemplate(k))}
                     className={cn('flex min-h-16 w-full items-start gap-3 rounded-2xl border p-3 text-left outline-none transition-colors duration-150 focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed',
                       on ? 'border-primary bg-primary/10' : off ? 'border-transparent' : 'border-border bg-card')}>
@@ -147,9 +162,11 @@ export default function NewChallengeSheet({ open, onClose }: { open: boolean; on
                   <div key={k} className="rounded-2xl border border-dashed border-border">
                     {radio}
                     <div className="flex items-center gap-3 px-3 pb-3">
-                      <p id="nutrition-off-why" className="flex-1 text-xs leading-snug text-muted-foreground">{t('Only for people with the Nutrition pillar on.')}</p>
-                      <Button variant="outline" className="h-11 shrink-0 rounded-xl" onClick={() => { setWantNutrition(true); setSetupOpen(true) }}>
-                        {t('Turn on Nutrition')}
+                      <p id={why} className="flex-1 text-xs leading-snug text-muted-foreground">
+                        {pillar === 'sleep' ? t('Only for people with the Sleep pillar on.') : t('Only for people with the Nutrition pillar on.')}
+                      </p>
+                      <Button variant="outline" className="h-11 shrink-0 rounded-xl" onClick={() => { setWant(pillar); setSetup(pillar) }}>
+                        {pillar === 'sleep' ? t('Turn on Sleep') : t('Turn on Nutrition')}
                       </Button>
                     </div>
                   </div>
@@ -158,13 +175,13 @@ export default function NewChallengeSheet({ open, onClose }: { open: boolean; on
             </div>
           </Field>
 
-          {template === NUTRITION && (
+          {PILLAR_OF[template] && (
             <div className="flex items-start gap-3 rounded-2xl border border-border p-3">
-              <label htmlFor="share-nutrition" className="flex-1 cursor-pointer">
-                <span className="block text-[15px] font-medium">{optIn.label}</span>
-                <span className="block text-xs leading-snug text-muted-foreground">{optIn.detail}</span>
+              <label htmlFor={optIn.id} className="flex-1 cursor-pointer">
+                <span className="block text-[15px] font-medium">{optIn.text.label}</span>
+                <span className="block text-xs leading-snug text-muted-foreground">{optIn.text.detail}</span>
               </label>
-              <Switch id="share-nutrition" checked={shareNutrition} onCheckedChange={setShareNutrition} />
+              <Switch key={optIn.id} id={optIn.id} checked={optIn.on} onCheckedChange={optIn.set} />
             </div>
           )}
 
@@ -239,7 +256,14 @@ export default function NewChallengeSheet({ open, onClose }: { open: boolean; on
           </Button>
         </DrawerFooter>
       </DrawerContent>
-      <NutritionSetup open={setupOpen} onOpenChange={o => { setSetupOpen(o); if (!o && !useProfile.getState().profile?.nutrition_enabled) setWantNutrition(false) }} />
+      <NutritionSetup open={setup === 'nutrition'} onOpenChange={o => {
+        setSetup(o ? 'nutrition' : null)
+        if (!o && !useProfile.getState().profile?.nutrition_enabled) setWant(null)
+      }} />
+      <SleepSetup open={setup === 'sleep'} onOpenChange={o => {
+        setSetup(o ? 'sleep' : null)
+        if (!o && !useProfile.getState().profile?.sleep_enabled) setWant(null)
+      }} />
     </Drawer>
   )
 }

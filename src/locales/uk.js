@@ -2603,4 +2603,17 @@ export default {
   "Thursday logged": "Четвер: записано",
   "Friday logged": "П'ятниця: записано",
   "Saturday logged": "Субота: записано",
+  // --- sleep challenge (phase 3) ---
+  "To take part, agree to show how many nights you were on target.": "Щоб узяти участь, дозвольте показувати, скільки ночей ви були в цілі.",
+  "Turn on the Sleep pillar to take part in this challenge.": "Увімкніть напрям «Сон», щоб узяти участь у цьому челенджі.",
+  "Nights on sleep target": "Ночі в цілі зі сну",
+  "Nights in the period that each person hits their sleep target. Others only see how many, never your times or how long you slept.": "Ночі періоду, коли кожен влучає у свою ціль зі сну. Інші бачать лише кількість, але ніколи не бачать ваш час чи скільки ви спали.",
+  "{0} nights on target in {1} days": "Ночей у цілі: {0} за {1} дн.",
+  "1 night on target in {0} days": "Ночей у цілі: 1 за {0} дн.",
+  "Show participants how many nights I was on target": "Показувати учасникам, скільки ночей я був у цілі",
+  "They see only that number, never your times, how long you slept or your notes.": "Вони бачать лише це число, але не ваш час, тривалість сну чи нотатки.",
+  "Turn on the Sleep pillar to create this challenge.": "Увімкніть напрям «Сон», щоб створити цей челендж.",
+  "Agree to show your nights on target to create this challenge.": "Дозвольте показувати ваші ночі в цілі, щоб створити цей челендж.",
+  "Only for people with the Sleep pillar on.": "Лише для тих, у кого увімкнено сон.",
+  "Turn on the Sleep pillar to join": "Увімкніть «Сон», щоб приєднатися",
 }

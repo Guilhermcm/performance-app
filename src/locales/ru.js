@@ -2606,4 +2606,17 @@ export default {
   "Thursday logged": "Четверг: записано",
   "Friday logged": "Пятница: записано",
   "Saturday logged": "Суббота: записано",
+  // --- sleep challenge (phase 3) ---
+  "To take part, agree to show how many nights you were on target.": "Чтобы участвовать, разрешите показывать, сколько ночей вы были в цели.",
+  "Turn on the Sleep pillar to take part in this challenge.": "Включите направление «Сон», чтобы участвовать в этом челлендже.",
+  "Nights on sleep target": "Ночи в цели по сну",
+  "Nights in the period that each person hits their sleep target. Others only see how many, never your times or how long you slept.": "Ночи периода, когда каждый попадает в свою цель по сну. Другие видят только количество, но никогда не видят ваше время или сколько вы спали.",
+  "{0} nights on target in {1} days": "Ночей в цели: {0} за {1} дн.",
+  "1 night on target in {0} days": "Ночей в цели: 1 за {0} дн.",
+  "Show participants how many nights I was on target": "Показывать участникам, сколько ночей я был в цели",
+  "They see only that number, never your times, how long you slept or your notes.": "Они видят только это число, но не ваше время, длительность сна или заметки.",
+  "Turn on the Sleep pillar to create this challenge.": "Включите направление «Сон», чтобы создать этот челлендж.",
+  "Agree to show your nights on target to create this challenge.": "Разрешите показывать ваши ночи в цели, чтобы создать этот челлендж.",
+  "Only for people with the Sleep pillar on.": "Только для тех, у кого включён сон.",
+  "Turn on the Sleep pillar to join": "Включите «Сон», чтобы участвовать",
 }
