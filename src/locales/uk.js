@@ -667,6 +667,8 @@ export default {
   '{0} days a week|many': '{0} днів на тиждень',
   '{0} min': '{0} хв',
   '{0}h {1}m': '{0} год {1} хв',
+  '{0}h': '{0} год',
+  '{0}h {1}': '{0} год {1}',
   'The Coach is on': 'Тренер увімкнений',
   'Before the Coach starts': 'Перш ніж Тренер почне',
   'When you ask for a plan or a review, this instance sends the following to {0}, running on this server under the instance owner’s account.': 'Коли ти запитуєш план чи розбір, цей сервер надсилає наведене нижче в {0}, що працює тут під обліковим записом власника сервера.',

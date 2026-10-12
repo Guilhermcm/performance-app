@@ -841,6 +841,8 @@ export default {
   '{0} days a week': '{0} jours par semaine',
   '{0} min': '{0} min',
   '{0}h {1}m': '{0} h {1} min',
+  '{0}h': '{0} h',
+  '{0}h {1}': '{0} h {1}',
   'The Coach is on': 'Coach activé',
   'Before the Coach starts': 'Avant de commencer',
   'When you ask for a plan or a review, this instance sends the following to {0}, running on this server under the instance owner’s account.': 'Quand vous demandez un plan ou un bilan, cette instance envoie ce qui suit à {0}, qui tourne sur ce serveur avec le compte du propriétaire.',

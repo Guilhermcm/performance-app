@@ -5,6 +5,8 @@ import training from '../../../supabase/tests/fixtures/training-scenarios.json'
 import {
   nutritionWeekAwards, levelFor, replay, sessionXp, streakAfter, weekStartOf, WEEK_MAX, TRAINING_WEEK_MAX, type XpEvent
 } from './xp'
+import sleep from '../../../supabase/tests/fixtures/sleep-scenarios.json'
+import { sleepWeekAwards } from './xp'
 
 describe('xp rules (client mirror)', () => {
   it.each(fixture.levels)('levelFor($xp)', l => {
@@ -80,5 +82,13 @@ describe('xp rules (client mirror)', () => {
     ]
     expect(replay(events, () => 3).map(a => a.reason)).toEqual(['workout', 'pr', 'weight'])
     expect(replay(events, () => 3, null).map(a => a.reason)).toEqual(['workout', 'pr', 'weight'])
+  })
+})
+
+describe('sleep xp rules (client mirror)', () => {
+  it.each(sleep.weeks)('sleep: $name', w => {
+    const awards = sleepWeekAwards(w.nights, w.target)
+    expect(awards).toEqual(w.awards)
+    expect(awards.reduce((n, a) => n + a.amount, 0)).toBe(w.total)
   })
 })

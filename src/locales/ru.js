@@ -853,6 +853,8 @@ export default {
   '{0} days a week|many': '{0} дней в неделю',
   '{0} min': '{0} мин',
   '{0}h {1}m': '{0} ч {1} мин',
+  '{0}h': '{0} ч',
+  '{0}h {1}': '{0} ч {1}',
   'The Coach is on': 'Тренер включён',
   'Before the Coach starts': 'Прежде чем Тренер начнёт',
   'When you ask for a plan or a review, this instance sends the following to {0}, running on this server under the instance owner’s account.': 'Когда вы запрашиваете план или разбор, этот сервер отправляет следующее в {0}, работающий здесь под учётной записью владельца.',

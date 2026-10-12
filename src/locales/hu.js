@@ -1007,6 +1007,8 @@ export default {
   '{0} days a week': 'Heti {0} nap',
   '{0} min': '{0} perc',
   '{0}h {1}m': '{0} ó {1} perc',
+  '{0}h': '{0} ó',
+  '{0}h {1}': '{0} ó {1}',
   'The Coach is on': 'Az Edző be van kapcsolva',
   'Before the Coach starts': 'Mielőtt az Edző elindul',
   'When you ask for a plan or a review, this instance sends the following to {0}, running on this server under the instance owner’s account.': 'Amikor tervet vagy áttekintést kérsz, ez a példány a következőket küldi el ide: {0}, ezen a szerveren, a példány tulajdonosának fiókjával.',

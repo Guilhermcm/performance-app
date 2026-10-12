@@ -1831,6 +1831,8 @@ export const PT_BR_OVERRIDES = {
   "Meet your weekly sleep goal {0} weeks in a row.": "Cumpra a meta semanal de sono {0} semanas seguidas.",
   "Clock on time": "Relógio em dia",
   "Go to bed within 30 minutes of your bedtime 7 nights in a row.": "Deite até 30 minutos antes ou depois do seu horário por 7 noites seguidas.",
+  "{0}h": "{0}h",
+  "{0}h {1}": "{0}h {1}",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

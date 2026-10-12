@@ -841,6 +841,8 @@ export default {
   '{0} days a week': '每周 {0} 天',
   '{0} min': '{0} 分钟',
   '{0}h {1}m': '{0} 小时 {1} 分钟',
+  '{0}h': '{0} 小时',
+  '{0}h {1}': '{0} 小时 {1}',
   'The Coach is on': '教练已开启',
   'Before the Coach starts': '在教练开始之前',
   'When you ask for a plan or a review, this instance sends the following to {0}, running on this server under the instance owner’s account.': '当你请求计划或复盘时，本实例会将以下内容发送给 {0}——它在本服务器上以实例所有者的账号运行。',
