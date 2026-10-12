@@ -11,6 +11,7 @@ import type { Profile } from '../profile/types'
 import { shiftDay } from '../nutrition/days'
 import { useLocalNow } from './use-local-now'
 import { useSleep } from './useSleep'
+import { fetchTargets } from './sleep-api'
 import { fmtClock, fmtDuration, shiftClock } from './time'
 import { BED_SLACK_MIN, GOAL_SLACK_MIN } from './classify'
 
@@ -54,8 +55,11 @@ function SetupBody({ profile, onDone }: { profile: Profile; onDone: () => void }
   const tomorrow = shiftDay(today, 1)
   // Any goal row at all, in force or not: only the very first one may start today (server policy).
   const hasTarget = useSleep(s => s.targets.length > 0)
-  // "No goal yet" only means that once the goals have loaded, so the button waits for them.
+  // "No goal yet" only means that once the goals have loaded. The button never waits for them (a
+  // failed pull left it stuck on "Loading your targets"): when the store is not ready, or only
+  // holds a saved copy that may be out of date, finishing asks the server for the goals directly.
   const loaded = useSleep(s => s.status === 'ready')
+  const stale = useSleep(s => s.stale)
   useEffect(() => {
     // A failed or idle first load is tried again when the sheet opens.
     const st = useSleep.getState().status
@@ -70,11 +74,22 @@ function SetupBody({ profile, onDone }: { profile: Profile; onDone: () => void }
 
   const targetChanged = !ahead || ahead.goal_min !== goal || ahead.bed_target !== bed
   const nightsChanged = nights !== profile.sleep_nights_per_week
-  const canGo = loaded && !busy
+  const canGo = !busy
 
   const finish = async () => {
     if (!canGo) return
     setBusy(true)
+    // Whether any goal exists decides today or tomorrow; asked before anything is written.
+    let anyTarget = hasTarget
+    if (!loaded || stale) {
+      try {
+        anyTarget = (await fetchTargets()).length > 0
+      } catch {
+        toast(t('Could not save the target. Check your connection and try again.'))
+        setBusy(false)
+        return
+      }
+    }
     try {
       if (activating || nightsChanged) {
         await save({ ...(activating ? { sleep_enabled: true } : {}), sleep_nights_per_week: nights })
@@ -86,7 +101,7 @@ function SetupBody({ profile, onDone }: { profile: Profile; onDone: () => void }
     }
     // The first goal ever (or one that never got saved) starts today; every later one tomorrow,
     // also when the pillar is turned back on. A goal that is already the one in force writes nothing.
-    const from = hasTarget ? tomorrow : today
+    const from = anyTarget ? tomorrow : today
     const changed = from === today || targetChanged
     try {
       if (changed) await useSleep.getState().setTarget({ goal_min: goal, bed_target: bed }, from)
@@ -120,7 +135,7 @@ function SetupBody({ profile, onDone }: { profile: Profile; onDone: () => void }
           {t('On target: at least {0} of sleep and in bed within {1} minutes of {2}.', fmtDuration(goal - GOAL_SLACK_MIN), BED_SLACK_MIN, fmtClock(bed))}
         </p>
 
-        {!activating && hasTarget && targetChanged && (
+        {hasTarget && targetChanged && (
           <p role="status" className="rounded-2xl bg-secondary/70 p-3 text-sm leading-snug">{t('Starts tomorrow')}</p>
         )}
 
@@ -142,7 +157,7 @@ function SetupBody({ profile, onDone }: { profile: Profile; onDone: () => void }
 
       <DrawerFooter className="flex-row gap-2 border-t border-border pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <Button type="submit" form="sleep-setup" className="h-12 flex-1 rounded-xl text-[15px] font-semibold" disabled={!canGo}>
-          {!loaded ? t('Loading your targets') : busy ? t('Saving…') : activating ? t('Turn on Sleep') : t('Save')}
+          {busy ? t('Saving…') : activating ? t('Turn on Sleep') : t('Save')}
         </Button>
       </DrawerFooter>
     </>

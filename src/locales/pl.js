@@ -2095,7 +2095,6 @@ export default {
   "Looking up the product…": "Szukam produktu…",
   "Last time ({0})": "Ostatnio ({0})",
   "Days older than two weeks need a connection.": "Dni starsze niż dwa tygodnie wymagają połączenia.",
-  "Loading your targets": "Wczytywanie Twoich celów",
   "Days older than two weeks could not be loaded.": "Nie udało się wczytać dni starszych niż dwa tygodnie.",
   "Pillars": "Filary",
   "Sleep": "Sen",

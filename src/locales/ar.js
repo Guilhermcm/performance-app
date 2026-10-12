@@ -2122,7 +2122,6 @@ export default {
   "Looking up the product…": "جارٍ البحث عن المنتج…",
   "Last time ({0})": "آخر مرة ({0})",
   "Days older than two weeks need a connection.": "الأيام الأقدم من أسبوعين تحتاج إلى اتصال.",
-  "Loading your targets": "جارٍ تحميل أهدافك",
   "Days older than two weeks could not be loaded.": "تعذّر تحميل الأيام الأقدم من أسبوعين.",
   "Pillars": "الركائز",
   "Sleep": "النوم",

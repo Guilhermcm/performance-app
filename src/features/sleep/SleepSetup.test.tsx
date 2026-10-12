@@ -2,8 +2,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react'
 
-const h = vi.hoisted(() => ({ toast: vi.fn() }))
+const h = vi.hoisted(() => ({ toast: vi.fn(), fetchTargets: vi.fn() }))
 vi.mock('sonner', () => ({ toast: h.toast }))
+vi.mock('./sleep-api', async orig => ({ ...(await orig<typeof import('./sleep-api')>()), fetchTargets: h.fetchTargets }))
 vi.mock('@/components/ui/drawer', () => import('../social/test-drawer'))
 
 import SleepSetup from './SleepSetup'
@@ -28,11 +29,11 @@ const choose = (name: string) => fireEvent.click(screen.getByRole('radio', { nam
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(new Date('2026-10-06T15:00:00Z'))
-  ;[save, setTarget, refresh, onOpenChange, h.toast].forEach(f => f.mockReset())
+  ;[save, setTarget, refresh, onOpenChange, h.toast, h.fetchTargets].forEach(f => f.mockReset())
   save.mockImplementation(async (patch: object) => ({ ...useProfile.getState().profile, ...patch }))
   setTarget.mockResolvedValue(undefined)
   refresh.mockResolvedValue(undefined)
-  useSleep.setState({ setTarget, refresh, targets: [], status: 'ready' })
+  useSleep.setState({ setTarget, refresh, targets: [], status: 'ready', stale: false })
 })
 afterEach(() => { cleanup(); vi.useRealTimers(); useProfile.setState(realProfile); useSleep.setState(realSleep) })
 
@@ -75,13 +76,61 @@ describe('SleepSetup', () => {
     expect(screen.getByText(/^23:45/)).toBeTruthy()
   })
 
-  it('waits for the targets to load before turning on', () => {
+  it('never waits for the targets to load: the server decides today or tomorrow', async () => {
+    for (const status of ['idle', 'loading', 'error'] as const) {
+      withProfile()
+      useSleep.setState({ status, targets: [] })
+      h.fetchTargets.mockResolvedValue([])
+      show()
+      expect(screen.queryByRole('button', { name: 'Loading your targets' })).toBeNull()
+      expect(button('Turn on Sleep').disabled).toBe(false)
+      click('Turn on Sleep')
+      await waitFor(() => expect(setTarget).toHaveBeenCalledTimes(1))
+      // The server has no goal at all: the first one starts today.
+      expect(setTarget.mock.calls[0][1]).toBe('2026-10-06')
+      setTarget.mockClear(); save.mockClear()
+      cleanup()
+    }
     withProfile()
-    useSleep.setState({ status: 'loading' })
+    useSleep.setState({ status: 'error', targets: [] })
+    h.fetchTargets.mockResolvedValue([targetOf({ valid_from: '2026-09-01' })])
     show()
-    const b = button('Loading your targets')
-    expect(b.disabled).toBe(true)
-    expect(screen.queryByRole('button', { name: 'Turn on Sleep' })).toBeNull()
+    click('Turn on Sleep')
+    await waitFor(() => expect(setTarget).toHaveBeenCalledTimes(1))
+    // The server already has one: this one starts tomorrow.
+    expect(setTarget.mock.calls[0][1]).toBe('2026-10-07')
+  })
+
+  it('asks the server when the store only holds a saved copy', async () => {
+    withProfile()
+    useSleep.setState({ status: 'ready', stale: true, targets: [] })
+    h.fetchTargets.mockResolvedValue([targetOf({ valid_from: '2026-09-01' })])
+    show()
+    click('Turn on Sleep')
+    await waitFor(() => expect(setTarget).toHaveBeenCalledTimes(1))
+    expect(h.fetchTargets).toHaveBeenCalledTimes(1)
+    expect(setTarget.mock.calls[0][1]).toBe('2026-10-07')
+  })
+
+  it('asks nothing of the server when the store is fresh', async () => {
+    withProfile()
+    show()
+    click('Turn on Sleep')
+    await waitFor(() => expect(setTarget).toHaveBeenCalledTimes(1))
+    expect(h.fetchTargets).not.toHaveBeenCalled()
+  })
+
+  it('writes nothing and says so when the targets cannot be read', async () => {
+    withProfile()
+    useSleep.setState({ status: 'error', targets: [] })
+    h.fetchTargets.mockRejectedValue(new Error('offline'))
+    show()
+    click('Turn on Sleep')
+    await waitFor(() => expect(h.toast).toHaveBeenCalledWith('Could not save the target. Check your connection and try again.'))
+    expect(save).not.toHaveBeenCalled()
+    expect(setTarget).not.toHaveBeenCalled()
+    expect(onOpenChange).not.toHaveBeenCalled()
+    expect(button('Turn on Sleep').disabled).toBe(false)
   })
 
   it('tries the pull again when the store has not loaded', () => {
@@ -116,6 +165,17 @@ describe('SleepSetup', () => {
     await waitFor(() => expect(save).toHaveBeenCalledWith({ sleep_enabled: true, sleep_nights_per_week: 5 }))
     // The goal in force from tomorrow is the same one: nothing to write.
     expect(setTarget).not.toHaveBeenCalled()
+  })
+
+  it('says a changed goal starts tomorrow also when turning the pillar back on', async () => {
+    withProfile()
+    useSleep.setState({ targets: [targetOf({ valid_from: '2026-09-01', goal_min: 450, bed_target: '23:30' })] })
+    show()
+    expect(screen.queryByText('Starts tomorrow')).toBeNull()
+    click('Sleep 15 minutes more')
+    expect(screen.getByText('Starts tomorrow')).toBeTruthy()
+    click('Turn on Sleep')
+    await waitFor(() => expect(setTarget).toHaveBeenCalledWith({ goal_min: 465, bed_target: '23:30' }, '2026-10-07'))
   })
 
   it('keeps the form and says so when the goal could not be saved', async () => {

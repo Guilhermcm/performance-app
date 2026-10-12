@@ -304,31 +304,33 @@ export default function ProfileScreen() {
 // "81,5 kg" in Portuguese, "81.5 kg" in English: the number in the app language's own format.
 const num = (n: number | null, unit: string) => (n == null ? null : Number(n).toLocaleString(dateLocale(), { maximumFractionDigits: 1 }) + ' ' + unit)
 
+// One label and value line of a summary list; an empty value shows a placeholder.
+const detailRow = (label: string, value: ReactNode) => (
+  <div key={label} className="flex min-h-11 items-center justify-between gap-4 py-2 text-[15px]">
+    <dt className="text-muted-foreground">{label}</dt>
+    <dd className="text-right font-medium tabular-nums">{value ?? '—'}</dd>
+  </div>
+)
+
 function Summary({ section, profile }: { section: SectionKey; profile: Profile }) {
-  const row = (label: string, value: ReactNode) => (
-    <div key={label} className="flex min-h-11 items-center justify-between gap-4 py-2 text-[15px]">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd className="text-right font-medium tabular-nums">{value ?? '—'}</dd>
-    </div>
-  )
   const list = (rows: ReactNode[]) => <dl className="divide-y divide-border">{rows}</dl>
   if (section === 'body') {
     const born = profile.birth_date
       ? new Date(profile.birth_date + 'T00:00:00').toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short', year: 'numeric' })
       : null
     return list([
-      row(t('Height (cm)'), num(profile.height_cm, 'cm')),
-      row(t('Weight (kg)'), num(profile.weight_kg, 'kg')),
-      row(t('Birth date'), born),
-      row(t('Sex'), profile.sex && SEX_LABEL[profile.sex]()),
-      row(t('Units'), <span className="font-mono">{profile.unit}</span>)
+      detailRow(t('Height (cm)'), num(profile.height_cm, 'cm')),
+      detailRow(t('Weight (kg)'), num(profile.weight_kg, 'kg')),
+      detailRow(t('Birth date'), born),
+      detailRow(t('Sex'), profile.sex && SEX_LABEL[profile.sex]()),
+      detailRow(t('Units'), <span className="font-mono">{profile.unit}</span>)
     ])
   }
   if (section === 'goal') {
     return list([
-      row(t('Main goal'), profile.goal && GOAL_LABEL[profile.goal]()),
-      row(t('Experience'), profile.level && LEVEL_LABEL[profile.level]()),
-      row(t('Training days per week'), profile.days_per_week)
+      detailRow(t('Main goal'), profile.goal && GOAL_LABEL[profile.goal]()),
+      detailRow(t('Experience'), profile.level && LEVEL_LABEL[profile.level]()),
+      detailRow(t('Training days per week'), profile.days_per_week)
     ])
   }
   if (!profile.equipment.length) return <p className="py-2 text-[15px] leading-snug text-muted-foreground">{t('Nothing selected — every exercise is shown.')}</p>
@@ -347,12 +349,6 @@ function NutritionCard({ profile, onToggle, onEdit }: { profile: Profile; onTogg
   const target = useNutrition(s => s.targetOn(todayIn(profile.timezone)))
   const on = profile.nutrition_enabled
   const title = t('Nutrition')
-  const row = (label: string, value: ReactNode) => (
-    <div key={label} className="flex min-h-11 items-center justify-between gap-4 py-2 text-[15px]">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd className="text-right font-medium tabular-nums">{value ?? '—'}</dd>
-    </div>
-  )
   return (
     <section data-slot="card" aria-labelledby="sec-nutrition" className="rounded-2xl border border-border bg-card px-5 pb-4 pt-3">
       <div className="flex min-h-11 items-center justify-between gap-3">
@@ -370,12 +366,12 @@ function NutritionCard({ profile, onToggle, onEdit }: { profile: Profile; onTogg
       </div>
       {on ? (
         <dl className="divide-y divide-border">
-          {row(t('Daily target'), target && <span className="font-mono">{fmtKcal(target.kcal)}</span>)}
-          {target && row(t('Protein'), <span className="font-mono">{fmtGrams(target.protein_g)}</span>)}
-          {target && row(t('Carbs'), <span className="font-mono">{fmtGrams(target.carbs_g)}</span>)}
-          {target && row(t('Fat'), <span className="font-mono">{fmtGrams(target.fat_g)}</span>)}
-          {row(t('Activity outside training'), profile.activity_level && ACTIVITY_LABEL[profile.activity_level].name())}
-          {row(t('Days on target per week'), <span className="font-mono">{profile.nutrition_days_per_week}</span>)}
+          {detailRow(t('Daily target'), target && <span className="font-mono">{fmtKcal(target.kcal)}</span>)}
+          {target && detailRow(t('Protein'), <span className="font-mono">{fmtGrams(target.protein_g)}</span>)}
+          {target && detailRow(t('Carbs'), <span className="font-mono">{fmtGrams(target.carbs_g)}</span>)}
+          {target && detailRow(t('Fat'), <span className="font-mono">{fmtGrams(target.fat_g)}</span>)}
+          {detailRow(t('Activity outside training'), profile.activity_level && ACTIVITY_LABEL[profile.activity_level].name())}
+          {detailRow(t('Days on target per week'), <span className="font-mono">{profile.nutrition_days_per_week}</span>)}
         </dl>
       ) : (
         <p className="pb-1 text-sm leading-snug text-muted-foreground">
@@ -396,12 +392,6 @@ function SleepCard({ profile, asking, onToggle, onEdit, onCancelOff, onConfirmOf
   const target = useSleep(s => s.targetOn(today))
   const on = profile.sleep_enabled
   const title = t('Sleep')
-  const row = (label: string, value: ReactNode) => (
-    <div key={label} className="flex min-h-11 items-center justify-between gap-4 py-2 text-[15px]">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd className="text-right font-medium tabular-nums">{value ?? '—'}</dd>
-    </div>
-  )
   return (
     <section data-slot="card" aria-labelledby="sec-sleep" className="rounded-2xl border border-border bg-card px-5 pb-4 pt-3">
       <div className="flex min-h-11 items-center justify-between gap-3">
@@ -420,9 +410,9 @@ function SleepCard({ profile, asking, onToggle, onEdit, onCancelOff, onConfirmOf
       {on ? (
         <>
           <dl className="divide-y divide-border">
-            {row(t('Sleep goal'), target && <span className="font-mono">{fmtDuration(target.goal_min)}</span>)}
-            {row(t('Bedtime'), target && <span className="font-mono">{fmtClock(target.bed_target)}</span>)}
-            {row(t('Nights on target per week'), <span className="font-mono">{profile.sleep_nights_per_week}</span>)}
+            {detailRow(t('Sleep goal'), target && <span className="font-mono">{fmtDuration(target.goal_min)}</span>)}
+            {detailRow(t('Bedtime'), target && <span className="font-mono">{fmtClock(target.bed_target)}</span>)}
+            {detailRow(t('Nights on target per week'), <span className="font-mono">{profile.sleep_nights_per_week}</span>)}
           </dl>
           {asking ? (
             <div role="alertdialog" aria-labelledby="sleep-off-question" aria-describedby="sleep-off-hint" className="mt-2 flex flex-col gap-3 rounded-2xl bg-secondary/70 p-4">

@@ -2096,7 +2096,6 @@ export default {
   "Looking up the product…": "Ищем продукт…",
   "Last time ({0})": "В прошлый раз ({0})",
   "Days older than two weeks need a connection.": "Для дней старше двух недель нужно подключение.",
-  "Loading your targets": "Загружаем ваши цели",
   "Days older than two weeks could not be loaded.": "Не удалось загрузить дни старше двух недель.",
   "Pillars": "Опоры",
   "Sleep": "Сон",

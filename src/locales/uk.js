@@ -2093,7 +2093,6 @@ export default {
   "Looking up the product…": "Шукаємо продукт…",
   "Last time ({0})": "Минулого разу ({0})",
   "Days older than two weeks need a connection.": "Для днів, старших за два тижні, потрібне з’єднання.",
-  "Loading your targets": "Завантажуємо ваші цілі",
   "Days older than two weeks could not be loaded.": "Не вдалося завантажити дні, старші за два тижні.",
   "Pillars": "Опори",
   "Sleep": "Сон",
