@@ -1,7 +1,7 @@
 # performance-app: Design da Fase 4, Hábitos e trackers
 
 - **Data:** 2026-10-15
-- **Status:** design aprovado por seções em 2026-10-15; spec em revisão.
+- **Status:** design aprovado por seções e spec aprovada em 2026-10-15.
 - **Roadmap:** [docs/ROADMAP.md](../../ROADMAP.md), Fase 4
 - **Base:** [spec do Sono](2026-10-06-fase-3-sono-design.md) (molde mais recente do pilar: períodos,
   fechamento em D+2, XP no servidor, streak, conquistas privadas, radar, fila offline compartilhada,
