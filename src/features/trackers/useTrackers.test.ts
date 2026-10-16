@@ -12,7 +12,7 @@ import { trackersOutbox } from './outbox'
 import { toTrackerError } from './trackers-api'
 import { useProfile } from '../profile/useProfile'
 import { ME, OTHER, T1, T2, trackerOf, entryOf } from './test-trackers'
-import type { TrackerEntry } from './types'
+import type { Tracker, TrackerEntry } from './types'
 
 // 12:00 in Sao Paulo (the zone used without a profile) on Friday 2026-10-16; the window starts 89 days before.
 const NOW = new Date('2026-10-16T15:00:00Z')
@@ -263,6 +263,65 @@ describe('useTrackers', () => {
     // What the server has stays on screen.
     expect(useTrackers.getState().trackers[1]).toEqual(mood)
     expect(useTrackers.getState().droppedNotice).not.toBeNull()
+  })
+
+  // A label tracker on the server whose option b has entries older than the window: removing b is refused.
+  const moodOf = (over: Partial<Tracker> = {}) => trackerOf({ id: T2, name: 'Mood', icon: 'smile', kind: 'label', unit: null, decimals: null,
+    aggregate: null, sort: 1, options: [{ id: 'a', text: 'good' }, { id: 'b', text: 'bad' }], ...over })
+  const refuseWithoutB = () => api.upsertTracker.mockImplementation(async (row: Tracker) => {
+    if (!row.options?.some(o => o.id === 'b')) throw refused('option_in_use')
+  })
+
+  it('keeps an archive queued after a refused edit when the edit is saved again', async () => {
+    const mood = moodOf()
+    api.fetchTrackers.mockResolvedValue([trackerOf(), mood])
+    await bound()
+    refuseWithoutB()
+    // Offline in practice: the edit and the archive both wait in the queue when the refusal comes.
+    useTrackers.getState().saveTracker({ ...mood, options: [{ id: 'a', text: 'great' }] })
+    useTrackers.getState().archiveTracker(T2)
+    await settle(); await settle(); await settle()
+    const t = useTrackers.getState().trackers.find(x => x.id === T2)!
+    expect(t).toMatchObject({ archived_at: NOW.toISOString(), options: [{ id: 'a', text: 'great' }, { id: 'b', text: 'bad' }] })
+    expect(useTrackers.getState().active().map(x => x.id)).toEqual([T1])
+    expect(api.upsertTracker).toHaveBeenLastCalledWith(t)
+    expect(trackersOutbox.pending(ME)).toEqual([])
+  })
+
+  it('keeps a reactivation queued after a refused edit when the edit is saved again', async () => {
+    const mood = moodOf({ archived_at: '2026-10-01T10:00:00.000Z' })
+    api.fetchTrackers.mockResolvedValue([trackerOf(), mood])
+    await bound()
+    refuseWithoutB()
+    useTrackers.getState().saveTracker({ ...mood, options: [{ id: 'a', text: 'great' }] })
+    useTrackers.getState().reactivateTracker(T2)
+    await settle(); await settle(); await settle()
+    const t = useTrackers.getState().trackers.find(x => x.id === T2)!
+    expect(t).toMatchObject({ archived_at: null, options: [{ id: 'a', text: 'great' }, { id: 'b', text: 'bad' }] })
+    expect(useTrackers.getState().active().map(x => x.id)).toEqual([T1, T2])
+    expect(api.upsertTracker).toHaveBeenLastCalledWith(t)
+  })
+
+  it.each([
+    ['reset', () => { useTrackers.getState().reset(); return useTrackers.getState().bind(OTHER) }],
+    ['bind of another account', () => useTrackers.getState().bind(OTHER)]
+  ])('never saves a pending edit again for the next account after %s', async (_, next) => {
+    const mood = moodOf()
+    api.fetchTrackers.mockResolvedValue([trackerOf(), mood])
+    await bound()
+    api.upsertTracker.mockRejectedValueOnce(refused('option_in_use'))
+    // The pull after the refusal never answers: the edit waits to be saved again.
+    api.fetchTrackers.mockReturnValueOnce(new Promise(() => {}))
+    useTrackers.getState().saveTracker({ ...mood, name: 'Mood today', options: [{ id: 'a', text: 'great' }] })
+    await settle(); await settle()
+    expect(api.upsertTracker).toHaveBeenCalledTimes(1)
+    // The next account happens to hold a tracker with the same id.
+    await next()
+    await settle(); await settle()
+    expect(api.upsertTracker).toHaveBeenCalledTimes(1)
+    expect(useTrackers.getState().userId).toBe(OTHER)
+    expect(useTrackers.getState().trackers.find(x => x.id === T2)).toEqual(mood)
+    expect(trackersOutbox.pending(OTHER)).toEqual([])
   })
 
   it('keeps an entry made while a pull was on its way, and pulls again', async () => {

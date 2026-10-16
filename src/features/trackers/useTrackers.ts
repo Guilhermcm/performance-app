@@ -32,12 +32,13 @@ const reasonOf = (details: string[]): DroppedReason => {
 
 // An edit refused with option_in_use (it removed an option whose entries are older than the 90 days
 // the phone holds), made again on the server's copy: the same fields and options, in the edit's
-// order, with the options the server still has and the edit removed put back at the end.
+// order, with the options the server still has and the edit removed put back at the end. The
+// archive state is the edit's too: an archive or reactivation is a full-row write like any edit.
 function keepOptions(edit: Tracker, server: Tracker): Tracker {
   const ids = new Set((edit.options ?? []).map(o => o.id))
   return {
     ...server, name: edit.name, icon: edit.icon, unit: edit.unit, decimals: edit.decimals, aggregate: edit.aggregate,
-    options: [...(edit.options ?? []), ...(server.options ?? []).filter(o => !ids.has(o.id))], updated_at: new Date().toISOString()
+    archived_at: edit.archived_at, options: [...(edit.options ?? []), ...(server.options ?? []).filter(o => !ids.has(o.id))], updated_at: new Date().toISOString()
   }
 }
 
