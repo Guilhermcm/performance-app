@@ -4,13 +4,13 @@
 
 1. Crie um projeto em https://supabase.com/dashboard (região: São Paulo, South America).
 2. SQL Editor → em um projeto novo, cole e rode, em ordem, cada arquivo de `supabase/migrations/`,
-   de `0001_init.sql` a `0025_sleep_cron.sql`, um por consulta. Antes de rodar a `0013`, ative
+   de `0001_init.sql` a `0030_habits_cron.sql`, um por consulta. Antes de rodar a `0013`, ative
    o `pg_cron` (veja a seção 7). Em um projeto que já tem `0001` a `0006`, siga o roteiro abaixo; em
    um que já tem até a `0016`, siga o roteiro do check-in; em um que já tem até a `0020`, siga o
-   roteiro do Sono.
+   roteiro do Sono; em um que já tem até a `0025`, siga o roteiro dos Hábitos.
    A `0006` cria a exclusão de conta pelo próprio app (Perfil > Excluir minha conta) e precisa rodar
    como `postgres`, o usuário padrão do SQL Editor, porque apaga a linha da conta em `auth.users`.
-   As `0007` a `0025` também rodam como `postgres`: as funções que fecham os dias e pagam o XP
+   As `0007` a `0030` também rodam como `postgres`: as funções que fecham os dias e pagam o XP
    escrevem como dono das tabelas.
 3. Project Settings → API: copie `Project URL` e a chave `anon public`.
 
@@ -213,6 +213,67 @@ Passo a passo:
    chegar; depois que a semana fechar, veja o eixo Sono aceso no radar; e crie um desafio de noites
    no alvo entre as duas contas, aceitando compartilhar a contagem nas duas.
 
+### Roteiro: banco de produção que já tem a 0001 a 0025 (Hábitos)
+
+Use este roteiro para levar um banco que já roda o Sono (`0001` a `0025`) até a `0030`, as
+migrations do pilar Hábitos (fase 4a). Rode o SQL e faça o merge **no mesmo dia**, nesta ordem:
+
+1. Rode o SQL em produção (passos abaixo).
+2. Faça o merge do PR da fase 4a logo em seguida, para o cliente novo ir ao ar.
+
+A ordem vem da `0029`. Ela apaga as versões de `create_challenge` e `join_challenge` e cria as novas,
+com o parâmetro `p_share_habits boolean default false` no fim. O cliente novo já manda
+`p_share_habits`, então criar ou aceitar um desafio só funciona nele depois do SQL: não publique o
+cliente antes. O cliente do Sono, que fica no ar enquanto o roteiro corre, continua funcionando. Ele
+chama as duas funções por parâmetros nomeados, sem `p_share_habits`, e o valor padrão cobre a falta;
+só não oferece os Hábitos. O painel de desafios dele, porém, quebra ao receber um desafio de um
+modelo que não conhece, como o de checks de hábitos: por isso o primeiro desafio de hábitos só sai
+depois que todos reabrirem o app (passo 5). A spec (§15) pede o SQL e o cliente no mesmo deploy, então
+não deixe o merge para outro dia.
+
+O que muda no banco quando a `0026` a `0030` rodam:
+
+- Os perfis que já existem ganham `habits_enabled = false`. Os Hábitos começam desligados para todo
+  mundo, e nada muda para quem não ligar o pilar.
+- Entram as tabelas `habits`, `habit_checks`, `habit_targets`, `habit_periods` e `habit_days`, com
+  RLS. O pilar `habits`, que já existia no banco sem uso, passa a render XP e a aparecer no radar,
+  nas conquistas e nos desafios.
+- As funções que o Sono tinha redefinido (`award_xp`, `achievement_stats`, `pillar_consistency`,
+  `progress_card`, `get_my_progress`, `challenge_progress`, `close_challenge` e outras) são
+  redefinidas de novo a partir do corpo do Sono, com os ramos de Treino, Nutrição e Sono intactos.
+
+Passo a passo:
+
+1. Confira que o `pg_cron` está ativo (Supabase → Database → Extensions → `pg_cron`). A `0030`
+   agenda o job `close-habit-days`. Sem a extensão, a migration segue sem agendar o job; nada
+   quebra, mas os dias de quem some só fecham quando a pessoa abre o app.
+2. No SQL Editor, rode o arquivo único `supabase/release/0026-0030_habits.sql` inteiro, numa consulta
+   só. Ou rode as cinco migrations em ordem, uma por consulta: `0026_habits_base.sql`,
+   `0027_habits_close.sql`, `0028_habits_progress.sql`, `0029_habits_challenge.sql` e
+   `0030_habits_cron.sql`. Pare no primeiro erro e resolva a causa antes de seguir. O arquivo único é
+   gerado por `node scripts/build-release-sql.mjs`, então não edite à mão (um teste confere que está
+   em dia).
+3. Confira o resultado:
+   - `select proname, count(*) from pg_proc where proname in ('create_challenge','join_challenge') group by 1;`
+     deve devolver `1` para cada função. Um `2` indica uma migration pela metade.
+   - `select relname, relrowsecurity from pg_class where relname in ('habits','habit_checks','habit_targets','habit_periods','habit_days');`
+     deve devolver as cinco tabelas, todas com `true`.
+   - `select jobname, schedule, command from cron.job where jobname = 'close-habit-days';` deve
+     devolver `close-habit-days | 50 6 * * * | select public.close_all_habit_days()` (o conjunto
+     completo está na seção 7).
+4. Se o app disser que não achou a função logo depois ("Could not find the function"), recarregue o
+   cache da API: `notify pgrst, 'reload schema';`.
+5. Faça o merge do PR da fase 4a e o deploy do cliente novo. Depois do deploy, peça ao grupo para
+   fechar e abrir o app, e só crie o primeiro desafio de hábitos depois que todos tiverem reaberto.
+   Um app instalado que ficou aberto durante o deploy ainda roda o cliente antigo: ele continua
+   funcionando, pelo valor padrão dos parâmetros nomeados, mas só mostra os Hábitos depois de
+   reaberto. O painel de desafios desse cliente quebra quando aparece um desafio de checks de
+   hábitos.
+6. Faça o smoke com duas contas: ligue o pilar em Perfil > Hábitos e crie o primeiro hábito; marque
+   o hábito pelo cartão da Home, no celular; desfaça o check; dois dias depois, veja o XP dos checks
+   chegar; depois que a semana fechar, veja o eixo Hábitos aceso no radar; e crie um desafio de
+   checks de hábitos entre as duas contas, aceitando compartilhar a contagem nas duas.
+
 ## 2. Google OAuth
 
 1. https://console.cloud.google.com → crie um projeto → APIs & Services → OAuth consent screen:
@@ -262,14 +323,15 @@ conquistas em dia para quem passa dias sem abrir.
 2. SQL Editor → rode de novo `supabase/migrations/0003_gamification_cron.sql`,
    `supabase/migrations/0005_social_cron.sql`, `supabase/migrations/0013_nutrition_cron.sql`, o bloco
    de cron no fim de `supabase/migrations/0019_training_days.sql` e
-   `supabase/migrations/0025_sleep_cron.sql`.
+   `supabase/migrations/0025_sleep_cron.sql` e `supabase/migrations/0030_habits_cron.sql`.
 3. Confira com `select jobname, schedule, command from cron.job order by jobname;`. O resultado
-   esperado tem cinco linhas: `close-challenges | 15 6 * * * | select public.close_all_challenges()`,
+   esperado tem seis linhas: `close-challenges | 15 6 * * * | select public.close_all_challenges()`,
+   `close-habit-days | 50 6 * * * | select public.close_all_habit_days()`,
    `close-nutrition-days | 30 6 * * * | select public.close_all_nutrition_days()`,
    `close-sleep-nights | 40 6 * * * | select public.close_all_sleep_nights()`,
    `close-training-days | 45 5 * * * | select public.close_all_training_days()` e
-   `close-weeks | 0 6 * * * | select public.close_all_weeks()` (06:15, 06:30, 06:40, 05:45 e 06:00
-   UTC).
+   `close-weeks | 0 6 * * * | select public.close_all_weeks()` (06:15, 06:50, 06:30, 06:40, 05:45 e
+   06:00 UTC).
 
 Sem o `pg_cron` nada quebra. O streak de quem sumiu só é atualizado quando a pessoa abre o app de
 novo.
@@ -288,6 +350,12 @@ Com o Sono, também. O job `close-sleep-nights` roda às 06:40 UTC e fecha as no
 pilar ligado e não abriu o app (a noite D fecha no começo de D+2, no fuso da pessoa). Ele paga o XP
 dessas noites, a meta da semana e as conquistas, e mantém o streak de sono em dia. Os desafios de
 sono não dependem dele: o `close-challenges` espera a carência e fecha as noites pendentes de quem
+participa antes de dar o resultado.
+
+Com os Hábitos, também. O job `close-habit-days` roda às 06:50 UTC e fecha os dias de quem está com o
+pilar ligado e não abriu o app (o dia D fecha no começo de D+2, no fuso da pessoa). Ele paga o XP
+dos checks, a meta da semana e as conquistas, e mantém o streak de hábitos em dia. O desafio de
+hábitos não depende dele: o `close-challenges` espera a carência e fecha os dias pendentes de quem
 participa antes de dar o resultado.
 
 ## 8. Tabela TACO (busca local de alimentos)
