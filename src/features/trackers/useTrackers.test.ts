@@ -177,16 +177,26 @@ describe('useTrackers', () => {
     expect(useTrackers.getState().droppedNotice).toBeNull()
   })
 
-  // A server that checks an entry against the tracker it has at that moment, as the guard does:
-  // the option must exist and the value must fit the decimals; a new entry needs an active tracker.
-  function fakeServer(start: Tracker) {
-    const server = { tracker: start, entries: new Map<string, TrackerEntry>(), order: [] as string[] }
-    api.upsertTracker.mockImplementation(async (x: Tracker) => { server.tracker = x; server.order.push(`tracker:${x.archived_at ? 'archived' : 'active'}`) })
+  // A server that checks each write as the guards do: an entry against the tracker it has at that
+  // moment (the option must exist; the value must fit the decimals unless the stored value is left
+  // as it is; a new entry needs an active tracker), and a tracker edit that removes an option some
+  // entry still uses is refused (option_in_use).
+  function fakeServer(start: Tracker, entries: TrackerEntry[] = []) {
+    const server = { tracker: start, entries: new Map(entries.map(e => [e.id, e])), order: [] as string[] }
+    api.upsertTracker.mockImplementation(async (x: Tracker) => {
+      const kept = new Set((x.options ?? []).map(o => o.id))
+      const used = [...server.entries.values()].some(e => e.tracker_id === x.id && e.option && !kept.has(e.option))
+      if (server.tracker.kind === 'label' && used) throw refused('option_in_use')
+      server.tracker = x; server.order.push(`tracker:${x.archived_at ? 'archived' : 'active'}`)
+    })
     api.upsertEntry.mockImplementation(async (e: TrackerEntry) => {
       const t = server.tracker
-      if (t.archived_at && !server.entries.has(e.id)) throw refused('tracker_archived')
+      const stored = server.entries.get(e.id)
+      if (t.archived_at && !stored) throw refused('tracker_archived')
       if (t.kind === 'label' && !t.options?.some(o => o.id === e.option)) throw refused('invalid_value')
-      if (t.kind === 'number' && e.value != null && Number(e.value.toFixed(t.decimals ?? 2)) !== e.value) throw refused('invalid_value')
+      if (t.kind === 'number' && e.value != null && Number(e.value.toFixed(t.decimals ?? 2)) !== e.value && stored?.value !== e.value) {
+        throw refused('invalid_value')
+      }
       server.entries.set(e.id, e); server.order.push('entry')
     })
     return server
@@ -202,7 +212,8 @@ describe('useTrackers', () => {
     const edit = useTrackers.getState().saveTracker({ ...mood, options: [...mood.options!, { id: 'c', text: 'great' }] })
     const relabeled = useTrackers.getState().saveEntry({ ...draft({ tracker_id: T2, value: null, option: 'c' }), id: e.id })
     await settle()
-    expect(trackersOutbox.pending(ME)).toEqual([{ op: 'tracker', row: edit }, { op: 'entry', row: relabeled }])
+    // The first copy stays where it was valid, the relabel goes after the edit it needs.
+    expect(trackersOutbox.pending(ME)).toEqual([{ op: 'entry', row: e }, { op: 'tracker', row: edit }, { op: 'entry', row: relabeled }])
     const server = fakeServer(mood)
     await useTrackers.getState().refresh()
     expect(server.entries.get(e.id)?.option).toBe('c')
@@ -222,7 +233,7 @@ describe('useTrackers', () => {
     const server = fakeServer(steps)
     await useTrackers.getState().refresh()
     expect(server.entries.get(e.id)?.value).toBe(2.5)
-    expect(server.order).toEqual(['tracker:active', 'entry'])
+    expect(server.order).toEqual(['entry', 'tracker:active', 'entry'])
     expect(useTrackers.getState().droppedNotice).toBeNull()
   })
 
@@ -239,9 +250,48 @@ describe('useTrackers', () => {
     await settle()
     const server = fakeServer(mood)
     await useTrackers.getState().refresh()
-    expect(server.order).toEqual(['tracker:active', 'entry', 'tracker:archived'])
+    expect(server.order).toEqual(['entry', 'tracker:active', 'entry', 'tracker:archived'])
     expect(server.entries.get(e.id)?.option).toBe('c')
     expect(useTrackers.getState().droppedNotice).toBeNull()
+  })
+
+  it('keeps an entry whose note is edited offline after its tracker lost decimals', async () => {
+    await withTrackers()
+    api.upsertEntry.mockRejectedValue(offline()); api.upsertTracker.mockRejectedValue(offline())
+    const e = useTrackers.getState().saveEntry(draft({ value: 2.5 }))
+    useTrackers.getState().saveTracker({ ...trackerOf(), decimals: 0 })
+    // The sheet keeps the stored 2.5 when only the note changes.
+    useTrackers.getState().saveEntry({ ...draft({ value: 2.5, note: 'after the run' }), id: e.id })
+    await settle()
+    const server = fakeServer(trackerOf())
+    await useTrackers.getState().refresh()
+    expect(server.order).toEqual(['entry', 'tracker:active', 'entry'])
+    expect(server.entries.get(e.id)).toMatchObject({ value: 2.5, note: 'after the run' })
+    expect(server.tracker.decimals).toBe(0)
+    expect(trackersOutbox.pending(ME)).toEqual([])
+    expect(useTrackers.getState().droppedNotice).toBeNull()
+  })
+
+  it('removes an option after the relabel that freed it, when a note edit comes later', async () => {
+    const mood = trackerOf({ id: T2, name: 'Mood', icon: 'smile', kind: 'label', unit: null, decimals: null, aggregate: null, sort: 1,
+      options: [{ id: 'a', text: 'good' }, { id: 'b', text: 'bad' }] })
+    const onA = entryOf('2026-10-15', { id: 'on-a', tracker_id: T2, value: null, option: 'a' })
+    api.fetchTrackers.mockResolvedValue([trackerOf(), mood])
+    api.fetchEntries.mockResolvedValue([onA])
+    await bound()
+    api.upsertEntry.mockRejectedValue(offline()); api.upsertTracker.mockRejectedValue(offline())
+    useTrackers.getState().saveEntry({ ...draft({ tracker_id: T2, day: onA.day, value: null, option: 'b' }), id: onA.id })
+    const removed = useTrackers.getState().saveTracker({ ...mood, options: [{ id: 'b', text: 'bad' }] })
+    useTrackers.getState().saveEntry({ ...draft({ tracker_id: T2, day: onA.day, value: null, option: 'b', note: 'tired' }), id: onA.id })
+    await settle()
+    const server = fakeServer(mood, [onA])
+    api.fetchTrackers.mockResolvedValue([trackerOf(), removed])
+    await useTrackers.getState().refresh()
+    expect(server.order).toEqual(['entry', 'tracker:active', 'entry'])
+    expect(server.tracker.options).toEqual([{ id: 'b', text: 'bad' }])
+    expect(server.entries.get(onA.id)).toMatchObject({ option: 'b', note: 'tired' })
+    expect(useTrackers.getState().droppedNotice).toBeNull()
+    expect(useTrackers.getState().trackers.find(x => x.id === T2)?.options).toEqual([{ id: 'b', text: 'bad' }])
   })
 
   it('sends a tracker made offline before its entries, and its rename after them', async () => {

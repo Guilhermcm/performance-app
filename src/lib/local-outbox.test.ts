@@ -42,9 +42,16 @@ describe('createLocalOutbox', () => {
     // A new item has nothing to replace: the end, without asking.
     placed.enqueue(ME, { id: 'c', v: 1 })
     expect(placed.pending(ME)).toEqual([{ id: 'a', v: 2 }, { id: 'b', v: 1 }, { id: 'c', v: 1 }])
+  })
+
+  it('with place, keeps the older copies before a later place and drops those after it', () => {
     const after = createLocalOutbox<Op>({ key: KEY, same: (a, b) => a.id === b.id, send, place: (_rest, at) => at + 1 })
+    for (const op of [{ id: 'a', v: 1 }, { id: 'b', v: 1 }, { id: 'c', v: 1 }]) after.enqueue(ME, op)
+    after.enqueue(ME, { id: 'a', v: 2 })
+    expect(after.pending(ME)).toEqual([{ id: 'a', v: 1 }, { id: 'b', v: 1 }, { id: 'a', v: 2 }, { id: 'c', v: 1 }])
+    // Again: the first copy stays, the one after b is replaced.
     after.enqueue(ME, { id: 'a', v: 3 })
-    expect(after.pending(ME)).toEqual([{ id: 'b', v: 1 }, { id: 'a', v: 3 }, { id: 'c', v: 1 }])
+    expect(after.pending(ME)).toEqual([{ id: 'a', v: 1 }, { id: 'b', v: 1 }, { id: 'a', v: 3 }, { id: 'c', v: 1 }])
   })
 
   it('drops a refusal for good with its reason and goes on', async () => {
