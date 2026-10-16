@@ -33,6 +33,27 @@ describe('createLocalOutbox', () => {
     expect(box.pending(ME)).toEqual([{ id: 'b', v: 1 }, { id: 'a', v: 2 }])
   })
 
+  it('with place, puts the newest op where it says, given where the first match was', () => {
+    const placed = createLocalOutbox<Op>({ key: KEY, same: (a, b) => a.id === b.id, send, place: (_rest, at) => at })
+    placed.enqueue(ME, { id: 'a', v: 1 })
+    placed.enqueue(ME, { id: 'b', v: 1 })
+    placed.enqueue(ME, { id: 'a', v: 2 })
+    expect(placed.pending(ME)).toEqual([{ id: 'a', v: 2 }, { id: 'b', v: 1 }])
+    // A new item has nothing to replace: the end, without asking.
+    placed.enqueue(ME, { id: 'c', v: 1 })
+    expect(placed.pending(ME)).toEqual([{ id: 'a', v: 2 }, { id: 'b', v: 1 }, { id: 'c', v: 1 }])
+  })
+
+  it('with place, keeps the older copies before a later place and drops those after it', () => {
+    const after = createLocalOutbox<Op>({ key: KEY, same: (a, b) => a.id === b.id, send, place: (_rest, at) => at + 1 })
+    for (const op of [{ id: 'a', v: 1 }, { id: 'b', v: 1 }, { id: 'c', v: 1 }]) after.enqueue(ME, op)
+    after.enqueue(ME, { id: 'a', v: 2 })
+    expect(after.pending(ME)).toEqual([{ id: 'a', v: 1 }, { id: 'b', v: 1 }, { id: 'a', v: 2 }, { id: 'c', v: 1 }])
+    // Again: the first copy stays, the one after b is replaced.
+    after.enqueue(ME, { id: 'a', v: 3 })
+    expect(after.pending(ME)).toEqual([{ id: 'a', v: 1 }, { id: 'b', v: 1 }, { id: 'a', v: 3 }, { id: 'c', v: 1 }])
+  })
+
   it('drops a refusal for good with its reason and goes on', async () => {
     for (const id of ['a', 'b', 'c']) box.enqueue(ME, { id, v: 1 })
     send.mockImplementation(async op => {
@@ -45,10 +66,11 @@ describe('createLocalOutbox', () => {
   it('tells a watcher which ops it dropped, per account, until it stops watching', async () => {
     for (const id of ['a', 'b']) box.enqueue(ME, { id, v: 1 })
     send.mockImplementation(async op => { if (op.id === 'a') throw pg('P0001', 'day_closed') })
-    const seen: [string, Op][] = []
-    const stop = box.onRefused((userId, op) => { seen.push([userId, op]) })
+    const seen: [string, Op, string][] = []
+    const stop = box.onRefused((userId, op, detail) => { seen.push([userId, op, detail]) })
     await box.flush(ME)
-    expect(seen).toEqual([[ME, { id: 'a', v: 1 }]])
+    // With the server's own words, so a store can tell one refusal from another.
+    expect(seen).toEqual([[ME, { id: 'a', v: 1 }, 'day_closed']])
     stop()
     box.enqueue(ME, { id: 'a', v: 2 })
     await box.flush(ME)

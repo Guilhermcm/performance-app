@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef } from 'react'
 import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation, useNavigationType } from 'react-router-dom'
 import { useStore } from './store/useStore.js'
 import { useUI } from './store/useUI.js'
@@ -33,6 +33,7 @@ import { useSocial } from './features/social/useSocial.ts'
 import { useNutrition, startNutritionSync } from './features/nutrition/useNutrition.ts'
 import { useSleep, startSleepSync } from './features/sleep/useSleep.ts'
 import { useHabits, startHabitsSync } from './features/habits/useHabits.ts'
+import { useTrackers, startTrackersSync } from './features/trackers/useTrackers.ts'
 import { useCheckins, startCheckinSync } from './features/checkin/useCheckins.ts'
 import CheckinFlow from './features/checkin/CheckinFlow.tsx'
 import MyTrainings from './features/checkin/MyTrainings.tsx'
@@ -43,6 +44,8 @@ import NutritionScreen from './features/nutrition/NutritionScreen.tsx'
 import NutritionHistoryScreen from './features/nutrition/HistoryScreen.tsx'
 import SleepScreen from './features/sleep/SleepScreen.tsx'
 import HabitsScreen from './features/habits/HabitsScreen.tsx'
+import TrackersScreen from './features/trackers/TrackersScreen.tsx'
+import { TrackerDetailSkeleton } from './features/trackers/TrackerChartSkeleton.tsx'
 import SocialScreen from './features/social/SocialScreen.tsx'
 import ChallengeDetail from './features/social/ChallengeDetail.tsx'
 import InviteScreen, { InviteRoute } from './features/social/InviteScreen.tsx'
@@ -59,6 +62,9 @@ import Library from './views/Library.jsx'
 import Muscles from './views/Muscles.jsx'
 import StructuralBalance from './views/StructuralBalance.jsx'
 import Settings from './views/Settings.jsx'
+
+// The detail loads on demand (its charts are heavy), on its own skeleton meanwhile.
+const TrackerDetail = lazy(() => import('./features/trackers/TrackerDetail.tsx'))
 
 // last known scrollY per route, so back-navigation can put the page where it was
 const scrollPositions = new Map()
@@ -160,7 +166,7 @@ function Shell() {
 
   // The profile in memory belongs to whoever is signed in; signing out drops it.
   useEffect(() => {
-    if (!user) { useProfile.getState().reset(); useProgress.getState().reset(); useSocial.getState().reset(); useNutrition.getState().reset(); useSleep.getState().reset(); useHabits.getState().reset(); useCheckins.getState().reset() }
+    if (!user) { useProfile.getState().reset(); useProgress.getState().reset(); useSocial.getState().reset(); useNutrition.getState().reset(); useSleep.getState().reset(); useHabits.getState().reset(); useTrackers.getState().reset(); useCheckins.getState().reset() }
   }, [user?.id])
   // No tab bar while the profile loads or the onboarding is on screen (a guest has no profile).
   const profileReady = useProfile(s => s.status === 'ready' && !s.onboarding) || !user
@@ -193,6 +199,12 @@ function Shell() {
     if (!user || !profileReady) return
     void useHabits.getState().bind(user.id)
     return startHabitsSync()
+  }, [user?.id, profileReady])
+  // Trackers: the same again (saved copy, queued trackers and entries sent, pull on focus, reconnect and a new day).
+  useEffect(() => {
+    if (!user || !profileReady) return
+    void useTrackers.getState().bind(user.id)
+    return startTrackersSync()
   }, [user?.id, profileReady])
   // Check-ins: my recent ones and the notices at once, the photo queue sent, and again on focus
   // and reconnect. The feed loads when the Social tab asks for it.
@@ -251,6 +263,8 @@ function Shell() {
                 <Route path="/nutricao/historico" element={<NutritionHistoryScreen />} />
                 <Route path="/sono" element={<SleepScreen />} />
                 <Route path="/habitos" element={<HabitsScreen />} />
+                <Route path="/trackers" element={<TrackersScreen />} />
+                <Route path="/trackers/:id" element={<Suspense fallback={<TrackerDetailSkeleton />}><TrackerDetail /></Suspense>} />
                 <Route path="/social" element={<Navigate to="/social/feed" replace />} />
                 <Route path="/social/desafios/:id" element={<ChallengeDetail />} />
                 <Route path="/social/:section" element={<SocialScreen />} />

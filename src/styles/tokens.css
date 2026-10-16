@@ -28,6 +28,10 @@
   /* habits stepped into the dark chart band too, far enough from strength's orange (dataviz
      validate_palette.js: L 0.48 to 0.67, normal-vision ΔE 15 or more against every pillar) */
   --pillar-habits: oklch(0.62 0.14 85);
+  /* the 7-day average of a tracker's line chart, next to --pillar-sleep (the day summary): its own
+     step per theme, checked against it on --card with dataviz validate_palette.js (L in the band,
+     chroma 0.10 or more, deutan ΔE 13.6 dark and 17.6 light, normal-vision ΔE 19.1 and 20.7, contrast 3:1 or more) */
+  --chart-trend: oklch(0.64 0.12 180);
   --radius: 16px;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --dur-1: 150ms;
@@ -62,6 +66,7 @@
   --pillar-nutrition: oklch(0.58 0.15 150);
   --pillar-sleep: oklch(0.52 0.16 275);
   --pillar-habits: oklch(0.47 0.105 65);
+  --chart-trend: oklch(0.56 0.12 180);
 }
 
 @media (prefers-reduced-motion: reduce) {

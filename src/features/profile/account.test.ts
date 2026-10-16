@@ -17,6 +17,7 @@ const h = vi.hoisted(() => {
     forgetDiaryOutbox: vi.fn((_u: string) => { calls.push('forgetDiaryOutbox') }),
     forgetSleepOutbox: vi.fn((_u: string) => { calls.push('forgetSleepOutbox') }),
     forgetHabitsOutbox: vi.fn((_u: string) => { calls.push('forgetHabitsOutbox') }),
+    forgetTrackersOutbox: vi.fn((_u: string) => { calls.push('forgetTrackersOutbox') }),
     checkinsReset: log('checkins.reset'),
     clearSignedUrls: log('clearSignedUrls'),
     session: { user: { id: 'u1' } } as { user: { id: string } } | null
@@ -28,6 +29,7 @@ vi.mock('../checkin/outbox', () => ({ clearCheckinOutbox: h.clearCheckinOutbox }
 vi.mock('../nutrition/outbox', () => ({ forgetOutbox: h.forgetDiaryOutbox }))
 vi.mock('../sleep/outbox', () => ({ sleepOutbox: { forget: h.forgetSleepOutbox } }))
 vi.mock('../habits/outbox', () => ({ habitsOutbox: { forget: h.forgetHabitsOutbox } }))
+vi.mock('../trackers/outbox', () => ({ trackersOutbox: { forget: h.forgetTrackersOutbox } }))
 vi.mock('../checkin/useCheckins', () => ({ useCheckins: { getState: () => ({ reset: h.checkinsReset }) } }))
 vi.mock('../../store/useStore.js', () => ({ useStore: { getState: () => ({ forgetAccount: h.forgetAccount }) } }))
 vi.mock('../gamification/events', () => ({ clearEventQueue: h.clearEventQueue }))
@@ -56,12 +58,13 @@ describe('deleteMyAccount', () => {
     expect(h.calls).toEqual([
       'removeAllPhotos', 'rpc',
       'forgetAccount', 'clearEventQueue', 'clearPendingInvite', 'profile.reset', 'progress.reset', 'social.reset',
-      'clearCheckinOutbox', 'forgetDiaryOutbox', 'forgetSleepOutbox', 'forgetHabitsOutbox', 'checkins.reset', 'clearSignedUrls'
+      'clearCheckinOutbox', 'forgetDiaryOutbox', 'forgetSleepOutbox', 'forgetHabitsOutbox', 'forgetTrackersOutbox', 'checkins.reset', 'clearSignedUrls'
     ])
     expect(h.clearCheckinOutbox).toHaveBeenCalledWith('u1')
     expect(h.forgetDiaryOutbox).toHaveBeenCalledWith('u1')
     expect(h.forgetSleepOutbox).toHaveBeenCalledWith('u1')
     expect(h.forgetHabitsOutbox).toHaveBeenCalledWith('u1')
+    expect(h.forgetTrackersOutbox).toHaveBeenCalledWith('u1')
   })
 
   it('still deletes the account when the photos cannot be removed', async () => {

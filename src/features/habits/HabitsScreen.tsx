@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, CloudOff, Flame, ListChecks, Plus, RefreshCw, Shield, ShieldCheck } from 'lucide-react'
+import { Activity, ArrowLeft, CloudOff, Flame, ListChecks, Plus, RefreshCw, Shield, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOnline } from '@/lib/use-online'
@@ -47,9 +47,12 @@ export default function HabitsScreen() {
   const goBack = () => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/home'))
   const header = (
     <header className="flex flex-col">
-      <div className="-ml-2 flex h-11 items-center">
+      <div className="-ml-2 flex h-11 items-center justify-between">
         <Button variant="ghost" size="icon" className="size-11 rounded-full" aria-label={t('Back')} onClick={goBack}>
           <ArrowLeft aria-hidden className="size-5 rtl:rotate-180" />
+        </Button>
+        <Button variant="ghost" className="h-11 gap-2 rounded-full px-3 text-muted-foreground hover:text-foreground" onClick={() => navigate('/trackers')}>
+          <Activity aria-hidden className="size-4" />{t('Trackers')}
         </Button>
       </div>
       <h1 className="mt-1 text-2xl font-semibold tracking-tight">{t('Habits')}</h1>

@@ -10,7 +10,9 @@ export type FlushResult = { sent: number; left: number; dropped: number; reasons
 
 export type LocalOutbox<Op> = {
   pending(userId: string): Op[]
-  // The newest op replaces an older one that `same` matches, so a queue never grows past the items touched.
+  // The newest op replaces an older one that `same` matches, so a queue never grows past the items
+  // touched. It goes to the end, or where `place` puts it; when that is later than the first older
+  // copy, the older copies before it stay (see createLocalOutbox).
   enqueue(userId: string, op: Op): void
   // One run at a time per account; a caller that arrives meanwhile runs on what is left after it.
   flush(userId: string): Promise<FlushResult>
@@ -19,8 +21,9 @@ export type LocalOutbox<Op> = {
   // One account's queue, when that account is deleted; the others stay.
   forget(userId: string): void
   // Called with each op dropped as refused from now on, so a pull on its way can leave it out of
-  // what it lays over the server's answer. Returns the way to stop.
-  onRefused(fn: (userId: string, op: Op) => void): () => void
+  // what it lays over the server's answer, with the server's message (the rule it named, if any).
+  // Returns the way to stop.
+  onRefused(fn: (userId: string, op: Op, detail: string) => void): () => void
 }
 
 type Queues<Op> = Record<string, Op[]>
@@ -40,7 +43,15 @@ async function sessionIs(userId: string): Promise<boolean> {
   } catch { return false }
 }
 
-export function createLocalOutbox<Op>(o: { key: string; same: (a: Op, b: Op) => boolean; send: (op: Op) => Promise<void> }): LocalOutbox<Op> {
+export function createLocalOutbox<Op>(o: {
+  key: string; same: (a: Op, b: Op) => boolean; send: (op: Op) => Promise<void>
+  // Where an op that replaces an older one goes: an index into `rest` (the queue without the
+  // matches), given `at`, where the first match was in it. Without it, the end. At `at` or before,
+  // the older copies all go. Later than `at`, the older copies before that point stay where they
+  // were, each one valid in its place, and only those after it go: the queue then holds the item
+  // more than once, in order, so the newest is still the last word.
+  place?: (rest: Op[], at: number, op: Op) => number
+}): LocalOutbox<Op> {
   const readAll = (): Queues<Op> => {
     try {
       const q: unknown = JSON.parse(localStorage.getItem(o.key) || '{}')
@@ -56,11 +67,29 @@ export function createLocalOutbox<Op>(o: { key: string; same: (a: Op, b: Op) => 
   }
 
   const pending = (userId: string): Op[] => readAll()[userId] ?? []
-  const watchers = new Set<(userId: string, op: Op) => void>()
+  const watchers = new Set<(userId: string, op: Op, detail: string) => void>()
 
   function enqueue(userId: string, op: Op): void {
     const all = readAll()
-    all[userId] = [...(all[userId] ?? []).filter(x => !o.same(x, op)), op]
+    const list = all[userId] ?? []
+    const at = list.findIndex(x => o.same(x, op))
+    const rest = list.filter(x => !o.same(x, op))
+    const i = o.place && at >= 0 ? Math.max(0, Math.min(rest.length, o.place(rest, at, op))) : rest.length
+    if (!o.place || i <= at) {
+      all[userId] = [...rest.slice(0, i), op, ...rest.slice(i)]
+    } else {
+      // Walk the queue: older copies before the new op's place stay, the rest of them go.
+      const out: Op[] = []
+      let others = 0
+      let placed = false
+      for (const x of list) {
+        if (o.same(x, op)) { if (!placed) out.push(x); continue }
+        out.push(x)
+        if (!placed && ++others === i) { out.push(op); placed = true }
+      }
+      if (!placed) out.push(op)
+      all[userId] = out
+    }
     writeAll(all)
   }
 
@@ -88,7 +117,7 @@ export function createLocalOutbox<Op>(o: { key: string; same: (a: Op, b: Op) => 
         if (!err.refused) break
         dropped++
         reasons.add(err.reason ?? 'refused')
-        for (const fn of watchers) fn(userId, op)
+        for (const fn of watchers) fn(userId, op, err.detail)
       }
       remove(userId, op)
     }
@@ -115,7 +144,7 @@ export function createLocalOutbox<Op>(o: { key: string; same: (a: Op, b: Op) => 
     writeAll(all)
   }
 
-  function onRefused(fn: (userId: string, op: Op) => void): () => void {
+  function onRefused(fn: (userId: string, op: Op, detail: string) => void): () => void {
     watchers.add(fn)
     return () => { watchers.delete(fn) }
   }
