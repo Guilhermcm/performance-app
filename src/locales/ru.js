@@ -2705,4 +2705,15 @@ export default {
   "Your habits and checks stay saved. You can turn it back on any time.": "Ваши привычки и отметки останутся сохранёнными. Включить их снова можно в любой момент.",
   "Open Habits": "Открыть привычки",
   "Choose your habits and how many times a week you want to do each one. Every check earns XP, like workouts do.": "Выберите привычки и сколько раз в неделю хотите выполнять каждую. Каждая отметка даёт XP, как тренировки.",
+  // --- habits home card (phase 4a) ---
+  "Today's habits": "Привычки на сегодня",
+  "Mark {0} done today": "Отметить «{0}» сегодня",
+  "Unmark {0} today": "Снять отметку «{0}» сегодня",
+  "1 left in 1 day": "ещё 1, остался 1 день",
+  "{0} left in 1 day": "ещё {0}, остался 1 день",
+  "{0} left in {1} days": "ещё {0}, дней осталось: {1}",
+  "1 left, and the week ends today": "ещё 1, а неделя заканчивается сегодня",
+  "{0} left, and the week ends today": "ещё {0}, а неделя заканчивается сегодня",
+  "Week: {0} of {1} · +{2} XP so far": "Неделя: {0} из {1} · +{2} XP пока",
+  "See all": "Показать все",
 }

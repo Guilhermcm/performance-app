@@ -12,6 +12,7 @@ import { BodyWeightCard } from './BodyWeightCard'
 import { CheckInCard, WelcomeCard } from './HomeCards'
 import HomeNutritionCard from '../nutrition/HomeNutritionCard'
 import HomeSleepCard from '../sleep/HomeSleepCard'
+import HomeHabitsCard from '../habits/HomeHabitsCard'
 import { useProgress } from '../gamification/useProgress'
 import type { PillarKey } from '../gamification/types'
 import { PillarRadarSkeleton } from './PillarRadarSkeleton'
@@ -71,6 +72,8 @@ export default function HomeScreen() {
       <TodayCard />
       {/* The sleep pillar's morning card sits right under today's (phase 3, spec 0.4). */}
       {user && <HomeSleepCard />}
+      {/* Today's habits right under it (phase 4a, spec 7.2). */}
+      {user && <HomeHabitsCard />}
       {S.checkIn !== false && <CheckInCard />}
       {S.showWeightCard !== false && <BodyWeightCard />}
     </div>

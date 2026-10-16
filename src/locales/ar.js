@@ -2689,4 +2689,15 @@ export default {
   "Your habits and checks stay saved. You can turn it back on any time.": "تبقى عاداتك وعلاماتك محفوظة. يمكنك تفعيلها مرة أخرى في أي وقت.",
   "Open Habits": "فتح العادات",
   "Choose your habits and how many times a week you want to do each one. Every check earns XP, like workouts do.": "اختر عاداتك وعدد المرات التي تريد ممارسة كل واحدة منها في الأسبوع. كل علامة تمنحك نقاط XP مثل التمارين.",
+  // --- habits home card (phase 4a) ---
+  "Today's habits": "عادات اليوم",
+  "Mark {0} done today": "تحديد {0} لليوم",
+  "Unmark {0} today": "إلغاء تحديد {0} لليوم",
+  "1 left in 1 day": "بقي 1 خلال يوم 1",
+  "{0} left in 1 day": "بقي {0} خلال يوم 1",
+  "{0} left in {1} days": "بقي {0} خلال {1} أيام",
+  "1 left, and the week ends today": "بقي 1 والأسبوع ينتهي اليوم",
+  "{0} left, and the week ends today": "بقي {0} والأسبوع ينتهي اليوم",
+  "Week: {0} of {1} · +{2} XP so far": "الأسبوع: {0} من {1} · +{2} XP حتى الآن",
+  "See all": "عرض الكل",
 }

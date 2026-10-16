@@ -2636,4 +2636,15 @@ export default {
   "Your habits and checks stay saved. You can turn it back on any time.": "आपकी आदतें और चेक सहेजे रहेंगे। आप जब चाहें इसे फिर चालू कर सकते हैं।",
   "Open Habits": "आदतें खोलें",
   "Choose your habits and how many times a week you want to do each one. Every check earns XP, like workouts do.": "अपनी आदतें चुनें और हर एक को हफ़्ते में कितनी बार करना चाहते हैं। हर चेक पर XP मिलता है, वर्कआउट की तरह।",
+  // --- habits home card (phase 4a) ---
+  "Today's habits": "आज की आदतें",
+  "Mark {0} done today": "{0} को आज के लिए चेक करें",
+  "Unmark {0} today": "{0} का आज का चेक हटाएँ",
+  "1 left in 1 day": "1 दिन में 1 बाकी",
+  "{0} left in 1 day": "1 दिन में {0} बाकी",
+  "{0} left in {1} days": "{1} दिनों में {0} बाकी",
+  "1 left, and the week ends today": "1 बाकी और हफ़्ता आज खत्म होता है",
+  "{0} left, and the week ends today": "{0} बाकी और हफ़्ता आज खत्म होता है",
+  "Week: {0} of {1} · +{2} XP so far": "हफ़्ता: {1} में से {0} · अब तक +{2} XP",
+  "See all": "सभी देखें",
 }

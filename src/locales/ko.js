@@ -2636,4 +2636,15 @@ export default {
   "Your habits and checks stay saved. You can turn it back on any time.": "습관과 체크 기록은 그대로 남아요. 언제든 다시 켤 수 있어요.",
   "Open Habits": "습관 열기",
   "Choose your habits and how many times a week you want to do each one. Every check earns XP, like workouts do.": "습관을 고르고 각각 일주일에 몇 번 할지 정하세요. 체크할 때마다 운동처럼 XP를 얻어요.",
+  // --- habits home card (phase 4a) ---
+  "Today's habits": "오늘의 습관",
+  "Mark {0} done today": "오늘 {0} 체크",
+  "Unmark {0} today": "오늘 {0} 체크 해제",
+  "1 left in 1 day": "1일 동안 1회 남음",
+  "{0} left in 1 day": "1일 동안 {0}회 남음",
+  "{0} left in {1} days": "{1}일 동안 {0}회 남음",
+  "1 left, and the week ends today": "1회 남았고 이번 주는 오늘 끝나요",
+  "{0} left, and the week ends today": "{0}회 남았고 이번 주는 오늘 끝나요",
+  "Week: {0} of {1} · +{2} XP so far": "이번 주: {1}회 중 {0}회 · 지금까지 +{2} XP",
+  "See all": "모두 보기",
 }
