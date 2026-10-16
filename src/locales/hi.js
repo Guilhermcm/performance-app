@@ -2688,4 +2688,5 @@ export default {
   "Over the goal": "लक्ष्य से ऊपर",
   "No habit checked on this day.": "इस दिन किसी आदत पर चेक नहीं लगा।",
   "Habits were off this month, so no day counts here.": "इस महीने आदतें बंद थीं, इसलिए यहाँ कोई दिन नहीं गिना जाता।",
+  "The habit was saved, but Habits is still off. Tap again to turn it on.": "आदत सेव हो गई, लेकिन आदतें अभी भी बंद हैं। चालू करने के लिए फिर से टैप करें।",
 }

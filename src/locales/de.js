@@ -2708,4 +2708,5 @@ export default {
   "Over the goal": "Über dem Ziel",
   "No habit checked on this day.": "An diesem Tag wurde keine Gewohnheit abgehakt.",
   "Habits were off this month, so no day counts here.": "Gewohnheiten war in diesem Monat aus, deshalb zählt hier kein Tag.",
+  "The habit was saved, but Habits is still off. Tap again to turn it on.": "Die Gewohnheit wurde gespeichert, aber Gewohnheiten ist noch aus. Tippe noch einmal, um sie zu aktivieren.",
 }

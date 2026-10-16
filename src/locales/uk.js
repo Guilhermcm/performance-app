@@ -2760,4 +2760,5 @@ export default {
   "Over the goal": "Понад ціль",
   "No habit checked on this day.": "Цього дня не позначено жодної звички.",
   "Habits were off this month, so no day counts here.": "Цього місяця «Звички» були вимкнені, тому тут не враховується жоден день.",
+  "The habit was saved, but Habits is still off. Tap again to turn it on.": "Звичку збережено, але розділ «Звички» досі вимкнено. Торкніться ще раз, щоб увімкнути.",
 }

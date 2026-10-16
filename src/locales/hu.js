@@ -2691,4 +2691,5 @@ export default {
   "Over the goal": "A cél felett",
   "No habit checked on this day.": "Ezen a napon egy szokás sincs kipipálva.",
   "Habits were off this month, so no day counts here.": "Ebben a hónapban a Szokások ki volt kapcsolva, ezért itt egy nap sem számít.",
+  "The habit was saved, but Habits is still off. Tap again to turn it on.": "A szokás mentve, de a Szokások még ki van kapcsolva. Koppints újra a bekapcsoláshoz.",
 }

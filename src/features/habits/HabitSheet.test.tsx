@@ -53,6 +53,18 @@ describe('HabitSheet: creating', () => {
     expect(h.toast).toHaveBeenCalledWith('Habit created')
   })
 
+  it('tells the caller a habit was saved, and only then', () => {
+    const onSaved = vi.fn()
+    render(<HabitSheet open onOpenChange={onOpenChange} onSaved={onSaved} />)
+    type('Read')
+    saveHabit.mockImplementationOnce(() => { throw classify({ code: 'P0001', message: 'too_many_habits' }) })
+    fireEvent.click(button('Create habit'))
+    expect(onSaved).not.toHaveBeenCalled()
+    fireEvent.click(button('Create habit'))
+    expect(onSaved).toHaveBeenCalledTimes(1)
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+
   it('cuts the name at 40 characters and shows the count', () => {
     show()
     type('a'.repeat(41))

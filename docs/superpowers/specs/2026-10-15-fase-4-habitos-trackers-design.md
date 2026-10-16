@@ -57,8 +57,9 @@ toques e vê a linha ou as barras com a média.
 
 Perfil ganha o cartão **Hábitos**, no molde dos cartões de Nutrição e Sono: chave para ligar e
 desligar, e "Abrir Hábitos". Ao ligar com nenhum hábito ativo, o app abre direto a folha de criação
-do primeiro hábito, porque um pilar ligado sem hábitos não mede nada. Desligar pede confirmação e
-não apaga nada.
+do primeiro hábito, porque um pilar ligado sem hábitos não mede nada. O pilar só liga quando esse
+hábito é salvo: fechar a folha sem salvar deixa tudo como estava, e o próximo toque abre a
+configuração de novo. Desligar pede confirmação e não apaga nada.
 
 `profiles.habits_enabled` liga o pilar; `habit_periods` guarda os períodos ativos, mantida por
 trigger como `sleep_periods`. Uma semana com algum dia fora de período é **neutra** para o streak

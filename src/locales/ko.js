@@ -2688,4 +2688,5 @@ export default {
   "Over the goal": "목표 초과",
   "No habit checked on this day.": "이날 체크한 습관이 없어요.",
   "Habits were off this month, so no day counts here.": "이번 달에는 습관 기능이 꺼져 있어서 여기서 세는 날이 없어요.",
+  "The habit was saved, but Habits is still off. Tap again to turn it on.": "습관은 저장했지만 습관 기능이 아직 꺼져 있어요. 다시 눌러 켜 주세요.",
 }
