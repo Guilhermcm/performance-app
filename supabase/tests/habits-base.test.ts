@@ -179,6 +179,23 @@ describe('habits', () => {
     expect(await sql(db, 'select 1 from public.habits where user_id = $1', [A])).toHaveLength(1)
   })
 
+  it('never moves created_at, which the freezing reads', async () => {
+    const createdAt = async (id: string) =>
+      (await sql(db, `select to_char(created_at at time zone 'UTC', 'YYYY-MM-DD HH24:MI') as c
+                        from public.habits where id = $1`, [id]))[0].c
+    // A client dating a habit in the future gets the clock instead; the past is kept.
+    const future = await addHabit(db, A, { createdAt: '2026-12-01T12:00:00Z' })
+    expect(await createdAt(future)).toBe('2026-10-07 15:00')
+    const past = await addHabit(db, A, { createdAt: '2026-09-20T12:00:00Z' })
+    expect(await createdAt(past)).toBe('2026-09-20 12:00')
+    // An update, or an upsert from the queue, cannot change it.
+    await asA(`update public.habits set created_at = '2026-01-01T00:00:00Z', name = 'Correr' where id = $1`, [past])
+    await asA(`insert into public.habits (id, name, icon, per_week, created_at) values ($1, 'Ler', 'book', 7, '2026-12-01T00:00:00Z')
+               on conflict (id) do update set name = excluded.name, created_at = excluded.created_at`, [past])
+    expect(await createdAt(past)).toBe('2026-09-20 12:00')
+    expect((await habit(past)).name).toBe('Ler')
+  })
+
   it('keeps the newest write', async () => {
     const h = await addHabit(db, A)
     const upsert = (name: string, at: string) =>

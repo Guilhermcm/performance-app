@@ -162,6 +162,42 @@ describe('habits weekly streak', () => {
     // 19/10 still met (archived with its three checks); 26/10 and 02/11 in period, Q = 0: neutral.
     expect(await streak()).toEqual({ current: 4, best: 4, shields: 1, last: '2026-11-02' })
   })
+
+  it('freezes a week once: a habit reactivated the next Monday keeps Q = 0', async () => {
+    await hitWeeks(A, h, BASE, 4)                          // four weeks, one shield
+    await at('2026-10-25')
+    await closeHabitsAs(db, A)                             // the daily close froze the weeks so far
+    await archiveHabit(db, A, h)                           // Sunday: archived with its three checks
+    await at('2026-10-28')
+    await closeHabitsAs(db, A)                             // the daily close: Monday 26/10 closes
+    await at('2026-11-02')
+    await archiveHabit(db, A, h, false)                    // reactivated on the next Monday
+    await at('2026-11-03')                                 // Tuesday: Saturday and Sunday close
+    await closeHabitsAs(db, A)
+    expect(await targetOf(db, h, '2026-10-26')).toBeNull()
+    const [{ q }] = await sql(db, `select public.habit_week_q($1, '2026-10-26') as q`, [A])
+    expect(q).toBe(0)
+    expect(await streak()).toEqual({ current: 4, best: 4, shields: 1, last: '2026-10-26' })
+  })
+
+  it('keeps the week bonus when another habit is reactivated the next Monday', async () => {
+    const other = await addHabit(db, A, { perWeek: 2, sort: 1 })   // Monday 28/09
+    await at('2026-10-01')
+    await archiveHabit(db, A, other)                               // archived the week before
+    await at('2026-10-07')
+    await closeHabitsAs(db, A)                                     // Monday 05/10 closes: Q = 3
+    for (const day of ['2026-10-09', '2026-10-10', '2026-10-11']) await check(A, h, day)
+    await at('2026-10-12')
+    await archiveHabit(db, A, other, false)                        // reactivated on the next Monday
+    await at('2026-10-13')                                         // Tuesday: C reaches Q on Sunday
+    await closeHabitsAs(db, A)
+    expect(await targetOf(db, other, '2026-10-05')).toBeNull()
+    const bonus = await sql(db,
+      `select amount from public.xp_ledger where user_id = $1 and reason = 'habit_week_target'
+          and week_start = '2026-10-05'`, [A])
+    expect(bonus).toEqual([{ amount: Math.round(150 * 3 / 7) }])
+    expect(await streak()).toEqual({ current: 1, best: 1, shields: 0, last: '2026-10-05' })
+  })
 })
 
 describe('habit badges', () => {

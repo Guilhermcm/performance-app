@@ -124,6 +124,14 @@ begin
     raise exception 'item_immutable' using errcode = 'P0001';
   end if;
 
+  -- created_at decides which weeks freeze_habit_targets gives the habit: it never changes, and a
+  -- client cannot date a habit in the future (app_now() is now() outside the tests).
+  if tg_op = 'UPDATE' then
+    new.created_at := old.created_at;
+  elsif current_user in ('authenticated', 'anon') then
+    new.created_at := least(new.created_at, public.app_now());
+  end if;
+
   -- Last write wins: the client's updated_at, capped at now(); an older write is dropped.
   new.updated_at := least(new.updated_at, now());
   if tg_op = 'UPDATE' and new.updated_at < old.updated_at then

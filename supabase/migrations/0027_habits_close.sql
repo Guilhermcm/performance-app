@@ -104,7 +104,7 @@ revoke all on function public.close_habit_weeks(uuid) from public, anon, authent
 -- Closing ---------------------------------------------------------------------------------------
 -- In the mould of close_sleep_nights (0022). Every pending day from the day after the last closed
 -- one (or the first period) up to local_today - 2, skipping days outside a period. For each day, in
--- order: the week's targets freeze if they have not yet; the day's checks that still fit under
+-- order: the week's targets freeze on its first closed day; the day's checks that still fit under
 -- their habit's target are marked counted; each valid check emits habit_check (by habits.sort, then
 -- id), the day emits habit_day if it had one, and the week emits habit_week_target on the day C
 -- reaches Q. Events are unique by source_ref, so a day never pays twice. Runs as the owner: the
@@ -127,6 +127,9 @@ begin
   if v_first is null then return 0; end if;
   select greatest(v_first, max(day) + 1) into v_first from public.habit_days where user_id = p_user;
   v_last := public.local_today(p_user) - 2;
+  -- The running week freezes on the first close that touches it (spec 3.3), with the habits as they
+  -- are now, before a late change can reach it.
+  perform public.freeze_habit_targets(p_user, public.week_start_of(public.local_today(p_user)));
 
   for v_day in
     select d::date from generate_series(v_first, v_last, interval '1 day') d
@@ -135,7 +138,13 @@ begin
   loop
     continue when not public.habits_active_on(p_user, v_day);
     v_week := public.week_start_of(v_day);
-    perform public.freeze_habit_targets(p_user, v_week);
+    -- Only on the week's first closed day. Its Saturday closes on the next Monday and its Sunday on
+    -- the next Tuesday: freezing again then would read next week's habits (one reactivated on that
+    -- Monday would raise a Q already settled).
+    if not exists (select 1 from public.habit_days x
+                    where x.user_id = p_user and x.day >= v_week and x.day < v_day) then
+      perform public.freeze_habit_targets(p_user, v_week);
+    end if;
 
     -- One check per habit and day, so the days already closed in the week decide whether it fits.
     -- A habit without a target row that week has no room.
