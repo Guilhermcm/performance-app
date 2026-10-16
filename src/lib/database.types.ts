@@ -230,7 +230,7 @@ export interface Database {
           id: string
           template:
             | 'workouts_count' | 'weeks_on_target' | 'volume_total' | 'nutrition_days_on_target' | 'checkin_days'
-            | 'sleep_nights_on_target'
+            | 'sleep_nights_on_target' | 'habit_checks'
           title: string
           mode: 'team' | 'solo'; target: number; starts_on: string; ends_on: string
           // null once the creator deleted their account; timezone is theirs, kept from then on.
@@ -244,7 +244,7 @@ export interface Database {
       challenge_members: {
         Row: {
           challenge_id: string; user_id: string; invited_by: string | null; joined_at: string | null
-          share_volume: boolean; share_nutrition: boolean; share_sleep: boolean
+          share_volume: boolean; share_nutrition: boolean; share_sleep: boolean; share_habits: boolean
           final: number | null; won: boolean | null
         }
         Insert: never

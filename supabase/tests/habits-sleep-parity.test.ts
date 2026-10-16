@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import type { PGlite } from '@electric-sql/pglite'
 import { freshDb, asUser } from './helpers/db'
-import { A, makeUser, setClock, withoutEventWindow, ledger, sql } from './helpers/game'
+import { A, B, makeUser, setClock, withoutEventWindow, ledger, sql } from './helpers/game'
+import { befriend, one, rows } from './helpers/social'
 import { addCheckin } from './helpers/checkin'
 import { closeAs, enableNutrition, setTarget } from './helpers/nutrition'
 import { closeSleepAs, enableSleep, logNight, setSleepTarget } from './helpers/sleep'
@@ -139,5 +140,84 @@ describe('progress (0028)', () => {
       sleep: { current: 1, previous: null },
       habits: { current: null, previous: null },
     })
+  })
+})
+
+describe('challenges (0029)', () => {
+  // Named parameters of the Sleep-era client (no p_share_habits). Seven days from Monday 2026-10-05.
+  const create = async (template: string, target: number, share: { nutrition?: boolean; sleep?: boolean } = {}) =>
+    (await one<{ id: string }>(db, A,
+      `select public.create_challenge(p_template => $1, p_title => 'Desafio', p_mode => 'team', p_target => $2::numeric,
+              p_starts_on => '2026-10-05', p_ends_on => '2026-10-11', p_invitees => $3::uuid[],
+              p_share_volume => false, p_share_nutrition => $4, p_share_sleep => $5) as v`,
+      [template, target, '{' + B + '}', share.nutrition ?? false, share.sleep ?? false])).id
+  const join = (id: string, share: { nutrition?: boolean; sleep?: boolean } = {}) =>
+    rows(db, B,
+      `select public.join_challenge(p_id => $1, p_share_volume => false, p_share_nutrition => $2,
+              p_share_sleep => $3)`,
+      [id, share.nutrition ?? false, share.sleep ?? false])
+  const board = async () => {
+    const [c] = await one<any[]>(db, A, 'select public.get_challenges() as v')
+    return { status: c.status, members: c.members.map((m: any) => [m.name, m.progress, m.won]) }
+  }
+  const closeAll = async () => (await sql<{ n: number }>(db, 'select public.close_all_challenges() as n'))[0].n
+  const bonus = async (uid: string) => (await ledger(db, uid)).filter(r => r.reason.startsWith('challenge:')).map(r => r.amount)
+
+  beforeEach(async () => {
+    await makeUser(db, B, { display_name: 'Bia' })
+    await befriend(db, A, B)
+  })
+
+  it('still counts training days in checkin_days', async () => {
+    const id = await create('checkin_days', 5)
+    await join(id)
+    await addCheckin(db, A, { day: '2026-10-05' })
+    await addCheckin(db, A, { day: '2026-10-05', visibility: 'private' })   // same day
+    await setClock(db, '2026-10-07T15:00:00Z')
+    await sql(db, 'select public.close_training_days($1)', [A])
+    expect(await board()).toEqual({ status: 'active', members: [['Ana', 1, null], ['Bia', 0, null]] })
+  })
+
+  it('still closes a nutrition challenge', async () => {
+    for (const u of [A, B]) {
+      await enableNutrition(db, u)
+      await setTarget(db, u, '2026-10-05', { kcal: 2000, protein_g: 150, carbs_g: 200, fat_g: 60 })
+    }
+    const id = await create('nutrition_days_on_target', 2, { nutrition: true })
+    await join(id, { nutrition: true })
+    // Ana on target on Monday and on the last day; nothing closed before the challenge.
+    for (const day of ['2026-10-05', '2026-10-11'])
+      for (const meal of ['lunch', 'dinner'])
+        await sql(db,
+          `insert into public.food_logs (id, user_id, day, meal, name, source, kcal, protein_g, carbs_g, fat_g)
+           values (gen_random_uuid(), $1, $2, $3, 'Item', 'quick', 1000, 75, 100, 30)`, [A, day, meal])
+    await setClock(db, '2026-10-14T02:59:00Z')       // 23:59 on ends_on + 2
+    expect(await closeAll()).toBe(0)
+    await setClock(db, '2026-10-14T03:01:00Z')       // 00:01 on ends_on + 3
+    expect(await closeAll()).toBe(1)
+    expect(await board()).toEqual({ status: 'won', members: [['Ana', 2, true], ['Bia', 0, true]] })
+    expect(await bonus(B)).toEqual([300])
+  })
+
+  it('still closes a sleep challenge after closing pending nights', async () => {
+    for (const u of [A, B]) {
+      await enableSleep(db, u)
+      await setSleepTarget(db, u, '2026-10-05', 480, '23:00')
+    }
+    const id = await create('sleep_nights_on_target', 3, { sleep: true })
+    await join(id, { sleep: true })
+    // Ana on target on Monday and the last two nights, Bia on Wednesday; nothing closed before.
+    for (const night of ['2026-10-05', '2026-10-10', '2026-10-11'])
+      await logNight(db, A, night, '23:00', '07:00', { asOwner: true })
+    await logNight(db, B, '2026-10-07', '23:00', '07:00', { asOwner: true })
+    await setClock(db, '2026-10-14T02:59:00Z')       // 23:59 on ends_on + 2
+    expect(await closeAll()).toBe(0)
+    await setClock(db, '2026-10-14T03:01:00Z')       // 00:01 on ends_on + 3
+    expect(await closeAll()).toBe(1)
+    expect(await board()).toEqual({ status: 'won', members: [['Ana', 3, true], ['Bia', 1, true]] })
+    const [last] = await sql(db,
+      `select to_char(max(night), 'YYYY-MM-DD') as n from public.sleep_nights where user_id = $1`, [A])
+    expect(last.n).toBe('2026-10-12')
+    expect(await bonus(A)).toEqual([300])
   })
 })

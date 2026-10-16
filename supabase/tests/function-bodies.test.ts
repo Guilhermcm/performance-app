@@ -70,6 +70,27 @@ const REDEFINED: { fn: string; base: string; in: string; changed: string[] }[] =
     changed: ["'previous', public.pillar_consistency(p_user, 'sleep', 1))))"],
   },
   { fn: 'get_my_progress', base: '0023_sleep_progress.sql', in: '0028_habits_progress.sql', changed: [] },
+  { fn: 'challenge_progress', base: '0024_sleep_challenge.sql', in: '0029_habits_challenge.sql', changed: [] },
+  { fn: 'close_challenge', base: '0024_sleep_challenge.sql', in: '0029_habits_challenge.sql', changed: [] },
+  // The two-day templates gain the habits one.
+  {
+    fn: 'challenge_grace', base: '0024_sleep_challenge.sql', in: '0029_habits_challenge.sql',
+    changed: ["'sleep_nights_on_target')"],
+  },
+  // The template list gains the habits one and the creator's row records share_habits.
+  {
+    fn: 'create_challenge', base: '0024_sleep_challenge.sql', in: '0029_habits_challenge.sql',
+    changed: [
+      "'checkin_days', 'sleep_nights_on_target')",
+      '(challenge_id, user_id, invited_by, joined_at, share_volume, share_nutrition, share_sleep)',
+      "p_template = 'sleep_nights_on_target');",
+    ],
+  },
+  // Joining records share_habits next to share_sleep.
+  {
+    fn: 'join_challenge', base: '0024_sleep_challenge.sql', in: '0029_habits_challenge.sql',
+    changed: ["share_sleep = (v_c.template = 'sleep_nights_on_target')"],
+  },
 ]
 
 describe('redefined function bodies', () => {
