@@ -2750,4 +2750,16 @@ export default {
   "Habits level {0}": "Звички, рівень {0}",
   "Habit week done, +{0} XP": "Тиждень звичок виконано, +{0} XP",
   "You hit every habit's goal last week.": "Минулого тижня ви виконали ціль кожної звички.",
+  // --- habits history calendar and day sheet (phase 4a) ---
+  "All checked": "Усе позначено",
+  "Partly checked": "Позначено частково",
+  "Nothing checked": "Нічого не позначено",
+  "1 check counted": "1 позначку зараховано",
+  "{0} checks counted": "{0} позначок зараховано",
+  "{0} checks counted|one": "{0} позначку зараховано",
+  "{0} checks counted|few": "{0} позначки зараховано",
+  "{0} checks counted|many": "{0} позначок зараховано",
+  "Over the goal": "Понад ціль",
+  "No habit checked on this day.": "Цього дня не позначено жодної звички.",
+  "Habits were off this month, so no day counts here.": "Цього місяця «Звички» були вимкнені, тому тут не враховується жоден день.",
 }

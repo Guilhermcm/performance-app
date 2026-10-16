@@ -2681,4 +2681,13 @@ export default {
   "Habits level {0}": "습관 레벨 {0}",
   "Habit week done, +{0} XP": "습관 주간 달성, +{0} XP",
   "You hit every habit's goal last week.": "지난주 모든 습관의 목표를 달성했어요.",
+  // --- habits history calendar and day sheet (phase 4a) ---
+  "All checked": "모두 체크",
+  "Partly checked": "일부 체크",
+  "Nothing checked": "체크 없음",
+  "1 check counted": "체크 1회 인정",
+  "{0} checks counted": "체크 {0}회 인정",
+  "Over the goal": "목표 초과",
+  "No habit checked on this day.": "이날 체크한 습관이 없어요.",
+  "Habits were off this month, so no day counts here.": "이번 달에는 습관 기능이 꺼져 있어서 여기서 세는 날이 없어요.",
 }

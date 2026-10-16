@@ -19,12 +19,13 @@ import { iconFor } from './icons'
 import HabitRow from './HabitRow'
 import HabitSheet, { fullText } from './HabitSheet'
 import HabitsSetup from './HabitsSetup'
+import HabitsHistory from './HabitsHistory'
 import type { Habit } from './types'
 
 const weeksText = (n: number) => (n === 1 ? t('1 week') : tn(n, '{0} weeks', n))
 
 // /habitos (spec 7.3): this week's C of Q with the streak and shields, the active habits in their
-// order with the week's seven days, room for the calendar (Task 11) and the archived habits last.
+// order with the week's seven days, the month of checks and the archived habits last.
 // Opens from the Home card, the radar and the Profile; with the pillar off, the invite to turn it on.
 export default function HabitsScreen() {
   const navigate = useNavigate()
@@ -178,8 +179,8 @@ function Habits({ timezone, failed }: { timezone: string | null | undefined; fai
         </section>
       )}
 
-      {/* The month of checks (spec 7.3, Task 11). */}
-      <div data-slot="habits-history" />
+      {/* The month of checks (spec 7.3), once there is a habit to have checked. */}
+      <div data-slot="habits-history">{!failed && habits.length > 0 && <HabitsHistory />}</div>
 
       {archived.length > 0 && (
         <section aria-labelledby="habits-archived-title" className="flex flex-col gap-2 pt-2">

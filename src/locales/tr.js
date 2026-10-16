@@ -2681,4 +2681,13 @@ export default {
   "Habits level {0}": "Alışkanlıklar seviye {0}",
   "Habit week done, +{0} XP": "Alışkanlık haftası tamam, +{0} XP",
   "You hit every habit's goal last week.": "Geçen hafta her alışkanlığın hedefini tutturdun.",
+  // --- habits history calendar and day sheet (phase 4a) ---
+  "All checked": "Hepsi işaretli",
+  "Partly checked": "Kısmen işaretli",
+  "Nothing checked": "Hiçbiri işaretli değil",
+  "1 check counted": "1 işaret sayıldı",
+  "{0} checks counted": "{0} işaret sayıldı",
+  "Over the goal": "Hedefin üstünde",
+  "No habit checked on this day.": "Bu gün hiçbir alışkanlık işaretlenmedi.",
+  "Habits were off this month, so no day counts here.": "Alışkanlıklar bu ay kapalıydı, bu yüzden burada hiçbir gün sayılmıyor.",
 }

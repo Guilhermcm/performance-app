@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { classify } from '@/lib/supabase-errors'
-import type { Habit, HabitCheck, HabitHistory, HabitTarget } from './types'
+import type { Habit, HabitCheck, HabitHistory, HabitPeriod, HabitTarget } from './types'
 
 const fail = (e: unknown): never => { throw classify(e) }
 
@@ -64,6 +64,13 @@ export async function fetchHistory(from: string, to: string): Promise<HabitHisto
   if (res.error) fail(res.error)
   const d = res.data as Partial<HabitHistory> | null
   return { days: d?.days ?? [], checks: d?.checks ?? [], targets: d?.targets ?? [], periods: d?.periods ?? [] }
+}
+
+// Every period of the pillar, oldest first: the calendar goes back to the first one, which
+// get_habit_history only returns when its range reaches it.
+export async function fetchPeriods(): Promise<HabitPeriod[]> {
+  const rows = await run<Row[]>(supabase.from('habit_periods').select('started_on, ended_on').order('started_on', { ascending: true }) as never)
+  return (rows ?? []).map(r => ({ started_on: r.started_on as string, ended_on: (r.ended_on as string | null) ?? null }))
 }
 
 export type HabitErrorCode = 'day_closed' | 'habit_archived' | 'pillar_off' | 'too_many_habits' | 'network' | 'refused'

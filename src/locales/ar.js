@@ -2734,4 +2734,13 @@ export default {
   "Habits level {0}": "العادات المستوى {0}",
   "Habit week done, +{0} XP": "أسبوع عادات مكتمل، +{0} XP",
   "You hit every habit's goal last week.": "حققت هدف كل عادة الأسبوع الماضي.",
+  // --- habits history calendar and day sheet (phase 4a) ---
+  "All checked": "كل العادات مُعلَّمة",
+  "Partly checked": "بعضها مُعلَّم",
+  "Nothing checked": "لا شيء مُعلَّم",
+  "1 check counted": "احتُسبت علامة واحدة",
+  "{0} checks counted": "احتُسبت {0} علامة",
+  "Over the goal": "فوق الهدف",
+  "No habit checked on this day.": "لم تُعلَّم أي عادة في هذا اليوم.",
+  "Habits were off this month, so no day counts here.": "كانت العادات متوقفة هذا الشهر، لذا لا يُحتسب أي يوم هنا.",
 }
