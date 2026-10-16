@@ -2663,4 +2663,18 @@ export default {
   "{0}, still ahead": "{0}, à venir",
   "1 week in a row": "1 semaine d'affilée",
   "{0}+ weeks in a row": "{0}+ semaines d'affilée",
+  // --- habits challenge (phase 4a) ---
+  "To take part, agree to show how many checks you made.": "Pour participer, accepte de montrer combien de coches tu as faites.",
+  "Turn on the Habits pillar to take part in this challenge.": "Active le pilier Habitudes pour participer à ce défi.",
+  "Habit checks": "Coches d’habitudes",
+  "Habit checks in the period, each habit up to its own weekly goal. Others only see how many, never your habits or the days.": "Les coches d’habitudes de la période, chaque habitude jusqu’à son propre objectif de la semaine. Les autres voient seulement combien, jamais tes habitudes ni les jours.",
+  "1 check": "1 coche",
+  "1 check in {0} days": "1 coche en {0} jours",
+  "{0} checks in {1} days": "{0} coches en {1} jours",
+  "Show participants how many checks I made": "Montrer aux participants combien de coches j’ai faites",
+  "They see only that number, never your habits, their icons or which days.": "Ils voient seulement ce nombre, jamais tes habitudes, leurs icônes ni les jours.",
+  "Turn on the Habits pillar to create this challenge.": "Active le pilier Habitudes pour créer ce défi.",
+  "Agree to show your checks to create this challenge.": "Accepte de montrer tes coches pour créer ce défi.",
+  "Only for people with the Habits pillar on.": "Réservé à ceux qui ont activé le pilier Habitudes.",
+  "Turn on the Habits pillar to join": "Active le pilier Habitudes pour participer",
 }

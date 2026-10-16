@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   GRACE, MODES, TARGET_STEP, TEMPLATES, addDays, challengeShare, checkChallenge, daysInclusive, daysLeft, mondayOf, nextMonday,
-  canJoin, pendingInvites, rankMembers, resultOn, suggestedTarget, targetRange, weeksTouched
+  canJoin, pendingInvites, rankMembers, resultOn, suggestHabitTarget, suggestedTarget, targetRange, weeksTouched
 } from './templates'
 import { challengeOf } from './test-social'
 import type { NewChallenge } from './types'
@@ -9,10 +9,12 @@ import type { NewChallenge } from './types'
 const today = '2026-10-05'
 const draft = (over: Partial<NewChallenge> = {}): NewChallenge => ({
   template: 'checkin_days', title: 'Outubro forte', mode: 'team', target: 6,
-  starts_on: '2026-10-05', ends_on: '2026-10-18', invitees: ['b'], share_volume: false, share_nutrition: false, share_sleep: false, ...over
+  starts_on: '2026-10-05', ends_on: '2026-10-18', invitees: ['b'], share_volume: false, share_nutrition: false, share_sleep: false, share_habits: false,
+  ...over
 })
 const NUT = 'nutrition_days_on_target' as const
 const SLEEP = 'sleep_nights_on_target' as const
+const HABITS = 'habit_checks' as const
 
 describe('calendar helpers', () => {
   it('count days and weeks like the database', () => {
@@ -112,7 +114,7 @@ describe('progress helpers', () => {
 
 describe('checkin_days (training days)', () => {
   it('is the template people create, for teams and for solo; the old ones are not offered', () => {
-    expect(TEMPLATES).toEqual(['checkin_days', 'weeks_on_target', 'nutrition_days_on_target', 'sleep_nights_on_target'])
+    expect(TEMPLATES).toEqual(['checkin_days', 'weeks_on_target', 'nutrition_days_on_target', 'sleep_nights_on_target', 'habit_checks'])
     expect(TEMPLATES).not.toContain('workouts_count')
     expect(TEMPLATES).not.toContain('volume_total')
     expect(MODES.checkin_days).toEqual(['team', 'solo'])
@@ -188,7 +190,8 @@ describe('nutrition_days_on_target', () => {
 
   it('gives the result two days later for templates paid by closed days, as challenge_grace does', () => {
     expect(GRACE).toEqual({
-      checkin_days: 2, workouts_count: 2, weeks_on_target: 2, volume_total: 0, nutrition_days_on_target: 2, sleep_nights_on_target: 2
+      checkin_days: 2, workouts_count: 2, weeks_on_target: 2, volume_total: 0, nutrition_days_on_target: 2, sleep_nights_on_target: 2,
+      habit_checks: 2
     })
     // ends_on 2026-10-18: its last day closes at the start of the 20th, the challenge on the 21st.
     expect(resultOn(challengeOf({ template: NUT }))).toBe('2026-10-21')
@@ -260,5 +263,77 @@ describe('sleep_nights_on_target', () => {
     expect(GRACE[SLEEP]).toBe(2)
     // ends_on 2026-10-18: that night closes at the start of the 20th, the challenge on the 21st.
     expect(resultOn(challengeOf({ template: SLEEP }))).toBe('2026-10-21')
+  })
+})
+
+// The same rules as create_challenge in supabase/migrations/0029_habits_challenge.sql;
+// supabase/tests/challenge-rules-parity.test.ts runs both against the same cases.
+describe('habit_checks', () => {
+  const habits = (over: Partial<NewChallenge> = {}) => draft({ template: HABITS, target: 20, share_habits: true, ...over })
+  const on = { habitsOn: true }
+
+  it('is the last template, for teams and for solo, a check at a time', () => {
+    expect(TEMPLATES[TEMPLATES.length - 1]).toBe(HABITS)
+    expect(MODES[HABITS]).toEqual(['team', 'solo'])
+    expect(TARGET_STEP[HABITS]).toBe(1)
+  })
+
+  it('bounds the goal by 10 checks a day of the period, times the people in a team', () => {
+    expect(targetRange(HABITS, '2026-10-05', '2026-10-18', 'solo', 1)).toEqual({ min: 1, max: 140 })
+    expect(targetRange(HABITS, '2026-10-05', '2026-10-18', 'solo', 2)).toEqual({ min: 1, max: 140 })
+    expect(targetRange(HABITS, '2026-10-05', '2026-10-18', 'team', 1)).toEqual({ min: 1, max: 280 })
+    expect(targetRange(HABITS, '2026-10-05', '2026-10-18', 'team', 2)).toEqual({ min: 1, max: 420 })
+    expect(targetRange(HABITS, '2026-10-05', '2027-01-04', 'team', 19)).toEqual({ min: 1, max: 18400 })
+  })
+
+  it('accepts the edges', () => {
+    expect(checkChallenge(habits(), today, on)).toBeNull()
+    expect(checkChallenge(habits({ mode: 'solo', target: 140 }), today, on)).toBeNull()
+    expect(checkChallenge(habits({ mode: 'team', target: 420, invitees: ['b', 'c'] }), today, on)).toBeNull()
+    expect(checkChallenge(habits({ target: 1 }), today, on)).toBeNull()
+  })
+
+  it.each([
+    [{ mode: 'solo', target: 141 }, 'target'],
+    [{ mode: 'team', target: 281 }, 'target'],
+    [{ mode: 'team', target: 421, invitees: ['b', 'c'] }, 'target'],
+    [{ target: 0 }, 'target'],
+    [{ target: 2.5 }, 'target'],
+    [{ ends_on: '2027-01-05' }, 'dates'],
+    [{ share_habits: false }, 'habits']
+  ] as [Partial<NewChallenge>, string][])('refuses %j as %s', (over, problem) => {
+    expect(checkChallenge(habits(over), today, on)).toBe(problem)
+  })
+
+  it('needs the pillar on, before the opt-in, as the server checks them', () => {
+    expect(checkChallenge(habits(), today, { habitsOn: false })).toBe('habits_off')
+    expect(checkChallenge(habits({ share_habits: false }), today)).toBe('habits_off')
+    // The shape comes first, as on the server.
+    expect(checkChallenge(habits({ target: 0, share_habits: false }), today)).toBe('target')
+    // Another pillar does not open the habits template, nor its opt-in another one.
+    expect(checkChallenge(habits({ share_sleep: true, share_nutrition: true }), today, { nutritionOn: true, sleepOn: true })).toBe('habits_off')
+    expect(checkChallenge(habits({ share_habits: false, share_sleep: true }), today, { habitsOn: true })).toBe('habits')
+    expect(checkChallenge(draft({ template: SLEEP, target: 10, share_habits: true }), today, { sleepOn: true, habitsOn: true })).toBe('sleep')
+    // The other templates do not care about the pillar.
+    expect(checkChallenge(draft(), today, { habitsOn: false })).toBeNull()
+  })
+
+  it('suggests Q checks a week over the period, or the weekly goals of the active habits while Q is 0 (plan decision 19)', () => {
+    expect(suggestHabitTarget(10, 10, 14)).toBe(20)
+    expect(suggestHabitTarget(10, 3, 14)).toBe(20)
+    expect(suggestHabitTarget(0, 6, 7)).toBe(6)
+    expect(suggestHabitTarget(0, 0, 7)).toBe(1)
+    expect(suggestHabitTarget(5, 0, 30)).toBe(21)
+    // Per person in a team, and never past the range.
+    expect(suggestedTarget(HABITS, 'solo', '2026-10-05', '2026-10-18', 10, 3)).toBe(20)
+    expect(suggestedTarget(HABITS, 'team', '2026-10-05', '2026-10-18', 10, 3)).toBe(60)
+    expect(suggestedTarget(HABITS, 'solo', '2026-10-05', '2026-10-11', 0, 1)).toBe(1)
+    expect(suggestedTarget(HABITS, 'solo', '2026-10-05', '2026-10-11', 140, 1)).toBe(70)
+  })
+
+  it('gives the result two days after the last day, as challenge_grace does', () => {
+    expect(GRACE[HABITS]).toBe(2)
+    // ends_on 2026-10-18: that day closes at the start of the 20th, the challenge on the 21st.
+    expect(resultOn(challengeOf({ template: HABITS }))).toBe('2026-10-21')
   })
 })

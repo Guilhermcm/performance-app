@@ -5,13 +5,14 @@ import { A, B, makeUser, setClock, sql } from './helpers/game'
 import { C, befriend, one, rows } from './helpers/social'
 import { enableNutrition } from './helpers/nutrition'
 import { enableSleep } from './helpers/sleep'
+import { enableHabits } from './helpers/habits'
 import {
   GRACE, MAX_DAYS, MIN_DAYS, TEMPLATES, addDays, checkChallenge, resultOn, targetRange, type ChallengeProblem
 } from '../../src/features/social/templates'
 import type { Challenge, ChallengeMode, NewChallenge } from '../../src/features/social/types'
 
 // The challenge rules of the client (src/features/social/templates.ts) against create_challenge
-// (0015_nutrition_challenge.sql, 0020_checkin_feed.sql, 0024_sleep_challenge.sql) on the same cases: what the form accepts the
+// (0015_nutrition_challenge.sql, 0020_checkin_feed.sql, 0024_sleep_challenge.sql, 0029_habits_challenge.sql) on the same cases: what the form accepts the
 // server accepts, and what the form refuses the server refuses with the matching error. Ana creates,
 // today is Monday 2026-10-05 in her time zone, Bia and Caio are her friends.
 
@@ -19,6 +20,7 @@ let db: PGlite
 const TODAY = '2026-10-05'
 const NUT = 'nutrition_days_on_target'
 const SLEEP = 'sleep_nights_on_target'
+const HABITS = 'habit_checks'
 // The training days template (0020) takes the rules of workouts_count and is the one the client
 // creates (workouts_count stays only for challenges already running).
 const DAYS = 'checkin_days'
@@ -27,7 +29,7 @@ const DAYS = 'checkin_days'
 const SERVER: Record<ChallengeProblem, string> = {
   title: 'invalid_challenge', mode: 'invalid_challenge', dates: 'invalid_challenge', target: 'invalid_challenge',
   invitees: 'invalid_challenge', volume: 'volume_opt_in_required', nutrition: 'nutrition_opt_in_required', nutrition_off: 'nutrition_off',
-  sleep: 'sleep_opt_in_required', sleep_off: 'sleep_off'
+  sleep: 'sleep_opt_in_required', sleep_off: 'sleep_off', habits: 'habits_opt_in_required', habits_off: 'habits_off'
 }
 
 async function serverSays(c: NewChallenge, template: string = c.template): Promise<string> {
@@ -35,9 +37,9 @@ async function serverSays(c: NewChallenge, template: string = c.template): Promi
     await one(db, A,
       `select public.create_challenge(p_template => $1, p_title => $2, p_mode => $3, p_target => $4::numeric,
               p_starts_on => $5::date, p_ends_on => $6::date, p_invitees => $7::uuid[],
-              p_share_volume => $8, p_share_nutrition => $9, p_share_sleep => $10) as v`,
+              p_share_volume => $8, p_share_nutrition => $9, p_share_sleep => $10, p_share_habits => $11) as v`,
       [template, c.title, c.mode, c.target, c.starts_on, c.ends_on, '{' + c.invitees.join(',') + '}', c.share_volume, c.share_nutrition,
-        c.share_sleep])
+        c.share_sleep, c.share_habits])
     return 'ok'
   } catch (e) {
     return (e as Error).message
@@ -49,11 +51,11 @@ async function serverSays(c: NewChallenge, template: string = c.template): Promi
 
 const draft = (over: Partial<NewChallenge>): NewChallenge => ({
   template: NUT, title: 'No alvo', mode: 'team', target: 1, starts_on: TODAY, ends_on: addDays(TODAY, 6),
-  invitees: [B], share_volume: false, share_nutrition: true, share_sleep: false, ...over
+  invitees: [B], share_volume: false, share_nutrition: true, share_sleep: false, share_habits: false, ...over
 })
 
-async function same(c: NewChallenge, nutritionOn = true, sleepOn = false) {
-  const problem = checkChallenge(c, TODAY, { nutritionOn, sleepOn })
+async function same(c: NewChallenge, nutritionOn = true, sleepOn = false, habitsOn = false) {
+  const problem = checkChallenge(c, TODAY, { nutritionOn, sleepOn, habitsOn })
   expect(await serverSays(c), JSON.stringify(c)).toBe(problem ? SERVER[problem] : 'ok')
 }
 
@@ -94,7 +96,7 @@ describe('nutrition challenge rules, client and server', () => {
 
   it('keeps the other templates as they were', async () => {
     // The old templates stay on the server for challenges already running, so they are held too.
-    for (const template of (Object.keys(GRACE) as (keyof typeof GRACE)[]).filter(t => t !== NUT && t !== SLEEP)) {
+    for (const template of (Object.keys(GRACE) as (keyof typeof GRACE)[]).filter(t => t !== NUT && t !== SLEEP && t !== HABITS)) {
       const mode = template === 'weeks_on_target' ? 'solo' : 'team'
       const ends_on = addDays(TODAY, 13)
       const { max } = targetRange(template, TODAY, ends_on, mode, 1)
@@ -143,6 +145,52 @@ describe('sleep challenge rules, client and server', () => {
     await sameSleep(night({ share_sleep: false }), false)
     expect(checkChallenge(night({}), TODAY, { sleepOn: false })).toBe('sleep_off')
     expect(checkChallenge(night({ share_sleep: false }), TODAY, { sleepOn: true })).toBe('sleep')
+  })
+})
+
+// Ana's Habits pillar is off outside this block, so the cases above see the habits template as habits_off.
+describe('habits challenge rules, client and server', () => {
+  const checks = (over: Partial<NewChallenge>) =>
+    draft({ template: HABITS, title: 'Hábitos em dia', share_nutrition: false, share_habits: true, ...over })
+  const sameHabits = (c: NewChallenge, habitsOn = true) => same(c, true, false, habitsOn)
+
+  const shapes: [ChallengeMode, number, string[]][] = []
+  for (const mode of ['team', 'solo'] as const) {
+    for (const days of [MIN_DAYS, 14, 30, MAX_DAYS]) for (const invitees of [[B], [B, C]]) shapes.push([mode, days, invitees])
+  }
+
+  it.each(shapes)('%s for %i days with %j: same goal range', async (mode, days, invitees) => {
+    await enableHabits(db, A)
+    try {
+      const ends_on = addDays(TODAY, days - 1)
+      const r = targetRange(HABITS, TODAY, ends_on, mode, invitees.length)
+      expect(r.max).toBe(10 * days * (mode === 'team' ? 1 + invitees.length : 1))
+      for (const target of [r.min - 1, r.min, r.max, r.max + 1]) await sameHabits(checks({ mode, ends_on, invitees, target }))
+    } finally {
+      await enableHabits(db, A, false)
+    }
+  })
+
+  it('agrees on the period, the opt-in and the pillar, in the order the server checks them', async () => {
+    await enableHabits(db, A)
+    try {
+      await sameHabits(checks({ ends_on: addDays(TODAY, MIN_DAYS - 2) }))
+      await sameHabits(checks({ ends_on: addDays(TODAY, MAX_DAYS) }))
+      await sameHabits(checks({ target: 2.5 }))
+      await sameHabits(checks({ share_habits: false }))
+      // Another opt-in does not stand in for the habits one.
+      await sameHabits(checks({ share_habits: false, share_sleep: true, share_nutrition: true }))
+      // Nor the habits opt-in for the sleep one.
+      await enableSleep(db, A)
+      await same(draft({ template: SLEEP, share_nutrition: false, share_habits: true }), true, true, true)
+      await enableSleep(db, A, false)
+    } finally {
+      await enableHabits(db, A, false)
+    }
+    await sameHabits(checks({}), false)
+    await sameHabits(checks({ share_habits: false }), false)
+    expect(checkChallenge(checks({}), TODAY, { habitsOn: false })).toBe('habits_off')
+    expect(checkChallenge(checks({ share_habits: false }), TODAY, { habitsOn: true })).toBe('habits')
   })
 })
 
@@ -219,6 +267,24 @@ describe('when the result comes', () => {
               p_share_volume => false, p_share_nutrition => false, p_share_sleep => true) as v`, [SLEEP, TODAY, ends_on, '{' + B + '}'])
     await rows(db, B, 'select public.join_challenge(p_id => $1, p_share_volume => false, p_share_sleep => true)', [id])
     const day = resultOn({ template: SLEEP, ends_on } as Challenge)
+    expect(day).toBe('2026-10-14')
+    await setClock(db, addDays(day, -1) + 'T15:00:00Z')
+    expect((await sql(db, 'select public.close_all_challenges() as n'))[0].n).toBe(0)
+    await setClock(db, day + 'T03:01:00Z')
+    expect((await sql(db, 'select public.close_all_challenges() as n'))[0].n).toBe(1)
+  })
+
+  it('closes a habits challenge on the day resultOn gives too', async () => {
+    await setClock(db, '2026-10-05T15:00:00Z')
+    await enableHabits(db, A)
+    await enableHabits(db, B)
+    const ends_on = addDays(TODAY, 6)
+    const { id } = await one<{ id: string }>(db, A,
+      `select public.create_challenge(p_template => $1, p_title => 'Hábitos em dia', p_mode => 'team', p_target => 1,
+              p_starts_on => $2::date, p_ends_on => $3::date, p_invitees => $4::uuid[],
+              p_share_habits => true) as v`, [HABITS, TODAY, ends_on, '{' + B + '}'])
+    await rows(db, B, 'select public.join_challenge(p_id => $1, p_share_habits => true)', [id])
+    const day = resultOn({ template: HABITS, ends_on } as Challenge)
     expect(day).toBe('2026-10-14')
     await setClock(db, addDays(day, -1) + 'T15:00:00Z')
     expect((await sql(db, 'select public.close_all_challenges() as n'))[0].n).toBe(0)

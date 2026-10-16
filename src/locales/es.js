@@ -2663,4 +2663,18 @@ export default {
   "{0}, still ahead": "{0}, aún no llega",
   "1 week in a row": "1 semana seguida",
   "{0}+ weeks in a row": "{0}+ semanas seguidas",
+  // --- habits challenge (phase 4a) ---
+  "To take part, agree to show how many checks you made.": "Para participar, acepta mostrar cuántas marcas hiciste.",
+  "Turn on the Habits pillar to take part in this challenge.": "Activa el pilar Hábitos para participar en este reto.",
+  "Habit checks": "Marcas de hábitos",
+  "Habit checks in the period, each habit up to its own weekly goal. Others only see how many, never your habits or the days.": "Marcas de hábitos en el período, cada hábito hasta su propia meta semanal. Los demás solo ven cuántas, nunca tus hábitos ni los días.",
+  "1 check": "1 marca",
+  "1 check in {0} days": "1 marca en {0} días",
+  "{0} checks in {1} days": "{0} marcas en {1} días",
+  "Show participants how many checks I made": "Mostrar a los participantes cuántas marcas hice",
+  "They see only that number, never your habits, their icons or which days.": "Solo ven ese número, nunca tus hábitos, sus iconos ni qué días.",
+  "Turn on the Habits pillar to create this challenge.": "Activa el pilar Hábitos para crear este reto.",
+  "Agree to show your checks to create this challenge.": "Acepta mostrar tus marcas para crear este reto.",
+  "Only for people with the Habits pillar on.": "Solo para quien tiene activado el pilar Hábitos.",
+  "Turn on the Habits pillar to join": "Activa el pilar Hábitos para participar",
 }

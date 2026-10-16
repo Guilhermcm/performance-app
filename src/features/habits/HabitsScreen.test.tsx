@@ -72,7 +72,7 @@ describe('HabitsScreen', () => {
     profile({ habits_enabled: false })
     render(<HabitsScreen />)
     expect(screen.queryByRole('list')).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'Ligar Hábitos' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ligar os Hábitos' }))
     expect(h.nav).not.toHaveBeenCalled()
     expect(screen.getByRole('dialog', { name: 'habits-setup' })).toBeTruthy()
   })

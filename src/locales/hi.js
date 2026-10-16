@@ -2663,4 +2663,18 @@ export default {
   "{0}, still ahead": "{0}, अभी आना है",
   "1 week in a row": "लगातार 1 हफ़्ता",
   "{0}+ weeks in a row": "लगातार {0}+ हफ़्ते",
+  // --- habits challenge (phase 4a) ---
+  "To take part, agree to show how many checks you made.": "हिस्सा लेने के लिए, यह दिखाने की सहमति दें कि आपने कितने चेक लगाए।",
+  "Turn on the Habits pillar to take part in this challenge.": "इस चैलेंज में हिस्सा लेने के लिए आदतें स्तंभ चालू करें।",
+  "Habit checks": "आदतों के चेक",
+  "Habit checks in the period, each habit up to its own weekly goal. Others only see how many, never your habits or the days.": "अवधि में आदतों के चेक, हर आदत अपने साप्ताहिक लक्ष्य तक। दूसरे सिर्फ़ गिनती देखते हैं, आपकी आदतें या दिन कभी नहीं।",
+  "1 check": "1 चेक",
+  "1 check in {0} days": "{0} दिनों में 1 चेक",
+  "{0} checks in {1} days": "{1} दिनों में {0} चेक",
+  "Show participants how many checks I made": "प्रतिभागियों को दिखाएँ कि मैंने कितने चेक लगाए",
+  "They see only that number, never your habits, their icons or which days.": "वे सिर्फ़ यह संख्या देखते हैं, आपकी आदतें, उनके आइकन या दिन कभी नहीं।",
+  "Turn on the Habits pillar to create this challenge.": "यह चैलेंज बनाने के लिए आदतें स्तंभ चालू करें।",
+  "Agree to show your checks to create this challenge.": "यह चैलेंज बनाने के लिए अपने चेक दिखाने की सहमति दें।",
+  "Only for people with the Habits pillar on.": "सिर्फ़ उनके लिए जिनका आदतें स्तंभ चालू है।",
+  "Turn on the Habits pillar to join": "जुड़ने के लिए आदतें स्तंभ चालू करें",
 }

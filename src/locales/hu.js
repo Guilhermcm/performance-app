@@ -2666,4 +2666,18 @@ export default {
   "{0}, still ahead": "{0}, még hátravan",
   "1 week in a row": "1 hét egymás után",
   "{0}+ weeks in a row": "{0}+ hét egymás után",
+  // --- habits challenge (phase 4a) ---
+  "To take part, agree to show how many checks you made.": "A részvételhez járulj hozzá, hogy látszódjon, hány pipát tettél.",
+  "Turn on the Habits pillar to take part in this challenge.": "Kapcsold be a Szokások pillért, hogy részt vehess ebben a kihívásban.",
+  "Habit checks": "Szokáspipák",
+  "Habit checks in the period, each habit up to its own weekly goal. Others only see how many, never your habits or the days.": "Szokáspipák az időszakban, minden szokás a saját heti céljáig. A többiek csak azt látják, hány, a szokásaidat és a napokat soha.",
+  "1 check": "1 pipa",
+  "1 check in {0} days": "1 pipa {0} nap alatt",
+  "{0} checks in {1} days": "{0} pipa {1} nap alatt",
+  "Show participants how many checks I made": "Mutassa a résztvevőknek, hány pipát tettem",
+  "They see only that number, never your habits, their icons or which days.": "Csak ezt a számot látják, a szokásaidat, azok ikonjait és a napokat soha.",
+  "Turn on the Habits pillar to create this challenge.": "Kapcsold be a Szokások pillért a kihívás létrehozásához.",
+  "Agree to show your checks to create this challenge.": "Járulj hozzá a pipáid megjelenítéséhez a kihívás létrehozásához.",
+  "Only for people with the Habits pillar on.": "Csak annak, akinél be van kapcsolva a Szokások pillér.",
+  "Turn on the Habits pillar to join": "Kapcsold be a Szokások pillért a csatlakozáshoz",
 }

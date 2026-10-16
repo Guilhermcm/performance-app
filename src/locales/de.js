@@ -2683,4 +2683,18 @@ export default {
   "{0}, still ahead": "{0}, kommt noch",
   "1 week in a row": "1 Woche in Folge",
   "{0}+ weeks in a row": "{0}+ Wochen in Folge",
+  // --- habits challenge (phase 4a) ---
+  "To take part, agree to show how many checks you made.": "Stimm zu, deine Häkchen zu zeigen, um mitzumachen.",
+  "Turn on the Habits pillar to take part in this challenge.": "Aktiviere die Säule Gewohnheiten, um bei dieser Challenge mitzumachen.",
+  "Habit checks": "Gewohnheits-Häkchen",
+  "Habit checks in the period, each habit up to its own weekly goal. Others only see how many, never your habits or the days.": "Häkchen bei Gewohnheiten im Zeitraum, jede Gewohnheit bis zu ihrem eigenen Wochenziel. Die anderen sehen nur, wie viele, nie deine Gewohnheiten oder die Tage.",
+  "1 check": "1 Häkchen",
+  "1 check in {0} days": "1 Häkchen in {0} Tagen",
+  "{0} checks in {1} days": "{0} Häkchen in {1} Tagen",
+  "Show participants how many checks I made": "Den Teilnehmenden zeigen, wie viele Häkchen ich gesetzt habe",
+  "They see only that number, never your habits, their icons or which days.": "Sie sehen nur diese Zahl, nie deine Gewohnheiten, ihre Symbole oder an welchen Tagen.",
+  "Turn on the Habits pillar to create this challenge.": "Aktiviere die Säule Gewohnheiten, um diese Challenge zu erstellen.",
+  "Agree to show your checks to create this challenge.": "Stimm zu, deine Häkchen zu zeigen, um diese Challenge zu erstellen.",
+  "Only for people with the Habits pillar on.": "Nur für alle mit aktivierter Säule Gewohnheiten.",
+  "Turn on the Habits pillar to join": "Aktiviere die Säule Gewohnheiten, um mitzumachen",
 }

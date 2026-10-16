@@ -2663,4 +2663,18 @@ export default {
   "{0}, still ahead": "{0}, deve ancora arrivare",
   "1 week in a row": "1 settimana di fila",
   "{0}+ weeks in a row": "{0}+ settimane di fila",
+  // --- habits challenge (phase 4a) ---
+  "To take part, agree to show how many checks you made.": "Per partecipare, accetta di mostrare quante spunte hai fatto.",
+  "Turn on the Habits pillar to take part in this challenge.": "Attiva il pilastro Abitudini per partecipare a questa sfida.",
+  "Habit checks": "Spunte delle abitudini",
+  "Habit checks in the period, each habit up to its own weekly goal. Others only see how many, never your habits or the days.": "Spunte delle abitudini nel periodo, ogni abitudine fino al proprio obiettivo settimanale. Gli altri vedono solo quante, mai le tue abitudini né i giorni.",
+  "1 check": "1 spunta",
+  "1 check in {0} days": "1 spunta in {0} giorni",
+  "{0} checks in {1} days": "{0} spunte in {1} giorni",
+  "Show participants how many checks I made": "Mostra ai partecipanti quante spunte ho fatto",
+  "They see only that number, never your habits, their icons or which days.": "Vedono solo quel numero, mai le tue abitudini, le loro icone o in quali giorni.",
+  "Turn on the Habits pillar to create this challenge.": "Attiva il pilastro Abitudini per creare questa sfida.",
+  "Agree to show your checks to create this challenge.": "Accetta di mostrare le tue spunte per creare questa sfida.",
+  "Only for people with the Habits pillar on.": "Solo per chi ha attivato il pilastro Abitudini.",
+  "Turn on the Habits pillar to join": "Attiva il pilastro Abitudini per partecipare",
 }

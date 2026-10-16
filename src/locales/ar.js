@@ -2716,4 +2716,18 @@ export default {
   "{0}, still ahead": "{0}، لم يأتِ بعد",
   "1 week in a row": "أسبوع واحد متتالٍ",
   "{0}+ weeks in a row": "{0}+ أسابيع متتالية",
+  // --- habits challenge (phase 4a) ---
+  "To take part, agree to show how many checks you made.": "للمشاركة، وافق على إظهار عدد العلامات التي وضعتها.",
+  "Turn on the Habits pillar to take part in this challenge.": "فعّل محور العادات للمشاركة في هذا التحدي.",
+  "Habit checks": "علامات العادات",
+  "Habit checks in the period, each habit up to its own weekly goal. Others only see how many, never your habits or the days.": "علامات العادات خلال الفترة، كل عادة حتى هدفها الأسبوعي. يرى الآخرون العدد فقط، ولا يرون عاداتك أو الأيام أبدًا.",
+  "1 check": "علامة واحدة",
+  "1 check in {0} days": "علامة واحدة في {0} يوم",
+  "{0} checks in {1} days": "{0} علامة في {1} يوم",
+  "Show participants how many checks I made": "إظهار عدد علاماتي للمشاركين",
+  "They see only that number, never your habits, their icons or which days.": "يرون هذا الرقم فقط، ولا يرون أبدًا عاداتك أو أيقوناتها أو الأيام.",
+  "Turn on the Habits pillar to create this challenge.": "فعّل محور العادات لإنشاء هذا التحدي.",
+  "Agree to show your checks to create this challenge.": "وافق على إظهار علاماتك لإنشاء هذا التحدي.",
+  "Only for people with the Habits pillar on.": "فقط لمن فعّل محور العادات.",
+  "Turn on the Habits pillar to join": "فعّل محور العادات للمشاركة",
 }

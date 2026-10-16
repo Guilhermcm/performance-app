@@ -2663,4 +2663,18 @@ export default {
   "{0}, still ahead": "{0}, 아직 오지 않음",
   "1 week in a row": "1주 연속",
   "{0}+ weeks in a row": "{0}+주 연속",
+  // --- habits challenge (phase 4a) ---
+  "To take part, agree to show how many checks you made.": "참여하려면 체크 횟수를 보여 주는 데 동의하세요.",
+  "Turn on the Habits pillar to take part in this challenge.": "이 챌린지에 참여하려면 습관 기능을 켜세요.",
+  "Habit checks": "습관 체크",
+  "Habit checks in the period, each habit up to its own weekly goal. Others only see how many, never your habits or the days.": "기간 동안의 습관 체크예요. 각 습관은 자기 주간 목표까지만 세요. 다른 사람은 횟수만 보고, 내 습관이나 날짜는 절대 보지 못해요.",
+  "1 check": "체크 1회",
+  "1 check in {0} days": "{0}일 동안 체크 1회",
+  "{0} checks in {1} days": "{1}일 동안 체크 {0}회",
+  "Show participants how many checks I made": "참가자에게 내 체크 횟수 보여 주기",
+  "They see only that number, never your habits, their icons or which days.": "그 숫자만 보여요. 내 습관, 아이콘, 체크한 날짜는 절대 보이지 않아요.",
+  "Turn on the Habits pillar to create this challenge.": "이 챌린지를 만들려면 습관 기능을 켜세요.",
+  "Agree to show your checks to create this challenge.": "이 챌린지를 만들려면 체크 횟수 공개에 동의하세요.",
+  "Only for people with the Habits pillar on.": "습관 기능을 켠 사람만 참여할 수 있어요.",
+  "Turn on the Habits pillar to join": "참여하려면 습관 기능을 켜세요",
 }

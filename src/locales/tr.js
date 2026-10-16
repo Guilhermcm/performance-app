@@ -2663,4 +2663,18 @@ export default {
   "{0}, still ahead": "{0}, henüz gelmedi",
   "1 week in a row": "Arka arkaya 1 hafta",
   "{0}+ weeks in a row": "Arka arkaya {0}+ hafta",
+  // --- habits challenge (phase 4a) ---
+  "To take part, agree to show how many checks you made.": "Katılmak için kaç işaret koyduğunu göstermeyi kabul et.",
+  "Turn on the Habits pillar to take part in this challenge.": "Bu meydan okumaya katılmak için Alışkanlıklar alanını aç.",
+  "Habit checks": "Alışkanlık işaretleri",
+  "Habit checks in the period, each habit up to its own weekly goal. Others only see how many, never your habits or the days.": "Dönemdeki alışkanlık işaretleri, her alışkanlık kendi haftalık hedefine kadar. Diğerleri yalnızca kaç tane olduğunu görür, alışkanlıklarını ya da günleri asla.",
+  "1 check": "1 işaret",
+  "1 check in {0} days": "{0} günde 1 işaret",
+  "{0} checks in {1} days": "{1} günde {0} işaret",
+  "Show participants how many checks I made": "Katılımcılara kaç işaret koyduğumu göster",
+  "They see only that number, never your habits, their icons or which days.": "Yalnızca bu sayıyı görürler, alışkanlıklarını, simgelerini ya da hangi günler olduğunu asla.",
+  "Turn on the Habits pillar to create this challenge.": "Bu meydan okumayı oluşturmak için Alışkanlıklar alanını aç.",
+  "Agree to show your checks to create this challenge.": "Bu meydan okumayı oluşturmak için işaretlerini göstermeyi kabul et.",
+  "Only for people with the Habits pillar on.": "Yalnızca Alışkanlıklar alanı açık olanlar için.",
+  "Turn on the Habits pillar to join": "Katılmak için Alışkanlıklar alanını aç",
 }

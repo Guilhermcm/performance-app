@@ -14,12 +14,16 @@ import { useProgress } from '../gamification/useProgress'
 import { useProfile } from '../profile/useProfile'
 import NutritionSetup from '../nutrition/NutritionSetup'
 import SleepSetup from '../sleep/SleepSetup'
+import HabitsSetup from '../habits/HabitsSetup'
+import { useHabits } from '../habits/useHabits'
 import { createChallenge, toSocialError } from './social-api'
 import { useSocial } from './useSocial'
-import { MODE_TEXT, TEMPLATE_TEXT, amountText, autoTitle, nutritionOptInText, sleepOptInText, socialErrorText } from './labels'
+import {
+  MODE_TEXT, TEMPLATE_TEXT, amountText, autoTitle, habitsOptInText, nutritionOptInText, sleepOptInText, socialErrorText
+} from './labels'
 import { fmtShortDay } from './format'
 import {
-  DURATIONS, MAX_INVITEES, MODES, TARGET_STEP, TEMPLATES, addDays, checkChallenge, clampTarget, nextMonday,
+  DURATIONS, MAX_INVITEES, MODES, TARGET_STEP, TEMPLATES, addDays, checkChallenge, clampTarget, habitsWeekly, nextMonday,
   suggestedTarget, targetRange
 } from './templates'
 import { PersonAvatar } from './components/PersonAvatar'
@@ -28,19 +32,26 @@ import { InviteButton } from './InviteButton'
 import type { ChallengeMode, ChallengeTemplate, NewChallenge } from './types'
 
 type Start = 'today' | 'monday'
-type Pillar = 'nutrition' | 'sleep'
+type Pillar = 'nutrition' | 'sleep' | 'habits'
 const NUTRITION: ChallengeTemplate = 'nutrition_days_on_target'
 const SLEEP: ChallengeTemplate = 'sleep_nights_on_target'
+const HABITS: ChallengeTemplate = 'habit_checks'
 const DEFAULT: ChallengeTemplate = 'checkin_days'
 // The templates that need a pillar on, and that pillar.
-const PILLAR_OF: Partial<Record<ChallengeTemplate, Pillar>> = { [NUTRITION]: 'nutrition', [SLEEP]: 'sleep' }
+const PILLAR_OF: Partial<Record<ChallengeTemplate, Pillar>> = { [NUTRITION]: 'nutrition', [SLEEP]: 'sleep', [HABITS]: 'habits' }
+// Why a pillar template is off, and the one step that turns it on.
+const PILLAR_TEXT: Record<Pillar, { why: () => string; turnOn: () => string }> = {
+  nutrition: { why: () => t('Only for people with the Nutrition pillar on.'), turnOn: () => t('Turn on Nutrition') },
+  sleep: { why: () => t('Only for people with the Sleep pillar on.'), turnOn: () => t('Turn on Sleep') },
+  habits: { why: () => t('Only for people with the Habits pillar on.'), turnOn: () => t('Turn on Habits') }
+}
 
 // A challenge from a template with parameters, in one bottom sheet: what counts (training days
 // first; the workouts and total volume templates are no longer offered), format, duration and
-// start, goal (suggested until touched), who joins, the nutrition or sleep opt-in and a name that
-// writes itself until edited. The same rules as the server decide whether it can be sent. With
-// the Nutrition (or Sleep) pillar off, its template is listed off, with a way to turn the pillar on
-// (the same setup the pillar's own screen opens); once on, it is picked.
+// start, goal (suggested until touched), who joins, the nutrition, sleep or habits opt-in and a name
+// that writes itself until edited. The same rules as the server decide whether it can be sent. With
+// the Nutrition (or Sleep, or Habits) pillar off, its template is listed off, with a way to turn the
+// pillar on (the same setup the pillar's own screen opens); once on, it is picked.
 export default function NewChallengeSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const navigate = useNavigate()
   const friends = useSocial(s => s.friends.data) ?? []
@@ -49,6 +60,10 @@ export default function NewChallengeSheet({ open, onClose }: { open: boolean; on
   const weeklyDays = useProfile(s => s.profile?.nutrition_days_per_week ?? 5)
   const sleepOn = useProfile(s => s.profile?.sleep_enabled ?? false)
   const weeklyNights = useProfile(s => s.profile?.sleep_nights_per_week ?? 5)
+  const habitsOn = useProfile(s => s.profile?.habits_enabled ?? false)
+  // Plan decision 19: my Q of the week, or the weekly goals of my active habits while Q is 0.
+  const habitsQ = useProgress(s => s.progress?.habits?.week.q ?? 0)
+  const habitsPerWeek = useHabits(s => s.habits.reduce((n, h) => (h.archived_at ? n : n + h.per_week), 0))
   const today = todayISO()
   const [template, setTemplate] = useState<ChallengeTemplate>(DEFAULT)
   const [mode, setMode] = useState<ChallengeMode>('team')
@@ -59,28 +74,31 @@ export default function NewChallengeSheet({ open, onClose }: { open: boolean; on
   const [title, setTitle] = useState<string | null>(null)
   const [shareNutrition, setShareNutrition] = useState(false)
   const [shareSleep, setShareSleep] = useState(false)
+  const [shareHabits, setShareHabits] = useState(false)
   const [setup, setSetup] = useState<Pillar | null>(null)
   // Asked for a pillar from here: its template is picked once it is on.
   const [want, setWant] = useState<Pillar | null>(null)
   const [busy, setBusy] = useState(false)
-  const pillarOn = (p: Pillar) => (p === 'nutrition' ? nutritionOn : sleepOn)
+  const pillarOn = (p: Pillar) => (p === 'nutrition' ? nutritionOn : p === 'sleep' ? sleepOn : habitsOn)
 
   useEffect(() => {
     if (!open) return
     setTemplate(DEFAULT); setMode('team'); setDays(30); setStart('today')
     setPicked([]); setTarget(null); setTitle(null); setShareNutrition(false); setShareSleep(false)
-    setWant(null)
+    setShareHabits(false); setWant(null)
   }, [open])
   useEffect(() => {
     if (want === 'nutrition' && nutritionOn) { setWant(null); setTemplate(NUTRITION); setTarget(null) }
     if (want === 'sleep' && sleepOn) { setWant(null); setTemplate(SLEEP); setTarget(null) }
-  }, [nutritionOn, sleepOn, want])
+    if (want === 'habits' && habitsOn) { setWant(null); setTemplate(HABITS); setTarget(null) }
+  }, [nutritionOn, sleepOn, habitsOn, want])
 
   const effMode: ChallengeMode = MODES[template].includes(mode) ? mode : 'solo'
   const startsOn = start === 'today' ? today : nextMonday(today)
   const endsOn = addDays(startsOn, days - 1)
   const range = targetRange(template, startsOn, endsOn, effMode, picked.length)
-  const weekly = template === NUTRITION ? weeklyDays : template === SLEEP ? weeklyNights : weeklyWorkouts
+  const weekly = template === NUTRITION ? weeklyDays : template === SLEEP ? weeklyNights
+    : template === HABITS ? habitsWeekly(habitsQ, habitsPerWeek) : weeklyWorkouts
   const goal = target === null
     ? suggestedTarget(template, effMode, startsOn, endsOn, weekly, picked.length + 1)
     : clampTarget(target, range)
@@ -88,9 +106,9 @@ export default function NewChallengeSheet({ open, onClose }: { open: boolean; on
   const draft: NewChallenge = {
     template, title: name, mode: effMode, target: goal, starts_on: startsOn, ends_on: endsOn,
     invitees: picked, share_volume: false, share_nutrition: template === NUTRITION && shareNutrition,
-    share_sleep: template === SLEEP && shareSleep
+    share_sleep: template === SLEEP && shareSleep, share_habits: template === HABITS && shareHabits
   }
-  const problem = checkChallenge(draft, today, { nutritionOn, sleepOn })
+  const problem = checkChallenge(draft, today, { nutritionOn, sleepOn, habitsOn })
   // Why the button is off, shown before anyone taps it.
   const hint = problem === 'title' ? t('Give the challenge a name.')
     : problem === 'invitees' ? (friends.length === 0 ? t('Add a friend to create challenges.') : t('Pick at least one friend.'))
@@ -98,10 +116,14 @@ export default function NewChallengeSheet({ open, onClose }: { open: boolean; on
     : problem === 'nutrition' ? t('Agree to show your days on target to create this challenge.')
     : problem === 'sleep_off' ? t('Turn on the Sleep pillar to create this challenge.')
     : problem === 'sleep' ? t('Agree to show your nights on target to create this challenge.')
+    : problem === 'habits_off' ? t('Turn on the Habits pillar to create this challenge.')
+    : problem === 'habits' ? t('Agree to show your checks to create this challenge.')
     : ''
   const optIn = template === SLEEP
     ? { id: 'share-sleep', text: sleepOptInText(), on: shareSleep, set: setShareSleep }
-    : { id: 'share-nutrition', text: nutritionOptInText(), on: shareNutrition, set: setShareNutrition }
+    : template === HABITS
+      ? { id: 'share-habits', text: habitsOptInText(), on: shareHabits, set: setShareHabits }
+      : { id: 'share-nutrition', text: nutritionOptInText(), on: shareNutrition, set: setShareNutrition }
 
   // A new shape gets a new suggested goal.
   const reshape = (change: () => void) => { change(); setTarget(null) }
@@ -163,11 +185,9 @@ export default function NewChallengeSheet({ open, onClose }: { open: boolean; on
                   <div key={k} className="rounded-2xl border border-dashed border-border">
                     {radio}
                     <div className="flex items-center gap-3 px-3 pb-3">
-                      <p id={why} className="flex-1 text-xs leading-snug text-muted-foreground">
-                        {pillar === 'sleep' ? t('Only for people with the Sleep pillar on.') : t('Only for people with the Nutrition pillar on.')}
-                      </p>
+                      <p id={why} className="flex-1 text-xs leading-snug text-muted-foreground">{PILLAR_TEXT[pillar].why()}</p>
                       <Button variant="outline" className="h-11 shrink-0 rounded-xl" onClick={() => { setWant(pillar); setSetup(pillar) }}>
-                        {pillar === 'sleep' ? t('Turn on Sleep') : t('Turn on Nutrition')}
+                        {PILLAR_TEXT[pillar].turnOn()}
                       </Button>
                     </div>
                   </div>
@@ -264,6 +284,10 @@ export default function NewChallengeSheet({ open, onClose }: { open: boolean; on
       <SleepSetup open={setup === 'sleep'} onOpenChange={o => {
         setSetup(o ? 'sleep' : null)
         if (!o && !useProfile.getState().profile?.sleep_enabled) setWant(null)
+      }} />
+      <HabitsSetup open={setup === 'habits'} onOpenChange={o => {
+        setSetup(o ? 'habits' : null)
+        if (!o && !useProfile.getState().profile?.habits_enabled) setWant(null)
       }} />
     </Drawer>
   )
