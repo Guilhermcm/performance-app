@@ -6,7 +6,7 @@ import { MemoryRouter, useLocation } from 'react-router-dom'
 let P: Record<string, unknown>
 const BASE = { id: 'u1', display_name: 'Ana', avatar_url: null, birth_date: null, sex: null, height_cm: 165, weight_kg: 62, goal: 'strength', level: 'beginner', days_per_week: 3, equipment: [], unit: 'kg', locale: 'pt-BR', timezone: 'America/Sao_Paulo', share_activity: false, checkin_visibility: 'friends', created_at: '', updated_at: '',
   nutrition_enabled: false, activity_level: null, nutrition_pace: 'standard', nutrition_days_per_week: 5,
-  sleep_enabled: false, sleep_nights_per_week: 5 }
+  sleep_enabled: false, sleep_nights_per_week: 5, habits_enabled: false }
 P = BASE
 const h = vi.hoisted(() => ({
   save: vi.fn(async (p: any) => ({ ...P, ...p })),
@@ -35,9 +35,16 @@ vi.mock('../sleep/SleepSetup', () => ({
   default: ({ open }: { open: boolean }) => (open ? <div role="dialog" aria-label="Sleep setup" /> : null)
 }))
 
+vi.mock('../habits/HabitSheet', () => ({
+  default: ({ open, habit }: { open: boolean; habit?: { id: string } }) =>
+    (open ? <div role="dialog" aria-label="Habit sheet" data-habit={habit?.id ?? 'new'} /> : null)
+}))
+
 import ProfileScreen, { SOURCE_URL } from './ProfileScreen'
 import { useNutrition } from '../nutrition/useNutrition'
 import { useSleep } from '../sleep/useSleep'
+import { useHabits } from '../habits/useHabits'
+import { habitOf } from '../habits/test-habits'
 
 const show = () => render(
   <MemoryRouter>
@@ -329,6 +336,109 @@ describe('ProfileScreen', () => {
       show()
       fireEvent.click(screen.getByRole('button', { name: 'Open Sleep' }))
       expect(screen.getByTestId('path').textContent).toBe('/sono')
+    })
+  })
+  describe('Habits card', () => {
+    const realHabits = useHabits.getState()
+    const active = [habitOf({ id: 'a' }), habitOf({ id: 'b', sort: 1 })]
+    const archived = habitOf({ id: 'c', sort: 2, archived_at: '2026-10-01T00:00:00Z' })
+    const card = () => within(screen.getByRole('heading', { name: 'Habits' }).closest('section')!)
+    // The profile follows what was saved, as the real store does.
+    const followSaves = () => h.save.mockImplementation(async (p: any) => (P = { ...P, ...p }))
+    beforeEach(() => { useHabits.setState({ habits: [], status: 'ready' }) })
+    afterEach(() => { useHabits.setState(realHabits); h.save.mockImplementation(async (p: any) => ({ ...P, ...p })) })
+
+    it('offers the switch while the pillar is off, without the link', () => {
+      show()
+      expect(screen.getByRole('switch', { name: 'Habits' }).getAttribute('aria-checked')).toBe('false')
+      expect(card().getByText('Choose your habits and how many times a week you want to do each one. Every check earns XP, like workouts do.')).toBeTruthy()
+      expect(screen.queryByRole('button', { name: 'Open Habits' })).toBeNull()
+    })
+
+    it('shows how many habits are active once the pillar is on', () => {
+      P = { ...BASE, habits_enabled: true }
+      useHabits.setState({ habits: [...active, archived] })
+      show()
+      expect(screen.getByRole('switch', { name: 'Habits' }).getAttribute('aria-checked')).toBe('true')
+      expect(card().getByText('Active habits')).toBeTruthy()
+      expect(card().getByText('2')).toBeTruthy()
+    })
+
+    it('shows a placeholder, not 0, until the habits have loaded', () => {
+      P = { ...BASE, habits_enabled: true }
+      useHabits.setState({ habits: [], status: 'loading' })
+      show()
+      expect(card().queryByText('0')).toBeNull()
+      expect(card().getByText('—')).toBeTruthy()
+    })
+
+    it('turns the pillar on and opens the creation when there is no active habit', async () => {
+      useHabits.setState({ habits: [archived] })
+      show()
+      fireEvent.click(screen.getByRole('switch', { name: 'Habits' }))
+      await waitFor(() => expect(screen.getByRole('dialog', { name: 'Habit sheet' })).toBeTruthy())
+      expect(h.save).toHaveBeenCalledWith({ habits_enabled: true })
+    })
+
+    it('asks before turning the pillar off, and keeps it on if the person cancels', () => {
+      P = { ...BASE, habits_enabled: true }
+      useHabits.setState({ habits: active })
+      show()
+      fireEvent.click(screen.getByRole('switch', { name: 'Habits' }))
+      expect(screen.getByRole('alertdialog', { name: 'Turn off Habits?' })).toBeTruthy()
+      expect(h.save).not.toHaveBeenCalled()
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+      expect(screen.queryByRole('alertdialog')).toBeNull()
+      expect(h.save).not.toHaveBeenCalled()
+    })
+
+    it('turns it off on confirmation and leaves the habits alone', async () => {
+      P = { ...BASE, habits_enabled: true }
+      useHabits.setState({ habits: [...active, archived] })
+      const before = useHabits.getState()
+      const calls = (['saveHabit', 'archiveHabit', 'reactivateHabit', 'toggleCheck', 'reset'] as const).map(k => vi.spyOn(before, k))
+      show()
+      fireEvent.click(screen.getByRole('switch', { name: 'Habits' }))
+      expect(screen.getByText('Your habits and checks stay saved. You can turn it back on any time.')).toBeTruthy()
+      fireEvent.click(screen.getByRole('button', { name: 'Turn off' }))
+      await waitFor(() => expect(h.save).toHaveBeenCalledWith({ habits_enabled: false }))
+      expect(h.save).toHaveBeenCalledTimes(1)
+      expect(screen.queryByRole('alertdialog')).toBeNull()
+      calls.forEach(c => expect(c).not.toHaveBeenCalled())
+      expect(useHabits.getState().habits).toEqual([...active, archived])
+    })
+
+    it('says so when turning it off fails', async () => {
+      P = { ...BASE, habits_enabled: true }
+      h.save.mockRejectedValueOnce(new Error('offline'))
+      show()
+      fireEvent.click(screen.getByRole('switch', { name: 'Habits' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Turn off' }))
+      await waitFor(() => expect(h.toast).toHaveBeenCalledWith('Could not save. Your previous values were kept.'))
+      expect(screen.getByRole('alertdialog')).toBeTruthy()
+    })
+
+    it('opens the Habits screen from the card once the pillar is on', () => {
+      P = { ...BASE, habits_enabled: true }
+      show()
+      fireEvent.click(screen.getByRole('button', { name: 'Open Habits' }))
+      expect(screen.getByTestId('path').textContent).toBe('/habitos')
+    })
+
+    it('turning it off and on again the same day with active habits does not open the creation', async () => {
+      P = { ...BASE, habits_enabled: true }
+      useHabits.setState({ habits: active })
+      followSaves()
+      const { rerender } = show()
+      fireEvent.click(screen.getByRole('switch', { name: 'Habits' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Turn off' }))
+      await waitFor(() => expect(h.save).toHaveBeenCalledWith({ habits_enabled: false }))
+      rerender(<MemoryRouter><ProfileScreen /><LocationProbe /></MemoryRouter>)
+      expect(screen.getByRole('switch', { name: 'Habits' }).getAttribute('aria-checked')).toBe('false')
+      fireEvent.click(screen.getByRole('switch', { name: 'Habits' }))
+      await waitFor(() => expect(h.save).toHaveBeenCalledWith({ habits_enabled: true }))
+      await waitFor(() => expect(h.toast).toHaveBeenCalledWith('The Habits pillar is on.'))
+      expect(screen.queryByRole('dialog', { name: 'Habit sheet' })).toBeNull()
     })
   })
 })
