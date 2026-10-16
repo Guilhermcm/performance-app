@@ -109,6 +109,38 @@ export interface Database {
         Update: never
         Relationships: []
       }
+      trackers: {
+        Row: {
+          id: string; user_id: string; name: string; icon: string; kind: 'number' | 'duration' | 'label'
+          unit: string | null; decimals: number | null; aggregate: 'sum' | 'avg' | null
+          options: { id: string; text: string }[] | null; sort: number; archived_at: string | null
+          created_at: string; updated_at: string
+        }
+        Insert: {
+          id: string; name: string; icon: string; kind: 'number' | 'duration' | 'label'; user_id?: string
+          unit?: string | null; decimals?: number | null; aggregate?: 'sum' | 'avg' | null
+          options?: { id: string; text: string }[] | null; sort?: number; archived_at?: string | null
+          created_at?: string; updated_at?: string
+        }
+        // kind and user_id never change (trackers_guard).
+        Update: Partial<Omit<Database['public']['Tables']['trackers']['Insert'], 'id' | 'user_id' | 'kind'>>
+        Relationships: []
+      }
+      tracker_entries: {
+        // Exactly one of value, minutes and option is set, the one the tracker's kind asks for.
+        Row: {
+          id: string; tracker_id: string; user_id: string; day: string; at: string; value: number | null
+          minutes: number | null; option: string | null; note: string | null; created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string; tracker_id: string; day: string; at: string; user_id?: string; value?: number | null
+          minutes?: number | null; option?: string | null; note?: string | null; created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Omit<Database['public']['Tables']['tracker_entries']['Insert'], 'id' | 'tracker_id' | 'user_id'>>
+        Relationships: []
+      }
       food_logs: {
         Row: {
           id: string; user_id: string; day: string; meal: 'breakfast' | 'lunch' | 'dinner' | 'snack'
