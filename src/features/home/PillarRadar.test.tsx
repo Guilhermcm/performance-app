@@ -19,6 +19,9 @@ vi.mock('../nutrition/NutritionSetup', () => ({
 vi.mock('../sleep/SleepSetup', () => ({
   default: ({ open }: { open: boolean }) => (open ? <div data-testid="sleep-setup" /> : null)
 }))
+vi.mock('../habits/HabitsSetup', () => ({
+  default: ({ open }: { open: boolean }) => (open ? <div data-testid="habits-setup" /> : null)
+}))
 const h = vi.hoisted(() => ({ nav: vi.fn() }))
 vi.mock('react-router-dom', () => ({ useNavigate: () => h.nav }))
 
@@ -42,6 +45,10 @@ const centre = (c: HTMLElement) => {
 const RELEASED_SLEEP: PillarKey[] = ['strength', 'nutrition', 'sleep']
 const SLEEP_ON = { strength: true, nutrition: true, sleep: true }
 const RADAR_SLEEP: Progress['radar'] = { ...RADAR, sleep: { current: 0.5, previous: 0.25 } }
+
+const RELEASED_HABITS: PillarKey[] = ['strength', 'nutrition', 'sleep', 'habits']
+const HABITS_ON = { strength: true, nutrition: true, sleep: true, habits: true }
+const RADAR_HABITS: Progress['radar'] = { ...RADAR_SLEEP, habits: { current: 0.4, previous: 0.3 } }
 
 afterEach(() => { cleanup(); h.nav.mockClear() })
 
@@ -178,6 +185,74 @@ describe('PillarRadar', () => {
       expect(tick(container, 'sleep').dataset.state).toBe('on')
       expect(within(tick(container, 'sleep')).getByText('No weeks yet')).toBeTruthy()
       expect(radarDescription(RADAR, SLEEP_ON, RELEASED_SLEEP)).toBe('Training 82%, Nutrition 64%, Sleep: no weeks yet, Habits coming soon')
+    })
+  })
+
+  describe('with habits released', () => {
+    it('describes the habits axis in text, with nothing coming soon', async () => {
+      expect(radarDescription(RADAR_HABITS, HABITS_ON, RELEASED_HABITS)).toBe('Training 82%, Nutrition 64%, Sleep 50%, Habits 40%')
+      render(<PillarRadar radar={RADAR_HABITS} enabled={HABITS_ON} released={RELEASED_HABITS} />)
+      expect(screen.getByText('Training 82%, Nutrition 64%, Sleep 50%, Habits 40%')).toBeTruthy()
+      expect(screen.queryByText(/coming soon/i)).toBeNull()
+      await setLang('pt-BR')
+      try {
+        expect(radarDescription(RADAR_HABITS, HABITS_ON, RELEASED_HABITS)).toBe('Treino 82%, Nutrição 64%, Sono 50%, Hábitos 40%')
+      } finally {
+        await setLang('en')
+      }
+    })
+
+    it('locks habits while it is off and opens its activation', () => {
+      const enabled = { ...HABITS_ON, habits: false }
+      const { container } = render(<PillarRadar radar={RADAR_HABITS} enabled={enabled} released={RELEASED_HABITS} />)
+      expect(tick(container, 'habits').dataset.state).toBe('off')
+      expect(tick(container, 'habits').querySelector('[data-icon="lock"]')).toBeTruthy()
+      expect(tick(container, 'habits').querySelector('line')!.getAttribute('stroke-dasharray')).toBeTruthy()
+      expect(radarDescription(RADAR_HABITS, enabled, RELEASED_HABITS)).toBe('Training 82%, Nutrition 64%, Sleep 50%, Habits: off')
+      fireEvent.click(screen.getByRole('button', { name: 'Turn on Habits' }))
+      expect(screen.getByTestId('habits-setup')).toBeTruthy()
+      expect(screen.queryByTestId('sleep-setup')).toBeNull()
+      expect(screen.queryByTestId('nutrition-setup')).toBeNull()
+      expect(screen.queryByRole('dialog')).toBeNull()
+    })
+
+    it('turns habits on from the detail sheet', () => {
+      render(<PillarRadar radar={RADAR_HABITS} enabled={{ ...HABITS_ON, habits: false }} released={RELEASED_HABITS} />)
+      fireEvent.click(screen.getByRole('button', { name: 'Pillar details' }))
+      fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Turn on Habits' }))
+      expect(screen.getByTestId('habits-setup')).toBeTruthy()
+    })
+
+    it('shows habits without active weeks at the center with its state', () => {
+      const radar = { ...RADAR_SLEEP, habits: { current: null, previous: null } }
+      const { container } = render(<PillarRadar radar={radar} enabled={HABITS_ON} released={RELEASED_HABITS} />)
+      expect(tick(container, 'habits').dataset.state).toBe('on')
+      expect(within(tick(container, 'habits')).getByText('No weeks yet')).toBeTruthy()
+      const vertex = container.querySelector('[data-vertex="habits"]')!
+      expect([vertex.getAttribute('cx'), vertex.getAttribute('cy')]).toEqual(centre(container))
+      expect(radarDescription(radar, HABITS_ON, RELEASED_HABITS)).toBe('Training 82%, Nutrition 64%, Sleep 50%, Habits: no weeks yet')
+    })
+
+    it('opens the habits screen from the axis label and from the detail sheet', () => {
+      const { container } = render(<PillarRadar radar={RADAR_HABITS} enabled={HABITS_ON} released={RELEASED_HABITS} />)
+      const open = within(tick(container, 'habits')).getByRole('button', { name: 'Open Habits' })
+      expect(within(open).getByText('40%')).toBeTruthy()
+      fireEvent.click(open)
+      expect(h.nav).toHaveBeenCalledWith('/habitos')
+      expect(screen.queryByRole('dialog')).toBeNull()
+      fireEvent.click(screen.getByRole('button', { name: 'Pillar details' }))
+      const sheet = screen.getByRole('dialog')
+      expect(within(within(sheet).getByRole('row', { name: /^Habits/ })).getByText('30%')).toBeTruthy()
+      fireEvent.click(within(sheet).getByRole('button', { name: 'Open Habits' }))
+      expect(h.nav).toHaveBeenCalledTimes(2)
+      expect(h.nav).toHaveBeenLastCalledWith('/habitos')
+    })
+
+    it('reads a cached radar without habits', () => {
+      const { container } = render(<PillarRadar radar={RADAR_SLEEP} enabled={HABITS_ON} released={RELEASED_HABITS} />)
+      expect(tick(container, 'habits').dataset.state).toBe('on')
+      expect(within(tick(container, 'habits')).getByText('No weeks yet')).toBeTruthy()
+      expect(radarDescription(RADAR_SLEEP, HABITS_ON, RELEASED_HABITS)).toBe('Training 82%, Nutrition 64%, Sleep 50%, Habits: no weeks yet')
     })
   })
 })

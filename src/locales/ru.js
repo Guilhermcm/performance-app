@@ -2749,4 +2749,8 @@ export default {
   "Agree to show your checks to create this challenge.": "Согласитесь показывать свои отметки, чтобы создать этот челлендж.",
   "Only for people with the Habits pillar on.": "Только для тех, у кого включены привычки.",
   "Turn on the Habits pillar to join": "Включите «Привычки», чтобы участвовать",
+  // --- habits radar, weekly bar and celebrations (phase 4a) ---
+  "Habits level {0}": "Привычки, уровень {0}",
+  "Habit week done, +{0} XP": "Неделя привычек выполнена, +{0} XP",
+  "You hit every habit's goal last week.": "На прошлой неделе вы выполнили цель каждой привычки.",
 }

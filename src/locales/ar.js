@@ -2730,4 +2730,8 @@ export default {
   "Agree to show your checks to create this challenge.": "وافق على إظهار علاماتك لإنشاء هذا التحدي.",
   "Only for people with the Habits pillar on.": "فقط لمن فعّل محور العادات.",
   "Turn on the Habits pillar to join": "فعّل محور العادات للمشاركة",
+  // --- habits radar, weekly bar and celebrations (phase 4a) ---
+  "Habits level {0}": "العادات المستوى {0}",
+  "Habit week done, +{0} XP": "أسبوع عادات مكتمل، +{0} XP",
+  "You hit every habit's goal last week.": "حققت هدف كل عادة الأسبوع الماضي.",
 }

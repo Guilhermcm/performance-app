@@ -2677,4 +2677,8 @@ export default {
   "Agree to show your checks to create this challenge.": "同意显示你的打卡次数后即可创建这个挑战。",
   "Only for people with the Habits pillar on.": "仅限已开启习惯板块的人。",
   "Turn on the Habits pillar to join": "开启习惯板块后参加",
+  // --- habits radar, weekly bar and celebrations (phase 4a) ---
+  "Habits level {0}": "习惯 {0} 级",
+  "Habit week done, +{0} XP": "习惯周达成，+{0} XP",
+  "You hit every habit's goal last week.": "上周你完成了每个习惯的目标。",
 }

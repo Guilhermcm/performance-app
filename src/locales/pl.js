@@ -2745,4 +2745,8 @@ export default {
   "Agree to show your checks to create this challenge.": "Zgódź się pokazać swoje odhaczenia, aby utworzyć to wyzwanie.",
   "Only for people with the Habits pillar on.": "Tylko dla osób z włączonym filarem Nawyki.",
   "Turn on the Habits pillar to join": "Włącz filar Nawyki, aby dołączyć",
+  // --- habits radar, weekly bar and celebrations (phase 4a) ---
+  "Habits level {0}": "Nawyki poziom {0}",
+  "Habit week done, +{0} XP": "Tydzień nawyków zaliczony, +{0} XP",
+  "You hit every habit's goal last week.": "W zeszłym tygodniu osiągnąłeś cel każdego nawyku.",
 }

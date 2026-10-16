@@ -2677,4 +2677,8 @@ export default {
   "Agree to show your checks to create this challenge.": "Bu meydan okumayı oluşturmak için işaretlerini göstermeyi kabul et.",
   "Only for people with the Habits pillar on.": "Yalnızca Alışkanlıklar alanı açık olanlar için.",
   "Turn on the Habits pillar to join": "Katılmak için Alışkanlıklar alanını aç",
+  // --- habits radar, weekly bar and celebrations (phase 4a) ---
+  "Habits level {0}": "Alışkanlıklar seviye {0}",
+  "Habit week done, +{0} XP": "Alışkanlık haftası tamam, +{0} XP",
+  "You hit every habit's goal last week.": "Geçen hafta her alışkanlığın hedefini tutturdun.",
 }

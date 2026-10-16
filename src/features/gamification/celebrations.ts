@@ -6,7 +6,8 @@ import type { Celebration, PillarKey, Progress } from './types'
 
 // What the person has already been shown: their level, badges, each pillar's level and the last
 // week whose goal was celebrated, per pillar. Markers saved before phase 2a lack the last two; markers
-// saved before phase 3 have no sleep entry in them (see markerOf).
+// saved before phase 3 have no sleep entry in them, and those saved before phase 4a no habits entry
+// (see markerOf).
 export type SeenMarker = {
   level: number
   codes: string[]
@@ -17,20 +18,21 @@ export type SeenMarker = {
 // Pillars whose level-ups and weekly goals get a card. Strength is left out: until phase 2a it was
 // the only pillar and its level moves with the overall one, which already has a card; its weekly
 // goal stays in the post-workout summary.
-const CELEBRATED_PILLARS = ['nutrition', 'sleep'] as const satisfies readonly PillarKey[]
+const CELEBRATED_PILLARS = ['nutrition', 'sleep', 'habits'] as const satisfies readonly PillarKey[]
 
-// A cached progress from an older build may lack pillars or the pillar blocks. Sleep is always
-// written (level 1 and no week until it has some), so a marker saved before the sleep pillar is
-// told apart by not having it.
+// A cached progress from an older build may lack pillars or the pillar blocks. Sleep and habits are
+// always written (level 1 and no week until they have some), so a marker saved before either pillar
+// is told apart by not having it.
 function pillarLevelsOf(p: Progress): Partial<Record<PillarKey, number>> {
   const out: Partial<Record<PillarKey, number>> = {}
   for (const [k, v] of Object.entries(p.pillars ?? {})) if (v) out[k as PillarKey] = v.level
-  return { ...out, sleep: out.sleep ?? 1 }
+  return { ...out, sleep: out.sleep ?? 1, habits: out.habits ?? 1 }
 }
 function weekTargetsOf(p: Progress): Partial<Record<PillarKey, string | null>> {
   const out: Partial<Record<PillarKey, string | null>> = {}
   if (p.nutrition?.last_week) out.nutrition = p.nutrition.last_week.start
   out.sleep = p.sleep?.last_week?.start ?? null
+  out.habits = p.habits?.last_week?.start ?? null
   return out
 }
 
@@ -42,17 +44,17 @@ export const markerOf = (p: Progress): SeenMarker => ({
 })
 
 // An old marker gets what it lacks from the current progress, so nothing in it is celebrated:
-// the same rule as the first load on a device. A marker without sleep comes from before the
-// sleep pillar: every pillar it lacks is taken as seen.
+// the same rule as the first load on a device. A marker without sleep or habits comes from before
+// that pillar: every pillar it lacks is taken as seen.
 export function completeMarker(seen: SeenMarker, p: Progress): SeenMarker {
   const levels = seen.pillarLevels, weeks = seen.weekTargets
-  if (levels && weeks && 'sleep' in levels && 'sleep' in weeks) return seen
+  if (levels && weeks && 'sleep' in levels && 'sleep' in weeks && 'habits' in levels && 'habits' in weeks) return seen
   return { ...seen, pillarLevels: { ...pillarLevelsOf(p), ...levels }, weekTargets: { ...weekTargetsOf(p), ...weeks } }
 }
 
 // A level-up (one card, the level reached), then each pillar that levelled up, each pillar's weekly
-// goal (nutrition, then sleep) and each new badge, in catalogue order. A pillar missing from the
-// marker starts at level 1.
+// goal (nutrition, sleep, then habits, which carries the XP its goal paid since it varies) and each
+// new badge, in catalogue order. A pillar missing from the marker starts at level 1.
 export function celebrationsSince(seen: SeenMarker, p: Progress): Celebration[] {
   const out: Celebration[] = []
   if (p.level.level > seen.level) out.push({ kind: 'level', level: p.level.level })
@@ -63,7 +65,9 @@ export function celebrationsSince(seen: SeenMarker, p: Progress): Celebration[] 
   for (const pillar of CELEBRATED_PILLARS) {
     const week = p[pillar]?.last_week
     if (week?.target_hit && week.start > (seen.weekTargets?.[pillar] ?? '')) {
-      out.push({ kind: 'week_target', pillar, week_start: week.start })
+      out.push('bonus' in week
+        ? { kind: 'week_target', pillar, week_start: week.start, xp: week.bonus }
+        : { kind: 'week_target', pillar, week_start: week.start })
     }
   }
   const had = new Set(seen.codes)
@@ -71,6 +75,11 @@ export function celebrationsSince(seen: SeenMarker, p: Progress): Celebration[] 
   for (const a of ACHIEVEMENTS) if (now.has(a.code) && !had.has(a.code)) out.push({ kind: 'achievement', code: a.code })
   return out
 }
+
+// The habit week card (spec 5.6, plan decision 15): "Habit week done, +64 XP", with the bonus the
+// week's goal paid (150, or less with fewer than 7 checks planned). Without XP, the plain title.
+export const habitWeekText = (xp: number | undefined): string =>
+  xp ? t('Habit week done, +{0} XP', fmtInt(xp)) : t('Habit week done')
 
 // The result of the last closed nutrition day, named by its weekday because it closes two days
 // later: "Saturday on target, +120 XP". Null when it was shown already or there is nothing to say

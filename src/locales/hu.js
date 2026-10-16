@@ -2680,4 +2680,8 @@ export default {
   "Agree to show your checks to create this challenge.": "Járulj hozzá a pipáid megjelenítéséhez a kihívás létrehozásához.",
   "Only for people with the Habits pillar on.": "Csak annak, akinél be van kapcsolva a Szokások pillér.",
   "Turn on the Habits pillar to join": "Kapcsold be a Szokások pillért a csatlakozáshoz",
+  // --- habits radar, weekly bar and celebrations (phase 4a) ---
+  "Habits level {0}": "Szokások {0}. szint",
+  "Habit week done, +{0} XP": "Szokáshét teljesítve, +{0} XP",
+  "You hit every habit's goal last week.": "Múlt héten minden szokásod célját elérted.",
 }

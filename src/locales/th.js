@@ -2688,4 +2688,8 @@ export default {
   "Agree to show your checks to create this challenge.": "ยอมแสดงการเช็กของคุณเพื่อสร้างชาเลนจ์นี้",
   "Only for people with the Habits pillar on.": "สำหรับคนที่เปิดนิสัยเท่านั้น",
   "Turn on the Habits pillar to join": "เปิดนิสัยเพื่อเข้าร่วม",
+  // --- habits radar, weekly bar and celebrations (phase 4a) ---
+  "Habits level {0}": "นิสัย เลเวล {0}",
+  "Habit week done, +{0} XP": "สัปดาห์นิสัยครบ +{0} XP",
+  "You hit every habit's goal last week.": "สัปดาห์ที่แล้วคุณทำถึงเป้าของทุกนิสัย",
 }

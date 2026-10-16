@@ -2677,4 +2677,8 @@ export default {
   "Agree to show your checks to create this challenge.": "यह चैलेंज बनाने के लिए अपने चेक दिखाने की सहमति दें।",
   "Only for people with the Habits pillar on.": "सिर्फ़ उनके लिए जिनका आदतें स्तंभ चालू है।",
   "Turn on the Habits pillar to join": "जुड़ने के लिए आदतें स्तंभ चालू करें",
+  // --- habits radar, weekly bar and celebrations (phase 4a) ---
+  "Habits level {0}": "आदतें स्तर {0}",
+  "Habit week done, +{0} XP": "आदतों का हफ़्ता पूरा, +{0} XP",
+  "You hit every habit's goal last week.": "पिछले हफ़्ते आपने हर आदत का लक्ष्य पूरा किया।",
 }

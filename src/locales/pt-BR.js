@@ -2068,6 +2068,10 @@ export const PT_BR_OVERRIDES = {
   "Only for people with the Habits pillar on.": "Só para quem está com o pilar Hábitos ligado.",
   "Turn on Habits": "Ligar os Hábitos",
   "Turn on the Habits pillar to join": "Ative o pilar Hábitos para participar",
+  // --- habits radar, weekly bar and celebrations (phase 4a) ---
+  "Habits level {0}": "Hábitos nível {0}",
+  "Habit week done, +{0} XP": "Semana de hábitos completa, +{0} XP",
+  "You hit every habit's goal last week.": "Você bateu a meta de todos os hábitos na semana passada.",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

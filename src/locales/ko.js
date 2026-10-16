@@ -2677,4 +2677,8 @@ export default {
   "Agree to show your checks to create this challenge.": "이 챌린지를 만들려면 체크 횟수 공개에 동의하세요.",
   "Only for people with the Habits pillar on.": "습관 기능을 켠 사람만 참여할 수 있어요.",
   "Turn on the Habits pillar to join": "참여하려면 습관 기능을 켜세요",
+  // --- habits radar, weekly bar and celebrations (phase 4a) ---
+  "Habits level {0}": "습관 레벨 {0}",
+  "Habit week done, +{0} XP": "습관 주간 달성, +{0} XP",
+  "You hit every habit's goal last week.": "지난주 모든 습관의 목표를 달성했어요.",
 }

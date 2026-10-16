@@ -16,8 +16,8 @@ const ready = (p = progressOf(400, { xp: 400, workouts: 2 }, { streak: { current
 
 beforeEach(() => { localStorage.clear(); useProgress.getState().reset(); h.nav.mockClear() })
 afterEach(() => { cleanup(); useProgress.setState({ refresh: realRefresh }); useProfile.setState({ profile: null }) })
-const pillarsOn = (nutrition: boolean, sleep: boolean) =>
-  useProfile.setState({ profile: { id: 'u1', timezone: 'America/Sao_Paulo', nutrition_enabled: nutrition, sleep_enabled: sleep } as never })
+const pillarsOn = (nutrition: boolean, sleep: boolean, habits = false) =>
+  useProfile.setState({ profile: { id: 'u1', timezone: 'America/Sao_Paulo', nutrition_enabled: nutrition, sleep_enabled: sleep, habits_enabled: habits } as never })
 const seg = (c: HTMLElement, k: string) => c.querySelector(`[data-slot="week-segment"][data-pillar="${k}"]`) as HTMLElement | null
 
 describe('ProgressHero', () => {
@@ -138,6 +138,40 @@ describe('ProgressHero', () => {
     expect(seg(container, 'nutrition')!.style.width).toBe(`${(170 / 1920) * 100}%`)
     expect(seg(container, 'sleep')).toBeNull()
     expect(within(screen.getByRole('list', { name: 'XP this week by pillar' })).getByText('Sleep')).toBeTruthy()
+  })
+
+  it('splits the week bar into training, nutrition, sleep, habits and bonus, each with its name', () => {
+    pillarsOn(true, true, true)
+    ready(progressOf(950, { xp: 704, max: 3840, pillars: { strength: 300, nutrition: 170, sleep: 120, habits: 64, bonus: 50 } }))
+    const { container } = render(<ProgressHero />)
+    expect(screen.getByText('704 of 3,840 XP')).toBeTruthy()
+    expect(seg(container, 'habits')!.style.width).toBe(`${(64 / 3840) * 100}%`)
+    expect([...container.querySelectorAll<HTMLElement>('[data-slot="week-segment"]')].map(e => e.dataset.pillar))
+      .toEqual(['strength', 'nutrition', 'sleep', 'habits', 'bonus'])
+    const legend = screen.getByRole('list', { name: 'XP this week by pillar' })
+    expect(within(legend).getAllByRole('listitem').map(li => li.textContent))
+      .toEqual(['Training300', 'Nutrition170', 'Sleep120', 'Habits64', 'Bonus50'])
+  })
+
+  it('shows habits alone when it is the only other pillar on', () => {
+    // Habits alone raises the maximum to 1,920 too: that is neither nutrition nor sleep.
+    pillarsOn(false, false, true)
+    ready(progressOf(950, { xp: 420, max: 1920, pillars: { strength: 300, nutrition: 0, sleep: 0, habits: 120, bonus: 0 } }))
+    const { container } = render(<ProgressHero />)
+    const legend = screen.getByRole('list', { name: 'XP this week by pillar' })
+    expect(within(legend).getAllByRole('listitem').map(li => li.textContent)).toEqual(['Training300', 'Habits120'])
+    expect(seg(container, 'habits')!.style.width).toBe(`${(120 / 1920) * 100}%`)
+    expect(container.querySelector('[data-pillar="nutrition"]')).toBeNull()
+    expect(container.querySelector('[data-pillar="sleep"]')).toBeNull()
+  })
+
+  it('reads a cached week without habits from an older build', () => {
+    pillarsOn(true, true, true)
+    ready(progressOf(950, { xp: 590, max: 3840, pillars: { strength: 300, nutrition: 170, sleep: 120, bonus: 0 } }))
+    const { container } = render(<ProgressHero />)
+    expect(seg(container, 'sleep')!.style.width).toBe(`${(120 / 3840) * 100}%`)
+    expect(seg(container, 'habits')).toBeNull()
+    expect(within(screen.getByRole('list', { name: 'XP this week by pillar' })).getByText('Habits')).toBeTruthy()
   })
 
   it('opens the achievements', () => {

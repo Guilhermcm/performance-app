@@ -2677,4 +2677,8 @@ export default {
   "Agree to show your checks to create this challenge.": "Accepte de montrer tes coches pour créer ce défi.",
   "Only for people with the Habits pillar on.": "Réservé à ceux qui ont activé le pilier Habitudes.",
   "Turn on the Habits pillar to join": "Active le pilier Habitudes pour participer",
+  // --- habits radar, weekly bar and celebrations (phase 4a) ---
+  "Habits level {0}": "Habitudes niveau {0}",
+  "Habit week done, +{0} XP": "Semaine d’habitudes réussie, +{0} XP",
+  "You hit every habit's goal last week.": "Tu as atteint l’objectif de chaque habitude la semaine dernière.",
 }

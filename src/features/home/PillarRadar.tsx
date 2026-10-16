@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 import { t, dateLocale } from '../../lib/i18n.js'
 import NutritionSetup from '../nutrition/NutritionSetup'
 import SleepSetup from '../sleep/SleepSetup'
+import HabitsSetup from '../habits/HabitsSetup'
 import type { PillarKey, Progress } from '../gamification/types'
 import { RADAR_CARD, RADAR_CHART_HEIGHT } from './PillarRadarSkeleton'
 
@@ -37,12 +38,15 @@ const PILLAR: Record<PillarKey, { name: () => string; icon: ComponentType<{ clas
 // What the lock offers, per pillar that can be off. Training is always on.
 const TURN_ON: Partial<Record<PillarKey, () => string>> = {
   nutrition: () => t('Turn on Nutrition'),
-  sleep: () => t('Turn on Sleep')
+  sleep: () => t('Turn on Sleep'),
+  habits: () => t('Turn on Habits')
 }
 
-// Where an active pillar's label leads (plan decision 19): the pillar's own screen.
+// Where an active pillar's label leads (phase 3 plan decision 19, phase 4a plan decision 18): the
+// pillar's own screen.
 const OPEN: Partial<Record<PillarKey, { path: string; label: () => string }>> = {
-  sleep: { path: '/sono', label: () => t('Open Sleep') }
+  sleep: { path: '/sono', label: () => t('Open Sleep') },
+  habits: { path: '/habitos', label: () => t('Open Habits') }
 }
 
 // Shapes in the accent, the previous window as a faded outline, the vertex dots in the pillar
@@ -155,6 +159,7 @@ export default function PillarRadar({ radar, enabled, released }: Props) {
       <RadarDetail open={detail} onOpenChange={setDetail} rows={rows} onActivate={activate} onOpen={open} />
       <NutritionSetup {...setupProps('nutrition')} />
       <SleepSetup {...setupProps('sleep')} />
+      <HabitsSetup {...setupProps('habits')} />
     </section>
   )
 }
