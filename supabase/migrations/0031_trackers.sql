@@ -158,7 +158,9 @@ begin
     raise exception 'item_immutable' using errcode = 'P0001';
   end if;
 
-  select * into v_tracker from public.trackers where id = new.tracker_id and user_id = new.user_id;
+  -- For share: the tracker cannot be archived or lose an option on another connection until this
+  -- write commits.
+  select * into v_tracker from public.trackers where id = new.tracker_id and user_id = new.user_id for share;
   if not found then
     raise exception 'tracker_not_found' using errcode = 'P0001';
   end if;
@@ -170,16 +172,20 @@ begin
     -- An archived tracker takes no new entry. The queue edits with an upsert, whose insert half
     -- runs this too: an entry that already exists is an edit.
     if tg_op = 'INSERT' and v_tracker.archived_at is not null
-       and not exists (select 1 from public.tracker_entries where id = new.id) then
+       and not exists (select 1 from public.tracker_entries where id = new.id and tracker_id = new.tracker_id) then
       raise exception 'tracker_archived' using errcode = 'P0001';
     end if;
   end if;
 
   -- The value the kind asks for (a second one filled in is left to the table check). A number
-  -- tracker without decimals keeps the column's 2.
+  -- tracker without decimals keeps the column's 2. A stored value written before the tracker lost
+  -- decimals stays as it is while an edit leaves it alone (the upsert's insert half included).
   if (case v_tracker.kind
         when 'number' then new.value is null
-                           or round(new.value, coalesce(v_tracker.decimals, 2)) <> new.value
+                           or (round(new.value, coalesce(v_tracker.decimals, 2)) <> new.value
+                               and not exists (select 1 from public.tracker_entries e
+                                                where e.id = new.id and e.tracker_id = new.tracker_id
+                                                  and e.value = new.value))
         when 'duration' then new.minutes is null
         else new.option is null
              or not exists (select 1 from jsonb_array_elements(v_tracker.options) o

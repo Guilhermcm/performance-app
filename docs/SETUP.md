@@ -307,6 +307,9 @@ Passo a passo:
 2. Confira o resultado:
    - `select relname, relrowsecurity from pg_class where relname in ('trackers','tracker_entries');`
      deve devolver as duas tabelas, ambas com `true`.
+   - `select tablename, policyname from pg_policies where tablename in ('trackers','tracker_entries');`
+     deve devolver 7 políticas: 3 em `trackers` (select, insert e update) e 4 em `tracker_entries`
+     (as mesmas e delete).
 3. Se o app disser que não achou a tabela logo depois ("Could not find the table"), recarregue o
    cache da API: `notify pgrst, 'reload schema';`.
 4. Faça o merge do PR da 4b e o deploy do cliente novo. Um app instalado que ficou aberto durante o
@@ -314,7 +317,7 @@ Passo a passo:
    dado compartilhado que dependa disso.
 5. Faça o smoke com uma conta: em Perfil > Trackers, crie um tracker de cada tipo (número, duração e
    rótulo); registre um valor em cada um pelo "+"; abra um deles e veja o gráfico em 30 e em 90 dias;
-   registre em um dia anterior pela folha completa; arquive um tracker e confirme que ele sai da
+   registre em um dia anterior pelo botão "Novo registro" do detalhe, que abre a folha completa; arquive um tracker e confirme que ele sai da
    lista ativa e continua nos arquivados.
 
 ## 2. Google OAuth

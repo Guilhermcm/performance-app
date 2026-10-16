@@ -253,6 +253,22 @@ describe('tracker entries', () => {
     await expect(putEntry(A, n, { value: 1, note: 'x'.repeat(141) })).rejects.toThrow(/check/)
   })
 
+  it('keeps a stored value with more decimals than the tracker has now, until it changes', async () => {
+    const n = await putTracker(A, { kind: 'number', decimals: 2 })
+    const e = await putEntry(A, n, { value: 1.85 })
+    await putTracker(A, { id: n, kind: 'number', decimals: 1 })
+    // An edit that leaves the value alone (a new note) goes through, by upsert or by update.
+    await putEntry(A, n, { id: e, value: 1.85, note: 'depois do treino' })
+    expect(await entry(e)).toMatchObject({ value: 1.85, note: 'depois do treino' })
+    await asA(`update public.tracker_entries set note = 'de novo' where id = $1`, [e])
+    expect(await entry(e)).toMatchObject({ value: 1.85, note: 'de novo' })
+    // A new value, or a new entry, follows the tracker's decimals.
+    await expect(putEntry(A, n, { id: e, value: 1.84 })).rejects.toThrow(/invalid_value/)
+    await expect(putEntry(A, n, { value: 1.85 })).rejects.toThrow(/invalid_value/)
+    await putEntry(A, n, { id: e, value: 1.9 })
+    expect(await entry(e)).toMatchObject({ value: 1.9 })
+  })
+
   it('accepts any day up to today in the profile time zone', async () => {
     const t = await putTracker(A)
     await putEntry(A, t, { value: 1, day: '2025-01-01' })
@@ -278,6 +294,10 @@ describe('tracker entries', () => {
     const e = await putEntry(A, t, { value: 1 })
     await asA('update public.trackers set archived_at = now() where id = $1', [t])
     await expect(putEntry(A, t, { value: 2 })).rejects.toThrow(/tracker_archived/)
+    // An id that exists on another tracker is not an edit of this archived one.
+    const live = await putTracker(A, { name: 'Peso' })
+    const elsewhere = await putEntry(A, live, { value: 1 })
+    await expect(putEntry(A, t, { id: elsewhere, value: 2 })).rejects.toThrow(/tracker_archived/)
     // The existing one can still be edited (also by the queue's upsert) and deleted.
     await putEntry(A, t, { id: e, value: 3, note: 'editado' })
     expect(await entry(e)).toMatchObject({ value: 3, note: 'editado' })
@@ -319,6 +339,15 @@ describe('tracker entries', () => {
 })
 
 describe('privacy', () => {
+  it('has the 7 policies the SETUP check counts', async () => {
+    const policies = await sql<{ tablename: string; cmd: string }>(db,
+      `select tablename, cmd from pg_policies where tablename in ('trackers', 'tracker_entries') order by tablename, cmd`)
+    expect(policies.map(p => `${p.tablename} ${p.cmd}`)).toEqual([
+      'tracker_entries DELETE', 'tracker_entries INSERT', 'tracker_entries SELECT', 'tracker_entries UPDATE',
+      'trackers INSERT', 'trackers SELECT', 'trackers UPDATE',
+    ])
+  })
+
   it('keeps trackers and entries to their owner', async () => {
     const t = await putTracker(A)
     const e = await putEntry(A, t, { value: 1 })
