@@ -42,6 +42,7 @@ import AnalysisScreen from './features/plan/AnalysisScreen.tsx'
 import NutritionScreen from './features/nutrition/NutritionScreen.tsx'
 import NutritionHistoryScreen from './features/nutrition/HistoryScreen.tsx'
 import SleepScreen from './features/sleep/SleepScreen.tsx'
+import HabitsScreen from './features/habits/HabitsScreen.tsx'
 import SocialScreen from './features/social/SocialScreen.tsx'
 import ChallengeDetail from './features/social/ChallengeDetail.tsx'
 import InviteScreen, { InviteRoute } from './features/social/InviteScreen.tsx'
@@ -249,6 +250,7 @@ function Shell() {
                 <Route path="/nutricao" element={<NutritionScreen />} />
                 <Route path="/nutricao/historico" element={<NutritionHistoryScreen />} />
                 <Route path="/sono" element={<SleepScreen />} />
+                <Route path="/habitos" element={<HabitsScreen />} />
                 <Route path="/social" element={<Navigate to="/social/feed" replace />} />
                 <Route path="/social/desafios/:id" element={<ChallengeDetail />} />
                 <Route path="/social/:section" element={<SocialScreen />} />

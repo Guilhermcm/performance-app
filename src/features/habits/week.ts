@@ -143,3 +143,18 @@ export function habitRun(
   }
   return run
 }
+
+export type WeekDot = { day: string; checked: boolean; markable: boolean }
+
+// The seven days of the week of `today`, Monday first, for one habit (spec 7.3): whether it has a
+// check, and whether it can still change (today and yesterday). On Monday yesterday is in the week
+// before, so only today is markable; Sunday goes through the calendar's day sheet (plan decision 14).
+export function weekDots(habitId: string, checks: Check[], today: string): WeekDot[] {
+  const ws = weekStartOf(today)
+  const yesterday = shiftDay(today, -1)
+  const mine = new Set(checks.filter(c => c.habit_id === habitId).map(c => c.day))
+  return Array.from({ length: 7 }, (_, i) => {
+    const day = shiftDay(ws, i)
+    return { day, checked: mine.has(day), markable: day === today || day === yesterday }
+  })
+}

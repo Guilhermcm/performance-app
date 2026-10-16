@@ -2038,6 +2038,22 @@ export const PT_BR_OVERRIDES = {
   "{0} left, and the week ends today": "faltam {0} e a semana acaba hoje",
   "Week: {0} of {1} · +{2} XP so far": "Semana: {0} de {1} · +{2} XP até agora",
   "See all": "Ver todos",
+  // --- habits screen (phase 4a) ---
+  "{0} of {1} checks this week": "{0} de {1} nesta semana",
+  "Track your habits": "Acompanhe seus hábitos",
+  "Turn on Habits": "Ligar Hábitos",
+  "Offline. Your checks stay on this phone and sync when you reconnect.": "Sem conexão. Seus checks ficam neste aparelho e sincronizam quando a conexão voltar.",
+  "Could not load your habits.": "Não foi possível carregar seus hábitos.",
+  "Your habits": "Seus hábitos",
+  "Create your first habit": "Crie seu primeiro hábito",
+  "Pick something you want to do each week and check it off on the days you do it.": "Escolha algo que você quer fazer toda semana e marque nos dias em que fizer.",
+  "Archived": "Arquivados",
+  "Edit {0}": "Editar {0}",
+  "{0}, done": "{0}, feito",
+  "{0}, not done": "{0}, sem check",
+  "{0}, still ahead": "{0}, ainda não chegou",
+  "1 week in a row": "1 semana seguida",
+  "{0}+ weeks in a row": "{0}+ semanas seguidas",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

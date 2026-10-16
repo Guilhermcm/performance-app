@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  cardOrder, daysLeft, habitRun, habitWeekAwards, lateness, newTarget, validChecks, weekSummary,
+  cardOrder, daysLeft, habitRun, habitWeekAwards, lateness, newTarget, validChecks, weekDots, weekSummary,
 } from './week'
 
 // 2026-10-05 is a Monday.
@@ -150,5 +150,31 @@ describe('habitWeekAwards', () => {
     const sum = habitWeekAwards({ habits, checks })
       .filter(a => a.reason === 'habit_check').reduce((s, a) => s + a.amount, 0)
     expect(sum).toBe(600)
+  })
+})
+
+describe('weekDots', () => {
+  const checks = [
+    { habit_id: 'a', day: MON }, { habit_id: 'a', day: WED }, { habit_id: 'b', day: '2026-10-06' },
+    { habit_id: 'a', day: '2026-10-04' },
+  ]
+  it('lays the week from Monday to Sunday with this habit checks, today and yesterday markable', () => {
+    expect(weekDots('a', checks, WED)).toEqual([
+      { day: MON, checked: true, markable: false },
+      { day: '2026-10-06', checked: false, markable: true },
+      { day: WED, checked: true, markable: true },
+      { day: '2026-10-08', checked: false, markable: false },
+      { day: FRI, checked: false, markable: false },
+      { day: SAT, checked: false, markable: false },
+      { day: SUN, checked: false, markable: false },
+    ])
+  })
+  it('on Monday leaves only today markable: yesterday belongs to the week before (plan decision 14)', () => {
+    const dots = weekDots('a', checks, MON)
+    expect(dots.map(d => d.day)).toEqual([MON, '2026-10-06', WED, '2026-10-08', FRI, SAT, SUN])
+    expect(dots.filter(d => d.markable).map(d => d.day)).toEqual([MON])
+  })
+  it('on Sunday marks Saturday and Sunday', () => {
+    expect(weekDots('a', checks, SUN).filter(d => d.markable).map(d => d.day)).toEqual([SAT, SUN])
   })
 })
