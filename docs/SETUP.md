@@ -4,10 +4,11 @@
 
 1. Crie um projeto em https://supabase.com/dashboard (região: São Paulo, South America).
 2. SQL Editor → em um projeto novo, cole e rode, em ordem, cada arquivo de `supabase/migrations/`,
-   de `0001_init.sql` a `0030_habits_cron.sql`, um por consulta. Antes de rodar a `0013`, ative
+   de `0001_init.sql` a `0031_trackers.sql`, um por consulta. Antes de rodar a `0013`, ative
    o `pg_cron` (veja a seção 7). Em um projeto que já tem `0001` a `0006`, siga o roteiro abaixo; em
    um que já tem até a `0016`, siga o roteiro do check-in; em um que já tem até a `0020`, siga o
-   roteiro do Sono; em um que já tem até a `0025`, siga o roteiro dos Hábitos.
+   roteiro do Sono; em um que já tem até a `0025`, siga o roteiro dos Hábitos; em um que já tem até a `0030`,
+   siga o roteiro dos Trackers.
    A `0006` cria a exclusão de conta pelo próprio app (Perfil > Excluir minha conta) e precisa rodar
    como `postgres`, o usuário padrão do SQL Editor, porque apaga a linha da conta em `auth.users`.
    As `0007` a `0030` também rodam como `postgres`: as funções que fecham os dias e pagam o XP
@@ -275,6 +276,46 @@ Passo a passo:
    o hábito pelo cartão da Home, no celular; desfaça o check; dois dias depois, veja o XP dos checks
    chegar; depois que a semana fechar, veja o eixo Hábitos aceso no radar; e crie um desafio de
    checks de hábitos entre as duas contas, aceitando compartilhar a contagem nas duas.
+
+### Roteiro: banco de produção que já tem a 0001 a 0030 (Trackers)
+
+Use este roteiro para levar um banco que já roda os Hábitos (`0001` a `0030`) até a `0031`, a
+migration dos Trackers (fase 4b). Diferente da 4a, não há pressa nem ordem a cumprir: a `0031` só
+cria as tabelas `trackers` e `tracker_entries`, com RLS e dois triggers, e não redefine nenhuma
+função existente nem cria RPC nova. O cliente atual continua funcionando igual antes e depois do
+SQL, então ele pode rodar antes do merge, sem pressa.
+
+O único cuidado é a ordem inversa: o cliente novo lê as tabelas dos Trackers. Se o merge sair antes
+do SQL, a tela Trackers não carrega até a `0031` rodar; o resto do app não depende dela. Por isso o
+mais simples é rodar o SQL primeiro.
+
+O que muda no banco quando a `0031` roda:
+
+- Entram as tabelas `trackers` e `tracker_entries`, com RLS por `user_id = auth.uid()`. Os perfis que
+  já existem não mudam, e não há chave nova nem pilar para ligar: os Trackers aparecem para todo
+  mundo, em Perfil > Trackers.
+- Os triggers `trackers_guard` e `tracker_entries_guard` (`security invoker`) validam cada escrita:
+  tipo, opções, o teto de 30 trackers ativos, dia futuro, tracker arquivado e última escrita vence.
+  Tracker não se apaga, só se arquiva.
+
+Passo a passo:
+
+1. No SQL Editor, rode o arquivo único `supabase/release/0031_trackers.sql` inteiro, numa consulta
+   só. É a própria `0031_trackers.sql` com um cabeçalho; rodar a migration direto dá o mesmo
+   resultado. O arquivo é gerado por `node scripts/build-release-sql.mjs`, então não edite à mão (um
+   teste confere que está em dia).
+2. Confira o resultado:
+   - `select relname, relrowsecurity from pg_class where relname in ('trackers','tracker_entries');`
+     deve devolver as duas tabelas, ambas com `true`.
+3. Se o app disser que não achou a tabela logo depois ("Could not find the table"), recarregue o
+   cache da API: `notify pgrst, 'reload schema';`.
+4. Faça o merge do PR da 4b e o deploy do cliente novo. Um app instalado que ficou aberto durante o
+   deploy ainda roda o cliente antigo, sem a tela Trackers, até ser reaberto. Não há desafio nem
+   dado compartilhado que dependa disso.
+5. Faça o smoke com uma conta: em Perfil > Trackers, crie um tracker de cada tipo (número, duração e
+   rótulo); registre um valor em cada um pelo "+"; abra um deles e veja o gráfico em 30 e em 90 dias;
+   registre em um dia anterior pela folha completa; arquive um tracker e confirme que ele sai da
+   lista ativa e continua nos arquivados.
 
 ## 2. Google OAuth
 

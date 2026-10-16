@@ -34,7 +34,7 @@ combinada a partir de outubro de 2026: **1c → 1d → 3 → 4 → 5 → 6** (a 
 | 1d | Plano com evidência | M | 1c | em produção desde 2026-10-12 (PR #6), sem SQL; falta a conferência das fontes em `docs/fontes-1d.md` ([spec](superpowers/specs/2026-10-12-fase-1d-plano-evidencia-design.md), [plano](superpowers/plans/2026-10-12-fase-1d-plano-evidencia.md)) |
 | 2 | Nutrição | G | 1a | concluída (2a e 2b) |
 | 3 | Sono | P | 1a | em produção desde 2026-10-12 (SQL 0021-0025 e PR #6) ([spec](superpowers/specs/2026-10-06-fase-3-sono-design.md), [plano](superpowers/plans/2026-10-12-fase-3-sono.md)) |
-| 4 | Hábitos + trackers | M | 1a | em duas subetapas ([spec](superpowers/specs/2026-10-15-fase-4-habitos-trackers-design.md)). 4a Hábitos: em produção desde 2026-10-16 ([plano](superpowers/plans/2026-10-15-fase-4a-habitos.md)). 4b Trackers: plano escrito ([plano](superpowers/plans/2026-10-16-fase-4b-trackers.md)) |
+| 4 | Hábitos + trackers | M | 1a | em duas subetapas ([spec](superpowers/specs/2026-10-15-fase-4-habitos-trackers-design.md)). 4a Hábitos: em produção desde 2026-10-16 ([plano](superpowers/plans/2026-10-15-fase-4a-habitos.md)). 4b Trackers: concluída no código, aguarda o SQL 0031 em produção ([plano](superpowers/plans/2026-10-16-fase-4b-trackers.md)) |
 | 5 | Painel de performance | M | 2, 3, 4 | a especificar |
 | 6 | Foco (ActivityWatch) | P | 1a | a especificar |
 
@@ -272,7 +272,7 @@ de [docs/SETUP.md](SETUP.md) ok, e o PR #6 (1d e Sono) entrou no mesmo dia.
 **Objetivo:** medir qualquer coisa e transformar hábitos em consistência.
 
 **Subetapas:** a Fase 4 sai em duas, cada uma com plano, PR, SQL e roteiro de publicação próprios.
-A 4b começa agora que a 4a está em produção.
+A 4b começou depois que a 4a entrou em produção.
 
 **Escopo previsto**
 - **Hábitos (4a)**: hábitos criados pela pessoa, com meta de N vezes por semana, check rápido e
@@ -288,6 +288,7 @@ A 4b começa agora que a 4a está em produção.
 
 **Spec:** [2026-10-15-fase-4-habitos-trackers-design.md](superpowers/specs/2026-10-15-fase-4-habitos-trackers-design.md).
 **Plano da 4a:** [2026-10-15-fase-4a-habitos.md](superpowers/plans/2026-10-15-fase-4a-habitos.md).
+**Plano da 4b:** [2026-10-16-fase-4b-trackers.md](superpowers/plans/2026-10-16-fase-4b-trackers.md).
 
 **Entregas da 4a**
 - Pilar opcional, ligado em Perfil > Hábitos: até 20 hábitos ativos, cada um com nome, ícone e meta
@@ -301,7 +302,23 @@ A 4b começa agora que a 4a está em produção.
   o job `close-habit-days`.
 
 **Status da 4a:** em produção. O SQL 0026-0030 rodou em 2026-10-16, com as conferências do roteiro
-de [docs/SETUP.md](SETUP.md), e o merge saiu no mesmo dia. **Próximo:** a 4b, Trackers.
+de [docs/SETUP.md](SETUP.md), e o merge saiu no mesmo dia.
+
+**Entregas da 4b**
+- Trackers de número (unidade, 0 a 2 casas, soma ou média por dia), duração (soma ou média por dia)
+  e rótulo (2 a 8 opções), até 30 ativos; tipo imutável, arquivar em vez de apagar.
+- Registro em um toque pelo "+" (agora, no fuso do perfil) ou pela folha completa, com dia até hoje,
+  hora e nota; editar e apagar registros; tudo offline, com fila.
+- Telas `/trackers` e `/trackers/:id`, com a linha **Trackers** no Perfil e o atalho no topo de
+  `/habitos`: gráfico de 30 ou 90 dias com média móvel de 7 dias (barras por opção nos de rótulo),
+  estatísticas, "tempo desde o último" e a lista de registros.
+- Privados: nada em progresso, feed, cartão de amigo ou desafio, e sem XP.
+- Migration `0031`, publicada em `supabase/release/0031_trackers.sql`: só cria as tabelas
+  `trackers` e `tracker_entries`, sem RPC nova.
+
+**Status da 4b:** concluída no código, aguarda o SQL 0031 em produção. Como a migration só cria
+tabelas, o SQL pode rodar antes do merge, sem pressa, pelo roteiro dos Trackers em
+[docs/SETUP.md](SETUP.md).
 
 ---
 

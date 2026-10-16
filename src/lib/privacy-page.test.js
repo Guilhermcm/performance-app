@@ -96,6 +96,36 @@ describe('privacy policy page', () => {
     expect(en).toContain('habits with their checks and goals')
   })
 
+  it('covers trackers: what is kept, that only you see it and that nothing is shared, in both languages', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('Trackers')
+    expect(pt).toContain('O app só guarda dados de trackers depois que você cria o primeiro')
+    expect(pt).toContain('o nome, o ícone, o tipo (número, duração ou rótulo), a unidade e, nos de rótulo, as opções')
+    expect(pt).toContain('os registros que você faz, cada um com o dia, a hora, o valor e uma nota opcional')
+    expect(pt).toContain('Só você vê seus trackers e seus registros')
+    expect(pt).toContain('Nada deles vai para seus amigos, para o feed ou para os desafios, e eles não rendem XP')
+    expect(en).toContain('Trackers')
+    expect(en).toContain('The app keeps no tracker data until you create your first one')
+    expect(en).toContain('the name, the icon, the type (number, duration or label), the unit and, for label trackers, the options')
+    expect(en).toContain('the entries you log, each with the day, the time, the value and an optional note')
+    expect(en).toContain('Only you see your trackers and entries')
+    expect(en).toContain('None of it goes to your friends, the feed or challenges, and it earns no XP')
+  })
+
+  it('says unsent trackers and entries stay on the device, and that deleting the account removes them', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('os trackers e os registros que ainda não foram enviados')
+    expect(pt).toContain('os trackers com seus registros')
+    expect(pt).toContain('as suas noites de sono, os seus hábitos ou os seus trackers')
+    expect(pt).toContain('as noites de sono e os registros dos trackers podem dizer algo sobre a sua saúde')
+    expect(en).toContain('trackers and entries that have not been sent yet')
+    expect(en).toContain('trackers with their entries')
+    expect(en).toContain('your sleep nights, your habits or your trackers')
+    expect(en).toContain('your sleep nights and your tracker entries can say something about your health')
+  })
+
   it('covers the nutrition pillar and Open Food Facts in both languages', () => {
     const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
     const en = visible.slice(visible.indexOf('Privacy Policy'))
