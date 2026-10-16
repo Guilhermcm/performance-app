@@ -14,15 +14,23 @@ const decimalSeparator = (locale: string): string => {
 
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
+// numeric(12, 2) holds ten integer digits.
+const INTEGER_DIGITS = 10
+
 // What a person typed, as a number in the language's own notation: one decimal separator (a comma
-// in pt-BR, a point in English), no thousands separator, an optional minus. Rounded to `decimals`
-// (half away from zero). Anything else is null, so the sheet can refuse it rather than guess.
+// in pt-BR, a point in English), no thousands separator, an optional minus, up to ten integer
+// digits. The other separator is taken too when it is the only one and 1 or 2 digits follow it
+// (a keypad set to another region types "1.8"); "8.000" stays refused, it reads as thousands.
+// Rounded to `decimals` (half away from zero). Anything else is null, so the sheet can refuse it
+// rather than guess.
 export function parseNumberInput(text: string, locale: string, decimals: number): number | null {
   const sep = decimalSeparator(locale)
+  const other = sep === '.' ? ',' : '.'
   const s = text.trim().replace('−', '-')
-  const m = new RegExp(`^(-?)(\\d+|\\d*${escapeRe(sep)}\\d+)$`).exec(s)
+  const m = new RegExp(`^(-?)(\\d+|\\d*${escapeRe(sep)}\\d+|\\d*${escapeRe(other)}\\d{1,2})$`).exec(s)
   if (!m) return null
-  const abs = m[2].replace(sep, '.')
+  const abs = m[2].replace(sep, '.').replace(other, '.')
+  if (abs.split('.')[0].replace(/^0+/, '').length > INTEGER_DIGITS) return null
   const rounded = Number(`${Math.round(Number(`${abs}e${decimals}`))}e-${decimals}`)
   if (!Number.isFinite(rounded)) return null
   return rounded === 0 ? 0 : m[1] ? -rounded : rounded
@@ -39,10 +47,13 @@ export function formatDuration(minutes: number): string {
 
 // A tracker's number as it reads on screen: the tracker's decimals and the language's separators,
 // then the unit after a space ("1,8 L", "8.000 passos"); a duration is written by formatDuration.
+// A tracker without decimals set writes 2, the server's default. A value that rounds to zero is
+// written as zero, never "-0,0".
 export function formatValue(tracker: Tracker, n: number, locale: string): string {
   if (tracker.kind === 'duration') return formatDuration(n)
-  const d = tracker.decimals ?? 0
-  const num = new Intl.NumberFormat(locale, { minimumFractionDigits: d, maximumFractionDigits: d }).format(n)
+  const d = tracker.decimals ?? 2
+  const shown = Math.abs(n) < 0.5 * 10 ** -d ? 0 : n
+  const num = new Intl.NumberFormat(locale, { minimumFractionDigits: d, maximumFractionDigits: d }).format(shown)
   return tracker.unit ? `${num} ${tracker.unit}` : num
 }
 

@@ -20,9 +20,17 @@ describe('parseNumberInput', () => {
     expect(parseNumberInput('1.8', 'en-GB', 1)).toBe(1.8)
   })
 
-  it('refuses the other separator and any thousands separator', () => {
-    expect(parseNumberInput('1.8', 'pt-BR', 1)).toBeNull()
-    expect(parseNumberInput('1,8', 'en', 1)).toBeNull()
+  it('takes the other separator alone before 1 or 2 digits, as a keypad of another region types it', () => {
+    expect(parseNumberInput('1.8', 'pt-BR', 1)).toBe(1.8)
+    expect(parseNumberInput('72.45', 'pt-BR', 2)).toBe(72.45)
+    expect(parseNumberInput('-3.5', 'pt-BR', 1)).toBe(-3.5)
+    expect(parseNumberInput('1,8', 'en', 1)).toBe(1.8)
+    // Three digits after it read as thousands: refused, never guessed.
+    expect(parseNumberInput('8.000', 'pt-BR', 0)).toBeNull()
+    expect(parseNumberInput('8,000', 'en', 0)).toBeNull()
+  })
+
+  it('refuses any thousands separator', () => {
     expect(parseNumberInput('1.234,5', 'pt-BR', 1)).toBeNull()
     expect(parseNumberInput('1,234.5', 'en', 1)).toBeNull()
     expect(parseNumberInput('1,2,3', 'pt-BR', 1)).toBeNull()
@@ -32,6 +40,12 @@ describe('parseNumberInput', () => {
     for (const text of ['abc', '', '  ', ',', '-', '1,', '1e3', '--1', '1 2', '0x10', 'Infinity']) {
       expect(parseNumberInput(text, 'pt-BR', 1), text).toBeNull()
     }
+  })
+
+  it('takes up to 10 integer digits, what the column holds', () => {
+    expect(parseNumberInput('9999999999', 'pt-BR', 0)).toBe(9999999999)
+    expect(parseNumberInput('12345678901', 'pt-BR', 0)).toBeNull()
+    expect(parseNumberInput('-12345678901,5', 'pt-BR', 1)).toBeNull()
   })
 
   it('reads negatives, a leading separator and surrounding spaces', () => {
@@ -63,7 +77,16 @@ describe('formatValue', () => {
 
   it('leaves the unit out when there is none', () => {
     expect(formatValue(trackerOf({ unit: null, decimals: 0 }), 12, 'pt-BR')).toBe('12')
-    expect(formatValue(trackerOf({ unit: '', decimals: null }), 12, 'pt-BR')).toBe('12')
+  })
+
+  it('uses 2 places when the tracker has no decimals set, as the server does', () => {
+    expect(formatValue(trackerOf({ unit: '', decimals: null }), 12, 'pt-BR')).toBe('12,00')
+  })
+
+  it('never writes a negative zero', () => {
+    expect(formatValue(trackerOf({ unit: 'L', decimals: 1 }), -0.04, 'pt-BR')).toBe('0,0 L')
+    expect(formatValue(trackerOf({ unit: null, decimals: 0 }), -0, 'en')).toBe('0')
+    expect(formatValue(trackerOf({ unit: null, decimals: 0 }), -0.6, 'en')).toBe('-1')
   })
 
   it('writes a duration as hours and minutes', () => {
