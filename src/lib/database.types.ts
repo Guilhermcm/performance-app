@@ -14,7 +14,7 @@ export interface Database {
           share_activity: boolean; checkin_visibility: 'friends' | 'private'; created_at: string; updated_at: string
           activity_level: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active' | null
           nutrition_pace: 'gentle' | 'standard'; nutrition_enabled: boolean; nutrition_days_per_week: number
-          sleep_enabled: boolean; sleep_nights_per_week: number
+          sleep_enabled: boolean; sleep_nights_per_week: number; habits_enabled: boolean
         }
         Insert: Partial<Database['public']['Tables']['profiles']['Row']> & { id: string; display_name: string }
         Update: Partial<Database['public']['Tables']['profiles']['Row']>
@@ -69,6 +69,36 @@ export interface Database {
           on_target: boolean; rested: boolean; closed_at: string
         }
         Insert: never
+        Update: never
+        Relationships: []
+      }
+      habit_periods: {
+        Row: { user_id: string; started_on: string; ended_on: string | null }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      habits: {
+        Row: {
+          id: string; user_id: string; name: string; icon: string; per_week: number; sort: number
+          archived_at: string | null; created_at: string; updated_at: string
+        }
+        Insert: {
+          id: string; name: string; icon: string; per_week: number; user_id?: string; sort?: number
+          archived_at?: string | null; created_at?: string; updated_at?: string
+        }
+        Update: Partial<Omit<Database['public']['Tables']['habits']['Insert'], 'id' | 'user_id'>>
+        Relationships: []
+      }
+      habit_targets: {
+        Row: { habit_id: string; user_id: string; week_start: string; target: number }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      habit_checks: {
+        Row: { habit_id: string; user_id: string; day: string; created_at: string }
+        Insert: { habit_id: string; day: string; user_id?: string; created_at?: string }
         Update: never
         Relationships: []
       }
