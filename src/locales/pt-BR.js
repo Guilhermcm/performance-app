@@ -2038,6 +2038,21 @@ export const PT_BR_OVERRIDES = {
   "{0} left, and the week ends today": "faltam {0} e a semana acaba hoje",
   "Week: {0} of {1} · +{2} XP so far": "Semana: {0} de {1} · +{2} XP até agora",
   "See all": "Ver todos",
+  // --- habits challenge (phase 4a) ---
+  "To take part, agree to show how many checks you made.": "Para participar, aceite mostrar quantos checks você fez.",
+  "Turn on the Habits pillar to take part in this challenge.": "Ative o pilar Hábitos para participar deste desafio.",
+  "Habit checks": "Checks de hábitos",
+  "Habit checks in the period, each habit up to its own weekly goal. Others only see how many, never your habits or the days.": "Checks de hábitos no período, cada hábito até a própria meta da semana. Os outros só veem quantos, nunca seus hábitos nem os dias.",
+  "1 check": "1 check",
+  "1 check in {0} days": "1 check em {0} dias",
+  "{0} checks in {1} days": "{0} checks em {1} dias",
+  "Show participants how many checks I made": "Mostrar aos participantes quantos checks eu fiz",
+  "They see only that number, never your habits, their icons or which days.": "Eles veem só esse número, nunca seus hábitos, os ícones ou os dias.",
+  "Turn on the Habits pillar to create this challenge.": "Ative o pilar Hábitos para criar este desafio.",
+  "Agree to show your checks to create this challenge.": "Aceite mostrar seus checks para criar este desafio.",
+  "Only for people with the Habits pillar on.": "Só para quem está com o pilar Hábitos ligado.",
+  "Turn on Habits": "Ligar os Hábitos",
+  "Turn on the Habits pillar to join": "Ative o pilar Hábitos para participar",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

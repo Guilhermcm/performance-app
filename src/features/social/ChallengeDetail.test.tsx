@@ -19,6 +19,10 @@ vi.mock('../sleep/SleepSetup', async () => {
   const { createElement } = await import('react')
   return { default: ({ open }: { open: boolean }) => (open ? createElement('div', { role: 'dialog', 'aria-label': 'Sleep setup' }) : null) }
 })
+vi.mock('../habits/HabitsSetup', async () => {
+  const { createElement } = await import('react')
+  return { default: ({ open }: { open: boolean }) => (open ? createElement('div', { role: 'dialog', 'aria-label': 'Habits setup' }) : null) }
+})
 
 import ChallengeDetail from './ChallengeDetail'
 import { useSocial } from './useSocial'
@@ -197,7 +201,7 @@ describe('ChallengeDetail', () => {
     expect(screen.queryByText('Team total')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Join challenge' }))
     await waitFor(() => expect(h.toast.success).toHaveBeenCalledWith('You joined the challenge'))
-    expect(h.join).toHaveBeenCalledWith('c1', { shareVolume: false, shareNutrition: false, shareSleep: false })
+    expect(h.join).toHaveBeenCalledWith('c1', { shareVolume: false, shareNutrition: false, shareSleep: false, shareHabits: false })
     expect(load).toHaveBeenCalledWith('challenges')
     expect(h.refresh).toHaveBeenCalled()
   })
@@ -231,7 +235,7 @@ describe('ChallengeDetail', () => {
     fireEvent.click(screen.getByRole('switch'))
     expect(join.disabled).toBe(false)
     fireEvent.click(join)
-    expect(h.join).toHaveBeenCalledWith('c1', { shareVolume: true, shareNutrition: false, shareSleep: false })
+    expect(h.join).toHaveBeenCalledWith('c1', { shareVolume: true, shareNutrition: false, shareSleep: false, shareHabits: false })
   })
 
   it('confirms before leaving', async () => {
@@ -273,7 +277,7 @@ describe('ChallengeDetail', () => {
     fireEvent.click(screen.getByRole('switch', { name: /Show participants how many days I was on target/ }))
     expect(join.disabled).toBe(false)
     fireEvent.click(join)
-    expect(h.join).toHaveBeenCalledWith('c1', { shareVolume: false, shareNutrition: true, shareSleep: false })
+    expect(h.join).toHaveBeenCalledWith('c1', { shareVolume: false, shareNutrition: true, shareSleep: false, shareHabits: false })
   })
 
   it('opens the pillar activation instead of joining while Nutrition is off', () => {
@@ -476,7 +480,7 @@ describe('ChallengeDetail', () => {
       fireEvent.click(screen.getByRole('switch', { name: /^Show participants how many nights I was on target/ }))
       expect(join.disabled).toBe(false)
       fireEvent.click(join)
-      expect(h.join).toHaveBeenCalledWith('c1', { shareVolume: false, shareNutrition: false, shareSleep: true })
+      expect(h.join).toHaveBeenCalledWith('c1', { shareVolume: false, shareNutrition: false, shareSleep: true, shareHabits: false })
     })
 
     it('opens the Sleep setup instead of joining while Sleep is off', () => {
@@ -513,6 +517,128 @@ describe('ChallengeDetail', () => {
       show([invited({ template: SLEEP, target: 10 })])
       render(<ChallengeDetail />)
       fireEvent.click(screen.getByRole('switch', { name: /how many nights/ }))
+      fireEvent.click(screen.getByRole('button', { name: 'Join challenge' }))
+      await waitFor(() => expect(h.toast.error).toHaveBeenCalledWith(text))
+    })
+  })
+
+  describe('a habits challenge', () => {
+    const HABITS = 'habit_checks' as const
+    const habitsPillar = (on: boolean) => useProfile.setState({ profile: {
+      habits_enabled: on, sleep_enabled: false, nutrition_enabled: false, timezone: 'America/Sao_Paulo'
+    } as never })
+    const checks = (over: Partial<Challenge> = {}) => challengeOf({
+      template: HABITS, target: 60, total: 21,
+      members: [
+        { id: ME, name: 'Ana', avatar_url: null, me: true, joined: true, progress: 12, won: null },
+        { id: BIA, name: 'Bia', avatar_url: null, me: false, joined: true, progress: 9, won: null },
+        { id: CAIO, name: 'Caio', avatar_url: null, me: false, joined: false, progress: null, won: null }
+      ],
+      ...over
+    })
+
+    it('shows the scoreboard in checks, counts closed days and says when the result comes', () => {
+      habitsPillar(true)
+      show([checks()])
+      render(<ChallengeDetail />)
+      expect(screen.getByText(/^Habit checks · Team$/)).toBeTruthy()
+      expect(screen.getByText('21 checks')).toBeTruthy()
+      expect(screen.getByText('Goal: 60 checks')).toBeTruthy()
+      expect(screen.getByText('Position 1 of 2')).toBeTruthy()
+      const rows = within(screen.getByRole('region', { name: 'Scoreboard' })).getAllByRole('listitem')
+      expect(rows.map(r => r.textContent)).toEqual([
+        expect.stringMatching(/Ana.*You.*12 checks/), expect.stringMatching(/Bia.*9 checks/), expect.stringMatching(/Caio.*Invited/)
+      ])
+      expect(within(rows[1]).getByLabelText('Position 2')).toBeTruthy()
+      expect(screen.getByText('Counting up to the day before yesterday')).toBeTruthy()
+      expect(screen.getByText('Result on ' + fmtShortDay('2026-10-21'))).toBeTruthy()
+    })
+
+    it('has no check-in feed and names no habit', () => {
+      habitsPillar(true)
+      show([checks()])
+      render(<ChallengeDetail />)
+      expect(screen.queryByText('challenge feed of c1')).toBeNull()
+      expect(screen.queryByRole('heading', { name: 'Check-ins' })).toBeNull()
+    })
+
+    it('reads 1 check in the singular', () => {
+      show([checks({ mode: 'solo', target: 10, members: [{ id: ME, name: 'Ana', avatar_url: null, me: true, joined: true, progress: 1, won: null }] })])
+      render(<ChallengeDetail />)
+      expect(screen.getAllByText('1 check')).toHaveLength(2)
+    })
+
+    it('waits for the result after the last day', () => {
+      const today = todayISO()
+      show([checks({ starts_on: addDays(today, -10), ends_on: addDays(today, -1) })])
+      render(<ChallengeDetail />)
+      expect(screen.queryByText(/Ends today/)).toBeNull()
+      expect(screen.getAllByText(new RegExp('Result on ' + fmtShortDay(addDays(today, 2))))).toHaveLength(1)
+      expect(screen.queryByRole('button', { name: 'Leave challenge' })).toBeNull()
+    })
+
+    it('says it in Brazilian Portuguese', async () => {
+      await setLang('pt-BR')
+      habitsPillar(true)
+      show([checks()])
+      render(<ChallengeDetail />)
+      expect(screen.getByText(/^Checks de hábitos · Equipe$/)).toBeTruthy()
+      expect(screen.getByRole('region', { name: 'Placar' })).toBeTruthy()
+      expect(screen.getByText('21 checks')).toBeTruthy()
+      expect(screen.getByText('Meta: 60 checks')).toBeTruthy()
+      expect(screen.getByText('Contando até anteontem')).toBeTruthy()
+      expect(screen.getByText('Resultado sai em ' + fmtShortDay('2026-10-21'))).toBeTruthy()
+    })
+
+    it('asks for the habits opt-in before joining and sends only it', () => {
+      habitsPillar(true)
+      show([invited({ template: HABITS, target: 60 })])
+      render(<ChallengeDetail />)
+      const join = screen.getByRole('button', { name: 'Join challenge' }) as HTMLButtonElement
+      expect(join.disabled).toBe(true)
+      expect(screen.getByText('They see only that number, never your habits, their icons or which days.')).toBeTruthy()
+      expect(screen.getAllByRole('switch')).toHaveLength(1)
+      fireEvent.click(screen.getByRole('switch', { name: /^Show participants how many checks I made/ }))
+      expect(join.disabled).toBe(false)
+      fireEvent.click(join)
+      expect(h.join).toHaveBeenCalledWith('c1', { shareVolume: false, shareNutrition: false, shareSleep: false, shareHabits: true })
+    })
+
+    it('opens the Habits setup instead of joining while Habits is off', () => {
+      habitsPillar(false)
+      show([invited({ template: HABITS, target: 60 })])
+      render(<ChallengeDetail />)
+      expect(screen.queryByRole('button', { name: 'Join challenge' })).toBeNull()
+      expect(screen.queryByRole('switch')).toBeNull()
+      fireEvent.click(screen.getByRole('button', { name: 'Turn on the Habits pillar to join' }))
+      expect(screen.getByRole('dialog', { name: 'Habits setup' })).toBeTruthy()
+      expect(screen.queryByRole('dialog', { name: 'Sleep setup' })).toBeNull()
+      expect(screen.queryByRole('dialog', { name: 'Nutrition setup' })).toBeNull()
+      expect(h.join).not.toHaveBeenCalled()
+      act(() => habitsPillar(true))
+      expect(screen.getByRole('button', { name: 'Join challenge' })).toBeTruthy()
+      expect(screen.getByRole('switch', { name: /how many checks/ })).toBeTruthy()
+    })
+
+    it('offers no action and no pillar shortcut once the day after the last day arrives', () => {
+      vi.setSystemTime(new Date('2026-10-19T15:00:00Z'))
+      habitsPillar(false)
+      show([invited({ template: HABITS, target: 60, ends_on: '2026-10-18' })])
+      render(<ChallengeDetail />)
+      expect(screen.queryByRole('button', { name: 'Turn on the Habits pillar to join' })).toBeNull()
+      expect(screen.queryByRole('button', { name: 'Join challenge' })).toBeNull()
+      expect(screen.queryByRole('button', { name: 'Decline' })).toBeNull()
+    })
+
+    it.each([
+      ['habits_off', 'Turn on the Habits pillar to take part in this challenge.'],
+      ['habits_opt_in_required', 'To take part, agree to show how many checks you made.']
+    ] as const)('explains %s from the server', async (code, text) => {
+      habitsPillar(true)
+      h.join.mockRejectedValue(new SocialError(code))
+      show([invited({ template: HABITS, target: 60 })])
+      render(<ChallengeDetail />)
+      fireEvent.click(screen.getByRole('switch', { name: /how many checks/ }))
       fireEvent.click(screen.getByRole('button', { name: 'Join challenge' }))
       await waitFor(() => expect(h.toast.error).toHaveBeenCalledWith(text))
     })
