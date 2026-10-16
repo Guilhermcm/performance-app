@@ -96,12 +96,13 @@ function Trackers({ timezone, failed }: { timezone: string | null | undefined; f
           </Button>
         </div>
       ) : !failed && (
+        // With only archived trackers this is not a first one: plain words, and the archived below.
         <section className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-border px-6 py-10 text-center">
           <p className="max-w-xs text-sm leading-relaxed text-muted-foreground text-pretty">
-            {t('Follow what matters to you, like weight, water or mood, and log it in one tap.')}
+            {archived.length ? t('You have no active trackers.') : t('Follow what matters to you, like weight, water or mood, and log it in one tap.')}
           </p>
           <Button className="mt-1 h-12 w-full max-w-xs gap-2 rounded-xl text-[15px]" onClick={create}>
-            <Plus aria-hidden className="size-4" />{t('Create your first tracker')}
+            <Plus aria-hidden className="size-4" />{archived.length ? t('New tracker') : t('Create your first tracker')}
           </Button>
         </section>
       )}
@@ -173,11 +174,11 @@ function TrackerRow({ tracker, last, today, canMove, onMove, onOpen, onAdd }: {
       <Button variant="ghost" size="icon" className="size-11 shrink-0 rounded-full" aria-label={t('Log for {0}', tracker.name)} onClick={onAdd}>
         <Plus aria-hidden className="size-5" />
       </Button>
-      <Button variant="ghost" size="icon" className="size-11 shrink-0 rounded-full" aria-label={t('Move up')}
+      <Button variant="ghost" size="icon" className="size-11 shrink-0 rounded-full" aria-label={t('Move {0} up', tracker.name)}
         disabled={!canMove.up} onClick={() => onMove(-1)}>
         <ChevronUp aria-hidden className="size-5" />
       </Button>
-      <Button variant="ghost" size="icon" className="size-11 shrink-0 rounded-full" aria-label={t('Move down')}
+      <Button variant="ghost" size="icon" className="size-11 shrink-0 rounded-full" aria-label={t('Move {0} down', tracker.name)}
         disabled={!canMove.down} onClick={() => onMove(1)}>
         <ChevronDown aria-hidden className="size-5" />
       </Button>
@@ -198,16 +199,19 @@ function ArchivedRow({ tracker, onOpen }: { tracker: Tracker; onOpen: () => void
   )
 }
 
-// The shape of the screen while the first load runs: the rows.
+// The shape of the screen while the first load runs: rows like TrackerRow (60 px: icon, name and
+// last value, then the plus and the two arrows at 44 px).
 function ScreenSkeleton() {
   return (
     <div data-testid="trackers-skeleton" role="status" aria-busy="true" aria-label={t('Loading…')} className="flex flex-col gap-2">
-      <div className={cn(CARD, 'flex flex-col gap-4 px-4')}>
+      <div className={cn(CARD, 'px-2 py-1')}>
         {[0, 1, 2, 3].map(i => (
-          <div key={i} className="flex items-center gap-3">
-            <Skeleton className="size-9 rounded-xl" />
-            <div className="flex-1 space-y-1.5"><Skeleton className="h-4 w-28" /><Skeleton className="h-3.5 w-36" /></div>
-            <Skeleton className="size-8 rounded-full" />
+          <div key={i} data-testid="trackers-skeleton-row" className="flex min-h-[60px] items-center gap-1 border-b border-border px-2 py-2 last:border-b-0">
+            <div className="flex min-w-0 flex-1 items-center gap-3 px-1">
+              <Skeleton className="size-9 shrink-0 rounded-xl" />
+              <div className="flex-1 space-y-1.5"><Skeleton className="h-4 w-28" /><Skeleton className="h-3.5 w-36" /></div>
+            </div>
+            {[0, 1, 2].map(j => <Skeleton key={j} className="size-11 shrink-0 rounded-full" />)}
           </div>
         ))}
       </div>

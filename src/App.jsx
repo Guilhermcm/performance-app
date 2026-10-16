@@ -45,8 +45,6 @@ import NutritionHistoryScreen from './features/nutrition/HistoryScreen.tsx'
 import SleepScreen from './features/sleep/SleepScreen.tsx'
 import HabitsScreen from './features/habits/HabitsScreen.tsx'
 import TrackersScreen from './features/trackers/TrackersScreen.tsx'
-// The detail loads on demand (its charts are heavy), on its own skeleton meanwhile.
-const TrackerDetail = lazy(() => import('./features/trackers/TrackerDetail.tsx'))
 import { TrackerDetailSkeleton } from './features/trackers/TrackerChartSkeleton.tsx'
 import SocialScreen from './features/social/SocialScreen.tsx'
 import ChallengeDetail from './features/social/ChallengeDetail.tsx'
@@ -64,6 +62,9 @@ import Library from './views/Library.jsx'
 import Muscles from './views/Muscles.jsx'
 import StructuralBalance from './views/StructuralBalance.jsx'
 import Settings from './views/Settings.jsx'
+
+// The detail loads on demand (its charts are heavy), on its own skeleton meanwhile.
+const TrackerDetail = lazy(() => import('./features/trackers/TrackerDetail.tsx'))
 
 // last known scrollY per route, so back-navigation can put the page where it was
 const scrollPositions = new Map()

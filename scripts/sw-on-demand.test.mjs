@@ -49,7 +49,7 @@ describe('onDemandFiles', () => {
     expect(onDemandFiles(b)).toEqual(['./assets/SleepBedtimeBand-i.js', './assets/SleepDurationChart-h.js', './assets/recharts-e.js'])
   })
 
-  it('lists the tracker line chart and label bars with the Recharts chunk, never the detail screen', () => {
+  it('lists the tracker detail, its line chart and label bars with the Recharts chunk, so the first offline open works', () => {
     const b = {
       'assets/index-a.js': chunk('assets/index-a.js', ['/app/src/main.jsx'], { isEntry: true }),
       'assets/TrackerLineChart-k.js': chunk('assets/TrackerLineChart-k.js', ['/app/src/features/trackers/TrackerLineChart.tsx'],
@@ -58,7 +58,7 @@ describe('onDemandFiles', () => {
       'assets/recharts-e.js': chunk('assets/recharts-e.js', ['/app/node_modules/recharts/es6/index.js']),
       'assets/TrackerDetail-m.js': chunk('assets/TrackerDetail-m.js', ['/app/src/features/trackers/TrackerDetail.tsx'])
     }
-    expect(onDemandFiles(b)).toEqual(['./assets/TrackerBars-l.js', './assets/TrackerLineChart-k.js', './assets/recharts-e.js'])
+    expect(onDemandFiles(b)).toEqual(['./assets/TrackerBars-l.js', './assets/TrackerDetail-m.js', './assets/TrackerLineChart-k.js', './assets/recharts-e.js'])
   })
 
   it('reads Windows module ids too', () => {

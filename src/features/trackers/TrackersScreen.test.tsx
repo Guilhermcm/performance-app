@@ -111,16 +111,16 @@ describe('TrackersScreen', () => {
 
   it('reorders with arrows of at least 44 px, and the ends cannot go further', () => {
     render(<TrackersScreen />)
-    const up = within(rows()[1]).getByRole('button', { name: 'Mover para cima' })
-    const down = within(rows()[1]).getByRole('button', { name: 'Mover para baixo' })
+    const up = within(rows()[1]).getByRole('button', { name: 'Mover Peso para cima' })
+    const down = within(rows()[1]).getByRole('button', { name: 'Mover Peso para baixo' })
     expect(up.className).toContain('size-11')
     expect(down.className).toContain('size-11')
     fireEvent.click(up)
     expect(move).toHaveBeenLastCalledWith(T2, -1)
     fireEvent.click(down)
     expect(move).toHaveBeenLastCalledWith(T2, 1)
-    expect(within(rows()[0]).getByRole('button', { name: 'Mover para cima' }).hasAttribute('disabled')).toBe(true)
-    expect(within(rows()[3]).getByRole('button', { name: 'Mover para baixo' }).hasAttribute('disabled')).toBe(true)
+    expect(within(rows()[0]).getByRole('button', { name: 'Mover Água para cima' }).hasAttribute('disabled')).toBe(true)
+    expect(within(rows()[3]).getByRole('button', { name: 'Mover Leitura para baixo' }).hasAttribute('disabled')).toBe(true)
   })
 
   it('opens the creation sheet with New tracker', () => {
@@ -140,7 +140,15 @@ describe('TrackersScreen', () => {
   it('shows a skeleton while the first load runs', () => {
     store({ status: 'loading', trackers: [], entries: [] })
     render(<TrackersScreen />)
-    expect(screen.getByTestId('trackers-skeleton').getAttribute('aria-busy')).toBe('true')
+    const skeleton = screen.getByTestId('trackers-skeleton')
+    expect(skeleton.getAttribute('aria-busy')).toBe('true')
+    // Rows in the shape of the real ones: about 60 px, with the plus and the two arrows at 44 px.
+    const shaped = skeleton.querySelectorAll('[data-testid="trackers-skeleton-row"]')
+    expect(shaped).toHaveLength(4)
+    for (const row of shaped) {
+      expect(row.className).toContain('min-h-[60px]')
+      expect(row.querySelectorAll('[data-slot="skeleton"].size-11')).toHaveLength(3)
+    }
     expect(screen.queryByRole('list')).toBeNull()
   })
 
@@ -181,10 +189,13 @@ describe('TrackersScreen', () => {
     expect(screen.queryByRole('dialog', { name: 'tracker-sheet' })).toBeNull()
   })
 
-  it('shows the archived section even when no tracker is active', () => {
+  it('shows the archived section even when no tracker is active, never as a first tracker', () => {
     store({ trackers: [OLD], entries: [] })
     render(<TrackersScreen />)
-    expect(screen.getByRole('button', { name: 'Crie seu primeiro tracker' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Crie seu primeiro tracker' })).toBeNull()
+    expect(screen.getByText('Você não tem trackers ativos.')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Novo tracker' }))
+    expect(screen.getByRole('dialog', { name: 'tracker-sheet' }).getAttribute('data-tracker')).toBe('new')
     expect(screen.getByRole('region', { name: 'Arquivados' })).toBeTruthy()
   })
 

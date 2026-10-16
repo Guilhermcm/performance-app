@@ -1,6 +1,6 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { Archive, ArrowLeft, Pencil, Plus } from 'lucide-react'
+import { Archive, ArrowLeft, CalendarPlus, Pencil, Plus, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { dateLocale, t, tn } from '../../lib/i18n.js'
@@ -24,8 +24,9 @@ const TrackerLineChart = lazy(() => import('./TrackerLineChart'))
 const TrackerBars = lazy(() => import('./TrackerBars'))
 
 // /trackers/:id (spec 8.4): 30 or 90 days of one tracker, as a chart, stats and the entries of
-// the period, each one editable. An archived tracker shows the same, says it is archived, offers
-// to reactivate it and takes no new entry (the server refuses one).
+// the period, each one editable. "+" logs now; "Add entry" opens the full sheet for a new entry on
+// any day of the window, at any time, with a note. An archived tracker shows the same, says it is
+// archived, offers to reactivate it and takes no new entry (the server refuses one).
 export default function TrackerDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -42,7 +43,7 @@ export default function TrackerDetail() {
     <div className="mx-auto flex w-full max-w-md flex-col gap-4 pb-6 font-sans text-foreground">
       {tracker
         ? <Detail key={tracker.id} tracker={tracker} timezone={profile?.timezone} onBack={goBack} />
-        : <Missing onBack={goBack} />}
+        : status === 'error' ? <LoadError onBack={goBack} /> : <Missing onBack={goBack} />}
     </div>
   )
 }
@@ -55,10 +56,25 @@ function BackButton({ onBack }: { onBack: () => void }) {
   )
 }
 
+// The first pull failed with nothing saved: the tracker may well exist, so a retry, not "missing".
+function LoadError({ onBack }: { onBack: () => void }) {
+  return (
+    <>
+      <div className="-ms-2 flex h-11 items-center"><BackButton onBack={onBack} /></div>
+      <div role="alert" className="flex flex-col items-start gap-3 rounded-2xl border border-border bg-card p-5">
+        <p className="text-[15px] font-medium leading-snug">{t('Could not load your trackers.')}</p>
+        <Button variant="outline" className="h-11 gap-2 rounded-xl" onClick={() => void useTrackers.getState().refresh()}>
+          <RefreshCw aria-hidden className="size-4" />{t('Try again')}
+        </Button>
+      </div>
+    </>
+  )
+}
+
 function Missing({ onBack }: { onBack: () => void }) {
   return (
     <>
-      <div className="-ml-2 flex h-11 items-center"><BackButton onBack={onBack} /></div>
+      <div className="-ms-2 flex h-11 items-center"><BackButton onBack={onBack} /></div>
       <section className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-border px-6 py-10 text-center">
         <p className="text-[15px] font-medium">{t('This tracker no longer exists')}</p>
         <Link to="/trackers" className="inline-flex h-11 items-center rounded-xl px-4 text-sm font-medium text-foreground underline underline-offset-4 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
@@ -121,10 +137,10 @@ function Detail({ tracker, timezone, onBack }: { tracker: Tracker; timezone: str
   return (
     <>
       <header className="flex flex-col gap-1">
-        <div className="-ml-2 flex h-11 items-center justify-between">
+        <div className="-ms-2 flex h-11 items-center justify-between">
           <BackButton onBack={onBack} />
           {!archived && (
-            <div className="-mr-2 flex items-center">
+            <div className="-me-2 flex items-center">
               <Button variant="ghost" size="icon" className="size-11 rounded-full" aria-label={t('Edit tracker')} onClick={() => setSheet(true)}>
                 <Pencil aria-hidden className="size-5" />
               </Button>
@@ -186,6 +202,12 @@ function Detail({ tracker, timezone, onBack }: { tracker: Tracker; timezone: str
         <p className="text-sm text-muted-foreground">{last}</p>
       </section>
 
+      {!archived && (
+        <Button variant="outline" className="h-12 gap-2 rounded-xl text-[15px]" onClick={() => setEntrySheet({ mode: 'full', open: true })}>
+          <CalendarPlus aria-hidden className="size-4" />{t('Add entry')}
+        </Button>
+      )}
+
       {byDay.length > 0 && (
         <section aria-labelledby="tracker-entries-title" className="flex flex-col gap-3">
           <h2 id="tracker-entries-title" className="text-[15px] font-semibold">{t('Entries')}</h2>
@@ -196,7 +218,7 @@ function Detail({ tracker, timezone, onBack }: { tracker: Tracker; timezone: str
                 {list.map(e => (
                   <li key={e.id} className="border-b border-border last:border-b-0">
                     <button type="button" onClick={() => setEntrySheet({ entry: e, mode: 'full', open: true })}
-                      className="flex min-h-11 w-full items-center gap-3 rounded-xl px-2 py-2 text-left outline-none transition-colors duration-150 hover:bg-secondary/60 focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-reduce:transition-none">
+                      className="flex min-h-11 w-full items-center gap-3 rounded-xl px-2 py-2 text-start outline-none transition-colors duration-150 hover:bg-secondary/60 focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-reduce:transition-none">
                       <span className="w-12 shrink-0 font-mono text-sm tabular-nums text-muted-foreground">{e.at}</span>
                       <span className="min-w-0 flex-1">
                         <span className="block font-mono text-[15px] font-medium tabular-nums">{entryValue(tracker, e)}</span>

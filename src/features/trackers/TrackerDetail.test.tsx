@@ -148,6 +148,30 @@ describe('TrackerDetail', () => {
     expect(screen.getByRole('dialog', { name: 'tracker-sheet' }).getAttribute('data-tracker')).toBe(T1)
   })
 
+  it('opens the full sheet for a new entry, to pick the day, the time and a note', () => {
+    open(T1)
+    fireEvent.click(screen.getByRole('button', { name: 'Novo registro' }))
+    const sheet = screen.getByRole('dialog', { name: 'entry-sheet' })
+    expect(sheet.getAttribute('data-entry')).toBe('new')
+    expect(sheet.getAttribute('data-mode')).toBe('full')
+  })
+
+  it('shows the load error with a retry when the first pull failed, never the missing tracker', () => {
+    const refresh = vi.fn(async () => {})
+    store({ status: 'error', trackers: [], entries: [], refresh })
+    open(T1)
+    const alert = screen.getByRole('alert')
+    expect(within(alert).getByText('Não foi possível carregar seus trackers.')).toBeTruthy()
+    expect(screen.queryByText('Esse tracker não existe mais')).toBeNull()
+    fireEvent.click(within(alert).getByRole('button', { name: 'Tentar novamente' }))
+    expect(refresh).toHaveBeenCalled()
+  })
+
+  it('uses logical sides only, so the layout mirrors in a right-to-left language', () => {
+    const { container } = open(T1)
+    expect(container.innerHTML).not.toMatch(/(^|[\s"])-?m[lr]-|text-left/)
+  })
+
   it('shows the chart as a table: day, summary and how many entries', async () => {
     open(T1)
     fireEvent.click(await screen.findByRole('button', { name: 'Ver como tabela' }))
@@ -194,6 +218,7 @@ describe('TrackerDetail', () => {
     open(T1)
     expect(screen.getByText('Arquivado. Você ainda pode editar e apagar os registros.')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Registrar em Água' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Novo registro' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Editar tracker' })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Reativar' }))
     expect(screen.getByRole('dialog', { name: 'tracker-sheet' }).getAttribute('data-tracker')).toBe(T1)
@@ -215,5 +240,7 @@ describe('TrackerDetail', () => {
 
   it('waits for the detail chunk on the detail skeleton (App.jsx)', () => {
     expect(appSource).toMatch(/path="\/trackers\/:id" element=\{<Suspense fallback=\{<TrackerDetailSkeleton \/>\}><TrackerDetail \/><\/Suspense>\}/)
+    // The lazy const comes after every import.
+    expect(appSource.lastIndexOf('\nimport ')).toBeLessThan(appSource.indexOf('const TrackerDetail = lazy('))
   })
 })
