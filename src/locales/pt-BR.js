@@ -2080,6 +2080,12 @@ export const PT_BR_OVERRIDES = {
   "No habit checked on this day.": "Nenhum hábito marcado neste dia.",
   "Habits were off this month, so no day counts here.": "Os Hábitos estavam desligados neste mês, então nenhum dia conta aqui.",
   "The habit was saved, but Habits is still off. Tap again to turn it on.": "O hábito foi salvo, mas os Hábitos ainda estão desligados. Toque de novo para ligar.",
+  // --- trackers: values and when (phase 4b) ---
+  "today": "hoje",
+  "yesterday": "ontem",
+  "{0} days ago": "há {0} dias",
+  "{0} h": "{0} h",
+  "{0} h {1} min": "{0} h {1} min",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

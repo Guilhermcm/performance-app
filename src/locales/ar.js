@@ -2742,4 +2742,10 @@ export default {
   "No habit checked on this day.": "لم تُعلَّم أي عادة في هذا اليوم.",
   "Habits were off this month, so no day counts here.": "كانت العادات متوقفة هذا الشهر، لذا لا يُحتسب أي يوم هنا.",
   "The habit was saved, but Habits is still off. Tap again to turn it on.": "تم حفظ العادة، لكن العادات ما زالت متوقفة. اضغط مرة أخرى لتشغيلها.",
+  // --- trackers: values and when (phase 4b) ---
+  "today": "اليوم",
+  "yesterday": "أمس",
+  "{0} days ago": "منذ {0} يوم",
+  "{0} h": "{0} س",
+  "{0} h {1} min": "{0} س {1} دقيقة",
 }

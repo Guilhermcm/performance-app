@@ -2689,4 +2689,10 @@ export default {
   "No habit checked on this day.": "Nessuna abitudine spuntata questo giorno.",
   "Habits were off this month, so no day counts here.": "Abitudini era disattivato questo mese, quindi qui non conta nessun giorno.",
   "The habit was saved, but Habits is still off. Tap again to turn it on.": "L'abitudine è stata salvata, ma Abitudini è ancora disattivato. Tocca di nuovo per attivarlo.",
+  // --- trackers: values and when (phase 4b) ---
+  "today": "oggi",
+  "yesterday": "ieri",
+  "{0} days ago": "{0} giorni fa",
+  "{0} h": "{0} h",
+  "{0} h {1} min": "{0} h {1} min",
 }

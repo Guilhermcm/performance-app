@@ -2689,4 +2689,10 @@ export default {
   "No habit checked on this day.": "Aucune habitude cochée ce jour-là.",
   "Habits were off this month, so no day counts here.": "Habitudes était désactivé ce mois-ci, donc aucun jour ne compte ici.",
   "The habit was saved, but Habits is still off. Tap again to turn it on.": "L'habitude est enregistrée, mais Habitudes reste désactivé. Touchez encore pour l'activer.",
+  // --- trackers: values and when (phase 4b) ---
+  "today": "aujourd'hui",
+  "yesterday": "hier",
+  "{0} days ago": "il y a {0} jours",
+  "{0} h": "{0} h",
+  "{0} h {1} min": "{0} h {1} min",
 }
