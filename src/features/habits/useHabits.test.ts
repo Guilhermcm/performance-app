@@ -151,6 +151,61 @@ describe('useHabits', () => {
     expect(s.habits.map(h => h.id)).toEqual([H1, H2, walk.id])
   })
 
+  it('keeps a check made while a pull was on its way, and pulls again', async () => {
+    await withHabits()
+    let release!: (v: HabitHistory) => void
+    api.fetchHistory.mockReturnValueOnce(new Promise(r => { release = r }))
+    const first = useHabits.getState().refresh()
+    await settle()
+    expect(api.fetchHistory).toHaveBeenCalledTimes(2)
+    // The tap lands after the reads went out; its insert goes and leaves the queue before they answer.
+    useHabits.getState().toggleCheck(H1, TODAY)
+    await settle()
+    expect(api.insertCheck).toHaveBeenCalledWith(H1, TODAY)
+    expect(habitsOutbox.pending(ME)).toEqual([])
+    api.fetchChecks.mockResolvedValue([checkOf(H1, TODAY)])
+    release(history())
+    await first
+    expect(useHabits.getState().checks).toEqual([checkOf(H1, TODAY)])
+    // The second pull, started as the first one ended, reads the server with the check.
+    await useHabits.getState().refresh()
+    expect(api.fetchHistory).toHaveBeenCalledTimes(3)
+    expect(useHabits.getState().checks).toEqual([checkOf(H1, TODAY)])
+  })
+
+  it('keeps a habit created while a pull was on its way', async () => {
+    await withHabits()
+    let release!: (v: unknown[]) => void
+    api.fetchHabits.mockReturnValueOnce(new Promise(r => { release = r }))
+    const first = useHabits.getState().refresh()
+    await settle()
+    const walk = useHabits.getState().saveHabit({ name: 'Walk', icon: 'footprints', per_week: 2 })
+    await settle()
+    expect(habitsOutbox.pending(ME)).toEqual([])
+    release([habitOf()])
+    await first
+    expect(useHabits.getState().active().map(h => h.id)).toEqual([H1, walk.id])
+  })
+
+  it('lays a write that left the queue during the reads over their answer', async () => {
+    await withHabits()
+    // Queued while offline; the reads go out, and the minute tick sends it before they answer.
+    api.insertCheck.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    useHabits.getState().toggleCheck(H1, TODAY)
+    await settle()
+    expect(habitsOutbox.pending(ME)).toHaveLength(1)
+    api.insertCheck.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    let release!: (v: HabitHistory) => void
+    api.fetchHistory.mockReturnValueOnce(new Promise(r => { release = r }))
+    const pull = useHabits.getState().refresh()
+    await settle()
+    await useHabits.getState().flushPending()
+    expect(habitsOutbox.pending(ME)).toEqual([])
+    release(history())
+    await pull
+    expect(useHabits.getState().checks).toEqual([checkOf(H1, TODAY)])
+  })
+
   it('raises the dropped notice once for closed days', async () => {
     await withHabits()
     // Back after three days: the check of the day before yesterday is still in the queue.
@@ -238,6 +293,16 @@ describe('useHabits', () => {
     // Nothing above the first one.
     useHabits.getState().move(H2, -1)
     expect(habitsOutbox.pending(ME)).toHaveLength(2)
+  })
+
+  it('renumbers equal sorts before a move and writes only what changed', async () => {
+    const H3 = '00000000-0000-0000-0000-0000000000c3'
+    api.fetchHabits.mockResolvedValue([habitOf({ sort: 0 }), habitOf({ id: H2, sort: 0 }), habitOf({ id: H3, sort: 0 })])
+    await bound()
+    useHabits.getState().move(H3, -1)
+    expect(useHabits.getState().active().map(h => [h.id, h.sort])).toEqual([[H1, 0], [H3, 1], [H2, 2]])
+    // H1 already had 0: only the two others go.
+    expect(habitsOutbox.pending(ME).map(o => (o.op === 'habit' ? [o.row.id, o.row.sort] : null))).toEqual([[H3, 1], [H2, 2]])
   })
 
   it('adds up the week and the XP it is on track for', async () => {

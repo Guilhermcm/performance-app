@@ -55,11 +55,12 @@ const writeHistory = (c: HistoryCache) => {
 
 const sortTargets = (ts: SleepTarget[]) => [...ts].sort((a, b) => (a.valid_from < b.valid_from ? -1 : 1))
 
-// What the server sent for today and yesterday, with the writes it has not heard about yet laid on
-// top. An op for an older night is left out: the server is about to refuse it.
-function applyPending(userId: string, logs: Record<string, SleepLog>, from: string): Record<string, SleepLog> {
+// What the server sent for today and yesterday, with the writes it may not have heard about yet laid
+// on top, oldest first (laying one it already has changes nothing). An op for an older night is left
+// out: the server is about to refuse it.
+function applyPending(ops: SleepOp[], logs: Record<string, SleepLog>, from: string): Record<string, SleepLog> {
   const out = { ...logs }
-  for (const op of sleepOutbox.pending(userId)) {
+  for (const op of ops) {
     if (op.night < from) continue
     delete out[op.night]
     if (op.op === 'upsert' && op.row) out[op.night] = op.row
@@ -109,6 +110,10 @@ const empty = (): Data => ({ logs: {}, targets: [], closed: [], periods: [], wee
 // Bumped by reset() and bind(): an answer from before a sign-out must not land in the next account's store.
 let generation = 0
 let refreshing: Promise<void> | null = null
+// Bumped by every local change. A pull that started before one read the server without it (its op
+// may even have gone and left the queue meanwhile), so its answer is dropped and the pull runs again.
+let writes = 0
+let pullAgain = false
 
 const todayNow = () => todayIn(useProfile.getState().profile?.timezone)
 
@@ -148,6 +153,7 @@ export const useSleep = create<SleepStore>((set, get) => {
       const saved = readSaved(userId)
       generation++
       refreshing = null
+      pullAgain = false
       set({
         userId, droppedNotice: false,
         status: saved ? 'ready' : 'loading', stale: !!saved,
@@ -162,10 +168,13 @@ export const useSleep = create<SleepStore>((set, get) => {
       const userId = get().userId
       if (!userId) return Promise.resolve()
       const gen = generation
+      const seen = writes
       const job = (async () => {
         // A queue that cannot go now must not stop the pull; it is tried again on the next refresh.
         try { await flush() } catch { /* kept for the next refresh */ }
         if (gen !== generation) return
+        // What is still queued now may go out while the reads are on their way, and leave the queue.
+        const queued = sleepOutbox.pending(userId)
         const today = todayNow()
         const yesterday = shiftDay(today, -1)
         const before = new Set(get().closed.map(n => n.night))
@@ -174,9 +183,10 @@ export const useSleep = create<SleepStore>((set, get) => {
             api.fetchLogs(yesterday, today), api.fetchTargets(), api.fetchNights(shiftDay(today, -(CLOSED_DAYS - 1)), today)
           ])
           if (gen !== generation) return
+          if (writes !== seen) { pullAgain = true; return }
           const byNight = Object.fromEntries(logs.map(l => [l.night, l]))
           set({
-            logs: applyPending(userId, byNight, yesterday), targets: sortTargets(targets),
+            logs: applyPending([...queued, ...sleepOutbox.pending(userId)], byNight, yesterday), targets: sortTargets(targets),
             closed: history.nights, periods: history.periods, weeks: history.weeks, status: 'ready', stale: false
           })
           persist()
@@ -186,7 +196,11 @@ export const useSleep = create<SleepStore>((set, get) => {
           if (gen !== generation) return
           set(s => ({ status: s.status === 'ready' ? 'ready' : 'error', stale: s.status === 'ready' }))
         }
-      })().finally(() => { if (gen === generation) refreshing = null })
+      })().finally(() => {
+        if (gen !== generation) return
+        refreshing = null
+        if (pullAgain) { pullAgain = false; void get().refresh() }
+      })
       refreshing = job
       return job
     },
@@ -199,6 +213,7 @@ export const useSleep = create<SleepStore>((set, get) => {
     reset() {
       generation++
       refreshing = null
+      pullAgain = false
       drop()
       set({ userId: null, status: 'idle', stale: false, ...empty(), droppedNotice: false })
     },
@@ -207,6 +222,7 @@ export const useSleep = create<SleepStore>((set, get) => {
 
     saveNight(input) {
       const log: SleepLog = { ...input, duration_min: durationMin(input.bed_time, input.wake_time), updated_at: new Date().toISOString() }
+      writes++
       set(s => ({ logs: { ...s.logs, [log.night]: log } }))
       persist()
       queue({ op: 'upsert', night: log.night, row: log })
@@ -214,6 +230,7 @@ export const useSleep = create<SleepStore>((set, get) => {
     },
 
     removeNight(night) {
+      writes++
       set(s => {
         const logs = { ...s.logs }
         delete logs[night]
@@ -226,6 +243,7 @@ export const useSleep = create<SleepStore>((set, get) => {
     async setTarget(t, validFrom) {
       const target: SleepTarget = { ...t, valid_from: validFrom }
       await api.insertTarget(target)
+      writes++
       set(s => ({ targets: sortTargets([...s.targets.filter(x => x.valid_from !== validFrom), target]) }))
       persist()
     },

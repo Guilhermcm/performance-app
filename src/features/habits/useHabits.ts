@@ -95,13 +95,13 @@ function retarget(prev: Habit | undefined, next: Habit, targets: Targets, checks
   }
 }
 
-// What the server sent, with the writes it has not heard about yet laid on top. A check op for a day
-// before yesterday is left out: the server is about to refuse it.
-function applyPending(userId: string, d: Pick<Data, 'habits' | 'checks' | 'targets'>, today: string): Pick<Data, 'habits' | 'checks' | 'targets'> {
+// What the server sent, with the writes it may not have heard about yet laid on top, oldest first
+// (laying one it already has changes nothing). A check op for a day before yesterday is left out:
+// the server is about to refuse it.
+function applyPending(ops: HabitOp[], d: Pick<Data, 'habits' | 'checks' | 'targets'>, today: string): Pick<Data, 'habits' | 'checks' | 'targets'> {
   const yesterday = shiftDay(today, -1)
   const habits = new Map(d.habits.map(h => [h.id, h]))
   const checks = new Map(d.checks.map(c => [keyOf(c.habit_id, c.day), c]))
-  const ops = habitsOutbox.pending(userId)
   for (const op of ops) {
     if (op.op === 'habit' || op.day < yesterday) continue
     const k = keyOf(op.habit_id, op.day)
@@ -163,6 +163,10 @@ const tooManyHabits = () => classify({ code: 'P0001', message: 'too_many_habits'
 // Bumped by reset() and bind(): an answer from before a sign-out must not land in the next account's store.
 let generation = 0
 let refreshing: Promise<void> | null = null
+// Bumped by every local change. A pull that started before one read the server without it (its op
+// may even have gone and left the queue meanwhile), so its answer is dropped and the pull runs again.
+let writes = 0
+let pullAgain = false
 
 export const useHabits = create<HabitsStore>((set, get) => {
   const persist = () => {
@@ -198,6 +202,7 @@ export const useHabits = create<HabitsStore>((set, get) => {
     const { habits, checks } = get()
     const targets = weekTargets(today)
     retarget(habits.find(h => h.id === next.id), next, targets, checks, today)
+    writes++
     set({ habits: [...habits.filter(h => h.id !== next.id), next].sort(byOrder), targets, targetsWeek: weekStartOf(today) })
     persist()
     queue({ op: 'habit', row: next })
@@ -217,6 +222,7 @@ export const useHabits = create<HabitsStore>((set, get) => {
       const saved = readSaved(userId)
       generation++
       refreshing = null
+      pullAgain = false
       set({
         userId, droppedNotice: false,
         status: saved ? 'ready' : 'loading', stale: !!saved,
@@ -231,10 +237,13 @@ export const useHabits = create<HabitsStore>((set, get) => {
       const userId = get().userId
       if (!userId) return Promise.resolve()
       const gen = generation
+      const seen = writes
       const job = (async () => {
         // A queue that cannot go now must not stop the pull; it is tried again on the next refresh.
         try { await flush() } catch { /* kept for the next refresh */ }
         if (gen !== generation) return
+        // What is still queued now may go out while the reads are on their way, and leave the queue.
+        const queued = habitsOutbox.pending(userId)
         const today = todayNow()
         const yesterday = shiftDay(today, -1)
         const week = weekStartOf(today)
@@ -245,8 +254,10 @@ export const useHabits = create<HabitsStore>((set, get) => {
             api.fetchHistory(shiftDay(today, -(RECENT_DAYS - 1)), today)
           ])
           if (gen !== generation) return
+          if (writes !== seen) { pullAgain = true; return }
           const server = { habits, checks, targets: Object.fromEntries(targets.map(x => [x.habit_id, x.target])) }
-          set({ ...applyPending(userId, server, today), targetsWeek: week, recent, status: 'ready', stale: false })
+          const ops = [...queued, ...habitsOutbox.pending(userId)]
+          set({ ...applyPending(ops, server, today), targetsWeek: week, recent, status: 'ready', stale: false })
           persist()
           // Reading the history closes the due days on the server, which can pay XP.
           if (recent.days.some(d => !before.has(d.day))) void useProgress.getState().refresh()
@@ -254,7 +265,11 @@ export const useHabits = create<HabitsStore>((set, get) => {
           if (gen !== generation) return
           set(s => ({ status: s.status === 'ready' ? 'ready' : 'error', stale: s.status === 'ready' }))
         }
-      })().finally(() => { if (gen === generation) refreshing = null })
+      })().finally(() => {
+        if (gen !== generation) return
+        refreshing = null
+        if (pullAgain) { pullAgain = false; void get().refresh() }
+      })
       refreshing = job
       return job
     },
@@ -267,6 +282,7 @@ export const useHabits = create<HabitsStore>((set, get) => {
     reset() {
       generation++
       refreshing = null
+      pullAgain = false
       drop()
       set({ userId: null, status: 'idle', stale: false, ...empty(), droppedNotice: false })
     },
@@ -309,12 +325,12 @@ export const useHabits = create<HabitsStore>((set, get) => {
       const i = list.findIndex(h => h.id === id)
       const j = i + dir
       if (i < 0 || j < 0 || j >= list.length) return
-      const a = list[i], b = list[j]
-      // Equal sorts (from another version) are ordered by id; stepping past the neighbour still moves it.
-      const [sa, sb] = a.sort !== b.sort ? [b.sort, a.sort] : [b.sort + dir, b.sort]
+      // The new order numbered 0..n-1, so equal or spread sorts cannot leave a tie; only the habits
+      // whose sort changed are written.
+      const order = [...list]
+      ;[order[i], order[j]] = [order[j], order[i]]
       const now = new Date().toISOString()
-      write({ ...a, sort: sa, updated_at: now })
-      if (sb !== b.sort) write({ ...b, sort: sb, updated_at: now })
+      order.forEach((h, sort) => { if (h.sort !== sort) write({ ...h, sort, updated_at: now }) })
     },
 
     toggleCheck(habitId, day) {
@@ -322,6 +338,7 @@ export const useHabits = create<HabitsStore>((set, get) => {
       if (day !== today && day !== shiftDay(today, -1)) return
       const { checks } = get()
       const had = checks.some(c => c.habit_id === habitId && c.day === day)
+      writes++
       set({
         checks: had
           ? checks.filter(c => !(c.habit_id === habitId && c.day === day))
