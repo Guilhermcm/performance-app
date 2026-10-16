@@ -10,6 +10,7 @@ import { shortDate } from '../sleep/chart-data'
 import { shiftDay } from '../nutrition/days'
 import { iconFor } from '../habits/icons'
 import { useTrackers } from './useTrackers'
+import { useDroppedNotice } from './useDroppedNotice'
 import { daySummaries, labelCounts, movingAverage, periodStats } from './stats'
 import { formatValue, whenText } from './format'
 import { PERIODS, periodDays, type Period } from './chart-data'
@@ -32,6 +33,7 @@ export default function TrackerDetail() {
   const profile = useProfile(s => s.profile)
   const status = useTrackers(s => s.status)
   const tracker = useTrackers(s => s.trackers.find(x => x.id === id))
+  useDroppedNotice()
 
   // Opened from a link or a reload there is nothing to go back to: the list instead.
   const goBack = () => (location.key === 'default' ? navigate('/trackers') : navigate(-1))
@@ -162,7 +164,7 @@ function Detail({ tracker, timezone, onBack }: { tracker: Tracker; timezone: str
 
       {line ? (
         <Suspense fallback={<TrackerChartSkeleton kind="line" days={period} empty={line.summaries.every(v => v == null)} />}>
-          <TrackerLineChart tracker={tracker} days={days} summaries={line.summaries} trend={line.trend} counts={line.counts} />
+          <TrackerLineChart tracker={tracker} days={days} summaries={line.summaries} trend={line.trend} counts={line.counts} stats={stats} />
         </Suspense>
       ) : (
         <Suspense fallback={<TrackerChartSkeleton kind="bars" days={period} options={rows.length} />}>

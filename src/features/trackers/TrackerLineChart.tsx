@@ -9,6 +9,7 @@ import { shortDate } from '../sleep/chart-data'
 import { entriesText, lineDescription, longDate, periodTitle, summaryName, tickText, valueTicks } from './chart-data'
 import { formatValue } from './format'
 import { LINE_CARD_MIN, TRACKER_CHART_CARD, TRACKER_CHART_HEIGHT } from './TrackerChartSkeleton'
+import type { PeriodStats } from './stats'
 import type { Tracker } from './types'
 
 // The day summary in the sleep chart's validated colour, the 7-day average in its own step
@@ -19,13 +20,18 @@ const CONFIG = {
   trend: { color: 'var(--chart-trend)' },
 } satisfies ChartConfig
 
-const DOT_R = 4
+// r 5 inside a 2 px ring in the card colour: a dot of 8 px of colour.
+const DOT_R = 5
 // Axis text in the theme's text colour (chart.tsx's selector misses Recharts 3.10's tick labels).
 const AXIS_TEXT = { fill: 'var(--muted-foreground)' }
 
 export type LinePoint = { day: string; summary: number | null; trend: number | null; count: number }
 
-type Props = { tracker: Tracker; days: string[]; summaries: (number | null)[]; trend: (number | null)[]; counts: number[] }
+type Props = {
+  tracker: Tracker; days: string[]; summaries: (number | null)[]; trend: (number | null)[]; counts: number[]
+  // The period's stats, for the description (the detail shows the same numbers).
+  stats: Pick<PeriodStats, 'average' | 'daysWithEntries'>
+}
 
 type DotProps = { cx?: number; cy?: number; payload?: LinePoint }
 
@@ -68,7 +74,7 @@ export function LineTooltip({ tracker, active, payload }: TooltipProps) {
 // Spec 8.5 for number and duration trackers: the day summary of each day of the period (dots, and
 // a segment only between two days in a row with entries) and the 7-day average as a second series.
 // One axis, in the tracker's unit.
-export default function TrackerLineChart({ tracker, days, summaries, trend, counts }: Props) {
+export default function TrackerLineChart({ tracker, days, summaries, trend, counts, stats }: Props) {
   const reduce = useReducedMotion() ?? false
   const [table, setTable] = useState(false)
   const id = useId()
@@ -104,7 +110,7 @@ export default function TrackerLineChart({ tracker, days, summaries, trend, coun
     <section data-slot="tracker-line-chart" aria-labelledby={id}
       className={cn(TRACKER_CHART_CARD, !empty && LINE_CARD_MIN, 'animate-in fade-in-0 duration-200 motion-reduce:animate-none')}>
       <h2 id={id} className="flex h-7 items-center text-[15px] font-semibold">{periodTitle(days.length)}</h2>
-      <p className="min-h-8 text-xs leading-4 text-muted-foreground">{lineDescription(tracker, summaries)}</p>
+      <p className="min-h-8 text-xs leading-4 text-muted-foreground">{lineDescription(tracker, days.length, stats)}</p>
 
       {empty ? null : table ? <LineTable tracker={tracker} data={data} /> : (
         <>

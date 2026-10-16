@@ -3,6 +3,7 @@
 import { dateLocale, t, tn } from '../../lib/i18n.js'
 import { shiftDay } from '../nutrition/days'
 import { formatDuration, formatValue } from './format'
+import type { PeriodStats } from './stats'
 import type { Tracker, TrackerOption } from './types'
 
 export const PERIODS = [30, 90] as const
@@ -22,13 +23,11 @@ export const periodTitle = (days: number): string => tn(days, 'Last {0} days', d
 // The name of the first series: the day's total or the day's average, by the tracker's aggregate.
 export const summaryName = (tracker: Tracker): string => (tracker.aggregate === 'avg' ? t('Day average') : t('Day total'))
 
-// "Average of 1.9 L over the last 30 days, 24 days with entries": the average of the day summaries
-// over the days with an entry, as the stats count it. One summary per day of the period.
-export function lineDescription(tracker: Tracker, summaries: (number | null)[]): string {
-  const logged = summaries.filter((v): v is number => v != null)
-  if (!logged.length) return emptyPeriodText(summaries.length)
-  const avg = logged.reduce((a, b) => a + b, 0) / logged.length
-  return t('Average of {0} over the last {1} days, {2}', formatValue(tracker, avg, dateLocale()), summaries.length, daysWithEntriesText(logged.length))
+// "Average of 1.9 L over the last 30 days, 24 days with entries": the period's stats (periodStats),
+// the same numbers the detail shows under the chart.
+export function lineDescription(tracker: Tracker, days: number, stats: Pick<PeriodStats, 'average' | 'daysWithEntries'>): string {
+  if (stats.average == null) return emptyPeriodText(days)
+  return t('Average of {0} over the last {1} days, {2}', formatValue(tracker, stats.average, dateLocale()), days, daysWithEntriesText(stats.daysWithEntries))
 }
 
 // The option picked most in the period; on a tie the first in the options order. Null with none.

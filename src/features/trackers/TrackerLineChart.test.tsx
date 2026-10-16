@@ -30,7 +30,10 @@ function series(values: Record<number, number>, counts: Record<number, number> =
   const summaries = DAYS.map((_, i) => values[i] ?? null)
   const map = new Map<string, { value: number }>()
   DAYS.forEach((d, i) => { if (summaries[i] != null) map.set(d, { value: summaries[i] as number }) })
-  return { days: DAYS, summaries, trend: movingAverage(map, DAYS), counts: DAYS.map((_, i) => (values[i] != null ? counts[i] ?? 1 : 0)) }
+  const logged = summaries.filter((v): v is number => v != null)
+  // What periodStats gives the detail for the same days.
+  const stats = { average: logged.length ? logged.reduce((a, b) => a + b, 0) / logged.length : null, daysWithEntries: logged.length }
+  return { days: DAYS, summaries, trend: movingAverage(map, DAYS), counts: DAYS.map((_, i) => (values[i] != null ? counts[i] ?? 1 : 0)), stats }
 }
 const GAP = series({ 0: 2, 1: 1.5, 3: 2.5 }, { 1: 2 })
 
@@ -57,7 +60,8 @@ describe('TrackerLineChart', () => {
     // A dot of at least 8 px on each day with an entry, and none on an empty day.
     const dots = container.querySelectorAll('[data-slot="summary-dot"]')
     expect([...dots].map(x => x.getAttribute('data-day'))).toEqual([DAYS[0], DAYS[1], DAYS[3]])
-    for (const dot of dots) expect(Number(dot.getAttribute('r'))).toBeGreaterThanOrEqual(4)
+    // r 5 with a 2 px ring in the card colour: 8 px of colour.
+    for (const dot of dots) expect(Number(dot.getAttribute('r'))).toBe(5)
   })
 
   it('draws the 7-day average as a second series, with a legend and a label on the line', () => {
@@ -70,6 +74,21 @@ describe('TrackerLineChart', () => {
     // The two series wear the sleep chart colour and the trend step, never in the text.
     expect(container.querySelector('.tracker-summary path.recharts-curve')!.getAttribute('stroke')).toBe('var(--color-summary)')
     expect(container.querySelector('.tracker-trend path.recharts-curve')!.getAttribute('stroke')).toBe('var(--color-trend)')
+  })
+
+  it('names the series of an avg tracker as the day average, with its unit', () => {
+    const weight = trackerOf({ unit: 'kg', aggregate: 'avg' })
+    render(<TrackerLineChart tracker={weight} {...series({ 0: 72.4, 1: 72.6 })} />)
+    expect(within(screen.getByRole('list', { name: 'Legend' })).getByText('Day average (kg)')).toBeTruthy()
+    expect(screen.getByText('Average of 72.5 kg over the last 30 days, 2 days with entries')).toBeTruthy()
+  })
+
+  it('writes a duration over 24 h in hours in the description and the tooltip', () => {
+    render(<TrackerLineChart tracker={READING} {...series({ 0: 1570, 1: 1570 })} />)
+    expect(screen.getByText('Average of 26 h 10 min over the last 30 days, 2 days with entries')).toBeTruthy()
+    cleanup()
+    const tip = render(<LineTooltip tracker={READING} active payload={[{ payload: { day: DAYS[1], summary: 1570, trend: 1570, count: 2 } }] as never} />)
+    expect(tip.getAllByText('26 h 10 min')).toHaveLength(2)
   })
 
   it('draws a lone day as a dot without a line', () => {

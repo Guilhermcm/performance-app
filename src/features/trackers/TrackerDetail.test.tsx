@@ -11,6 +11,8 @@ vi.mock('recharts', async orig => ({
     cloneElement(children, { width: 340, height: 208 })
 }))
 vi.mock('motion/react', async orig => ({ ...(await orig<typeof import('motion/react')>()), useReducedMotion: () => true }))
+const h = vi.hoisted(() => ({ toast: vi.fn() }))
+vi.mock('sonner', () => ({ toast: h.toast }))
 // The sheets have their own tests; here only what the screen hands them matters.
 vi.mock('./TrackerSheet', () => ({
   default: ({ open, tracker }: { open: boolean; tracker?: { id: string } }) =>
@@ -76,6 +78,7 @@ beforeEach(async () => {
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(new Date('2026-10-14T12:00:00Z'))
   localStorage.clear()
+  h.toast.mockReset()
   await setLang('pt-BR')
   useProfile.setState({ status: 'ready', profile: { id: ME, timezone: 'America/Sao_Paulo' } as unknown as Profile })
   store()
@@ -200,6 +203,14 @@ describe('TrackerDetail', () => {
     const sheet = screen.getByRole('dialog', { name: 'entry-sheet' })
     expect(sheet.getAttribute('data-entry')).toBe('w0')
     expect(sheet.getAttribute('data-mode')).toBe('full')
+  })
+
+  it('says once that the queue dropped entries, in the language of the moment, then forgets it', async () => {
+    store({ droppedNotice: 'tracker_archived' })
+    open(T1)
+    expect(h.toast).toHaveBeenCalledTimes(1)
+    expect(h.toast).toHaveBeenCalledWith('Alguns registros de trackers arquivados não foram salvos.')
+    expect(useTrackers.getState().droppedNotice).toBeNull()
   })
 
   it('waits for the detail chunk on the detail skeleton (App.jsx)', () => {

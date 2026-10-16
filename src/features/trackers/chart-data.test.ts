@@ -24,21 +24,30 @@ describe('periodDays', () => {
 })
 
 describe('lineDescription', () => {
-  it('gives the average of the days with an entry and how many there were', async () => {
-    const summaries = [2, 1.5, null, 2.5, ...Array(26).fill(null)]
-    expect(lineDescription(WATER, summaries)).toBe('Average of 2.0 L over the last 30 days, 3 days with entries')
+  it('gives the average of the period stats and how many days had an entry', async () => {
+    const stats = { average: 2, daysWithEntries: 3 }
+    expect(lineDescription(WATER, 30, stats)).toBe('Average of 2.0 L over the last 30 days, 3 days with entries')
     await setLang('pt-BR')
-    expect(lineDescription(WATER, summaries)).toBe('Média de 2,0 L nos últimos 30 dias, 3 dias com registro')
+    expect(lineDescription(WATER, 30, stats)).toBe('Média de 2,0 L nos últimos 30 dias, 3 dias com registro')
   })
 
   it('says one day, and the duration in hours and minutes', () => {
-    expect(lineDescription(READING, [null, 85, ...Array(88).fill(null)])).toBe('Average of 1 h 25 min over the last 90 days, 1 day with entries')
+    expect(lineDescription(READING, 90, { average: 85, daysWithEntries: 1 })).toBe('Average of 1 h 25 min over the last 90 days, 1 day with entries')
+  })
+
+  it('keeps hours past a day for a duration over 24 h', () => {
+    expect(lineDescription(READING, 30, { average: 1570, daysWithEntries: 2 })).toBe('Average of 26 h 10 min over the last 30 days, 2 days with entries')
+  })
+
+  it('names the average of an avg tracker the same way', () => {
+    const weight = trackerOf({ unit: 'kg', aggregate: 'avg' })
+    expect(lineDescription(weight, 30, { average: 72.44, daysWithEntries: 5 })).toBe('Average of 72.4 kg over the last 30 days, 5 days with entries')
   })
 
   it('says there is nothing in the period', async () => {
-    expect(lineDescription(WATER, Array(30).fill(null))).toBe('No entries in the last 30 days')
+    expect(lineDescription(WATER, 30, { average: null, daysWithEntries: 0 })).toBe('No entries in the last 30 days')
     await setLang('pt-BR')
-    expect(lineDescription(WATER, Array(90).fill(null))).toBe('Nenhum registro nos últimos 90 dias')
+    expect(lineDescription(WATER, 90, { average: null, daysWithEntries: 0 })).toBe('Nenhum registro nos últimos 90 dias')
   })
 })
 
