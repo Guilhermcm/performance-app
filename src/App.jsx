@@ -45,8 +45,9 @@ import NutritionHistoryScreen from './features/nutrition/HistoryScreen.tsx'
 import SleepScreen from './features/sleep/SleepScreen.tsx'
 import HabitsScreen from './features/habits/HabitsScreen.tsx'
 import TrackersScreen from './features/trackers/TrackersScreen.tsx'
-// The detail loads on demand (its charts are heavy); Task 7 of the plan replaces the placeholder.
+// The detail loads on demand (its charts are heavy), on its own skeleton meanwhile.
 const TrackerDetail = lazy(() => import('./features/trackers/TrackerDetail.tsx'))
+import { TrackerDetailSkeleton } from './features/trackers/TrackerChartSkeleton.tsx'
 import SocialScreen from './features/social/SocialScreen.tsx'
 import ChallengeDetail from './features/social/ChallengeDetail.tsx'
 import InviteScreen, { InviteRoute } from './features/social/InviteScreen.tsx'
@@ -262,7 +263,7 @@ function Shell() {
                 <Route path="/sono" element={<SleepScreen />} />
                 <Route path="/habitos" element={<HabitsScreen />} />
                 <Route path="/trackers" element={<TrackersScreen />} />
-                <Route path="/trackers/:id" element={<Suspense fallback={null}><TrackerDetail /></Suspense>} />
+                <Route path="/trackers/:id" element={<Suspense fallback={<TrackerDetailSkeleton />}><TrackerDetail /></Suspense>} />
                 <Route path="/social" element={<Navigate to="/social/feed" replace />} />
                 <Route path="/social/desafios/:id" element={<ChallengeDetail />} />
                 <Route path="/social/:section" element={<SocialScreen />} />

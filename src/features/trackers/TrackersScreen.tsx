@@ -125,7 +125,7 @@ function Trackers({ timezone, failed }: { timezone: string | null | undefined; f
           </h2>
           {showArchived && (
             <ul id="trackers-archived-list" className={cn(CARD, 'px-2 py-1')}>
-              {archived.map(x => <ArchivedRow key={x.id} tracker={x} onEdit={() => setSheet({ tracker: x, open: true })} />)}
+              {archived.map(x => <ArchivedRow key={x.id} tracker={x} onOpen={() => navigate(`/trackers/${x.id}`)} />)}
             </ul>
           )}
         </section>
@@ -192,12 +192,12 @@ function TrackerRow({ tracker, last, today, canMove, onMove, onOpen, onAdd }: {
   )
 }
 
-// An archived tracker: no plus (the server takes no new entries there). The sheet edits it and
-// brings it back.
-function ArchivedRow({ tracker, onEdit }: { tracker: Tracker; onEdit: () => void }) {
+// An archived tracker: no plus (the server takes no new entries there). Its detail keeps the
+// entries editable and offers to reactivate it.
+function ArchivedRow({ tracker, onOpen }: { tracker: Tracker; onOpen: () => void }) {
   return (
     <li className="flex items-center gap-2 border-b border-border px-2 py-2 last:border-b-0">
-      <button type="button" onClick={onEdit} aria-label={t('Edit {0}', tracker.name)} className={cn(ROW_BUTTON, '-ml-1 text-muted-foreground')}>
+      <button type="button" onClick={onOpen} className={cn(ROW_BUTTON, '-ml-1 text-muted-foreground')}>
         <TrackerIcon icon={tracker.icon} muted />
         <span className="block min-w-0 truncate text-[15px]">{tracker.name}</span>
       </button>

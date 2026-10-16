@@ -163,7 +163,7 @@ describe('TrackersScreen', () => {
     expect(screen.getByRole('dialog', { name: 'entry-sheet' })).toBeTruthy()
   })
 
-  it('keeps the archived trackers collapsed with their count, and reactivates through the sheet', () => {
+  it('keeps the archived trackers collapsed with their count, and opens the detail of one', () => {
     store({ trackers: [WATER, OLD, { ...OLD, id: 'old2', name: 'Outro', sort: 5 }] })
     render(<TrackersScreen />)
     const region = screen.getByRole('region', { name: 'Arquivados' })
@@ -175,9 +175,10 @@ describe('TrackersScreen', () => {
     expect(toggle.getAttribute('aria-expanded')).toBe('true')
     // No quick entry for an archived tracker: the server refuses new entries there.
     expect(within(region).queryByRole('button', { name: /Registrar em/ })).toBeNull()
+    // Its entries stay editable there, and the detail offers to reactivate it.
     fireEvent.click(within(region).getByRole('button', { name: /Antigo/ }))
-    expect(screen.getByRole('dialog', { name: 'tracker-sheet' }).getAttribute('data-tracker')).toBe('old')
-    expect(h.nav).not.toHaveBeenCalled()
+    expect(h.nav).toHaveBeenCalledWith('/trackers/old')
+    expect(screen.queryByRole('dialog', { name: 'tracker-sheet' })).toBeNull()
   })
 
   it('shows the archived section even when no tracker is active', () => {

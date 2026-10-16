@@ -49,6 +49,18 @@ describe('onDemandFiles', () => {
     expect(onDemandFiles(b)).toEqual(['./assets/SleepBedtimeBand-i.js', './assets/SleepDurationChart-h.js', './assets/recharts-e.js'])
   })
 
+  it('lists the tracker line chart and label bars with the Recharts chunk, never the detail screen', () => {
+    const b = {
+      'assets/index-a.js': chunk('assets/index-a.js', ['/app/src/main.jsx'], { isEntry: true }),
+      'assets/TrackerLineChart-k.js': chunk('assets/TrackerLineChart-k.js', ['/app/src/features/trackers/TrackerLineChart.tsx'],
+        { imports: ['assets/index-a.js', 'assets/recharts-e.js'] }),
+      'assets/TrackerBars-l.js': chunk('assets/TrackerBars-l.js', ['/app/src/features/trackers/TrackerBars.tsx']),
+      'assets/recharts-e.js': chunk('assets/recharts-e.js', ['/app/node_modules/recharts/es6/index.js']),
+      'assets/TrackerDetail-m.js': chunk('assets/TrackerDetail-m.js', ['/app/src/features/trackers/TrackerDetail.tsx'])
+    }
+    expect(onDemandFiles(b)).toEqual(['./assets/TrackerBars-l.js', './assets/TrackerLineChart-k.js', './assets/recharts-e.js'])
+  })
+
   it('reads Windows module ids too', () => {
     const b = { 'assets/taco-c.js': chunk('assets/taco-c.js', ['C:\\app\\src\\features\\nutrition\\data\\taco.json']) }
     expect(onDemandFiles(b)).toEqual(['./assets/taco-c.js'])
