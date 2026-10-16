@@ -2570,4 +2570,15 @@ export default {
   "Agree to show your nights on target to create this challenge.": "यह चैलेंज बनाने के लिए अपनी लक्ष्य वाली रातें दिखाने की सहमति दें।",
   "Only for people with the Sleep pillar on.": "सिर्फ़ उनके लिए जिनका नींद स्तंभ चालू है।",
   "Turn on the Sleep pillar to join": "जुड़ने के लिए नींद स्तंभ चालू करें",
+  // --- habit badges (phase 4a) ---
+  "First check": "पहला चेक",
+  "Check off a habit for the first time.": "पहली बार किसी आदत पर चेक लगाएँ।",
+  "{0} checks": "{0} चेक",
+  "Check off habits {0} times within your weekly goals.": "अपने साप्ताहिक लक्ष्यों के भीतर आदतों पर {0} बार चेक लगाएँ।",
+  "Habit week done": "आदतों का हफ़्ता पूरा",
+  "Meet the goal of every habit in a week for the first time.": "पहली बार किसी हफ़्ते में हर आदत का लक्ष्य पूरा करें।",
+  "{0} weeks of habits": "आदतों के {0} हफ़्ते",
+  "Meet the goal of every habit {0} weeks in a row.": "लगातार {0} हफ़्ते हर आदत का लक्ष्य पूरा करें।",
+  "Iron habit": "फ़ौलादी आदत",
+  "Meet the goal of the same habit 8 weeks in a row.": "लगातार 8 हफ़्ते एक ही आदत का लक्ष्य पूरा करें।",
 }

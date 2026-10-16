@@ -2623,4 +2623,15 @@ export default {
   "Agree to show your nights on target to create this challenge.": "وافق على إظهار لياليك ضمن الهدف لإنشاء هذا التحدي.",
   "Only for people with the Sleep pillar on.": "فقط لمن فعّل محور النوم.",
   "Turn on the Sleep pillar to join": "فعّل محور النوم للمشاركة",
+  // --- habit badges (phase 4a) ---
+  "First check": "أول علامة",
+  "Check off a habit for the first time.": "ضع علامة على عادة لأول مرة.",
+  "{0} checks": "{0} علامة",
+  "Check off habits {0} times within your weekly goals.": "ضع علامات على عاداتك {0} مرة ضمن أهدافك الأسبوعية.",
+  "Habit week done": "أسبوع عادات مكتمل",
+  "Meet the goal of every habit in a week for the first time.": "حقق هدف كل عادة في أسبوع واحد لأول مرة.",
+  "{0} weeks of habits": "{0} أسابيع من العادات",
+  "Meet the goal of every habit {0} weeks in a row.": "حقق هدف كل عادة {0} أسابيع متتالية.",
+  "Iron habit": "عادة من حديد",
+  "Meet the goal of the same habit 8 weeks in a row.": "حقق هدف العادة نفسها 8 أسابيع متتالية.",
 }

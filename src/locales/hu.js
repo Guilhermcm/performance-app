@@ -2573,4 +2573,15 @@ export default {
   "Agree to show your nights on target to create this challenge.": "A kihívás létrehozásához járulj hozzá, hogy látszódjanak a célban töltött éjszakáid.",
   "Only for people with the Sleep pillar on.": "Csak annak, akinél be van kapcsolva az Alvás pillér.",
   "Turn on the Sleep pillar to join": "Kapcsold be az Alvás pillért a csatlakozáshoz",
+  // --- habit badges (phase 4a) ---
+  "First check": "Első pipa",
+  "Check off a habit for the first time.": "Pipálj ki először egy szokást.",
+  "{0} checks": "{0} pipa",
+  "Check off habits {0} times within your weekly goals.": "Pipálj ki szokásokat {0} alkalommal a heti céljaidon belül.",
+  "Habit week done": "Szokáshét teljesítve",
+  "Meet the goal of every habit in a week for the first time.": "Teljesítsd először egy héten minden szokásod célját.",
+  "{0} weeks of habits": "{0} hét szokásokkal",
+  "Meet the goal of every habit {0} weeks in a row.": "Teljesítsd minden szokásod célját {0} héten át egymás után.",
+  "Iron habit": "Vasszokás",
+  "Meet the goal of the same habit 8 weeks in a row.": "Teljesítsd ugyanannak a szokásnak a célját 8 héten át egymás után.",
 }

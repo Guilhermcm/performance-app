@@ -2570,4 +2570,15 @@ export default {
   "Agree to show your nights on target to create this challenge.": "请同意展示你的达标晚数以创建此挑战。",
   "Only for people with the Sleep pillar on.": "仅限已开启睡眠板块的人。",
   "Turn on the Sleep pillar to join": "开启睡眠板块后参加",
+  // --- habit badges (phase 4a) ---
+  "First check": "首次打卡",
+  "Check off a habit for the first time.": "第一次给习惯打卡。",
+  "{0} checks": "打卡 {0} 次",
+  "Check off habits {0} times within your weekly goals.": "在每周目标内给习惯打卡 {0} 次。",
+  "Habit week done": "习惯周达成",
+  "Meet the goal of every habit in a week for the first time.": "第一次在一周内完成每个习惯的目标。",
+  "{0} weeks of habits": "习惯 {0} 周",
+  "Meet the goal of every habit {0} weeks in a row.": "连续 {0} 周完成每个习惯的目标。",
+  "Iron habit": "铁打的习惯",
+  "Meet the goal of the same habit 8 weeks in a row.": "连续 8 周完成同一个习惯的目标。",
 }

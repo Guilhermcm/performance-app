@@ -187,7 +187,9 @@ describe('closing a habit day', () => {
     const others = () => sql(db,
       `select pillar::text, reason, amount from public.xp_ledger
         where user_id = $1 and pillar in ('strength', 'nutrition', 'sleep') order by id`, [A])
-    const streaks = () => sql(db, 'select * from public.streaks where user_id = $1 order by kind', [A])
+    // habits_week is the pillar's own streak; the other pillars' streaks stay as they were.
+    const streaks = () => sql(db,
+      `select * from public.streaks where user_id = $1 and kind <> 'habits_week' order by kind`, [A])
     const beforeLedger = await others()
     const beforeStreaks = await streaks()
 

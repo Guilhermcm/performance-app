@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { ACHIEVEMENTS, NUTRITION_METRICS, SLEEP_METRICS } from './achievements'
+import { ACHIEVEMENTS, HABITS_METRICS, NUTRITION_METRICS, SLEEP_METRICS } from './achievements'
 import { ACHIEVEMENT_TEXT, achievementTitle } from './achievement-labels'
 
 describe('achievement labels', () => {
@@ -39,6 +39,26 @@ describe('achievement labels', () => {
     expect(ACHIEVEMENT_TEXT.sleep_streak_12.title()).toBe('12 weeks of sleep')
     expect(ACHIEVEMENT_TEXT.sleep_streak_12.detail()).toBe('Meet your weekly sleep goal 12 weeks in a row.')
     expect(ACHIEVEMENT_TEXT.sleep_clock_7.title()).toBe('Clock on time')
+  })
+
+  it('gives the 10 habit badges their own text, without a dash as a pause', () => {
+    const habits = ACHIEVEMENTS.filter(a => HABITS_METRICS.includes(a.metric))
+    expect(habits).toHaveLength(10)
+    const titles = habits.map(a => ACHIEVEMENT_TEXT[a.code].title())
+    expect(new Set(titles).size).toBe(10)
+    for (const a of habits) {
+      const { title, detail } = ACHIEVEMENT_TEXT[a.code]
+      expect(title().trim(), a.code).not.toBe('')
+      expect(detail().trim(), a.code).not.toBe('')
+      expect(title() + ' ' + detail(), a.code).not.toMatch(/[—–]|\s-\s/)
+    }
+    expect(ACHIEVEMENT_TEXT.habits_first_check.title()).toBe('First check')
+    expect(ACHIEVEMENT_TEXT.habits_checks_200.title()).toBe('200 checks')
+    expect(ACHIEVEMENT_TEXT.habits_checks_200.detail()).toBe('Check off habits 200 times within your weekly goals.')
+    expect(ACHIEVEMENT_TEXT.habits_week_target_1.title()).toBe('Habit week done')
+    expect(ACHIEVEMENT_TEXT.habits_streak_12.title()).toBe('12 weeks of habits')
+    expect(ACHIEVEMENT_TEXT.habits_streak_12.detail()).toBe('Meet the goal of every habit 12 weeks in a row.')
+    expect(ACHIEVEMENT_TEXT.habits_iron_8.title()).toBe('Iron habit')
   })
 
   it('puts the threshold in the counted badges', () => {

@@ -2570,4 +2570,15 @@ export default {
   "Agree to show your nights on target to create this challenge.": "Acepta mostrar tus noches en el objetivo para crear este desafío.",
   "Only for people with the Sleep pillar on.": "Solo para quien tiene activado el pilar Sueño.",
   "Turn on the Sleep pillar to join": "Activa el pilar Sueño para participar",
+  // --- habit badges (phase 4a) ---
+  "First check": "Primera marca",
+  "Check off a habit for the first time.": "Marca un hábito por primera vez.",
+  "{0} checks": "{0} marcas",
+  "Check off habits {0} times within your weekly goals.": "Marca hábitos {0} veces dentro de tus metas semanales.",
+  "Habit week done": "Semana de hábitos cumplida",
+  "Meet the goal of every habit in a week for the first time.": "Cumple la meta de todos tus hábitos en una semana por primera vez.",
+  "{0} weeks of habits": "{0} semanas de hábitos",
+  "Meet the goal of every habit {0} weeks in a row.": "Cumple la meta de todos tus hábitos {0} semanas seguidas.",
+  "Iron habit": "Hábito de hierro",
+  "Meet the goal of the same habit 8 weeks in a row.": "Cumple la meta del mismo hábito 8 semanas seguidas.",
 }

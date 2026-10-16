@@ -2570,4 +2570,15 @@ export default {
   "Agree to show your nights on target to create this challenge.": "Bu meydan okumayı oluşturmak için hedefteki gecelerini göstermeyi kabul et.",
   "Only for people with the Sleep pillar on.": "Yalnızca Uyku alanı açık olanlar için.",
   "Turn on the Sleep pillar to join": "Katılmak için Uyku alanını aç",
+  // --- habit badges (phase 4a) ---
+  "First check": "İlk işaret",
+  "Check off a habit for the first time.": "Bir alışkanlığı ilk kez işaretle.",
+  "{0} checks": "{0} işaret",
+  "Check off habits {0} times within your weekly goals.": "Haftalık hedeflerin içinde alışkanlıkları {0} kez işaretle.",
+  "Habit week done": "Alışkanlık haftası tamam",
+  "Meet the goal of every habit in a week for the first time.": "Bir haftada tüm alışkanlıklarının hedefini ilk kez tuttur.",
+  "{0} weeks of habits": "{0} hafta alışkanlık",
+  "Meet the goal of every habit {0} weeks in a row.": "Tüm alışkanlıklarının hedefini {0} hafta üst üste tuttur.",
+  "Iron habit": "Demir alışkanlık",
+  "Meet the goal of the same habit 8 weeks in a row.": "Aynı alışkanlığın hedefini 8 hafta üst üste tuttur.",
 }

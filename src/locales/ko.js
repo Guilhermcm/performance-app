@@ -2570,4 +2570,15 @@ export default {
   "Agree to show your nights on target to create this challenge.": "이 챌린지를 만들려면 목표 달성 밤을 보여 주는 데 동의하세요.",
   "Only for people with the Sleep pillar on.": "수면 기능을 켠 사람만 참여할 수 있어요.",
   "Turn on the Sleep pillar to join": "참여하려면 수면 기능을 켜세요",
+  // --- habit badges (phase 4a) ---
+  "First check": "첫 체크",
+  "Check off a habit for the first time.": "처음으로 습관을 체크하세요.",
+  "{0} checks": "체크 {0}회",
+  "Check off habits {0} times within your weekly goals.": "주간 목표 안에서 습관을 {0}회 체크하세요.",
+  "Habit week done": "습관 주간 달성",
+  "Meet the goal of every habit in a week for the first time.": "처음으로 한 주 동안 모든 습관의 목표를 달성하세요.",
+  "{0} weeks of habits": "습관 {0}주",
+  "Meet the goal of every habit {0} weeks in a row.": "{0}주 연속 모든 습관의 목표를 달성하세요.",
+  "Iron habit": "강철 습관",
+  "Meet the goal of the same habit 8 weeks in a row.": "같은 습관의 목표를 8주 연속 달성하세요.",
 }

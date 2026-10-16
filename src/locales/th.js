@@ -2581,4 +2581,15 @@ export default {
   "Agree to show your nights on target to create this challenge.": "ยอมรับการแสดงจำนวนคืนที่ถึงเป้าเพื่อสร้างชาเลนจ์นี้",
   "Only for people with the Sleep pillar on.": "สำหรับคนที่เปิดการนอนเท่านั้น",
   "Turn on the Sleep pillar to join": "เปิดการนอนเพื่อเข้าร่วม",
+  // --- habit badges (phase 4a) ---
+  "First check": "เช็กครั้งแรก",
+  "Check off a habit for the first time.": "เช็กนิสัยเป็นครั้งแรก",
+  "{0} checks": "เช็ก {0} ครั้ง",
+  "Check off habits {0} times within your weekly goals.": "เช็กนิสัย {0} ครั้งภายในเป้ารายสัปดาห์",
+  "Habit week done": "สัปดาห์นิสัยครบ",
+  "Meet the goal of every habit in a week for the first time.": "ทำเป้าของทุกนิสัยได้ครบในหนึ่งสัปดาห์เป็นครั้งแรก",
+  "{0} weeks of habits": "นิสัยดี {0} สัปดาห์",
+  "Meet the goal of every habit {0} weeks in a row.": "ทำเป้าของทุกนิสัยได้ครบ {0} สัปดาห์ติดต่อกัน",
+  "Iron habit": "นิสัยเหล็ก",
+  "Meet the goal of the same habit 8 weeks in a row.": "ทำเป้าของนิสัยเดียวกันได้ 8 สัปดาห์ติดต่อกัน",
 }

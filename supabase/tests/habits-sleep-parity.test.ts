@@ -63,3 +63,28 @@ describe('award_xp (0027)', () => {
     ])
   })
 })
+
+describe('achievement_stats (0027)', () => {
+  it('still counts training, nutrition and sleep metrics', async () => {
+    await addCheckin(db, A, { day: '2026-10-05' })
+    await enableNutrition(db, A)
+    await setTarget(db, A, '2026-10-05', { kcal: 2000, protein_g: 150, carbs_g: 200, fat_g: 60 })
+    for (const meal of ['lunch', 'dinner'])
+      await sql(db,
+        `insert into public.food_logs (id, user_id, day, meal, name, source, kcal, protein_g, carbs_g, fat_g)
+         values (gen_random_uuid(), $1, '2026-10-05', $2, 'Item', 'quick', 1000, 75, 100, 30)`, [A, meal])
+    await enableSleep(db, A)
+    await setSleepTarget(db, A, '2026-10-05', 480, '23:00')
+    await logNight(db, A, '2026-10-05', '23:00', '07:00', { asOwner: true })
+    await setClock(db, '2026-10-07T15:00:00Z')
+    await sql(db, 'select public.close_training_days($1)', [A])
+    expect(await closeAs(db, A)).toBe(1)
+    expect(await closeSleepAs(db, A)).toBe(1)
+    const [{ s }] = await sql(db, 'select public.achievement_stats($1) as s', [A])
+    expect(s).toMatchObject({
+      workouts: 1, nutrition_logged_days: 1, nutrition_on_target_days: 1, protein_best_run: 1,
+      sleep_logged_nights: 1, sleep_on_target_nights: 1, sleep_week_targets: 0, sleep_best_streak: 0,
+      sleep_clock_best_run: 1,
+    })
+  })
+})

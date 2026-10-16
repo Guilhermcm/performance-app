@@ -52,6 +52,8 @@ const REDEFINED: { fn: string; base: string; in: string; changed: string[] }[] =
   },
   // Habits: the habits branch goes in before the Treino one; nothing of the sleep body changes.
   { fn: 'award_xp', base: '0022_sleep_close.sql', in: '0027_habits_close.sql', changed: [] },
+  // The last line of sleep_clock_best_run gains a comma: the habits metrics follow it.
+  { fn: 'achievement_stats', base: '0022_sleep_close.sql', in: '0027_habits_close.sql', changed: [') lengths), 0)'] },
 ]
 
 describe('redefined function bodies', () => {

@@ -1,6 +1,8 @@
 -- Phase 4a, day closing: day D closes at the start of D+2 local (spec 6.4), its valid checks are
 -- marked (habit_checks.counted), its snapshot goes to habit_days and the server-only events it earns
 -- pay habits XP through award_xp (spec 4, 5.1, 5.2, 6.3; plan decision 7).
+-- Then the habits_week streak, the daily safety net and the private habit badges (spec 5.3, 5.4;
+-- plan decisions 3, 4 and 20).
 
 -- Closed days -----------------------------------------------------------------------------------
 -- xp is what the day paid: its valid checks and the +30. The week bonus is the week's, not the day's.
@@ -35,6 +37,69 @@ language sql stable security definer set search_path = public as $$
   select coalesce(sum(target), 0)::integer
     from public.habit_targets where user_id = p_user and week_start = p_week
 $$;
+
+-- Weekly streak (spec 5.3) ---------------------------------------------------------------------
+-- In the mould of close_sleep_weeks (0022). A week is judged once its seven days have closed
+-- (week_start + 6 <= local_today - 2, Tuesday morning) and closed days never reopen, so a verdict
+-- is final and nothing is ever replayed. On target is the week's habit_week_target paid.
+--   on target                              -> +1 (and a shield every 4, at most 2)
+--   a day outside a period, missed         -> neutral: nothing changes (the activation week included)
+--   Q = 0 (every habit archived), missed   -> neutral too
+--   missed with a streak and shield        -> the shield goes, the streak stays
+--   otherwise                              -> 0
+-- The iron habit run needs no state: achievement_stats reads it from the targets and checks. It
+-- ends looking at the badges, so every close does (spec 6.4).
+
+create function public.close_habit_weeks(p_user uuid) returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  v_last   date;
+  v_s      public.streaks%rowtype;
+  v_week   date;
+  v_judged integer := 0;
+begin
+  perform pg_advisory_xact_lock(hashtextextended('xp:' || p_user::text, 0));
+  -- The last week whose seven days have all closed.
+  v_last := public.local_today(p_user) - 8;
+  insert into public.streaks (user_id, kind) values (p_user, 'habits_week') on conflict do nothing;
+  select * into v_s from public.streaks where user_id = p_user and kind = 'habits_week' for update;
+
+  if v_s.last_period is null then
+    select public.week_start_of(min(started_on)) into v_week
+      from public.habit_periods where user_id = p_user;
+  else
+    v_week := v_s.last_period + 7;
+  end if;
+
+  while v_week is not null and v_week <= v_last loop
+    if exists (select 1 from public.xp_ledger
+                where user_id = p_user and reason = 'habit_week_target' and week_start = v_week) then
+      v_s.current := v_s.current + 1;
+      v_s.best := greatest(v_s.best, v_s.current);
+      if v_s.current % 4 = 0 then v_s.shields := least(2, v_s.shields + 1); end if;
+    elsif exists (select 1 from generate_series(v_week, v_week + 6, interval '1 day') d
+                   where not public.habits_active_on(p_user, d::date))
+       or public.habit_week_q(p_user, v_week) = 0 then
+      null;   -- neutral week
+    elsif v_s.current > 0 and v_s.shields > 0 then
+      v_s.shields := v_s.shields - 1;
+    else
+      v_s.current := 0;
+    end if;
+    v_s.last_period := v_week;
+    v_week := v_week + 7;
+    v_judged := v_judged + 1;
+  end loop;
+
+  if v_judged > 0 then
+    update public.streaks
+       set current = v_s.current, best = v_s.best, shields = v_s.shields, last_period = v_s.last_period
+     where user_id = p_user and kind = 'habits_week';
+  end if;
+  perform public.evaluate_achievements(p_user);
+end $$;
+
+revoke all on function public.close_habit_weeks(uuid) from public, anon, authenticated;
 
 -- Closing ---------------------------------------------------------------------------------------
 -- In the mould of close_sleep_nights (0022). Every pending day from the day after the last closed
@@ -118,11 +183,38 @@ begin
                 and e.occurred_on = v_day));
     n := n + 1;
   end loop;
+
+  -- Even when no day closed: a week may be due, and the badges are looked at on every close.
+  perform public.close_habit_weeks(p_user);
   return n;
 end $$;
 
 revoke all on function public.habit_week_q(uuid, date), public.close_habit_days(uuid)
   from public, anon, authenticated;
+
+-- Daily safety net (0030 schedules it) ----------------------------------------------------------
+-- In the mould of close_all_sleep_nights (0022). Visits everyone with an open period, or with a
+-- closed period whose last week is not judged yet (its days may still be pending too, and that week
+-- still has to be judged). Returns how many of them had days pending, so a second run the same day
+-- returns 0.
+
+create function public.close_all_habit_days() returns integer
+language plpgsql security definer set search_path = public as $$
+declare
+  r record;
+  n integer := 0;
+begin
+  for r in
+    select distinct p.user_id from public.habit_periods p
+      left join public.streaks s on s.user_id = p.user_id and s.kind = 'habits_week'
+     where p.ended_on is null or p.ended_on >= coalesce(s.last_period + 7, p.started_on)
+  loop
+    if public.close_habit_days(r.user_id) > 0 then n := n + 1; end if;
+  end loop;
+  return n;
+end $$;
+
+revoke all on function public.close_all_habit_days() from public, anon, authenticated;
 
 -- XP per event: the habits branch (spec 5.1, 5.2; plan decision 7) -----------------------------
 -- 0022's body with the habits branch added, before Treino's. Habits has its own reasons, so nothing
@@ -348,3 +440,120 @@ begin
 end $$;
 
 revoke all on function public.award_xp() from public, anon, authenticated;
+
+-- Badges (spec 5.4; plan decisions 3 and 20) ----------------------------------------------------
+-- All private: never shown to friends. Mirrored by src/features/gamification/achievements.ts
+-- (gamification-catalog.test.ts). The metric check is 0022's with the four habits metrics.
+
+alter table public.achievement_catalog drop constraint achievement_catalog_metric_check;
+alter table public.achievement_catalog add constraint achievement_catalog_metric_check check (metric in (
+  'workouts', 'prs', 'week_targets', 'best_streak', 'weigh_in_run', 'level', 'early_workouts', 'friends',
+  'challenges_won', 'nutrition_logged_days', 'nutrition_on_target_days', 'nutrition_week_targets',
+  'nutrition_best_streak', 'protein_best_run', 'sleep_logged_nights', 'sleep_on_target_nights',
+  'sleep_week_targets', 'sleep_best_streak', 'sleep_clock_best_run', 'habits_checks', 'habits_week_targets',
+  'habits_best_streak', 'habits_iron_best_run'));
+
+insert into public.achievement_catalog (code, metric, threshold, xp, sort, private) values
+  ('habits_first_check',   'habits_checks',           1,   50, 500, true),
+  ('habits_checks_50',     'habits_checks',          50,  100, 510, true),
+  ('habits_checks_200',    'habits_checks',         200,  200, 520, true),
+  ('habits_checks_500',    'habits_checks',         500,  300, 530, true),
+  ('habits_checks_1000',   'habits_checks',        1000,  500, 540, true),
+  ('habits_week_target_1', 'habits_week_targets',     1,   75, 550, true),
+  ('habits_streak_4',      'habits_best_streak',      4,  150, 560, true),
+  ('habits_streak_12',     'habits_best_streak',     12,  400, 570, true),
+  ('habits_streak_26',     'habits_best_streak',     26,  800, 580, true),
+  ('habits_iron_8',        'habits_iron_best_run',    8,  200, 590, true);
+
+-- Achievement metrics ---------------------------------------------------------------------------
+-- 0022's, with the habits ones. They read only closed days (counted is null until then), the
+-- ledger, the streak and the frozen targets.
+
+create or replace function public.achievement_stats(p_user uuid) returns jsonb
+language sql stable security definer set search_path = public as $$
+  select jsonb_build_object(
+    'workouts', (select count(*) from public.activity_events e
+                  where e.user_id = p_user and e.kind = 'workout_completed'
+                    and e.occurred_on < public.training_checkin_since()
+                    and not exists (select 1 from public.training_days t
+                                     where t.user_id = p_user and t.day = e.occurred_on
+                                       and t.checked and not t.legacy))
+              + (select count(*) from public.training_days where user_id = p_user and checked and not legacy),
+    'prs', (select count(*) from public.activity_events where user_id = p_user and kind = 'pr'),
+    'week_targets', (select count(*) from public.xp_ledger
+                      where user_id = p_user and reason in ('week_target', 'training_week_target')),
+    'best_streak', coalesce((select best from public.streaks where user_id = p_user and kind = 'training_week'), 0),
+    -- Longest run of consecutive weigh-in days (gaps and islands).
+    'weigh_in_run', coalesce((
+      select max(n) from (
+        select count(*) as n from (
+          select d - (row_number() over (order by d))::int as grp
+            from (select distinct occurred_on as d from public.activity_events
+                   where user_id = p_user and kind = 'weight_logged') days
+        ) runs group by grp
+      ) lengths), 0),
+    -- Live sessions only: the app sends the local start hour for those, never for backfills.
+    'early_workouts', (select count(*) from public.activity_events
+                        where user_id = p_user and kind = 'workout_completed'
+                          and jsonb_typeof(payload -> 'hour') = 'number' and (payload ->> 'hour')::numeric < 7),
+    'friends', (select count(*) from public.friendships where p_user in (user_a, user_b)),
+    'challenges_won', (select count(*) from public.challenge_members where user_id = p_user and won),
+    'nutrition_logged_days', (select count(*) from public.nutrition_days
+                               where user_id = p_user and not imported and logged),
+    'nutrition_on_target_days', (select count(*) from public.nutrition_days
+                                  where user_id = p_user and not imported and on_target),
+    'nutrition_week_targets', (select count(*) from public.xp_ledger
+                                where user_id = p_user and reason = 'nutrition_week_target'),
+    'nutrition_best_streak', coalesce((select best from public.streaks
+                                        where user_id = p_user and kind = 'nutrition_week'), 0),
+    -- Longest run of consecutive closed days with protein at or above the target in force.
+    'protein_best_run', coalesce((
+      select max(n) from (
+        select count(*) as n from (
+          select day - (row_number() over (order by day))::int as grp
+            from public.nutrition_days
+           where user_id = p_user and not imported
+             and protein_g >= (target ->> 'protein_g')::numeric
+        ) runs group by grp
+      ) lengths), 0),
+    'sleep_logged_nights', (select count(*) from public.sleep_nights where user_id = p_user and logged),
+    'sleep_on_target_nights', (select count(*) from public.sleep_nights where user_id = p_user and on_target),
+    'sleep_week_targets', (select count(*) from public.xp_ledger
+                            where user_id = p_user and reason = 'sleep_week_target'),
+    'sleep_best_streak', coalesce((select best from public.streaks
+                                    where user_id = p_user and kind = 'sleep_week'), 0),
+    -- Longest run of consecutive closed nights, all logged, in bed within 30 minutes of the target.
+    -- A night without a log, without a target or outside a period breaks it.
+    'sleep_clock_best_run', coalesce((
+      select max(n) from (
+        select count(*) as n from (
+          select night - (row_number() over (order by night))::int as grp
+            from public.sleep_nights
+           where user_id = p_user and logged and bed_diff_min <= 30
+        ) runs group by grp
+      ) lengths), 0),
+    'habits_checks', (select count(*) from public.habit_checks where user_id = p_user and counted),
+    'habits_week_targets', (select count(*) from public.xp_ledger
+                             where user_id = p_user and reason = 'habit_week_target'),
+    'habits_best_streak', coalesce((select best from public.streaks
+                                     where user_id = p_user and kind = 'habits_week'), 0),
+    -- Longest run of consecutive judged weeks in which one same habit met its own target (> 0).
+    -- A week without a target row (the habit did not exist or was archived) breaks it; the week it
+    -- was archived counts if the lowered target was met (plan decision 4).
+    'habits_iron_best_run', coalesce((
+      select max(n) from (
+        select count(*) as n from (
+          select t.habit_id,
+                 t.week_start - 7 * (row_number() over (partition by t.habit_id order by t.week_start))::int as grp
+            from public.habit_targets t
+           where t.user_id = p_user and t.target > 0
+             and t.week_start <= public.local_today(p_user) - 8
+             and (select count(*) from public.habit_checks c
+                   where c.habit_id = t.habit_id and c.day between t.week_start and t.week_start + 6
+                     and c.counted) >= t.target
+        ) runs group by habit_id, grp
+      ) lengths), 0)
+  )
+$$;
+
+revoke all on function public.achievement_stats(uuid) from public, anon, authenticated;
