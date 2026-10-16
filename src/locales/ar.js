@@ -2634,4 +2634,6 @@ export default {
   "Meet the goal of every habit {0} weeks in a row.": "حقق هدف كل عادة {0} أسابيع متتالية.",
   "Iron habit": "عادة من حديد",
   "Meet the goal of the same habit 8 weeks in a row.": "حقق هدف العادة نفسها 8 أسابيع متتالية.",
+  // --- habits store (phase 4a) ---
+  "Some checks from days that already closed were not saved.": "لم تُحفظ بعض العلامات من أيام أُغلقت بالفعل.",
 }

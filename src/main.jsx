@@ -13,6 +13,7 @@ import { cleanAuthParams } from './features/auth/auth.ts'
 import { startEventSync, clearEventQueue } from './features/gamification/events.ts'
 import { clearNutritionLocal } from './features/nutrition/sign-out.ts'
 import { clearSleepLocal } from './features/sleep/sign-out.ts'
+import { clearHabitsLocal } from './features/habits/sign-out.ts'
 import { clearPendingInvite } from './features/social/pending-invite.ts'
 import { clearSignedUrls } from './features/checkin/checkin-api.ts'
 
@@ -24,10 +25,10 @@ supabase.auth.getSession().finally(() => cleanAuthParams())
 
 // Gamification events wait in a local queue and go out whenever there is a session and a network.
 // A sign-out clears them: the next person on this phone must not inherit someone else's XP.
-// The check-in, diary and sleep queues stay (they are per account and go up when that account is back); only the
+// The check-in, diary, sleep and habits queues stay (they are per account and go up when that account is back); only the
 // photo links of the session go.
 startEventSync()
-supabase.auth.onAuthStateChange(event => { if (event === 'SIGNED_OUT') { clearEventQueue(); clearNutritionLocal(); clearSleepLocal(); clearPendingInvite(); clearSignedUrls() } })
+supabase.auth.onAuthStateChange(event => { if (event === 'SIGNED_OUT') { clearEventQueue(); clearNutritionLocal(); clearSleepLocal(); clearHabitsLocal(); clearPendingInvite(); clearSignedUrls() } })
 
 // App.jsx restores per-route scroll itself; the browser's own attempt races it.
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual'

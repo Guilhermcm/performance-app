@@ -2581,4 +2581,6 @@ export default {
   "Meet the goal of every habit {0} weeks in a row.": "连续 {0} 周完成每个习惯的目标。",
   "Iron habit": "铁打的习惯",
   "Meet the goal of the same habit 8 weeks in a row.": "连续 8 周完成同一个习惯的目标。",
+  // --- habits store (phase 4a) ---
+  "Some checks from days that already closed were not saved.": "已结算日期的部分打卡没有保存。",
 }

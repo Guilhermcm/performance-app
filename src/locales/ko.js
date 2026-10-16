@@ -2581,4 +2581,6 @@ export default {
   "Meet the goal of every habit {0} weeks in a row.": "{0}주 연속 모든 습관의 목표를 달성하세요.",
   "Iron habit": "강철 습관",
   "Meet the goal of the same habit 8 weeks in a row.": "같은 습관의 목표를 8주 연속 달성하세요.",
+  // --- habits store (phase 4a) ---
+  "Some checks from days that already closed were not saved.": "이미 마감된 날의 일부 체크는 저장되지 않았어요.",
 }
