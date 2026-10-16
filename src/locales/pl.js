@@ -2701,4 +2701,15 @@ export default {
   "Your habits and checks stay saved. You can turn it back on any time.": "Twoje nawyki i odhaczenia zostają zapisane. Możesz je włączyć ponownie, kiedy zechcesz.",
   "Open Habits": "Otwórz nawyki",
   "Choose your habits and how many times a week you want to do each one. Every check earns XP, like workouts do.": "Wybierz swoje nawyki i to, ile razy w tygodniu chcesz robić każdy z nich. Każde odhaczenie daje XP, tak jak treningi.",
+  // --- habits home card (phase 4a) ---
+  "Today's habits": "Dzisiejsze nawyki",
+  "Mark {0} done today": "Odhacz {0} na dziś",
+  "Unmark {0} today": "Cofnij odhaczenie {0} na dziś",
+  "1 left in 1 day": "brakuje 1, został 1 dzień",
+  "{0} left in 1 day": "brakuje {0}, został 1 dzień",
+  "{0} left in {1} days": "brakuje {0}, dni do końca: {1}",
+  "1 left, and the week ends today": "brakuje 1, a tydzień kończy się dziś",
+  "{0} left, and the week ends today": "brakuje {0}, a tydzień kończy się dziś",
+  "Week: {0} of {1} · +{2} XP so far": "Tydzień: {0} z {1} · +{2} XP do tej pory",
+  "See all": "Zobacz wszystkie",
 }

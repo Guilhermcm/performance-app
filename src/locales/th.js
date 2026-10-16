@@ -2647,4 +2647,15 @@ export default {
   "Your habits and checks stay saved. You can turn it back on any time.": "นิสัยและการเช็กของคุณจะยังอยู่ คุณเปิดใหม่ได้ทุกเมื่อ",
   "Open Habits": "ไปที่นิสัย",
   "Choose your habits and how many times a week you want to do each one. Every check earns XP, like workouts do.": "เลือกนิสัยและจำนวนครั้งต่อสัปดาห์ที่อยากทำแต่ละอย่าง ทุกการเช็กได้ XP เหมือนการออกกำลังกาย",
+  // --- habits home card (phase 4a) ---
+  "Today's habits": "นิสัยวันนี้",
+  "Mark {0} done today": "เช็ก {0} ของวันนี้",
+  "Unmark {0} today": "ยกเลิกเช็ก {0} ของวันนี้",
+  "1 left in 1 day": "เหลือ 1 ครั้งใน 1 วัน",
+  "{0} left in 1 day": "เหลือ {0} ครั้งใน 1 วัน",
+  "{0} left in {1} days": "เหลือ {0} ครั้งใน {1} วัน",
+  "1 left, and the week ends today": "เหลือ 1 ครั้ง และสัปดาห์นี้จบวันนี้",
+  "{0} left, and the week ends today": "เหลือ {0} ครั้ง และสัปดาห์นี้จบวันนี้",
+  "Week: {0} of {1} · +{2} XP so far": "สัปดาห์: {0} จาก {1} · +{2} XP จนถึงตอนนี้",
+  "See all": "ดูทั้งหมด",
 }

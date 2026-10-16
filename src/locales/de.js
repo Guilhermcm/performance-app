@@ -2656,4 +2656,15 @@ export default {
   "Your habits and checks stay saved. You can turn it back on any time.": "Deine Gewohnheiten und Häkchen bleiben gespeichert. Du kannst sie jederzeit wieder einschalten.",
   "Open Habits": "Gewohnheiten öffnen",
   "Choose your habits and how many times a week you want to do each one. Every check earns XP, like workouts do.": "Wähle deine Gewohnheiten und wie oft pro Woche du jede machen willst. Jedes Häkchen bringt XP, genau wie Trainings.",
+  // --- habits home card (phase 4a) ---
+  "Today's habits": "Gewohnheiten für heute",
+  "Mark {0} done today": "{0} heute abhaken",
+  "Unmark {0} today": "Häkchen bei {0} für heute entfernen",
+  "1 left in 1 day": "noch 1 in 1 Tag",
+  "{0} left in 1 day": "noch {0} in 1 Tag",
+  "{0} left in {1} days": "noch {0} in {1} Tagen",
+  "1 left, and the week ends today": "noch 1, und die Woche endet heute",
+  "{0} left, and the week ends today": "noch {0}, und die Woche endet heute",
+  "Week: {0} of {1} · +{2} XP so far": "Woche: {0} von {1} · +{2} XP bisher",
+  "See all": "Alle ansehen",
 }

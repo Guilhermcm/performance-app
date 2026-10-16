@@ -2639,4 +2639,15 @@ export default {
   "Your habits and checks stay saved. You can turn it back on any time.": "A szokásaid és a pipáid megmaradnak. Bármikor újra bekapcsolhatod.",
   "Open Habits": "Szokások megnyitása",
   "Choose your habits and how many times a week you want to do each one. Every check earns XP, like workouts do.": "Válaszd ki a szokásaidat, és hogy hetente hányszor szeretnéd csinálni mindegyiket. Minden pipa XP-t ér, akárcsak az edzések.",
+  // --- habits home card (phase 4a) ---
+  "Today's habits": "Mai szokások",
+  "Mark {0} done today": "{0} kipipálása mára",
+  "Unmark {0} today": "{0} pipájának törlése mára",
+  "1 left in 1 day": "még 1, 1 nap alatt",
+  "{0} left in 1 day": "még {0}, 1 nap alatt",
+  "{0} left in {1} days": "még {0}, {1} nap alatt",
+  "1 left, and the week ends today": "még 1, és ma vége a hétnek",
+  "{0} left, and the week ends today": "még {0}, és ma vége a hétnek",
+  "Week: {0} of {1} · +{2} XP so far": "Hét: {0}/{1} · eddig +{2} XP",
+  "See all": "Összes megtekintése",
 }

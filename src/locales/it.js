@@ -2636,4 +2636,15 @@ export default {
   "Your habits and checks stay saved. You can turn it back on any time.": "Le tue abitudini e le tue spunte restano salvate. Puoi riattivarlo quando vuoi.",
   "Open Habits": "Apri Abitudini",
   "Choose your habits and how many times a week you want to do each one. Every check earns XP, like workouts do.": "Scegli le tue abitudini e quante volte a settimana vuoi fare ciascuna. Ogni spunta dà XP, come gli allenamenti.",
+  // --- habits home card (phase 4a) ---
+  "Today's habits": "Abitudini di oggi",
+  "Mark {0} done today": "Spunta {0} oggi",
+  "Unmark {0} today": "Togli la spunta a {0} oggi",
+  "1 left in 1 day": "ne manca 1 in 1 giorno",
+  "{0} left in 1 day": "ne mancano {0} in 1 giorno",
+  "{0} left in {1} days": "ne mancano {0} in {1} giorni",
+  "1 left, and the week ends today": "ne manca 1 e la settimana finisce oggi",
+  "{0} left, and the week ends today": "ne mancano {0} e la settimana finisce oggi",
+  "Week: {0} of {1} · +{2} XP so far": "Settimana: {0} su {1} · +{2} XP finora",
+  "See all": "Vedi tutte",
 }

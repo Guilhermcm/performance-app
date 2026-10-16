@@ -2636,4 +2636,15 @@ export default {
   "Your habits and checks stay saved. You can turn it back on any time.": "Tus hábitos y marcas siguen guardados. Puedes volver a activarlo cuando quieras.",
   "Open Habits": "Abrir Hábitos",
   "Choose your habits and how many times a week you want to do each one. Every check earns XP, like workouts do.": "Elige tus hábitos y cuántas veces por semana quieres hacer cada uno. Cada marca da XP, igual que los entrenamientos.",
+  // --- habits home card (phase 4a) ---
+  "Today's habits": "Hábitos de hoy",
+  "Mark {0} done today": "Marcar {0} hoy",
+  "Unmark {0} today": "Desmarcar {0} hoy",
+  "1 left in 1 day": "falta 1 en 1 día",
+  "{0} left in 1 day": "faltan {0} en 1 día",
+  "{0} left in {1} days": "faltan {0} en {1} días",
+  "1 left, and the week ends today": "falta 1 y la semana termina hoy",
+  "{0} left, and the week ends today": "faltan {0} y la semana termina hoy",
+  "Week: {0} of {1} · +{2} XP so far": "Semana: {0} de {1} · +{2} XP hasta ahora",
+  "See all": "Ver todos",
 }

@@ -2702,4 +2702,15 @@ export default {
   "Your habits and checks stay saved. You can turn it back on any time.": "Ваші звички та позначки залишаються збереженими. Увімкнути їх знову можна будь-коли.",
   "Open Habits": "Відкрити звички",
   "Choose your habits and how many times a week you want to do each one. Every check earns XP, like workouts do.": "Виберіть звички і скільки разів на тиждень хочете виконувати кожну. Кожна позначка дає XP, як тренування.",
+  // --- habits home card (phase 4a) ---
+  "Today's habits": "Звички на сьогодні",
+  "Mark {0} done today": "Позначити «{0}» сьогодні",
+  "Unmark {0} today": "Зняти позначку «{0}» сьогодні",
+  "1 left in 1 day": "ще 1, залишився 1 день",
+  "{0} left in 1 day": "ще {0}, залишився 1 день",
+  "{0} left in {1} days": "ще {0}, днів залишилося: {1}",
+  "1 left, and the week ends today": "ще 1, а тиждень закінчується сьогодні",
+  "{0} left, and the week ends today": "ще {0}, а тиждень закінчується сьогодні",
+  "Week: {0} of {1} · +{2} XP so far": "Тиждень: {0} з {1} · +{2} XP поки що",
+  "See all": "Показати всі",
 }

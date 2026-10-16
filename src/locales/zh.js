@@ -2636,4 +2636,15 @@ export default {
   "Your habits and checks stay saved. You can turn it back on any time.": "你的习惯和打卡记录都会保留，随时可以重新开启。",
   "Open Habits": "打开习惯",
   "Choose your habits and how many times a week you want to do each one. Every check earns XP, like workouts do.": "选好你的习惯，以及每个习惯每周想做几次。每次打卡都能获得 XP，和训练一样。",
+  // --- habits home card (phase 4a) ---
+  "Today's habits": "今日习惯",
+  "Mark {0} done today": "今天打卡{0}",
+  "Unmark {0} today": "取消今天的{0}打卡",
+  "1 left in 1 day": "1 天内还差 1 次",
+  "{0} left in 1 day": "1 天内还差 {0} 次",
+  "{0} left in {1} days": "{1} 天内还差 {0} 次",
+  "1 left, and the week ends today": "还差 1 次，本周今天结束",
+  "{0} left, and the week ends today": "还差 {0} 次，本周今天结束",
+  "Week: {0} of {1} · +{2} XP so far": "本周：{0}/{1} · 目前 +{2} XP",
+  "See all": "查看全部",
 }

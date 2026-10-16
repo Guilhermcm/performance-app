@@ -2636,4 +2636,15 @@ export default {
   "Your habits and checks stay saved. You can turn it back on any time.": "Alışkanlıkların ve işaretlerin kayıtlı kalır. İstediğin zaman yeniden açabilirsin.",
   "Open Habits": "Alışkanlıkları görüntüle",
   "Choose your habits and how many times a week you want to do each one. Every check earns XP, like workouts do.": "Alışkanlıklarını ve her birini haftada kaç kez yapmak istediğini seç. Her işaret antrenmanlar gibi XP kazandırır.",
+  // --- habits home card (phase 4a) ---
+  "Today's habits": "Bugünün alışkanlıkları",
+  "Mark {0} done today": "{0} için bugünü işaretle",
+  "Unmark {0} today": "{0} için bugünkü işareti kaldır",
+  "1 left in 1 day": "1 günde 1 eksik",
+  "{0} left in 1 day": "1 günde {0} eksik",
+  "{0} left in {1} days": "{1} günde {0} eksik",
+  "1 left, and the week ends today": "1 eksik ve hafta bugün bitiyor",
+  "{0} left, and the week ends today": "{0} eksik ve hafta bugün bitiyor",
+  "Week: {0} of {1} · +{2} XP so far": "Hafta: {0}/{1} · şimdiye kadar +{2} XP",
+  "See all": "Tümünü gör",
 }
