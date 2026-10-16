@@ -2601,4 +2601,6 @@ export default {
   "Meet the goal of every habit {0} weeks in a row.": "Erreiche das Ziel jeder Gewohnheit {0} Wochen in Folge.",
   "Iron habit": "Eiserne Gewohnheit",
   "Meet the goal of the same habit 8 weeks in a row.": "Erreiche das Ziel derselben Gewohnheit 8 Wochen in Folge.",
+  // --- habits store (phase 4a) ---
+  "Some checks from days that already closed were not saved.": "Einige Häkchen von bereits abgeschlossenen Tagen wurden nicht gespeichert.",
 }

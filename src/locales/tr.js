@@ -2581,4 +2581,6 @@ export default {
   "Meet the goal of every habit {0} weeks in a row.": "Tüm alışkanlıklarının hedefini {0} hafta üst üste tuttur.",
   "Iron habit": "Demir alışkanlık",
   "Meet the goal of the same habit 8 weeks in a row.": "Aynı alışkanlığın hedefini 8 hafta üst üste tuttur.",
+  // --- habits store (phase 4a) ---
+  "Some checks from days that already closed were not saved.": "Kapanmış günlere ait bazı işaretler kaydedilmedi.",
 }

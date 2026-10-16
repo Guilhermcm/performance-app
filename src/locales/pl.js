@@ -2640,4 +2640,6 @@ export default {
   "Meet the goal of every habit {0} weeks in a row.|many": "Osiągaj cel każdego nawyku {0} tygodni z rzędu.",
   "Iron habit": "Żelazny nawyk",
   "Meet the goal of the same habit 8 weeks in a row.": "Osiągaj cel tego samego nawyku 8 tygodni z rzędu.",
+  // --- habits store (phase 4a) ---
+  "Some checks from days that already closed were not saved.": "Niektóre odhaczenia z zamkniętych już dni nie zostały zapisane.",
 }

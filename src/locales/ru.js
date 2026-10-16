@@ -2644,4 +2644,6 @@ export default {
   "Meet the goal of every habit {0} weeks in a row.|many": "Выполняйте цель каждой привычки {0} недель подряд.",
   "Iron habit": "Железная привычка",
   "Meet the goal of the same habit 8 weeks in a row.": "Выполняйте цель одной и той же привычки 8 недель подряд.",
+  // --- habits store (phase 4a) ---
+  "Some checks from days that already closed were not saved.": "Некоторые отметки за уже закрытые дни не сохранились.",
 }

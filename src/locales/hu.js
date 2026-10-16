@@ -2584,4 +2584,6 @@ export default {
   "Meet the goal of every habit {0} weeks in a row.": "Teljesítsd minden szokásod célját {0} héten át egymás után.",
   "Iron habit": "Vasszokás",
   "Meet the goal of the same habit 8 weeks in a row.": "Teljesítsd ugyanannak a szokásnak a célját 8 héten át egymás után.",
+  // --- habits store (phase 4a) ---
+  "Some checks from days that already closed were not saved.": "Néhány pipa a már lezárt napokról nem lett mentve.",
 }

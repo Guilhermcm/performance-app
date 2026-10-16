@@ -32,6 +32,13 @@ describe('classify', () => {
     expect(new NutritionError('night_closed').reason).toBe('night_closed')
   })
 
+  it('refuses the habit rules as plain refusals and keeps a closed day as day_closed', () => {
+    for (const message of ['habit_archived', 'pillar_off', 'too_many_habits']) {
+      expect(classify({ code: 'P0001', message })).toMatchObject({ refused: true, reason: 'refused', detail: message })
+    }
+    expect(classify({ code: 'P0001', message: 'day_closed' })).toMatchObject({ code: 'day_closed', refused: true, reason: 'day_closed' })
+  })
+
   it('refuses check, unique, FK (23xxx) and data exception (22xxx) violations', () => {
     expect(classify({ code: '23514', message: 'check violation' })).toMatchObject({ refused: true, sqlstate: '23514' })
     expect(classify({ code: '23505', message: 'dup' }).refused).toBe(true)

@@ -1972,6 +1972,8 @@ export const PT_BR_OVERRIDES = {
   "Meet the goal of every habit {0} weeks in a row.": "Cumpra a meta de todos os hábitos {0} semanas seguidas.",
   "Iron habit": "Hábito de ferro",
   "Meet the goal of the same habit 8 weeks in a row.": "Cumpra a meta do mesmo hábito 8 semanas seguidas.",
+  // --- habits store (phase 4a) ---
+  "Some checks from days that already closed were not saved.": "Alguns checks de dias já fechados não foram salvos.",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

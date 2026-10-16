@@ -2581,4 +2581,6 @@ export default {
   "Meet the goal of every habit {0} weeks in a row.": "Atteins l’objectif de chaque habitude {0} semaines d’affilée.",
   "Iron habit": "Habitude de fer",
   "Meet the goal of the same habit 8 weeks in a row.": "Atteins l’objectif d’une même habitude 8 semaines d’affilée.",
+  // --- habits store (phase 4a) ---
+  "Some checks from days that already closed were not saved.": "Certaines coches de jours déjà clos n'ont pas été enregistrées.",
 }

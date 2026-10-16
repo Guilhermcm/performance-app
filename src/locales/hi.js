@@ -2581,4 +2581,6 @@ export default {
   "Meet the goal of every habit {0} weeks in a row.": "लगातार {0} हफ़्ते हर आदत का लक्ष्य पूरा करें।",
   "Iron habit": "फ़ौलादी आदत",
   "Meet the goal of the same habit 8 weeks in a row.": "लगातार 8 हफ़्ते एक ही आदत का लक्ष्य पूरा करें।",
+  // --- habits store (phase 4a) ---
+  "Some checks from days that already closed were not saved.": "पहले से बंद दिनों के कुछ चेक सेव नहीं हुए।",
 }
