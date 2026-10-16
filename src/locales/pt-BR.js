@@ -2090,6 +2090,7 @@ export const PT_BR_OVERRIDES = {
   "Some entries for archived trackers were not saved.": "Alguns registros de trackers arquivados não foram salvos.",
   "Some entries dated after today were not saved.": "Alguns registros com data depois de hoje não foram salvos.",
   "Some tracker changes could not be saved.": "Algumas mudanças nos trackers não foram salvas.",
+  "An option you removed has older entries, so it was kept.": "Uma opção que você removeu tem registros antigos, então ela foi mantida.",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

@@ -2752,4 +2752,5 @@ export default {
   "Some entries for archived trackers were not saved.": "لم يتم حفظ بعض الإدخالات الخاصة بمتتبعات مؤرشفة.",
   "Some entries dated after today were not saved.": "لم يتم حفظ بعض الإدخالات المؤرخة بعد اليوم.",
   "Some tracker changes could not be saved.": "تعذر حفظ بعض التغييرات في المتتبعات.",
+  "An option you removed has older entries, so it was kept.": "خيار حذفته له إدخالات أقدم، لذلك تم الإبقاء عليه.",
 }

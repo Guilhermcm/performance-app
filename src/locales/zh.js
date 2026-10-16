@@ -2699,4 +2699,5 @@ export default {
   "Some entries for archived trackers were not saved.": "部分已归档追踪项的记录未保存。",
   "Some entries dated after today were not saved.": "部分日期晚于今天的记录未保存。",
   "Some tracker changes could not be saved.": "部分追踪项的更改无法保存。",
+  "An option you removed has older entries, so it was kept.": "你删除的一个选项有较早的记录，因此已保留。",
 }

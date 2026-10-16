@@ -2710,4 +2710,5 @@ export default {
   "Some entries for archived trackers were not saved.": "บางรายการของตัวติดตามที่เก็บถาวรไม่ได้บันทึก",
   "Some entries dated after today were not saved.": "บางรายการที่ลงวันที่หลังวันนี้ไม่ได้บันทึก",
   "Some tracker changes could not be saved.": "บันทึกการเปลี่ยนแปลงตัวติดตามบางรายการไม่ได้",
+  "An option you removed has older entries, so it was kept.": "ตัวเลือกที่คุณลบมีรายการเก่าอยู่ จึงเก็บไว้",
 }

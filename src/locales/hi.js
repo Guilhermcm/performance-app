@@ -2699,4 +2699,5 @@ export default {
   "Some entries for archived trackers were not saved.": "संग्रहित ट्रैकर की कुछ एंट्री सेव नहीं हुईं।",
   "Some entries dated after today were not saved.": "आज के बाद की तारीख वाली कुछ एंट्री सेव नहीं हुईं।",
   "Some tracker changes could not be saved.": "ट्रैकर के कुछ बदलाव सेव नहीं हो सके।",
+  "An option you removed has older entries, so it was kept.": "आपने जो विकल्प हटाया उसकी पुरानी एंट्री हैं, इसलिए उसे रखा गया।",
 }

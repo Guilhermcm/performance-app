@@ -2699,4 +2699,5 @@ export default {
   "Some entries for archived trackers were not saved.": "보관된 트래커의 일부 기록이 저장되지 않았어요.",
   "Some entries dated after today were not saved.": "오늘 이후 날짜의 일부 기록이 저장되지 않았어요.",
   "Some tracker changes could not be saved.": "트래커 변경 사항 일부를 저장하지 못했어요.",
+  "An option you removed has older entries, so it was kept.": "삭제한 옵션에 이전 기록이 있어서 그대로 두었어요.",
 }

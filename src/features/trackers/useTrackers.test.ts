@@ -218,6 +218,53 @@ describe('useTrackers', () => {
     expect(useTrackers.getState().droppedNotice).toBe(droppedNoticeText('refused'))
   })
 
+  it('keeps an option that still has older entries and saves the rest of the edit again', async () => {
+    const mood = trackerOf({ id: T2, name: 'Mood', icon: 'smile', kind: 'label', unit: null, decimals: null, aggregate: null, sort: 1,
+      options: [{ id: 'a', text: 'good' }, { id: 'b', text: 'bad' }, { id: 'c', text: 'meh' }] })
+    api.fetchTrackers.mockResolvedValue([trackerOf(), mood])
+    await bound()
+    // B has entries from before the 90 days the phone holds, so the server refuses its removal.
+    api.upsertTracker.mockRejectedValueOnce(refused('option_in_use')).mockRejectedValueOnce(offline())
+    const edit = useTrackers.getState().saveTracker({ ...mood, name: 'Mood today', options: [{ id: 'c', text: 'so so' }, { id: 'a', text: 'great' }] })
+    expect(useTrackers.getState().trackers[1].options).toEqual(edit.options)
+    await settle(); await settle()
+    const kept = {
+      ...mood, name: 'Mood today', options: [{ id: 'c', text: 'so so' }, { id: 'a', text: 'great' }, { id: 'b', text: 'bad' }],
+      updated_at: NOW.toISOString()
+    }
+    expect(useTrackers.getState().trackers[1]).toEqual(kept)
+    expect(cache().trackers[1]).toEqual(kept)
+    expect(api.upsertTracker).toHaveBeenCalledTimes(2)
+    expect(api.upsertTracker).toHaveBeenLastCalledWith(kept)
+    expect(trackersOutbox.pending(ME)).toEqual([{ op: 'tracker', row: kept, kept: true }])
+    expect(useTrackers.getState().droppedNotice).toBe(droppedNoticeText('option_in_use'))
+    expect(droppedNoticeText('option_in_use')).toBe('An option you removed has older entries, so it was kept.')
+    useTrackers.getState().dismissDropped()
+    api.upsertTracker.mockResolvedValue(undefined)
+    api.fetchTrackers.mockResolvedValue([trackerOf(), kept])
+    await useTrackers.getState().refresh()
+    expect(trackersOutbox.pending(ME)).toEqual([])
+    expect(useTrackers.getState().droppedNotice).toBeNull()
+    expect(useTrackers.getState().trackers[1]).toEqual(kept)
+  })
+
+  it('saves an edit again only once when the server keeps refusing an option', async () => {
+    const mood = trackerOf({ id: T2, name: 'Mood', icon: 'smile', kind: 'label', unit: null, decimals: null, aggregate: null, sort: 1,
+      options: [{ id: 'a', text: 'good' }, { id: 'b', text: 'bad' }] })
+    api.fetchTrackers.mockResolvedValue([trackerOf(), mood])
+    await bound()
+    api.upsertTracker.mockRejectedValue(refused('option_in_use'))
+    useTrackers.getState().saveTracker({ ...mood, name: 'Mood today', options: [{ id: 'a', text: 'good' }, { id: 'n', text: 'new' }] })
+    await settle(); await settle(); await settle()
+    await useTrackers.getState().refresh()
+    await settle()
+    expect(api.upsertTracker).toHaveBeenCalledTimes(2)
+    expect(trackersOutbox.pending(ME)).toEqual([])
+    // What the server has stays on screen.
+    expect(useTrackers.getState().trackers[1]).toEqual(mood)
+    expect(useTrackers.getState().droppedNotice).not.toBeNull()
+  })
+
   it('keeps an entry made while a pull was on its way, and pulls again', async () => {
     await withTrackers()
     let release!: (v: TrackerEntry[]) => void

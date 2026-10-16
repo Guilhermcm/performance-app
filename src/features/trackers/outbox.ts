@@ -10,8 +10,10 @@ import type { Tracker, TrackerEntry } from './types'
 // server keeps the newest updated_at. A reorder carries only the sort, never a full row, so it
 // cannot bring back what another device archived or renamed. It does not collapse either.
 export type EntryOp = { op: 'entry'; row: TrackerEntry } | { op: 'delete'; id: string }
+// `kept` marks an edit the store queued again after an option_in_use refusal, with the refused
+// options put back: it is never queued a third time.
 export type TrackerOp =
-  | { op: 'tracker'; row: Tracker }
+  | { op: 'tracker'; row: Tracker; kept?: true }
   | { op: 'sort'; id: string; sort: number; updated_at: string }
   | EntryOp
 

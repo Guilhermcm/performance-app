@@ -2699,4 +2699,5 @@ export default {
   "Some entries for archived trackers were not saved.": "Arşivlenmiş izleyicilere ait bazı kayıtlar kaydedilmedi.",
   "Some entries dated after today were not saved.": "Bugünden sonraki bir tarihe ait bazı kayıtlar kaydedilmedi.",
   "Some tracker changes could not be saved.": "İzleyicilerdeki bazı değişiklikler kaydedilemedi.",
+  "An option you removed has older entries, so it was kept.": "Kaldırdığın bir seçeneğin eski kayıtları var, bu yüzden korundu.",
 }

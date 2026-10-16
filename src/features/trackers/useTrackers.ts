@@ -13,18 +13,32 @@ export const MAX_ACTIVE_TRACKERS = 30
 // The entries kept on the phone (plan decision 5): today and the 89 days before it, every tracker.
 export const WINDOW_DAYS = 90
 
-// Why queued writes were dropped: one rule only when every drop was that rule.
-export type DroppedReason = 'tracker_archived' | 'future_day' | 'refused'
+// Why queued writes were dropped: one rule only when every drop was that rule. option_in_use is an
+// edit saved again with the options the server kept, not a loss.
+export type DroppedReason = 'tracker_archived' | 'future_day' | 'option_in_use' | 'refused'
 
 export const droppedNoticeText = (reason: DroppedReason): string =>
   reason === 'tracker_archived' ? t('Some entries for archived trackers were not saved.')
     : reason === 'future_day' ? t('Some entries dated after today were not saved.')
-      : t('Some tracker changes could not be saved.')
+      : reason === 'option_in_use' ? t('An option you removed has older entries, so it was kept.')
+        : t('Some tracker changes could not be saved.')
 
+const SPECIFIC: readonly string[] = ['tracker_archived', 'future_day', 'option_in_use']
 const reasonOf = (details: string[]): DroppedReason => {
   const all = new Set(details)
   const [only] = all
-  return all.size === 1 && (only === 'tracker_archived' || only === 'future_day') ? only : 'refused'
+  return all.size === 1 && SPECIFIC.includes(only) ? (only as DroppedReason) : 'refused'
+}
+
+// An edit refused with option_in_use (it removed an option whose entries are older than the 90 days
+// the phone holds), made again on the server's copy: the same fields and options, in the edit's
+// order, with the options the server still has and the edit removed put back at the end.
+function keepOptions(edit: Tracker, server: Tracker): Tracker {
+  const ids = new Set((edit.options ?? []).map(o => o.id))
+  return {
+    ...server, name: edit.name, icon: edit.icon, unit: edit.unit, decimals: edit.decimals, aggregate: edit.aggregate,
+    options: [...(edit.options ?? []), ...(server.options ?? []).filter(o => !ids.has(o.id))], updated_at: new Date().toISOString()
+  }
 }
 
 type Data = { trackers: Tracker[]; entries: TrackerEntry[]; from: string }
@@ -119,6 +133,8 @@ let refreshing: Promise<void> | null = null
 // may even have gone and left the queue meanwhile), so its answer is dropped and the pull runs again.
 let writes = 0
 let pullAgain = false
+// Tracker edits refused with option_in_use, waiting for the next pull to be made again (keepOptions).
+let retries: Tracker[] = []
 
 export const useTrackers = create<TrackersStore>((set, get) => {
   const persist = () => {
@@ -138,9 +154,17 @@ export const useTrackers = create<TrackersStore>((set, get) => {
     const stop = trackersOutbox.onRefused((u, op, detail) => { if (u === userId) refused.push({ op, detail }) })
     try { await trackersOutbox.flush(userId) } finally { stop() }
     if (gen !== generation || !refused.length) return
+    // An edit refused for an option that still has entries goes again once the pull brings the
+    // server's options; one already made again that is refused anyway is a plain refusal.
+    const details = refused.map(({ op, detail }) => {
+      if (op.op !== 'tracker' || detail !== 'option_in_use') return detail
+      if (op.kept) return 'refused'
+      retries.push(op.row)
+      return detail
+    })
     const waiting = new Set(trackersOutbox.pending(userId).flatMap(op => (op.op === 'entry' ? [op.row.id] : op.op === 'delete' ? [op.id] : [])))
     const gone = new Set(refused.flatMap(({ op }) => (op.op === 'entry' && !waiting.has(op.row.id) ? [op.row.id] : [])))
-    const text = droppedNoticeText(reasonOf(refused.map(r => r.detail)))
+    const text = droppedNoticeText(reasonOf(details))
     const shown = get().droppedNotice
     set(s => ({
       entries: gone.size ? s.entries.filter(e => !gone.has(e.id)) : s.entries,
@@ -156,11 +180,11 @@ export const useTrackers = create<TrackersStore>((set, get) => {
     void flush(true)
   }
 
-  const write = (next: Tracker) => {
+  const write = (next: Tracker, kept = false) => {
     writes++
     set({ trackers: [...get().trackers.filter(x => x.id !== next.id), next].sort(byOrder) })
     persist()
-    queue({ op: 'tracker', row: next })
+    queue(kept ? { op: 'tracker', row: next, kept: true } : { op: 'tracker', row: next })
   }
 
   return {
@@ -177,6 +201,7 @@ export const useTrackers = create<TrackersStore>((set, get) => {
       generation++
       refreshing = null
       pullAgain = false
+      retries = []
       set({
         userId, droppedNotice: null, status: saved ? 'ready' : 'loading',
         trackers: saved?.trackers ?? [], entries: saved?.entries ?? [], from: saved?.from ?? windowStart(todayNow())
@@ -207,6 +232,12 @@ export const useTrackers = create<TrackersStore>((set, get) => {
           const ops = [...queued.filter(op => !refused.has(JSON.stringify(op))), ...trackersOutbox.pending(userId)]
           set({ ...applyPending(ops, { trackers, entries }), from, status: 'ready' })
           persist()
+          const edits = retries
+          retries = []
+          for (const edit of edits) {
+            const server = trackers.find(x => x.id === edit.id)
+            if (server) write(keepOptions(edit, server), true)
+          }
         } catch {
           if (gen !== generation) return
           set(s => ({ status: s.status === 'ready' ? 'ready' : 'error' }))
@@ -229,6 +260,7 @@ export const useTrackers = create<TrackersStore>((set, get) => {
       generation++
       refreshing = null
       pullAgain = false
+      retries = []
       drop()
       set({ userId: null, status: 'idle', ...empty(), droppedNotice: null })
     },

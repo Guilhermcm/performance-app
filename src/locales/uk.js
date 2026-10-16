@@ -2774,4 +2774,5 @@ export default {
   "Some entries for archived trackers were not saved.": "Деякі записи архівних трекерів не збережено.",
   "Some entries dated after today were not saved.": "Деякі записи з датою після сьогоднішньої не збережено.",
   "Some tracker changes could not be saved.": "Деякі зміни трекерів не вдалося зберегти.",
+  "An option you removed has older entries, so it was kept.": "Варіант, який ви видалили, має старіші записи, тому його збережено.",
 }

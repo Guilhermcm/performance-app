@@ -2719,4 +2719,5 @@ export default {
   "Some entries for archived trackers were not saved.": "Einige Einträge für archivierte Tracker wurden nicht gespeichert.",
   "Some entries dated after today were not saved.": "Einige Einträge mit einem Datum nach heute wurden nicht gespeichert.",
   "Some tracker changes could not be saved.": "Einige Änderungen an Trackern konnten nicht gespeichert werden.",
+  "An option you removed has older entries, so it was kept.": "Eine Option, die du entfernt hast, hat ältere Einträge und wurde deshalb behalten.",
 }
