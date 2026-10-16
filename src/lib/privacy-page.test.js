@@ -107,7 +107,7 @@ describe('privacy policy page', () => {
     expect(pt).toContain('Nada deles vai para seus amigos, para o feed ou para os desafios, e eles não rendem XP')
     expect(en).toContain('Trackers')
     expect(en).toContain('The app keeps no tracker data until you create your first one')
-    expect(en).toContain('the name, the icon, the type (number, duration or label), the unit and, for label trackers, the options')
+    expect(en).toContain('the name, the icon, the type (number, duration or choice), the unit and, for choice trackers, the options')
     expect(en).toContain('the entries you log, each with the day, the time, the value and an optional note')
     expect(en).toContain('Only you see your trackers and entries')
     expect(en).toContain('None of it goes to your friends, the feed or challenges, and it earns no XP')

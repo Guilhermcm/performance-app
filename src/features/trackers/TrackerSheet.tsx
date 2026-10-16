@@ -89,7 +89,10 @@ function SheetBody({ tracker, onSaved, onDone }: { tracker?: Tracker; onSaved?: 
   // The options with entries in the window (plan decision 8) cannot be removed; the server has the last word.
   const inUse = useMemo(() => new Set(tracker ? entries.filter(e => e.tracker_id === tracker.id && e.option).map(e => e.option) : []), [entries, tracker])
   const texts = options.map(o => o.text.trim())
-  const optionsOk = kind !== 'label' || (options.length >= OPTIONS_MIN && texts.every(x => x.length > 0))
+  // Two options written the same (case and spaces aside) would read as one in the sheet and the chart.
+  const keys = texts.map(x => x.toLocaleLowerCase())
+  const repeated = new Set(keys.filter((k, i) => k && keys.indexOf(k) !== i))
+  const optionsOk = kind !== 'label' || (options.length >= OPTIONS_MIN && texts.every(x => x.length > 0) && repeated.size === 0)
 
   const canGo = trimmed.length > 0 && optionsOk && !full
 
@@ -252,6 +255,7 @@ function SheetBody({ tracker, onSaved, onDone }: { tracker?: Tracker; onSaved?: 
                   <div key={o.id} role="group" aria-label={t('Option {0}', i + 1)} className="flex flex-col gap-1">
                     <div className="flex items-center gap-1">
                       <Input value={o.text} autoComplete="off" enterKeyHint="done" aria-label={t('Name of option {0}', i + 1)}
+                        aria-invalid={repeated.has(keys[i]) || undefined} aria-describedby={repeated.has(keys[i]) ? id + '-same' : undefined}
                         className="h-12 min-w-0 flex-1 rounded-xl text-[15px]" onChange={e => setText(i, e.target.value)} />
                       <Button type="button" variant="ghost" size="icon" className={small} aria-label={t('Move up')} disabled={i === 0}
                         onClick={() => swap(i, i - 1)}><ChevronUp aria-hidden className="size-5" /></Button>
@@ -272,7 +276,8 @@ function SheetBody({ tracker, onSaved, onDone }: { tracker?: Tracker; onSaved?: 
               })}
             </div>
             <p className="text-sm leading-snug text-muted-foreground">{t('Between 2 and 8 options.')}</p>
-            {!optionsOk && <p role="status" className="text-sm leading-snug text-muted-foreground">{t('Write a name for every option.')}</p>}
+            {texts.some(x => !x) && <p role="status" className="text-sm leading-snug text-muted-foreground">{t('Write a name for every option.')}</p>}
+            {repeated.size > 0 && <p id={id + '-same'} role="status" className="text-sm leading-snug text-destructive">{t('Each option needs a different name.')}</p>}
             {options.length < OPTIONS_MAX && (
               <Button type="button" variant="outline" className="h-11 justify-start rounded-xl px-3 text-[15px]" onClick={add}>
                 <Plus aria-hidden className="size-4" />{t('Add option')}

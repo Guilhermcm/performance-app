@@ -10,6 +10,7 @@ import TrackerSheet from './TrackerSheet'
 import { useTrackers } from './useTrackers'
 import { classify } from '@/lib/supabase-errors'
 import { trackerOf, entryOf, T1 } from './test-trackers'
+import { setLang } from '../../lib/i18n.js'
 import type { Tracker, TrackerOption } from './types'
 
 const realTrackers = useTrackers.getState()
@@ -142,6 +143,29 @@ describe('TrackerSheet: label options', () => {
     // Ids the server accepts: 1 to 16 of a-z0-9, one apiece.
     for (const o of input.options) expect(o.id).toMatch(/^[a-z0-9]{1,16}$/)
     expect(new Set(input.options.map((o: TrackerOption) => o.id)).size).toBe(2)
+  })
+
+  it('refuses two options with the same text, whatever the case and spaces, and says so', () => {
+    show()
+    radio('Choice')
+    type('Mood')
+    setOption(0, 'Good')
+    setOption(1, ' good ')
+    expect(button('Create tracker').disabled).toBe(true)
+    expect(screen.getByText('Each option needs a different name.')).toBeTruthy()
+    expect(optionFields()[1].getAttribute('aria-invalid')).toBe('true')
+    expect(optionFields()[0].getAttribute('aria-invalid')).toBe('true')
+    setOption(1, 'Bad')
+    expect(screen.queryByText('Each option needs a different name.')).toBeNull()
+    expect(button('Create tracker').disabled).toBe(false)
+  })
+
+  it('names the label kind "Rótulo" in pt-BR', async () => {
+    await setLang('pt-BR')
+    try {
+      show()
+      expect(screen.getByRole('radio', { name: 'Rótulo' })).toBeTruthy()
+    } finally { await setLang('en') }
   })
 
   it('adds up to 8 options and the add button goes away on the 8th', () => {
