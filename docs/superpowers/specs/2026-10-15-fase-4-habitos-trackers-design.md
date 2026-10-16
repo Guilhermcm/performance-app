@@ -4,7 +4,7 @@
 - **Status:** design aprovado por seções e spec aprovada em 2026-10-15. A 4a (Hábitos) foi
   implementada e publicada em produção em 2026-10-16; o que esta spec deixava em aberto foi
   fechado nas [Decisões do plano](../plans/2026-10-15-fase-4a-habitos.md#decisões-do-plano). A 4b
-  (Trackers) foi implementada em 2026-10-16 e aguarda o SQL 0031 em produção; o que a spec deixava
+  (Trackers) foi implementada e publicada em produção em 2026-10-16; o que a spec deixava
   em aberto foi fechado nas [Decisões do plano](../plans/2026-10-16-fase-4b-trackers.md#decisões-do-plano).
 - **Publicação da 4a:** `supabase/release/0026-0030_habits.sql` e o cliente sobem no mesmo dia, pelo
   roteiro dos Hábitos em [docs/SETUP.md](../../SETUP.md).

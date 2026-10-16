@@ -34,7 +34,7 @@ combinada a partir de outubro de 2026: **1c → 1d → 3 → 4 → 5 → 6** (a 
 | 1d | Plano com evidência | M | 1c | em produção desde 2026-10-12 (PR #6), sem SQL; falta a conferência das fontes em `docs/fontes-1d.md` ([spec](superpowers/specs/2026-10-12-fase-1d-plano-evidencia-design.md), [plano](superpowers/plans/2026-10-12-fase-1d-plano-evidencia.md)) |
 | 2 | Nutrição | G | 1a | concluída (2a e 2b) |
 | 3 | Sono | P | 1a | em produção desde 2026-10-12 (SQL 0021-0025 e PR #6) ([spec](superpowers/specs/2026-10-06-fase-3-sono-design.md), [plano](superpowers/plans/2026-10-12-fase-3-sono.md)) |
-| 4 | Hábitos + trackers | M | 1a | em duas subetapas ([spec](superpowers/specs/2026-10-15-fase-4-habitos-trackers-design.md)). 4a Hábitos: em produção desde 2026-10-16 ([plano](superpowers/plans/2026-10-15-fase-4a-habitos.md)). 4b Trackers: concluída no código, aguarda o SQL 0031 em produção ([plano](superpowers/plans/2026-10-16-fase-4b-trackers.md)) |
+| 4 | Hábitos + trackers | M | 1a | em duas subetapas ([spec](superpowers/specs/2026-10-15-fase-4-habitos-trackers-design.md)). 4a Hábitos: em produção desde 2026-10-16 ([plano](superpowers/plans/2026-10-15-fase-4a-habitos.md)). 4b Trackers: em produção desde 2026-10-16 ([plano](superpowers/plans/2026-10-16-fase-4b-trackers.md)) |
 | 5 | Painel de performance | M | 2, 3, 4 | a especificar |
 | 6 | Foco (ActivityWatch) | P | 1a | a especificar |
 
@@ -316,9 +316,8 @@ de [docs/SETUP.md](SETUP.md), e o merge saiu no mesmo dia.
 - Migration `0031`, publicada em `supabase/release/0031_trackers.sql`: só cria as tabelas
   `trackers` e `tracker_entries`, sem RPC nova.
 
-**Status da 4b:** concluída no código, aguarda o SQL 0031 em produção. Como a migration só cria
-tabelas, o SQL pode rodar antes do merge, sem pressa, pelo roteiro dos Trackers em
-[docs/SETUP.md](SETUP.md).
+**Status da 4b:** em produção. O SQL 0031 rodou em 2026-10-16, com as conferências do roteiro dos
+Trackers em [docs/SETUP.md](SETUP.md), e o merge saiu no mesmo dia.
 
 ---
 
