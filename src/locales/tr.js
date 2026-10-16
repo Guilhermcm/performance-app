@@ -2689,4 +2689,10 @@ export default {
   "No habit checked on this day.": "Bu gün hiçbir alışkanlık işaretlenmedi.",
   "Habits were off this month, so no day counts here.": "Alışkanlıklar bu ay kapalıydı, bu yüzden burada hiçbir gün sayılmıyor.",
   "The habit was saved, but Habits is still off. Tap again to turn it on.": "Alışkanlık kaydedildi ama Alışkanlıklar hâlâ kapalı. Açmak için tekrar dokun.",
+  // --- trackers: values and when (phase 4b) ---
+  "today": "bugün",
+  "yesterday": "dün",
+  "{0} days ago": "{0} gün önce",
+  "{0} h": "{0} sa",
+  "{0} h {1} min": "{0} sa {1} dk",
 }

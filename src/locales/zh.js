@@ -2689,4 +2689,10 @@ export default {
   "No habit checked on this day.": "这一天没有打卡任何习惯。",
   "Habits were off this month, so no day counts here.": "这个月习惯功能处于关闭状态，所以这里没有计入任何一天。",
   "The habit was saved, but Habits is still off. Tap again to turn it on.": "习惯已保存，但习惯功能仍未开启。再点一次即可开启。",
+  // --- trackers: values and when (phase 4b) ---
+  "today": "今天",
+  "yesterday": "昨天",
+  "{0} days ago": "{0} 天前",
+  "{0} h": "{0} 小时",
+  "{0} h {1} min": "{0} 小时 {1} 分钟",
 }

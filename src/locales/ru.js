@@ -2764,4 +2764,13 @@ export default {
   "No habit checked on this day.": "В этот день не отмечено ни одной привычки.",
   "Habits were off this month, so no day counts here.": "В этом месяце «Привычки» были выключены, поэтому здесь не учитывается ни один день.",
   "The habit was saved, but Habits is still off. Tap again to turn it on.": "Привычка сохранена, но раздел «Привычки» всё ещё выключен. Нажмите ещё раз, чтобы включить.",
+  // --- trackers: values and when (phase 4b) ---
+  "today": "сегодня",
+  "yesterday": "вчера",
+  "{0} days ago": "{0} дня назад",
+  "{0} days ago|one": "{0} день назад",
+  "{0} days ago|few": "{0} дня назад",
+  "{0} days ago|many": "{0} дней назад",
+  "{0} h": "{0} ч",
+  "{0} h {1} min": "{0} ч {1} мин",
 }

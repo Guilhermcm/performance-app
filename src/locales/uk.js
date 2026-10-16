@@ -2761,4 +2761,13 @@ export default {
   "No habit checked on this day.": "Цього дня не позначено жодної звички.",
   "Habits were off this month, so no day counts here.": "Цього місяця «Звички» були вимкнені, тому тут не враховується жоден день.",
   "The habit was saved, but Habits is still off. Tap again to turn it on.": "Звичку збережено, але розділ «Звички» досі вимкнено. Торкніться ще раз, щоб увімкнути.",
+  // --- trackers: values and when (phase 4b) ---
+  "today": "сьогодні",
+  "yesterday": "вчора",
+  "{0} days ago": "{0} дня тому",
+  "{0} days ago|one": "{0} день тому",
+  "{0} days ago|few": "{0} дні тому",
+  "{0} days ago|many": "{0} днів тому",
+  "{0} h": "{0} год",
+  "{0} h {1} min": "{0} год {1} хв",
 }
