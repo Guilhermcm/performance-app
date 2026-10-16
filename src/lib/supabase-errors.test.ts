@@ -39,6 +39,12 @@ describe('classify', () => {
     expect(classify({ code: 'P0001', message: 'day_closed' })).toMatchObject({ code: 'day_closed', refused: true, reason: 'day_closed' })
   })
 
+  it('refuses the tracker rules as plain refusals, keeping the code in detail', () => {
+    for (const message of ['too_many_trackers', 'option_in_use', 'invalid_options', 'invalid_value', 'future_day', 'tracker_archived', 'tracker_not_found']) {
+      expect(classify({ code: 'P0001', message })).toMatchObject({ refused: true, reason: 'refused', detail: message })
+    }
+  })
+
   it('refuses check, unique, FK (23xxx) and data exception (22xxx) violations', () => {
     expect(classify({ code: '23514', message: 'check violation' })).toMatchObject({ refused: true, sqlstate: '23514' })
     expect(classify({ code: '23505', message: 'dup' }).refused).toBe(true)

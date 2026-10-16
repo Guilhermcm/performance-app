@@ -2086,6 +2086,10 @@ export const PT_BR_OVERRIDES = {
   "{0} days ago": "há {0} dias",
   "{0} h": "{0} h",
   "{0} h {1} min": "{0} h {1} min",
+  // --- trackers: dropped queued writes (phase 4b) ---
+  "Some entries for archived trackers were not saved.": "Alguns registros de trackers arquivados não foram salvos.",
+  "Some entries dated after today were not saved.": "Alguns registros com data depois de hoje não foram salvos.",
+  "Some tracker changes could not be saved.": "Algumas mudanças nos trackers não foram salvas.",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

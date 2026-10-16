@@ -7,6 +7,7 @@ import { useCheckins } from '../checkin/useCheckins'
 import { forgetOutbox as forgetDiaryOutbox } from '../nutrition/outbox'
 import { sleepOutbox } from '../sleep/outbox'
 import { habitsOutbox } from '../habits/outbox'
+import { trackersOutbox } from '../trackers/outbox'
 import { clearEventQueue } from '../gamification/events'
 import { useProgress } from '../gamification/useProgress'
 import { clearPendingInvite } from '../social/pending-invite'
@@ -29,7 +30,7 @@ type ForgetStore = { forgetAccount(): Promise<void> }
 // Deletes the account and everything the server keeps about it (delete_my_account, migration
 // 0006), then everything this device keeps about it: the app copy, its stashes and media, the
 // sync marks, the profile, progress and social caches, the event queue, a pending invite and the
-// check-in, food diary, sleep and habits queues of that account.
+// check-in, food diary, sleep, habits and trackers queues of that account.
 // The session ends with it, so the app falls back to the sign-in screen. Nothing local is touched
 // when the server call fails: the account still exists and the person can try again.
 // The check-in photos go first, while the session can still reach its folder (spec 6.3). A failure
@@ -51,12 +52,14 @@ export async function deleteMyAccount(): Promise<void> {
   useProfile.getState().reset()
   useProgress.getState().reset()
   useSocial.getState().reset()
-  // The check-ins, diary entries, nights, habits and checks waiting on this phone belong to an account that no longer exists.
+  // The check-ins, diary entries, nights, habits, checks, trackers and entries waiting on this phone belong to an
+  // account that no longer exists.
   if (userId) {
     await clearCheckinOutbox(userId).catch(() => {})
     forgetDiaryOutbox(userId)
     sleepOutbox.forget(userId)
     habitsOutbox.forget(userId)
+    trackersOutbox.forget(userId)
   }
   useCheckins.getState().reset()
   clearSignedUrls()

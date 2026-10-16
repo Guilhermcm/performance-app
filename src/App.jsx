@@ -33,6 +33,7 @@ import { useSocial } from './features/social/useSocial.ts'
 import { useNutrition, startNutritionSync } from './features/nutrition/useNutrition.ts'
 import { useSleep, startSleepSync } from './features/sleep/useSleep.ts'
 import { useHabits, startHabitsSync } from './features/habits/useHabits.ts'
+import { useTrackers, startTrackersSync } from './features/trackers/useTrackers.ts'
 import { useCheckins, startCheckinSync } from './features/checkin/useCheckins.ts'
 import CheckinFlow from './features/checkin/CheckinFlow.tsx'
 import MyTrainings from './features/checkin/MyTrainings.tsx'
@@ -160,7 +161,7 @@ function Shell() {
 
   // The profile in memory belongs to whoever is signed in; signing out drops it.
   useEffect(() => {
-    if (!user) { useProfile.getState().reset(); useProgress.getState().reset(); useSocial.getState().reset(); useNutrition.getState().reset(); useSleep.getState().reset(); useHabits.getState().reset(); useCheckins.getState().reset() }
+    if (!user) { useProfile.getState().reset(); useProgress.getState().reset(); useSocial.getState().reset(); useNutrition.getState().reset(); useSleep.getState().reset(); useHabits.getState().reset(); useTrackers.getState().reset(); useCheckins.getState().reset() }
   }, [user?.id])
   // No tab bar while the profile loads or the onboarding is on screen (a guest has no profile).
   const profileReady = useProfile(s => s.status === 'ready' && !s.onboarding) || !user
@@ -193,6 +194,12 @@ function Shell() {
     if (!user || !profileReady) return
     void useHabits.getState().bind(user.id)
     return startHabitsSync()
+  }, [user?.id, profileReady])
+  // Trackers: the same again (saved copy, queued trackers and entries sent, pull on focus, reconnect and a new day).
+  useEffect(() => {
+    if (!user || !profileReady) return
+    void useTrackers.getState().bind(user.id)
+    return startTrackersSync()
   }, [user?.id, profileReady])
   // Check-ins: my recent ones and the notices at once, the photo queue sent, and again on focus
   // and reconnect. The feed loads when the Social tab asks for it.

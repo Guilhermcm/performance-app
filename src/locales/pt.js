@@ -2695,4 +2695,8 @@ export default {
   "{0} days ago": "há {0} dias",
   "{0} h": "{0} h",
   "{0} h {1} min": "{0} h {1} min",
+  // --- trackers: dropped queued writes (phase 4b) ---
+  "Some entries for archived trackers were not saved.": "Alguns registos de trackers arquivados não foram guardados.",
+  "Some entries dated after today were not saved.": "Alguns registos com data posterior a hoje não foram guardados.",
+  "Some tracker changes could not be saved.": "Não foi possível guardar algumas alterações nos trackers.",
 }

@@ -45,10 +45,11 @@ describe('createLocalOutbox', () => {
   it('tells a watcher which ops it dropped, per account, until it stops watching', async () => {
     for (const id of ['a', 'b']) box.enqueue(ME, { id, v: 1 })
     send.mockImplementation(async op => { if (op.id === 'a') throw pg('P0001', 'day_closed') })
-    const seen: [string, Op][] = []
-    const stop = box.onRefused((userId, op) => { seen.push([userId, op]) })
+    const seen: [string, Op, string][] = []
+    const stop = box.onRefused((userId, op, detail) => { seen.push([userId, op, detail]) })
     await box.flush(ME)
-    expect(seen).toEqual([[ME, { id: 'a', v: 1 }]])
+    // With the server's own words, so a store can tell one refusal from another.
+    expect(seen).toEqual([[ME, { id: 'a', v: 1 }, 'day_closed']])
     stop()
     box.enqueue(ME, { id: 'a', v: 2 })
     await box.flush(ME)

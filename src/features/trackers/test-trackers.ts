@@ -12,3 +12,7 @@ export const entryOf = (day: string, over: Partial<TrackerEntry> = {}): TrackerE
   id: `e${++seq}`, tracker_id: T1, day, at: '09:00', value: 1, minutes: null, option: null, note: null,
   updated_at: '2026-09-01T12:00:00.000Z', ...over,
 })
+
+export const ME = '00000000-0000-0000-0000-00000000000a'
+export const OTHER = '00000000-0000-0000-0000-00000000000b'
+export const T2 = '00000000-0000-0000-0000-0000000000c2'

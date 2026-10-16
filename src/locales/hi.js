@@ -2695,4 +2695,8 @@ export default {
   "{0} days ago": "{0} दिन पहले",
   "{0} h": "{0} घंटे",
   "{0} h {1} min": "{0} घंटे {1} मिनट",
+  // --- trackers: dropped queued writes (phase 4b) ---
+  "Some entries for archived trackers were not saved.": "संग्रहित ट्रैकर की कुछ एंट्री सेव नहीं हुईं।",
+  "Some entries dated after today were not saved.": "आज के बाद की तारीख वाली कुछ एंट्री सेव नहीं हुईं।",
+  "Some tracker changes could not be saved.": "ट्रैकर के कुछ बदलाव सेव नहीं हो सके।",
 }

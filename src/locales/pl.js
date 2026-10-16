@@ -2769,4 +2769,8 @@ export default {
   "{0} days ago|many": "{0} dni temu",
   "{0} h": "{0} godz.",
   "{0} h {1} min": "{0} godz. {1} min",
+  // --- trackers: dropped queued writes (phase 4b) ---
+  "Some entries for archived trackers were not saved.": "Niektóre wpisy zarchiwizowanych trackerów nie zostały zapisane.",
+  "Some entries dated after today were not saved.": "Niektóre wpisy z datą późniejszą niż dziś nie zostały zapisane.",
+  "Some tracker changes could not be saved.": "Nie udało się zapisać niektórych zmian w trackerach.",
 }

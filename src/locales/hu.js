@@ -2698,4 +2698,8 @@ export default {
   "{0} days ago": "{0} napja",
   "{0} h": "{0} ó",
   "{0} h {1} min": "{0} ó {1} perc",
+  // --- trackers: dropped queued writes (phase 4b) ---
+  "Some entries for archived trackers were not saved.": "Néhány archivált követőhöz tartozó bejegyzés nem lett mentve.",
+  "Some entries dated after today were not saved.": "Néhány mai napnál későbbi dátumú bejegyzés nem lett mentve.",
+  "Some tracker changes could not be saved.": "Néhány követőmódosítást nem sikerült menteni.",
 }

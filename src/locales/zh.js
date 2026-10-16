@@ -2695,4 +2695,8 @@ export default {
   "{0} days ago": "{0} 天前",
   "{0} h": "{0} 小时",
   "{0} h {1} min": "{0} 小时 {1} 分钟",
+  // --- trackers: dropped queued writes (phase 4b) ---
+  "Some entries for archived trackers were not saved.": "部分已归档追踪项的记录未保存。",
+  "Some entries dated after today were not saved.": "部分日期晚于今天的记录未保存。",
+  "Some tracker changes could not be saved.": "部分追踪项的更改无法保存。",
 }

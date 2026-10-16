@@ -2706,4 +2706,8 @@ export default {
   "{0} days ago": "{0} วันที่แล้ว",
   "{0} h": "{0} ชม.",
   "{0} h {1} min": "{0} ชม. {1} นาที",
+  // --- trackers: dropped queued writes (phase 4b) ---
+  "Some entries for archived trackers were not saved.": "บางรายการของตัวติดตามที่เก็บถาวรไม่ได้บันทึก",
+  "Some entries dated after today were not saved.": "บางรายการที่ลงวันที่หลังวันนี้ไม่ได้บันทึก",
+  "Some tracker changes could not be saved.": "บันทึกการเปลี่ยนแปลงตัวติดตามบางรายการไม่ได้",
 }

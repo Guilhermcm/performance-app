@@ -2748,4 +2748,8 @@ export default {
   "{0} days ago": "منذ {0} يوم",
   "{0} h": "{0} س",
   "{0} h {1} min": "{0} س {1} دقيقة",
+  // --- trackers: dropped queued writes (phase 4b) ---
+  "Some entries for archived trackers were not saved.": "لم يتم حفظ بعض الإدخالات الخاصة بمتتبعات مؤرشفة.",
+  "Some entries dated after today were not saved.": "لم يتم حفظ بعض الإدخالات المؤرخة بعد اليوم.",
+  "Some tracker changes could not be saved.": "تعذر حفظ بعض التغييرات في المتتبعات.",
 }

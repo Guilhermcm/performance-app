@@ -19,8 +19,9 @@ export type LocalOutbox<Op> = {
   // One account's queue, when that account is deleted; the others stay.
   forget(userId: string): void
   // Called with each op dropped as refused from now on, so a pull on its way can leave it out of
-  // what it lays over the server's answer. Returns the way to stop.
-  onRefused(fn: (userId: string, op: Op) => void): () => void
+  // what it lays over the server's answer, with the server's message (the rule it named, if any).
+  // Returns the way to stop.
+  onRefused(fn: (userId: string, op: Op, detail: string) => void): () => void
 }
 
 type Queues<Op> = Record<string, Op[]>
@@ -49,7 +50,7 @@ export function createLocalOutbox<Op>(o: { key: string; same: (a: Op, b: Op) => 
   }
 
   const pending = (userId: string): Op[] => readAll()[userId] ?? []
-  const watchers = new Set<(userId: string, op: Op) => void>()
+  const watchers = new Set<(userId: string, op: Op, detail: string) => void>()
 
   function enqueue(userId: string, op: Op): void {
     const all = readAll()
@@ -81,7 +82,7 @@ export function createLocalOutbox<Op>(o: { key: string; same: (a: Op, b: Op) => 
         if (!err.refused) break
         dropped++
         reasons.add(err.reason ?? 'refused')
-        for (const fn of watchers) fn(userId, op)
+        for (const fn of watchers) fn(userId, op, err.detail)
       }
       remove(userId, op)
     }
@@ -108,7 +109,7 @@ export function createLocalOutbox<Op>(o: { key: string; same: (a: Op, b: Op) => 
     writeAll(all)
   }
 
-  function onRefused(fn: (userId: string, op: Op) => void): () => void {
+  function onRefused(fn: (userId: string, op: Op, detail: string) => void): () => void {
     watchers.add(fn)
     return () => { watchers.delete(fn) }
   }
