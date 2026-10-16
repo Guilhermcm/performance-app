@@ -219,7 +219,7 @@ Use este roteiro para levar um banco que já roda o Sono (`0001` a `0025`) até 
 migrations do pilar Hábitos (fase 4a). Rode o SQL e faça o merge **no mesmo dia**, nesta ordem:
 
 1. Rode o SQL em produção (passos abaixo).
-2. Faça o merge do PR da fase 4a logo em seguida, para o cliente novo ir ao ar.
+2. Faça o merge do PR #7 logo em seguida, para o cliente novo ir ao ar.
 
 A ordem vem da `0029`. Ela apaga as versões de `create_challenge` e `join_challenge` e cria as novas,
 com o parâmetro `p_share_habits boolean default false` no fim. O cliente novo já manda
@@ -228,7 +228,8 @@ cliente antes. O cliente do Sono, que fica no ar enquanto o roteiro corre, conti
 chama as duas funções por parâmetros nomeados, sem `p_share_habits`, e o valor padrão cobre a falta;
 só não oferece os Hábitos. O painel de desafios dele, porém, quebra ao receber um desafio de um
 modelo que não conhece, como o de checks de hábitos: por isso o primeiro desafio de hábitos só sai
-depois que todos reabrirem o app (passo 5). A spec (§15) pede o SQL e o cliente no mesmo deploy, então
+depois que todos reabrirem o app (passo 5). Só quem participa desse desafio ou foi convidado para ele
+cai na tela de erro, e o botão de recarregar dessa tela abre o cliente novo depois do deploy. A spec (§15) pede o SQL e o cliente no mesmo deploy, então
 não deixe o merge para outro dia.
 
 O que muda no banco quando a `0026` a `0030` rodam:
@@ -263,12 +264,13 @@ Passo a passo:
      completo está na seção 7).
 4. Se o app disser que não achou a função logo depois ("Could not find the function"), recarregue o
    cache da API: `notify pgrst, 'reload schema';`.
-5. Faça o merge do PR da fase 4a e o deploy do cliente novo. Depois do deploy, peça ao grupo para
+5. Faça o merge do PR #7 e o deploy do cliente novo. Depois do deploy, peça ao grupo para
    fechar e abrir o app, e só crie o primeiro desafio de hábitos depois que todos tiverem reaberto.
    Um app instalado que ficou aberto durante o deploy ainda roda o cliente antigo: ele continua
    funcionando, pelo valor padrão dos parâmetros nomeados, mas só mostra os Hábitos depois de
    reaberto. O painel de desafios desse cliente quebra quando aparece um desafio de checks de
-   hábitos.
+   hábitos, mas só para quem participa dele ou foi convidado. A tela de erro tem um botão de
+   recarregar, que já abre o cliente novo.
 6. Faça o smoke com duas contas: ligue o pilar em Perfil > Hábitos e crie o primeiro hábito; marque
    o hábito pelo cartão da Home, no celular; desfaça o check; dois dias depois, veja o XP dos checks
    chegar; depois que a semana fechar, veja o eixo Hábitos aceso no radar; e crie um desafio de
@@ -322,7 +324,7 @@ conquistas em dia para quem passa dias sem abrir.
 1. Supabase → Database → Extensions → procure `pg_cron` → Enable.
 2. SQL Editor → rode de novo `supabase/migrations/0003_gamification_cron.sql`,
    `supabase/migrations/0005_social_cron.sql`, `supabase/migrations/0013_nutrition_cron.sql`, o bloco
-   de cron no fim de `supabase/migrations/0019_training_days.sql` e
+   de cron no fim de `supabase/migrations/0019_training_days.sql`,
    `supabase/migrations/0025_sleep_cron.sql` e `supabase/migrations/0030_habits_cron.sql`.
 3. Confira com `select jobname, schedule, command from cron.job order by jobname;`. O resultado
    esperado tem seis linhas: `close-challenges | 15 6 * * * | select public.close_all_challenges()`,

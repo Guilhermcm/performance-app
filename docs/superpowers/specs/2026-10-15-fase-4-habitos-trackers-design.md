@@ -6,7 +6,7 @@
   fechado nas [Decisões do plano](../plans/2026-10-15-fase-4a-habitos.md#decisões-do-plano). A 4b
   (Trackers) ainda não tem plano.
 - **Publicação da 4a:** `supabase/release/0026-0030_habits.sql` e o cliente sobem no mesmo dia, pelo
-  roteiro dos Hábitos em [docs/SETUP.md](../../SETUP.md)
+  roteiro dos Hábitos em [docs/SETUP.md](../../SETUP.md).
 - **Roadmap:** [docs/ROADMAP.md](../../ROADMAP.md), Fase 4
 - **Base:** [spec do Sono](2026-10-06-fase-3-sono-design.md) (molde mais recente do pilar: períodos,
   fechamento em D+2, XP no servidor, streak, conquistas privadas, radar, fila offline compartilhada,

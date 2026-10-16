@@ -141,7 +141,8 @@ describe('release bundle 0021-0025', () => {
     const profile = await db.query<{ sleep_enabled: boolean; sleep_nights_per_week: number }>(
       'select sleep_enabled, sleep_nights_per_week from public.profiles where id = $1', [U])
     expect(profile.rows).toEqual([{ sleep_enabled: false, sleep_nights_per_week: 5 }])
-    // The checkin_days challenge still counts yesterday's training day once it closes (two days on).
+    // The checkin_days challenge still counts yesterday's training day once it closes at D+2, which is
+    // tomorrow: the clock moves two days on, past it.
     const progress = async () => (await db.query<{ v: string }>(
       'select public.challenge_progress($1, $2)::text as v', [id, U])).rows[0].v
     expect(await progress()).toBe('0')
@@ -208,7 +209,8 @@ describe('release bundle 0026-0030', () => {
     const profile = await db.query<{ habits_enabled: boolean; sleep_enabled: boolean }>(
       'select habits_enabled, sleep_enabled from public.profiles where id = $1', [U])
     expect(profile.rows).toEqual([{ habits_enabled: false, sleep_enabled: true }])
-    // The sleep challenge still counts the night once it closes (two days on), with the new bodies.
+    // The sleep challenge still counts the night once it closes, with the new bodies: three days old,
+    // it is already past its D+2, so the clock does not move.
     const progress = async () => (await db.query<{ v: string }>(
       'select public.challenge_progress($1, $2)::text as v', [id, U])).rows[0].v
     expect(await progress()).toBe('0')
