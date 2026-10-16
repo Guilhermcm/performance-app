@@ -2713,4 +2713,9 @@ export default {
   "{0} left, and the week ends today": "ще {0}, а тиждень закінчується сьогодні",
   "Week: {0} of {1} · +{2} XP so far": "Тиждень: {0} з {1} · +{2} XP поки що",
   "See all": "Показати всі",
+  // --- habits radar, weekly bar and celebrations (phase 4a) ---
+  "Turn on Habits": "Увімкнути звички",
+  "Habits level {0}": "Звички, рівень {0}",
+  "Habit week done, +{0} XP": "Тиждень звичок виконано, +{0} XP",
+  "You hit every habit's goal last week.": "Минулого тижня ви виконали ціль кожної звички.",
 }

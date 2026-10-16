@@ -2700,4 +2700,9 @@ export default {
   "{0} left, and the week ends today": "بقي {0} والأسبوع ينتهي اليوم",
   "Week: {0} of {1} · +{2} XP so far": "الأسبوع: {0} من {1} · +{2} XP حتى الآن",
   "See all": "عرض الكل",
+  // --- habits radar, weekly bar and celebrations (phase 4a) ---
+  "Turn on Habits": "تفعيل العادات",
+  "Habits level {0}": "العادات المستوى {0}",
+  "Habit week done, +{0} XP": "أسبوع عادات مكتمل، +{0} XP",
+  "You hit every habit's goal last week.": "حققت هدف كل عادة الأسبوع الماضي.",
 }

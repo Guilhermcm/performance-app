@@ -2647,4 +2647,9 @@ export default {
   "{0} left, and the week ends today": "{0} eksik ve hafta bugün bitiyor",
   "Week: {0} of {1} · +{2} XP so far": "Hafta: {0}/{1} · şimdiye kadar +{2} XP",
   "See all": "Tümünü gör",
+  // --- habits radar, weekly bar and celebrations (phase 4a) ---
+  "Turn on Habits": "Alışkanlıkları aç",
+  "Habits level {0}": "Alışkanlıklar seviye {0}",
+  "Habit week done, +{0} XP": "Alışkanlık haftası tamam, +{0} XP",
+  "You hit every habit's goal last week.": "Geçen hafta her alışkanlığın hedefini tutturdun.",
 }

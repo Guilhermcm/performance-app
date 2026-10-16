@@ -2716,4 +2716,9 @@ export default {
   "{0} left, and the week ends today": "ещё {0}, а неделя заканчивается сегодня",
   "Week: {0} of {1} · +{2} XP so far": "Неделя: {0} из {1} · +{2} XP пока",
   "See all": "Показать все",
+  // --- habits radar, weekly bar and celebrations (phase 4a) ---
+  "Turn on Habits": "Включить привычки",
+  "Habits level {0}": "Привычки, уровень {0}",
+  "Habit week done, +{0} XP": "Неделя привычек выполнена, +{0} XP",
+  "You hit every habit's goal last week.": "На прошлой неделе вы выполнили цель каждой привычки.",
 }

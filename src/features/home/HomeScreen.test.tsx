@@ -111,11 +111,29 @@ describe('HomeScreen', () => {
     try {
       useProfile.setState({ profile: { timezone: 'America/Sao_Paulo', nutrition_enabled: true, sleep_enabled: true } as never })
       const on = render(<HomeScreen />)
-      await described('Training: no weeks yet, Nutrition: no weeks yet, Sleep: no weeks yet, Habits coming soon')
+      await described('Training: no weeks yet, Nutrition: no weeks yet, Sleep: no weeks yet, Habits: off')
       on.unmount()
       useProfile.setState({ profile: { timezone: 'America/Sao_Paulo', nutrition_enabled: true, sleep_enabled: false } as never })
       render(<HomeScreen />)
-      await described('Training: no weeks yet, Nutrition: no weeks yet, Sleep: off, Habits coming soon')
+      await described('Training: no weeks yet, Nutrition: no weeks yet, Sleep: off, Habits: off')
+    } finally {
+      useProfile.setState({ profile: null })
+      useProgress.getState().reset()
+    }
+  })
+
+  it('puts habits on the radar, on or off as the profile says', async () => {
+    setS({}, { id: 'u1', name: 'Ana' })
+    useProgress.setState({ status: 'ready', progress: progressOf(400), userId: 'u1' })
+    const described = (text: string) => waitFor(() => expect(screen.getByText(text)).toBeTruthy(), { timeout: 10_000 })
+    try {
+      useProfile.setState({ profile: { timezone: 'America/Sao_Paulo', nutrition_enabled: false, sleep_enabled: false, habits_enabled: true } as never })
+      const on = render(<HomeScreen />)
+      await described('Training: no weeks yet, Nutrition: off, Sleep: off, Habits: no weeks yet')
+      on.unmount()
+      useProfile.setState({ profile: { timezone: 'America/Sao_Paulo', nutrition_enabled: false, sleep_enabled: false, habits_enabled: false } as never })
+      render(<HomeScreen />)
+      await described('Training: no weeks yet, Nutrition: off, Sleep: off, Habits: off')
     } finally {
       useProfile.setState({ profile: null })
       useProgress.getState().reset()

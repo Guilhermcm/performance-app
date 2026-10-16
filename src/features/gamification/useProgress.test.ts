@@ -67,7 +67,7 @@ describe('useProgress', () => {
     await useProgress.getState().load('u1')
     expect(useProgress.getState().pending).toEqual([])
     const seen = JSON.parse(localStorage.getItem('perf_celebrated_v1')!).value
-    expect(seen.pillarLevels).toEqual({ strength: 3, nutrition: 2, sleep: 1 })
+    expect(seen.pillarLevels).toEqual({ strength: 3, nutrition: 2, sleep: 1, habits: 1 })
   })
 
   it('completes a marker saved before the sleep pillar without celebrating sleep', async () => {
@@ -84,8 +84,8 @@ describe('useProgress', () => {
     await useProgress.getState().load('u1')
     expect(useProgress.getState().pending).toEqual([])
     const seen = JSON.parse(localStorage.getItem('perf_celebrated_v1')!).value
-    expect(seen.pillarLevels).toEqual({ strength: 3, sleep: 2 })
-    expect(seen.weekTargets).toEqual({ sleep: '2026-09-28' })
+    expect(seen.pillarLevels).toEqual({ strength: 3, sleep: 2, habits: 1 })
+    expect(seen.weekTargets).toEqual({ sleep: '2026-09-28', habits: null })
   })
 
   it('runs one follow-up when asked during a refresh', async () => {

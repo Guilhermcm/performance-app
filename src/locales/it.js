@@ -2647,4 +2647,9 @@ export default {
   "{0} left, and the week ends today": "ne mancano {0} e la settimana finisce oggi",
   "Week: {0} of {1} · +{2} XP so far": "Settimana: {0} su {1} · +{2} XP finora",
   "See all": "Vedi tutte",
+  // --- habits radar, weekly bar and celebrations (phase 4a) ---
+  "Turn on Habits": "Attiva Abitudini",
+  "Habits level {0}": "Abitudini livello {0}",
+  "Habit week done, +{0} XP": "Settimana di abitudini completata, +{0} XP",
+  "You hit every habit's goal last week.": "La settimana scorsa hai centrato l'obiettivo di ogni abitudine.",
 }

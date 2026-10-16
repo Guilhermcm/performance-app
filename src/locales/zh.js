@@ -2647,4 +2647,9 @@ export default {
   "{0} left, and the week ends today": "还差 {0} 次，本周今天结束",
   "Week: {0} of {1} · +{2} XP so far": "本周：{0}/{1} · 目前 +{2} XP",
   "See all": "查看全部",
+  // --- habits radar, weekly bar and celebrations (phase 4a) ---
+  "Turn on Habits": "开启习惯",
+  "Habits level {0}": "习惯 {0} 级",
+  "Habit week done, +{0} XP": "习惯周达成，+{0} XP",
+  "You hit every habit's goal last week.": "上周你完成了每个习惯的目标。",
 }

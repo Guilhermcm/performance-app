@@ -2647,4 +2647,9 @@ export default {
   "{0} left, and the week ends today": "{0} बाकी और हफ़्ता आज खत्म होता है",
   "Week: {0} of {1} · +{2} XP so far": "हफ़्ता: {1} में से {0} · अब तक +{2} XP",
   "See all": "सभी देखें",
+  // --- habits radar, weekly bar and celebrations (phase 4a) ---
+  "Turn on Habits": "आदतें चालू करें",
+  "Habits level {0}": "आदतें स्तर {0}",
+  "Habit week done, +{0} XP": "आदतों का हफ़्ता पूरा, +{0} XP",
+  "You hit every habit's goal last week.": "पिछले हफ़्ते आपने हर आदत का लक्ष्य पूरा किया।",
 }

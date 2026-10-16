@@ -2650,4 +2650,9 @@ export default {
   "{0} left, and the week ends today": "még {0}, és ma vége a hétnek",
   "Week: {0} of {1} · +{2} XP so far": "Hét: {0}/{1} · eddig +{2} XP",
   "See all": "Összes megtekintése",
+  // --- habits radar, weekly bar and celebrations (phase 4a) ---
+  "Turn on Habits": "Szokások bekapcsolása",
+  "Habits level {0}": "Szokások {0}. szint",
+  "Habit week done, +{0} XP": "Szokáshét teljesítve, +{0} XP",
+  "You hit every habit's goal last week.": "Múlt héten minden szokásod célját elérted.",
 }

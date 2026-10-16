@@ -2647,4 +2647,9 @@ export default {
   "{0} left, and the week ends today": "{0}회 남았고 이번 주는 오늘 끝나요",
   "Week: {0} of {1} · +{2} XP so far": "이번 주: {1}회 중 {0}회 · 지금까지 +{2} XP",
   "See all": "모두 보기",
+  // --- habits radar, weekly bar and celebrations (phase 4a) ---
+  "Turn on Habits": "습관 켜기",
+  "Habits level {0}": "습관 레벨 {0}",
+  "Habit week done, +{0} XP": "습관 주간 달성, +{0} XP",
+  "You hit every habit's goal last week.": "지난주 모든 습관의 목표를 달성했어요.",
 }

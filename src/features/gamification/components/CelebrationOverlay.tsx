@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, useReducedMotion } from 'motion/react'
-import { Apple, CalendarCheck, Crown, Moon, type LucideIcon } from 'lucide-react'
+import { Apple, CalendarCheck, Crown, ListChecks, Moon, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { t } from '../../../lib/i18n.js'
 import { achievementByCode, type AchievementCode } from '../achievements'
@@ -10,6 +10,7 @@ import { WEEK_TARGET_BONUS } from '../xp'
 import { AchievementIcon } from './AchievementIcon'
 import { ACCENT_TEXT } from './accent'
 import { fmtInt } from '../format'
+import { habitWeekText } from '../celebrations'
 import type { Celebration, PillarKey } from '../types'
 
 type View = { eyebrow: string; title: string; detail: string; xp: number; icon: ReactNode }
@@ -17,16 +18,28 @@ type View = { eyebrow: string; title: string; detail: string; xp: number; icon: 
 // The pillars with a level-up card (celebrations.ts); another one falls back to the plain level.
 const PILLAR_LEVEL: Partial<Record<PillarKey, { title: (level: number) => string; icon: LucideIcon; tone: string }>> = {
   nutrition: { title: level => t('Nutrition level {0}', level), icon: Apple, tone: 'bg-pillar-nutrition/15 text-pillar-nutrition' },
-  sleep: { title: level => t('Sleep level {0}', level), icon: Moon, tone: 'bg-pillar-sleep/15 text-pillar-sleep' }
+  sleep: { title: level => t('Sleep level {0}', level), icon: Moon, tone: 'bg-pillar-sleep/15 text-pillar-sleep' },
+  habits: { title: level => t('Habits level {0}', level), icon: ListChecks, tone: 'bg-pillar-habits/15 text-pillar-habits' }
 }
 
 type WeekTargetPillar = Extract<Celebration, { kind: 'week_target' }>['pillar']
 
-// The pillars with a weekly goal card; another one falls back to the plain goal card. The bonus is
-// the one the celebration carries, or the fixed 150 (spec 5.1).
-const WEEK_TARGET: Partial<Record<WeekTargetPillar, { title: () => string; detail: () => string; tone: string }>> = {
-  nutrition: { title: () => t('Nutrition goal met'), detail: () => t('You hit your target on enough days last week.'), tone: 'bg-pillar-nutrition/15 text-pillar-nutrition' },
-  sleep: { title: () => t('Sleep goal met'), detail: () => t('You hit your target on enough nights last week.'), tone: 'bg-pillar-sleep/15 text-pillar-sleep' }
+// The weekly goal card of each pillar that has one. Nutrition and sleep pay the fixed 150 (spec
+// 5.1), shown apart; the habits bonus varies with the checks planned, so it is part of the title
+// (spec 5.6) and not repeated below it.
+const WEEK_TARGET: Record<WeekTargetPillar, { title: (xp?: number) => string; detail: () => string; tone: string; chip: number }> = {
+  nutrition: {
+    title: () => t('Nutrition goal met'), detail: () => t('You hit your target on enough days last week.'),
+    tone: 'bg-pillar-nutrition/15 text-pillar-nutrition', chip: WEEK_TARGET_BONUS
+  },
+  sleep: {
+    title: () => t('Sleep goal met'), detail: () => t('You hit your target on enough nights last week.'),
+    tone: 'bg-pillar-sleep/15 text-pillar-sleep', chip: WEEK_TARGET_BONUS
+  },
+  habits: {
+    title: habitWeekText, detail: () => t("You hit every habit's goal last week."),
+    tone: 'bg-pillar-habits/15 text-pillar-habits', chip: 0
+  }
 }
 
 function viewOf(c: Celebration): View {
@@ -47,9 +60,8 @@ function viewOf(c: Celebration): View {
   if (c.kind === 'week_target') {
     const w = WEEK_TARGET[c.pillar]
     return {
-      eyebrow: t('Weekly goal met'), title: w ? w.title() : t('Weekly goal met'), detail: w ? w.detail() : '',
-      xp: c.xp ?? WEEK_TARGET_BONUS,
-      icon: <span className={cn('grid size-20 place-items-center rounded-3xl', w?.tone ?? 'bg-primary text-primary-foreground')}><CalendarCheck className="size-10" strokeWidth={1.75} /></span>
+      eyebrow: t('Weekly goal met'), title: w.title(c.xp), detail: w.detail(), xp: w.chip,
+      icon: <span className={cn('grid size-20 place-items-center rounded-3xl', w.tone)}><CalendarCheck className="size-10" strokeWidth={1.75} /></span>
     }
   }
   const text = ACHIEVEMENT_TEXT[c.code as AchievementCode]

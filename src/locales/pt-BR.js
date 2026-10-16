@@ -2038,6 +2038,11 @@ export const PT_BR_OVERRIDES = {
   "{0} left, and the week ends today": "faltam {0} e a semana acaba hoje",
   "Week: {0} of {1} · +{2} XP so far": "Semana: {0} de {1} · +{2} XP até agora",
   "See all": "Ver todos",
+  // --- habits radar, weekly bar and celebrations (phase 4a) ---
+  "Turn on Habits": "Ligar os Hábitos",
+  "Habits level {0}": "Hábitos nível {0}",
+  "Habit week done, +{0} XP": "Semana de hábitos completa, +{0} XP",
+  "You hit every habit's goal last week.": "Você bateu a meta de todos os hábitos na semana passada.",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }
