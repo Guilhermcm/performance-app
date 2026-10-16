@@ -1,8 +1,8 @@
 // Offline queue of check-ins (and deletes), in IndexedDB so the photo can wait in it. Same contract
 // as the nutrition outbox: ops go out in the order they arrived, a refusal the server will never
-// change is dropped with its reason while a network error stops the run and keeps the rest, nothing
-// is sent without a live session, and the queue stays through a sign-out (it is per account, so the
-// next account never sends it).
+// change is dropped with its reason while a network error stops the run and keeps the rest, and the
+// queue stays through a sign-out: it is per account, and each op goes only while the live session is
+// that same account's.
 import { supabase } from '@/lib/supabase'
 import { classify } from '@/lib/supabase-errors'
 import { idbOutboxBackend } from './outbox-idb'
@@ -85,11 +85,18 @@ const removeIfSame = (userId: string, sent: StoredOp) => serial(async () => {
   if (cur && cur.rev === sent.rev) await b.delete(userId, sent.id)
 })
 
-// Without a live session a request goes out as anon and fails (42501): send nothing, drop nothing.
-async function hasSession(): Promise<boolean> {
+// Asked before every op, not once per run. Without a live session a request goes out as anon and
+// fails (42501); with another account's session (a sign-out and sign-in while a run was on its way)
+// it would go out as that account, and the check-in and its photo would land in it. Either way: send
+// nothing more, drop nothing, keep the rest for its own account. supabase-js always fills
+// session.user; a session without one (the tests' stubs) has no owner to compare.
+async function sessionIs(userId: string): Promise<boolean> {
   try {
     const { data } = await supabase.auth.getSession()
-    return !!data?.session
+    const session = data?.session as { user?: { id?: string } } | null | undefined
+    if (!session) return false
+    const owner = session.user?.id
+    return owner == null || owner === userId
   } catch { return false }
 }
 
@@ -97,8 +104,8 @@ export type CheckinFlushResult = { sent: number; refused: { id: string; reason: 
 
 async function run(userId: string, send: (op: CheckinOp) => Promise<void>): Promise<CheckinFlushResult> {
   const result: CheckinFlushResult = { sent: 0, refused: [] }
-  if (!(await hasSession())) return result
   for (const rec of await (await backend()).list(userId)) {
+    if (!(await sessionIs(userId))) break
     try {
       await send(rec.op)
       result.sent++
