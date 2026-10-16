@@ -76,6 +76,15 @@ describe('habits api', () => {
     expect(h.rpc).toHaveBeenCalledWith('get_habit_history', { p_from: '2026-09-01', p_to: '2026-10-05' })
   })
 
+  it('reads every period of the pillar, oldest first', async () => {
+    const c = chain({ data: [{ started_on: '2026-05-10', ended_on: '2026-06-01' }, { started_on: '2026-09-20', ended_on: null }], error: null })
+    h.from.mockReturnValue(c.proxy)
+    await expect(api.fetchPeriods()).resolves.toEqual([{ started_on: '2026-05-10', ended_on: '2026-06-01' }, { started_on: '2026-09-20', ended_on: null }])
+    expect(h.from).toHaveBeenCalledWith('habit_periods')
+    expect(c.calls).toContainEqual(['select', ['started_on, ended_on']])
+    expect(c.calls).toContainEqual(['order', ['started_on', { ascending: true }]])
+  })
+
   it('throws classified errors', async () => {
     const c = chain({ error: { code: 'P0001', message: 'day_closed' } }); h.from.mockReturnValue(c.proxy)
     await expect(api.insertCheck(H1, '2026-10-01')).rejects.toMatchObject({ code: 'day_closed', refused: true, reason: 'day_closed' })

@@ -2753,4 +2753,16 @@ export default {
   "Habits level {0}": "Привычки, уровень {0}",
   "Habit week done, +{0} XP": "Неделя привычек выполнена, +{0} XP",
   "You hit every habit's goal last week.": "На прошлой неделе вы выполнили цель каждой привычки.",
+  // --- habits history calendar and day sheet (phase 4a) ---
+  "All checked": "Всё отмечено",
+  "Partly checked": "Отмечено частично",
+  "Nothing checked": "Ничего не отмечено",
+  "1 check counted": "1 отметка засчитана",
+  "{0} checks counted": "{0} отметок засчитано",
+  "{0} checks counted|one": "{0} отметка засчитана",
+  "{0} checks counted|few": "{0} отметки засчитаны",
+  "{0} checks counted|many": "{0} отметок засчитано",
+  "Over the goal": "Сверх цели",
+  "No habit checked on this day.": "В этот день не отмечено ни одной привычки.",
+  "Habits were off this month, so no day counts here.": "В этом месяце «Привычки» были выключены, поэтому здесь не учитывается ни один день.",
 }

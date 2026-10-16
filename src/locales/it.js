@@ -2681,4 +2681,13 @@ export default {
   "Habits level {0}": "Abitudini livello {0}",
   "Habit week done, +{0} XP": "Settimana di abitudini completata, +{0} XP",
   "You hit every habit's goal last week.": "La settimana scorsa hai centrato l'obiettivo di ogni abitudine.",
+  // --- habits history calendar and day sheet (phase 4a) ---
+  "All checked": "Tutto spuntato",
+  "Partly checked": "Spuntato in parte",
+  "Nothing checked": "Niente spuntato",
+  "1 check counted": "1 spunta contata",
+  "{0} checks counted": "{0} spunte contate",
+  "Over the goal": "Oltre l'obiettivo",
+  "No habit checked on this day.": "Nessuna abitudine spuntata questo giorno.",
+  "Habits were off this month, so no day counts here.": "Abitudini era disattivato questo mese, quindi qui non conta nessun giorno.",
 }

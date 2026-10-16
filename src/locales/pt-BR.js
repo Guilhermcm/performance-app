@@ -2072,6 +2072,15 @@ export const PT_BR_OVERRIDES = {
   "Habits level {0}": "Hábitos nível {0}",
   "Habit week done, +{0} XP": "Semana de hábitos completa, +{0} XP",
   "You hit every habit's goal last week.": "Você bateu a meta de todos os hábitos na semana passada.",
+  // --- habits history calendar and day sheet (phase 4a) ---
+  "All checked": "Tudo marcado",
+  "Partly checked": "Parte marcada",
+  "Nothing checked": "Nada marcado",
+  "1 check counted": "1 check contou",
+  "{0} checks counted": "{0} checks contaram",
+  "Over the goal": "Além da meta",
+  "No habit checked on this day.": "Nenhum hábito marcado neste dia.",
+  "Habits were off this month, so no day counts here.": "Os Hábitos estavam desligados neste mês, então nenhum dia conta aqui.",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

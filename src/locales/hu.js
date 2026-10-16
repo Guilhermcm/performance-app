@@ -2684,4 +2684,13 @@ export default {
   "Habits level {0}": "Szokások {0}. szint",
   "Habit week done, +{0} XP": "Szokáshét teljesítve, +{0} XP",
   "You hit every habit's goal last week.": "Múlt héten minden szokásod célját elérted.",
+  // --- habits history calendar and day sheet (phase 4a) ---
+  "All checked": "Minden kipipálva",
+  "Partly checked": "Részben kipipálva",
+  "Nothing checked": "Semmi sincs kipipálva",
+  "1 check counted": "1 pipa számított",
+  "{0} checks counted": "{0} pipa számított",
+  "Over the goal": "A cél felett",
+  "No habit checked on this day.": "Ezen a napon egy szokás sincs kipipálva.",
+  "Habits were off this month, so no day counts here.": "Ebben a hónapban a Szokások ki volt kapcsolva, ezért itt egy nap sem számít.",
 }

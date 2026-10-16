@@ -2749,4 +2749,16 @@ export default {
   "Habits level {0}": "Nawyki poziom {0}",
   "Habit week done, +{0} XP": "Tydzień nawyków zaliczony, +{0} XP",
   "You hit every habit's goal last week.": "W zeszłym tygodniu osiągnąłeś cel każdego nawyku.",
+  // --- habits history calendar and day sheet (phase 4a) ---
+  "All checked": "Wszystko odhaczone",
+  "Partly checked": "Częściowo odhaczone",
+  "Nothing checked": "Nic nie odhaczone",
+  "1 check counted": "1 odhaczenie zaliczone",
+  "{0} checks counted": "{0} odhaczeń zaliczonych",
+  "{0} checks counted|one": "{0} odhaczenie zaliczone",
+  "{0} checks counted|few": "{0} odhaczenia zaliczone",
+  "{0} checks counted|many": "{0} odhaczeń zaliczonych",
+  "Over the goal": "Ponad cel",
+  "No habit checked on this day.": "Tego dnia nie odhaczono żadnego nawyku.",
+  "Habits were off this month, so no day counts here.": "Nawyki były wyłączone w tym miesiącu, więc żaden dzień się tu nie liczy.",
 }

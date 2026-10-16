@@ -2701,4 +2701,13 @@ export default {
   "Habits level {0}": "Gewohnheiten Stufe {0}",
   "Habit week done, +{0} XP": "Gewohnheitswoche geschafft, +{0} XP",
   "You hit every habit's goal last week.": "Du hast letzte Woche das Ziel jeder Gewohnheit erreicht.",
+  // --- habits history calendar and day sheet (phase 4a) ---
+  "All checked": "Alles abgehakt",
+  "Partly checked": "Teilweise abgehakt",
+  "Nothing checked": "Nichts abgehakt",
+  "1 check counted": "1 Häkchen gezählt",
+  "{0} checks counted": "{0} Häkchen gezählt",
+  "Over the goal": "Über dem Ziel",
+  "No habit checked on this day.": "An diesem Tag wurde keine Gewohnheit abgehakt.",
+  "Habits were off this month, so no day counts here.": "Gewohnheiten war in diesem Monat aus, deshalb zählt hier kein Tag.",
 }

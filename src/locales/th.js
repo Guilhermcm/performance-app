@@ -2692,4 +2692,13 @@ export default {
   "Habits level {0}": "นิสัย เลเวล {0}",
   "Habit week done, +{0} XP": "สัปดาห์นิสัยครบ +{0} XP",
   "You hit every habit's goal last week.": "สัปดาห์ที่แล้วคุณทำถึงเป้าของทุกนิสัย",
+  // --- habits history calendar and day sheet (phase 4a) ---
+  "All checked": "เช็กครบ",
+  "Partly checked": "เช็กบางส่วน",
+  "Nothing checked": "ไม่ได้เช็ก",
+  "1 check counted": "นับเช็ก 1 ครั้ง",
+  "{0} checks counted": "นับเช็ก {0} ครั้ง",
+  "Over the goal": "เกินเป้า",
+  "No habit checked on this day.": "วันนี้ไม่มีนิสัยที่เช็กไว้",
+  "Habits were off this month, so no day counts here.": "เดือนนี้ปิดนิสัยไว้ จึงไม่มีวันใดนับที่นี่",
 }

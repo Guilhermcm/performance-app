@@ -5,10 +5,15 @@ import { render, screen, fireEvent, cleanup, within } from '@testing-library/rea
 const h = vi.hoisted(() => ({
   nav: vi.fn(),
   toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }),
+  fetchPeriods: vi.fn(),
+  fetchHistory: vi.fn(),
 }))
 vi.mock('react-router-dom', () => ({ useNavigate: () => h.nav }))
 vi.mock('sonner', () => ({ toast: h.toast }))
 vi.mock('@/components/ui/drawer', () => import('../social/test-drawer'))
+vi.mock('./habits-api', async orig => ({
+  ...(await orig<typeof import('./habits-api')>()), fetchPeriods: h.fetchPeriods, fetchHistory: h.fetchHistory
+}))
 // The setup turns the pillar on through the profile; here only whether it opens matters.
 vi.mock('./HabitsSetup', () => ({
   default: ({ open }: { open: boolean }) => (open ? <div role="dialog" aria-label="habits-setup" /> : null)
@@ -55,7 +60,8 @@ beforeEach(() => {
   vi.setSystemTime(new Date('2026-10-14T12:00:00Z'))
   setOnline(true)
   localStorage.clear()
-  ;[h.nav, h.toast, refresh, toggleCheck, move, reactivateHabit].forEach(f => f.mockReset())
+  ;[h.nav, h.toast, h.fetchPeriods, h.fetchHistory, refresh, toggleCheck, move, reactivateHabit].forEach(f => f.mockReset())
+  h.fetchPeriods.mockResolvedValue([{ started_on: '2026-10-01', ended_on: null }])
   profile()
   store()
   useProgress.setState({ status: 'ready', progress: progressOf(0) })
@@ -215,9 +221,23 @@ describe('HabitsScreen', () => {
     expect(h.toast).toHaveBeenCalledTimes(1)
   })
 
-  it('leaves the history slot for the calendar', () => {
+  it('shows the month of checks in the history slot, and Sunday from Monday through the day sheet', () => {
+    vi.setSystemTime(new Date('2026-10-12T12:00:00Z')) // Monday
+    store({ recent: { days: [], checks: [], targets: [], periods: [{ started_on: '2026-10-01', ended_on: null }] } })
     const { container } = render(<HabitsScreen />)
-    expect(container.querySelector('[data-slot="habits-history"]')).toBeTruthy()
+    const slot = container.querySelector('[data-slot="habits-history"]') as HTMLElement
+    expect(within(slot).getByRole('heading', { name: 'October 2026' })).toBeTruthy()
+    // The rows show this week only: Sunday is not among their days.
+    expect(within(habitsList()).queryByRole('button', { name: /Sunday/ })).toBeNull()
+    fireEvent.click(within(slot).getByRole('button', { name: 'Sunday 11 October: Still open' }))
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Walk' }))
+    expect(toggleCheck).toHaveBeenCalledWith(H2, '2026-10-11')
+  })
+
+  it('leaves the calendar out while there is no habit', () => {
+    store({ habits: [], targets: {} })
+    const { container } = render(<HabitsScreen />)
+    expect(container.querySelector('[data-slot="habits-history"]')!.childElementCount).toBe(0)
   })
 
   it('goes back to Home when opened directly', () => {

@@ -2681,4 +2681,13 @@ export default {
   "Habits level {0}": "Hábitos nível {0}",
   "Habit week done, +{0} XP": "Semana de hábitos concluída, +{0} XP",
   "You hit every habit's goal last week.": "Cumpriste a meta de todos os hábitos na semana passada.",
+  // --- habits history calendar and day sheet (phase 4a) ---
+  "All checked": "Tudo marcado",
+  "Partly checked": "Parte marcada",
+  "Nothing checked": "Nada marcado",
+  "1 check counted": "1 marcação contou",
+  "{0} checks counted": "{0} marcações contaram",
+  "Over the goal": "Acima da meta",
+  "No habit checked on this day.": "Nenhum hábito marcado neste dia.",
+  "Habits were off this month, so no day counts here.": "Os Hábitos estiveram desligados neste mês, por isso nenhum dia conta aqui.",
 }

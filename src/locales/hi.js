@@ -2681,4 +2681,13 @@ export default {
   "Habits level {0}": "आदतें स्तर {0}",
   "Habit week done, +{0} XP": "आदतों का हफ़्ता पूरा, +{0} XP",
   "You hit every habit's goal last week.": "पिछले हफ़्ते आपने हर आदत का लक्ष्य पूरा किया।",
+  // --- habits history calendar and day sheet (phase 4a) ---
+  "All checked": "सब पर चेक",
+  "Partly checked": "कुछ पर चेक",
+  "Nothing checked": "किसी पर चेक नहीं",
+  "1 check counted": "1 चेक गिना गया",
+  "{0} checks counted": "{0} चेक गिने गए",
+  "Over the goal": "लक्ष्य से ऊपर",
+  "No habit checked on this day.": "इस दिन किसी आदत पर चेक नहीं लगा।",
+  "Habits were off this month, so no day counts here.": "इस महीने आदतें बंद थीं, इसलिए यहाँ कोई दिन नहीं गिना जाता।",
 }

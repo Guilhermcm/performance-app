@@ -2681,4 +2681,13 @@ export default {
   "Habits level {0}": "习惯 {0} 级",
   "Habit week done, +{0} XP": "习惯周达成，+{0} XP",
   "You hit every habit's goal last week.": "上周你完成了每个习惯的目标。",
+  // --- habits history calendar and day sheet (phase 4a) ---
+  "All checked": "全部打卡",
+  "Partly checked": "部分打卡",
+  "Nothing checked": "没有打卡",
+  "1 check counted": "计入 1 次打卡",
+  "{0} checks counted": "计入 {0} 次打卡",
+  "Over the goal": "超出目标",
+  "No habit checked on this day.": "这一天没有打卡任何习惯。",
+  "Habits were off this month, so no day counts here.": "这个月习惯功能处于关闭状态，所以这里没有计入任何一天。",
 }
