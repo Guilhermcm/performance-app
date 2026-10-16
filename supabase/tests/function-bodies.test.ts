@@ -54,6 +54,22 @@ const REDEFINED: { fn: string; base: string; in: string; changed: string[] }[] =
   { fn: 'award_xp', base: '0022_sleep_close.sql', in: '0027_habits_close.sql', changed: [] },
   // The last line of sleep_clock_best_run gains a comma: the habits metrics follow it.
   { fn: 'achievement_stats', base: '0022_sleep_close.sql', in: '0027_habits_close.sql', changed: [') lengths), 0)'] },
+  // The active-week test gains the habits case: sleep moves to its own when.
+  {
+    fn: 'pillar_consistency', base: '0023_sleep_progress.sql', in: '0028_habits_progress.sql',
+    changed: ['else public.sleep_week_active(p_user, w::date) end;'],
+  },
+  // The sleep term of week.max is no longer the last one; the 'habits' split follows the 'sleep' one.
+  {
+    fn: 'progress_card', base: '0023_sleep_progress.sql', in: '0028_habits_progress.sql',
+    changed: ['+ public.sleep_week_active(p_user, v_week)::int),'],
+  },
+  // The sleep radar point is no longer the last one: the habits one follows it.
+  {
+    fn: 'my_progress_extras', base: '0023_sleep_progress.sql', in: '0028_habits_progress.sql',
+    changed: ["'previous', public.pillar_consistency(p_user, 'sleep', 1))))"],
+  },
+  { fn: 'get_my_progress', base: '0023_sleep_progress.sql', in: '0028_habits_progress.sql', changed: [] },
 ]
 
 describe('redefined function bodies', () => {

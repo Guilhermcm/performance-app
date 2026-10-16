@@ -107,6 +107,7 @@ describe('progress (0023)', () => {
       strength: { current: 0.75, previous: null },
       nutrition: { current: 0.5, previous: null },
       sleep: { current: null, previous: null },
+      habits: { current: null, previous: null },
     })
   })
 })

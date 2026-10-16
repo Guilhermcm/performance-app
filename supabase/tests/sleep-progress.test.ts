@@ -77,9 +77,9 @@ describe('sleep in the public card', () => {
     await xpRow(A, null, 25, '2026-10-05')
     await xpRow(A, 'sleep', 960, '2026-09-28')                   // last week: not in this one
     const c = await card()
-    expect(c.week.pillars).toEqual({ strength: 200, nutrition: 70, sleep: 130, bonus: 25 })
+    expect(c.week.pillars).toEqual({ strength: 200, nutrition: 70, sleep: 130, habits: 0, bonus: 25 })
     expect(c.week.xp).toBe(425)
-    expect((await card(B)).week.pillars).toEqual({ strength: 0, nutrition: 0, sleep: 0, bonus: 0 })
+    expect((await card(B)).week.pillars).toEqual({ strength: 0, nutrition: 0, sleep: 0, habits: 0, bonus: 0 })
   })
 
   it('hides sleep from friends', async () => {

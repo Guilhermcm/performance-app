@@ -20,8 +20,11 @@ const PILLAR_LEVEL: Partial<Record<PillarKey, { title: (level: number) => string
   sleep: { title: level => t('Sleep level {0}', level), icon: Moon, tone: 'bg-pillar-sleep/15 text-pillar-sleep' }
 }
 
-// The pillars with a weekly goal card; both pay the same bonus (spec 5.1).
-const WEEK_TARGET: Record<'nutrition' | 'sleep', { title: () => string; detail: () => string; tone: string }> = {
+type WeekTargetPillar = Extract<Celebration, { kind: 'week_target' }>['pillar']
+
+// The pillars with a weekly goal card; another one falls back to the plain goal card. The bonus is
+// the one the celebration carries, or the fixed 150 (spec 5.1).
+const WEEK_TARGET: Partial<Record<WeekTargetPillar, { title: () => string; detail: () => string; tone: string }>> = {
   nutrition: { title: () => t('Nutrition goal met'), detail: () => t('You hit your target on enough days last week.'), tone: 'bg-pillar-nutrition/15 text-pillar-nutrition' },
   sleep: { title: () => t('Sleep goal met'), detail: () => t('You hit your target on enough nights last week.'), tone: 'bg-pillar-sleep/15 text-pillar-sleep' }
 }
@@ -44,8 +47,9 @@ function viewOf(c: Celebration): View {
   if (c.kind === 'week_target') {
     const w = WEEK_TARGET[c.pillar]
     return {
-      eyebrow: t('Weekly goal met'), title: w.title(), detail: w.detail(), xp: WEEK_TARGET_BONUS,
-      icon: <span className={cn('grid size-20 place-items-center rounded-3xl', w.tone)}><CalendarCheck className="size-10" strokeWidth={1.75} /></span>
+      eyebrow: t('Weekly goal met'), title: w ? w.title() : t('Weekly goal met'), detail: w ? w.detail() : '',
+      xp: c.xp ?? WEEK_TARGET_BONUS,
+      icon: <span className={cn('grid size-20 place-items-center rounded-3xl', w?.tone ?? 'bg-primary text-primary-foreground')}><CalendarCheck className="size-10" strokeWidth={1.75} /></span>
     }
   }
   const text = ACHIEVEMENT_TEXT[c.code as AchievementCode]

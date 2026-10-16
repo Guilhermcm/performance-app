@@ -55,6 +55,15 @@ describe('CelebrationOverlay', () => {
     expect(screen.getByText('+150 XP')).toBeTruthy()
   })
 
+  // Habits has no card of its own yet: the plain goal card, with the XP the celebration carries.
+  it('falls back to the plain weekly goal card with the bonus it carries', () => {
+    render(<CelebrationOverlay onDone={vi.fn()} items={[
+      { kind: 'week_target', pillar: 'habits', week_start: '2026-09-28', xp: 64 }
+    ]} />)
+    expect(screen.getAllByText('Weekly goal met').length).toBeGreaterThan(0)
+    expect(screen.getByText('+64 XP')).toBeTruthy()
+  })
+
   it('never shows a raw code for a badge it does not know', () => {
     render(<CelebrationOverlay items={[{ kind: 'achievement', code: 'from_the_future' }]} onDone={vi.fn()} />)
     expect(screen.queryByText('from_the_future')).toBeNull()
