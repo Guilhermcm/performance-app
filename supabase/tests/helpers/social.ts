@@ -32,21 +32,23 @@ export async function xp(db: PGlite, uid: string, amount: number, week: string, 
 export type ChallengeArgs = {
   template: string; title: string; mode: string; target: number
   starts_on: string; ends_on: string; invitees: string[]; share_volume: boolean; share_sleep: boolean
+  share_habits: boolean
 }
 
 // Two weeks from Monday 2026-10-05, team, 6 workouts, Bia invited.
 export const challengeArgs = (over: Partial<ChallengeArgs> = {}): ChallengeArgs => ({
   template: 'workouts_count', title: 'Outubro forte', mode: 'team', target: 6,
   starts_on: '2026-10-05', ends_on: '2026-10-18', invitees: ['00000000-0000-0000-0000-00000000000b'],
-  share_volume: false, share_sleep: false, ...over
+  share_volume: false, share_sleep: false, share_habits: false, ...over
 })
 
 export async function createChallenge(db: PGlite, uid: string, over: Partial<ChallengeArgs> = {}): Promise<string> {
   const a = challengeArgs(over)
   // Positional up to share_volume, like the first clients; share_nutrition keeps its default.
   const r = await one<{ id: string }>(db, uid,
-    'select public.create_challenge($1, $2, $3, $4::numeric, $5::date, $6::date, $7::uuid[], $8, p_share_sleep => $9) as v',
+    `select public.create_challenge($1, $2, $3, $4::numeric, $5::date, $6::date, $7::uuid[], $8,
+            p_share_sleep => $9, p_share_habits => $10) as v`,
     [a.template, a.title, a.mode, a.target, a.starts_on, a.ends_on, '{' + a.invitees.join(',') + '}', a.share_volume,
-      a.share_sleep])
+      a.share_sleep, a.share_habits])
   return r.id
 }

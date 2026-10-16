@@ -12,14 +12,15 @@ import { BodyWeightCard } from './BodyWeightCard'
 import { CheckInCard, WelcomeCard } from './HomeCards'
 import HomeNutritionCard from '../nutrition/HomeNutritionCard'
 import HomeSleepCard from '../sleep/HomeSleepCard'
+import HomeHabitsCard from '../habits/HomeHabitsCard'
 import { useProgress } from '../gamification/useProgress'
 import type { PillarKey } from '../gamification/types'
 import { PillarRadarSkeleton } from './PillarRadarSkeleton'
 
 // Recharts is heavy and only the radar uses it on the Home: it comes in its own chunk.
 const PillarRadar = lazy(() => import('./PillarRadar'))
-// The pillars out so far; habits shows as coming soon.
-const RELEASED: PillarKey[] = ['strength', 'nutrition', 'sleep']
+// The pillars out so far: all four.
+const RELEASED: PillarKey[] = ['strength', 'nutrition', 'sleep', 'habits']
 
 type HomeStore = { S: Record<string, any>; user: { id: string; name?: string } | null }
 
@@ -71,6 +72,8 @@ export default function HomeScreen() {
       <TodayCard />
       {/* The sleep pillar's morning card sits right under today's (phase 3, spec 0.4). */}
       {user && <HomeSleepCard />}
+      {/* Today's habits right under it (phase 4a, spec 7.2). */}
+      {user && <HomeHabitsCard />}
       {S.checkIn !== false && <CheckInCard />}
       {S.showWeightCard !== false && <BodyWeightCard />}
     </div>
@@ -86,7 +89,8 @@ function HomeRadar() {
   const profile = useProfile(s => s.profile)
   const nutrition = profile?.nutrition_enabled ?? false
   const sleep = profile?.sleep_enabled ?? false
-  const enabled = useMemo(() => ({ strength: true, nutrition, sleep }), [nutrition, sleep])
+  const habits = profile?.habits_enabled ?? false
+  const enabled = useMemo(() => ({ strength: true, nutrition, sleep, habits }), [nutrition, sleep, habits])
   if (!profile || loading) return <PillarRadarSkeleton />
   return (
     <Suspense fallback={<PillarRadarSkeleton />}>

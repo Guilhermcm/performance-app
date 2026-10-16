@@ -1,4 +1,4 @@
-import { Apple, Dumbbell, Moon, Target, Weight, type LucideIcon } from 'lucide-react'
+import { Apple, Dumbbell, ListChecks, Moon, Target, Weight, type LucideIcon } from 'lucide-react'
 import { t, tn } from '../../lib/i18n.js'
 import { fmtDecimal } from './format'
 import { isTrainingDays } from './templates'
@@ -23,6 +23,8 @@ export function socialErrorText(code: SocialErrorCode): string {
     case 'nutrition_off': return t('Turn on the Nutrition pillar to take part in this challenge.')
     case 'sleep_opt_in_required': return t('To take part, agree to show how many nights you were on target.')
     case 'sleep_off': return t('Turn on the Sleep pillar to take part in this challenge.')
+    case 'habits_opt_in_required': return t('To take part, agree to show how many checks you made.')
+    case 'habits_off': return t('Turn on the Habits pillar to take part in this challenge.')
     case 'not_found': return t('This post is no longer available.')
     case 'invalid_emoji': return t('This emoji doesn’t work here. Try another one.')
     case 'invalid_comment': return t('A comment goes from 1 to 500 characters.')
@@ -51,6 +53,11 @@ export const TEMPLATE_TEXT: Record<ChallengeTemplate, { name: () => string; rule
     name: () => t('Nights on sleep target'),
     rule: () => t('Nights in the period that each person hits their sleep target. Others only see how many, never your times, how long you slept, its quality or your notes.'),
     icon: Moon
+  },
+  habit_checks: {
+    name: () => t('Habit checks'),
+    rule: () => t('Habit checks in the period, each habit up to its own weekly goal. Others only see how many, never your habits or the days.'),
+    icon: ListChecks
   }
 }
 
@@ -59,12 +66,14 @@ export const MODE_TEXT: Record<ChallengeMode, { name: () => string; detail: () =
   solo: { name: () => t('Solo'), detail: () => t('Each person has to reach the goal.') }
 }
 
-// "1 training day", "12 training days", "3 weeks", "12.5 t", "21 days on target", "21 nights on target".
+// "1 training day", "12 training days", "3 weeks", "12.5 t", "21 days on target", "21 nights on target",
+// "1 check", "40 checks".
 export function amountText(template: ChallengeTemplate, n: number): string {
   if (isTrainingDays(template)) return n === 1 ? t('1 training day') : tn(n, '{0} training days', n)
   if (template === 'weeks_on_target') return n === 1 ? t('1 week') : tn(n, '{0} weeks', n)
   if (template === 'nutrition_days_on_target') return n === 1 ? t('1 day on target') : tn(n, '{0} days on target', n)
   if (template === 'sleep_nights_on_target') return n === 1 ? t('1 night on target') : tn(n, '{0} nights on target', n)
+  if (template === 'habit_checks') return n === 1 ? t('1 check') : tn(n, '{0} checks', n)
   return t('{0} t', fmtDecimal(n))
 }
 
@@ -77,6 +86,9 @@ export function autoTitle(template: ChallengeTemplate, target: number, days: num
   }
   if (template === 'sleep_nights_on_target') {
     return target === 1 ? t('1 night on target in {0} days', days) : tn(target, '{0} nights on target in {1} days', target, days)
+  }
+  if (template === 'habit_checks') {
+    return target === 1 ? t('1 check in {0} days', days) : tn(target, '{0} checks in {1} days', target, days)
   }
   return t('{0} t in {1} days', fmtDecimal(target), days)
 }
@@ -92,4 +104,11 @@ export const nutritionOptInText = () => ({
 export const sleepOptInText = () => ({
   label: t('Show participants how many nights I was on target'),
   detail: t('They see only that number, never your times, how long you slept, its quality or your notes.')
+})
+
+// The habits opt-in, the same words when creating and when joining (spec 6.5 and 11): only the count
+// of valid checks leaves the account.
+export const habitsOptInText = () => ({
+  label: t('Show participants how many checks I made'),
+  detail: t('They see only that number, never your habits, their icons or which days.')
 })

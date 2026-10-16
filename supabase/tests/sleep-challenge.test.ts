@@ -243,12 +243,15 @@ describe('signatures', () => {
       `select (select count(*)::int from pg_proc where proname = 'create_challenge') as c,
               (select count(*)::int from pg_proc where proname = 'join_challenge') as j`)
     expect(r).toEqual({ c: 1, j: 1 })
-    const [g] = await sql(db,
-      `select has_function_privilege('authenticated', 'public.create_challenge(text, text, text, numeric, date, date, uuid[], boolean, boolean, boolean)', 'execute') as ca,
-              has_function_privilege('anon', 'public.create_challenge(text, text, text, numeric, date, date, uuid[], boolean, boolean, boolean)', 'execute') as cn,
-              has_function_privilege('authenticated', 'public.join_challenge(uuid, boolean, boolean, boolean)', 'execute') as ja,
-              has_function_privilege('anon', 'public.join_challenge(uuid, boolean, boolean, boolean)', 'execute') as jn`)
-    expect(g).toEqual({ ca: true, cn: false, ja: true, jn: false })
+    // By oid: the signature grows with each pillar (0029 adds p_share_habits).
+    const g = await sql(db,
+      `select proname, has_function_privilege('authenticated', oid, 'execute') as signed_in,
+              has_function_privilege('anon', oid, 'execute') as anon
+         from pg_proc where proname in ('create_challenge', 'join_challenge') order by proname`)
+    expect(g).toEqual([
+      { proname: 'create_challenge', signed_in: true, anon: false },
+      { proname: 'join_challenge', signed_in: true, anon: false },
+    ])
 
     // The client of 2b names its parameters and does not know p_share_sleep: it keeps working.
     await enableNutrition(db, A)

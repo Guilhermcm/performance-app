@@ -1,5 +1,5 @@
 // Tells a write the server refused for good from one that only needs another try. Shared by the
-// offline queues (nutrition, sleep, check-in): a refused op is dropped with its reason, anything else
+// offline queues (nutrition, sleep, habits, check-in): a refused op is dropped with its reason, anything else
 // stops the queue and stays in it.
 export type NutritionErrorCode = 'day_closed' | 'night_closed' | 'too_many_items' | 'too_many_checkins' | 'item_immutable' | 'network'
 
@@ -26,10 +26,12 @@ export class NutritionError extends Error {
   }
 }
 
-// The triggers of 0009_nutrition_diary.sql, 0017_checkins.sql and 0021_sleep_base.sql raise their typed errors (P0001)
-// with the code as the message. These are the codes a caller can tell apart.
+// The triggers of 0009_nutrition_diary.sql, 0017_checkins.sql, 0021_sleep_base.sql and 0026_habits_base.sql raise their
+// typed errors (P0001) with the code as the message. These are the codes a caller can tell apart; the habit ones
+// (habit_archived, pillar_off, too_many_habits) are plain refusals here, and habits-api tells them apart.
 const KNOWN: readonly NutritionErrorCode[] = ['day_closed', 'night_closed', 'too_many_items', 'too_many_checkins', 'item_immutable']
-const P0001_REFUSALS = ['day_closed', 'night_closed', 'too_many_items', 'too_many_checkins', 'too_many_foods', 'too_many_measures', 'item_immutable', 'import_forbidden']
+const P0001_REFUSALS = ['day_closed', 'night_closed', 'too_many_items', 'too_many_checkins', 'too_many_foods', 'too_many_measures', 'item_immutable', 'import_forbidden',
+  'habit_archived', 'pillar_off', 'too_many_habits']
 
 const messageOf = (e: unknown) => {
   const m = (e as { message?: unknown } | null)?.message

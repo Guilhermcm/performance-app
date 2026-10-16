@@ -13,9 +13,10 @@ import { useProfile } from '../profile/useProfile'
 import { useCheckins } from '../checkin/useCheckins'
 import NutritionSetup from '../nutrition/NutritionSetup'
 import SleepSetup from '../sleep/SleepSetup'
+import HabitsSetup from '../habits/HabitsSetup'
 import { joinChallenge, leaveChallenge, toSocialError } from './social-api'
 import { useSocial } from './useSocial'
-import { MODE_TEXT, TEMPLATE_TEXT, amountText, nutritionOptInText, sleepOptInText, socialErrorText } from './labels'
+import { MODE_TEXT, TEMPLATE_TEXT, amountText, habitsOptInText, nutritionOptInText, sleepOptInText, socialErrorText } from './labels'
 import { canJoin, challengeShare, isTrainingDays, rankMembers, resultOn } from './templates'
 import { fmtShortDay } from './format'
 import { statusLine } from './ChallengesPanel'
@@ -27,12 +28,13 @@ import type { Challenge } from './types'
 
 // /social/desafios/:id: the rule, where the team (or I) stand against the goal, each member, and
 // the one action that fits: join or decline an invitation, leave (after a confirmation), or the
-// result once it ended. After the last day there is no action at all. A nutrition or sleep
+// result once it ended. After the last day there is no action at all. A nutrition, sleep or habits
 // challenge counts closed days (or nights) only, up to the day before yesterday, and gives its
 // result later; joining it asks for the opt-in, and with the pillar off the join button opens the
 // pillar's setup instead. A training days challenge (checkin_days, and workouts_count made before
 // it) counts closed days too, shows a ranked scoreboard with my position, and the check-ins of its
-// members below. A sleep challenge shows the same scoreboard with no feed: only counts are shared.
+// members below. A sleep or habits challenge shows the same scoreboard with no feed: only counts are
+// shared (nights on target, valid checks), never which habits or which days.
 export default function ChallengeDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -42,9 +44,11 @@ export default function ChallengeDetail() {
   const [shareVolume, setShareVolume] = useState(false)
   const [shareNutrition, setShareNutrition] = useState(false)
   const [shareSleep, setShareSleep] = useState(false)
+  const [shareHabits, setShareHabits] = useState(false)
   const [setupOpen, setSetupOpen] = useState(false)
   const nutritionOn = useProfile(s => s.profile?.nutrition_enabled ?? false)
   const sleepOn = useProfile(s => s.profile?.sleep_enabled ?? false)
+  const habitsOn = useProfile(s => s.profile?.habits_enabled ?? false)
   useEffect(() => { void useSocial.getState().load('challenges') }, [])
   const c = res.data?.find(x => x.id === id) ?? null
   const today = todayISO()
@@ -97,23 +101,28 @@ export default function ChallengeDetail() {
   const needsVolume = joinable && c.template === 'volume_total'
   const nutrition = c.template === 'nutrition_days_on_target'
   const sleep = c.template === 'sleep_nights_on_target'
+  const habits = c.template === 'habit_checks'
   const training = isTrainingDays(c.template)
-  // All three count closed days (or nights) only, and the result comes after the last of them closes.
-  const closedDays = nutrition || sleep || training
+  // All four count closed days (or nights) only, and the result comes after the last of them closes.
+  const closedDays = nutrition || sleep || habits || training
   // A ranked scoreboard with positions; the other templates list their members.
-  const scored = training || sleep
+  const scored = training || sleep || habits
   const ranking = rankMembers(c)
   const joinedCount = ranking.filter(r => r.pos !== null).length
   const myPos = ranking.find(r => r.member.me)?.pos ?? null
   const needsNutrition = joinable && nutrition
   const needsSleep = joinable && sleep
+  const needsHabits = joinable && habits
   const blocked = (needsVolume && !shareVolume) || (needsNutrition && !shareNutrition) || (needsSleep && !shareSleep)
+    || (needsHabits && !shareHabits)
   // The pillar a join needs, whether it is on, and its opt-in.
   const pillar = needsNutrition
     ? { on: nutritionOn, id: 'join-nutrition', text: nutritionOptInText(), share: shareNutrition, set: setShareNutrition, turnOn: t('Turn on the Nutrition pillar to join') }
     : needsSleep
       ? { on: sleepOn, id: 'join-sleep', text: sleepOptInText(), share: shareSleep, set: setShareSleep, turnOn: t('Turn on the Sleep pillar to join') }
-      : null
+      : needsHabits
+        ? { on: habitsOn, id: 'join-habits', text: habitsOptInText(), share: shareHabits, set: setShareHabits, turnOn: t('Turn on the Habits pillar to join') }
+        : null
 
   return page(
     <>
@@ -231,7 +240,8 @@ export default function ChallengeDetail() {
                   ) : (
                     <Button className="h-12 gap-2 rounded-2xl text-[15px] font-semibold" disabled={busy || blocked} aria-busy={busy}
                       onClick={() => act(() => joinChallenge(c.id, {
-                        shareVolume: needsVolume && shareVolume, shareNutrition: needsNutrition && shareNutrition, shareSleep: needsSleep && shareSleep
+                        shareVolume: needsVolume && shareVolume, shareNutrition: needsNutrition && shareNutrition, shareSleep: needsSleep && shareSleep,
+                        shareHabits: needsHabits && shareHabits
                       }), t('You joined the challenge'))}>
                       {busy && <LoaderCircle aria-hidden className="size-5 animate-spin motion-reduce:animate-none" />}{t('Join challenge')}
                     </Button>
@@ -257,6 +267,7 @@ export default function ChallengeDetail() {
       )}
       {needsNutrition && <NutritionSetup open={setupOpen} onOpenChange={setSetupOpen} />}
       {needsSleep && <SleepSetup open={setupOpen} onOpenChange={setSetupOpen} />}
+      {needsHabits && <HabitsSetup open={setupOpen} onOpenChange={setSetupOpen} />}
     </>
   )
 }

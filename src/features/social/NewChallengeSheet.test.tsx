@@ -16,11 +16,18 @@ vi.mock('../sleep/SleepSetup', async () => {
   const { createElement } = await import('react')
   return { default: ({ open }: { open: boolean }) => (open ? createElement('div', { role: 'dialog', 'aria-label': 'Sleep setup' }) : null) }
 })
+vi.mock('../habits/HabitsSetup', async () => {
+  const { createElement } = await import('react')
+  return { default: ({ open }: { open: boolean }) => (open ? createElement('div', { role: 'dialog', 'aria-label': 'Habits setup' }) : null) }
+})
 
 import NewChallengeSheet from './NewChallengeSheet'
 import { useSocial } from './useSocial'
 import { useProgress } from '../gamification/useProgress'
 import { useProfile } from '../profile/useProfile'
+import { useHabits } from '../habits/useHabits'
+import { habitOf } from '../habits/test-habits'
+import { progressOf } from '../gamification/test-progress'
 import { SocialError } from './social-api'
 import { addDays } from './templates'
 import { todayISO } from '../../lib/format.js'
@@ -40,11 +47,23 @@ const sleepPillar = (on: boolean) => useProfile.setState({ profile: {
 const sleepRadio = () => screen.getByRole('radio', { name: /Nights on sleep target/ }) as HTMLButtonElement
 const SLEEP_OFF_WHY = 'Only for people with the Sleep pillar on.'
 const SLEEP_HINT = 'Agree to show your nights on target to create this challenge.'
+// Habits on or off; Nutrition and Sleep off.
+const habitsPillar = (on: boolean) => useProfile.setState({ profile: {
+  nutrition_enabled: false, sleep_enabled: false, habits_enabled: on, timezone: 'America/Sao_Paulo'
+} as never })
+// My Q this week (Progress.habits.week.q).
+const habitsQ = (q: number) => useProgress.setState({ progress: progressOf(400, {}, {
+  habits: { week: { q, c: 0, xp: 0 }, streak: { current: 0, best: 0, shields: 0 }, last_week: null }
+}) })
+const habitsRadio = () => screen.getByRole('radio', { name: /Habit checks/ }) as HTMLButtonElement
+const HABITS_OFF_WHY = 'Only for people with the Habits pillar on.'
+const HABITS_HINT = 'Agree to show your checks to create this challenge.'
 
 beforeEach(() => {
   localStorage.clear()
   useProgress.getState().reset()
   useSocial.getState().reset()
+  useHabits.getState().reset()
   useSocial.setState({ userId: ME, load, friends: ready([friendOf(BIA, 'Bia'), friendOf(CAIO, 'Caio')]) })
   ;[load, onClose, h.nav, h.createChallenge, h.toast.success, h.toast.error].forEach(f => f.mockReset())
 })
@@ -56,7 +75,7 @@ describe('NewChallengeSheet', () => {
     const options = within(screen.getByRole('radiogroup', { name: 'What counts' })).getAllByRole('radio')
     expect(options.map(o => o.textContent)).toEqual([
       expect.stringContaining('Training days'), expect.stringContaining('Weeks on target'), expect.stringContaining('Days on nutrition target'),
-      expect.stringContaining('Nights on sleep target')
+      expect.stringContaining('Nights on sleep target'), expect.stringContaining('Habit checks')
     ])
     expect(screen.getByRole('radio', { name: /Training days/ }).getAttribute('aria-checked')).toBe('true')
     expect(screen.getByText('Days with a check-in in the period. Several on the same day count as one.')).toBeTruthy()
@@ -112,7 +131,8 @@ describe('NewChallengeSheet', () => {
     const today = todayISO()
     expect(h.createChallenge).toHaveBeenCalledWith({
       template: 'checkin_days', title: '24 training days in 30 days', mode: 'team', target: 24,
-      starts_on: today, ends_on: addDays(today, 29), invitees: [BIA], share_volume: false, share_nutrition: false, share_sleep: false
+      starts_on: today, ends_on: addDays(today, 29), invitees: [BIA], share_volume: false, share_nutrition: false, share_sleep: false,
+      share_habits: false
     })
     expect(onClose).toHaveBeenCalled()
     expect(load).toHaveBeenCalledWith('challenges')
@@ -313,6 +333,132 @@ describe('NewChallengeSheet', () => {
       fireEvent.click(sleepRadio())
       fireEvent.click(screen.getByRole('checkbox', { name: /Bia/ }))
       fireEvent.click(screen.getByRole('switch', { name: /how many nights/ }))
+      fireEvent.click(create())
+      await waitFor(() => expect(h.toast.error).toHaveBeenCalledWith(text))
+    })
+  })
+
+  describe('the habits challenge', () => {
+    it('is listed off while Habits is off, says why and opens the Habits setup', () => {
+      habitsPillar(false)
+      render(<NewChallengeSheet open onClose={onClose} />)
+      expect(habitsRadio().disabled).toBe(true)
+      expect(screen.getByText(HABITS_OFF_WHY)).toBeTruthy()
+      expect(habitsRadio().getAttribute('aria-describedby')).toBe(screen.getByText(HABITS_OFF_WHY).id)
+      fireEvent.click(habitsRadio())
+      expect(habitsRadio().getAttribute('aria-checked')).toBe('false')
+      fireEvent.click(screen.getByRole('button', { name: 'Turn on Habits' }))
+      expect(screen.getByRole('dialog', { name: 'Habits setup' })).toBeTruthy()
+      expect(screen.queryByRole('dialog', { name: 'Sleep setup' })).toBeNull()
+      expect(screen.queryByRole('dialog', { name: 'Nutrition setup' })).toBeNull()
+      // The setup turns the pillar on: the template opens up and is picked for the person.
+      act(() => habitsPillar(true))
+      expect(habitsRadio().disabled).toBe(false)
+      expect(habitsRadio().getAttribute('aria-checked')).toBe('true')
+      expect(screen.queryByText(HABITS_OFF_WHY)).toBeNull()
+    })
+
+    it('keeps the current template while the Habits setup has not turned the pillar on', () => {
+      habitsPillar(false)
+      render(<NewChallengeSheet open onClose={onClose} />)
+      fireEvent.click(screen.getByRole('button', { name: 'Turn on Habits' }))
+      expect(screen.getByRole('dialog', { name: 'Habits setup' })).toBeTruthy()
+      expect(screen.getByRole('radio', { name: /Training days/ }).getAttribute('aria-checked')).toBe('true')
+    })
+
+    it('suggests checks from my Q of the week', () => {
+      habitsPillar(true)
+      habitsQ(10)
+      render(<NewChallengeSheet open onClose={onClose} />)
+      fireEvent.click(habitsRadio())
+      // Q = 10 checks a week over 30 days, only me so far.
+      expect(screen.getByText('43 checks')).toBeTruthy()
+      fireEvent.click(screen.getByRole('checkbox', { name: /Bia/ }))
+      expect(screen.getByText('86 checks')).toBeTruthy()
+      expect((screen.getByLabelText('Challenge name') as HTMLInputElement).value).toBe('86 checks in 30 days')
+      fireEvent.click(screen.getByRole('radio', { name: 'Solo' }))
+      fireEvent.click(screen.getByRole('button', { name: '7 days' }))
+      expect(screen.getByText('10 checks')).toBeTruthy()
+      fireEvent.click(screen.getByRole('button', { name: 'More' }))
+      expect(screen.getByText('11 checks')).toBeTruthy()
+    })
+
+    it('suggests from the weekly goals of the active habits while Q is 0, and 1 check with none', () => {
+      habitsPillar(true)
+      habitsQ(0)
+      useHabits.setState({ habits: [
+        habitOf({ id: 'h1', per_week: 3 }), habitOf({ id: 'h2', per_week: 4 }),
+        habitOf({ id: 'h3', per_week: 7, archived_at: '2026-10-01T12:00:00Z' })
+      ] })
+      const { unmount } = render(<NewChallengeSheet open onClose={onClose} />)
+      fireEvent.click(habitsRadio())
+      // 3 + 4 a week over 30 days; the archived habit does not count.
+      expect(screen.getByText('30 checks')).toBeTruthy()
+      unmount()
+      useHabits.setState({ habits: [] })
+      render(<NewChallengeSheet open onClose={onClose} />)
+      fireEvent.click(habitsRadio())
+      expect(screen.getByText('1 check')).toBeTruthy()
+      expect((screen.getByLabelText('Challenge name') as HTMLInputElement).value).toBe('1 check in 30 days')
+      expect((screen.getByRole('button', { name: 'Less' }) as HTMLButtonElement).disabled).toBe(true)
+    })
+
+    it('asks for the opt-in, saying only the count of checks is shown, and sends it', async () => {
+      habitsPillar(true)
+      habitsQ(7)
+      h.createChallenge.mockResolvedValue('c9')
+      render(<NewChallengeSheet open onClose={onClose} />)
+      fireEvent.click(habitsRadio())
+      fireEvent.click(screen.getByRole('checkbox', { name: /Bia/ }))
+      expect(screen.getByText(HABITS_HINT)).toBeTruthy()
+      expect(create().disabled).toBe(true)
+      expect(screen.getByText('They see only that number, never your habits, their icons or which days.')).toBeTruthy()
+      // Only the habits opt-in is offered for it.
+      expect(screen.getAllByRole('switch')).toHaveLength(1)
+      fireEvent.click(screen.getByRole('switch', { name: /^Show participants how many checks I made/ }))
+      expect(screen.queryByText(HABITS_HINT)).toBeNull()
+      fireEvent.click(create())
+      await waitFor(() => expect(h.nav).toHaveBeenCalledWith('/social/desafios/c9'))
+      expect(h.createChallenge).toHaveBeenCalledWith(expect.objectContaining({
+        template: 'habit_checks', mode: 'team', target: 60, invitees: [BIA], title: '60 checks in 30 days',
+        share_nutrition: false, share_sleep: false, share_habits: true
+      }))
+    })
+
+    it('does not send the habits opt-in with another template', async () => {
+      habitsPillar(true)
+      h.createChallenge.mockResolvedValue('c9')
+      render(<NewChallengeSheet open onClose={onClose} />)
+      fireEvent.click(habitsRadio())
+      fireEvent.click(screen.getByRole('switch', { name: /how many checks/ }))
+      fireEvent.click(screen.getByRole('radio', { name: /Training days/ }))
+      fireEvent.click(screen.getByRole('checkbox', { name: /Bia/ }))
+      fireEvent.click(create())
+      await waitFor(() => expect(h.createChallenge).toHaveBeenCalled())
+      expect(h.createChallenge).toHaveBeenCalledWith(expect.objectContaining({ template: 'checkin_days', share_habits: false }))
+    })
+
+    it('says when the pillar went off under an open form', () => {
+      habitsPillar(true)
+      render(<NewChallengeSheet open onClose={onClose} />)
+      fireEvent.click(habitsRadio())
+      fireEvent.click(screen.getByRole('checkbox', { name: /Bia/ }))
+      fireEvent.click(screen.getByRole('switch', { name: /how many checks/ }))
+      act(() => habitsPillar(false))
+      expect(screen.getByText('Turn on the Habits pillar to create this challenge.')).toBeTruthy()
+      expect(create().disabled).toBe(true)
+    })
+
+    it.each([
+      ['habits_off', 'Turn on the Habits pillar to take part in this challenge.'],
+      ['habits_opt_in_required', 'To take part, agree to show how many checks you made.']
+    ] as const)('explains %s from the server', async (code, text) => {
+      habitsPillar(true)
+      h.createChallenge.mockRejectedValue(new SocialError(code))
+      render(<NewChallengeSheet open onClose={onClose} />)
+      fireEvent.click(habitsRadio())
+      fireEvent.click(screen.getByRole('checkbox', { name: /Bia/ }))
+      fireEvent.click(screen.getByRole('switch', { name: /how many checks/ }))
       fireEvent.click(create())
       await waitFor(() => expect(h.toast.error).toHaveBeenCalledWith(text))
     })

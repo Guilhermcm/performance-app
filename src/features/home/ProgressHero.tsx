@@ -30,6 +30,7 @@ export function ProgressHero() {
   const online = useOnline()
   const nutritionOn = useProfile(s => !!s.profile?.nutrition_enabled)
   const sleepOn = useProfile(s => !!s.profile?.sleep_enabled)
+  const habitsOn = useProfile(s => !!s.profile?.habits_enabled)
   const [shieldsOpen, setShieldsOpen] = useState(false)
 
   if (!progress) {
@@ -59,7 +60,7 @@ export function ProgressHero() {
 
   const lv = progress.level
   const week = progress.week
-  const segments = weekSegments(week, { nutrition: nutritionOn, sleep: sleepOn })
+  const segments = weekSegments(week, { nutrition: nutritionOn, sleep: sleepOn, habits: habitsOn })
 
   return (
     <section data-slot="progress-hero" aria-labelledby="hero-level"
@@ -138,25 +139,29 @@ export function ProgressHero() {
   )
 }
 
-type SegmentKey = 'strength' | 'nutrition' | 'sleep' | 'bonus'
+type SegmentKey = 'strength' | 'nutrition' | 'sleep' | 'habits' | 'bonus'
 const SEGMENT: Record<SegmentKey, { label: () => string; fill: string }> = {
   strength: { label: () => t('Training'), fill: 'bg-[var(--pillar-strength)]' },
   nutrition: { label: () => t('Nutrition'), fill: 'bg-pillar-nutrition' },
   sleep: { label: () => t('Sleep'), fill: 'bg-pillar-sleep' },
+  habits: { label: () => t('Habits'), fill: 'bg-pillar-habits' },
   // Badges and challenges belong to no pillar: a neutral tone.
   bonus: { label: () => t('Bonus'), fill: 'bg-muted-foreground/60' }
 }
 
 // The week's XP split by pillar, each a share of the week's maximum, laid end to end and cut at
-// 100%. Nutrition and sleep show while the profile has them on or they earned XP this week (plan
-// decision 9: the maximum alone cannot tell which pillar raised it), bonus once there is some. A
-// cached week from an older build has no split (all strength) or no sleep in it (none yet).
-export function weekSegments(week: WeekProgress, active: { nutrition: boolean; sleep: boolean }): { key: SegmentKey; xp: number; pct: number }[] {
+// 100%. Nutrition, sleep and habits show while the profile has them on or they earned XP this week
+// (phase 3 plan decision 9: the maximum alone cannot tell which pillar raised it), bonus once there
+// is some. A cached week from an older build has no split (all strength) or no sleep or habits in
+// it (none yet).
+export function weekSegments(week: WeekProgress, active: { nutrition: boolean; sleep: boolean; habits: boolean }): { key: SegmentKey; xp: number; pct: number }[] {
   const p = week.pillars ?? { strength: week.xp, nutrition: 0, bonus: 0 }
   const sleep = p.sleep ?? 0
+  const habits = p.habits ?? 0
   const shown: [SegmentKey, number][] = [['strength', p.strength]]
   if (active.nutrition || p.nutrition > 0) shown.push(['nutrition', p.nutrition])
   if (active.sleep || sleep > 0) shown.push(['sleep', sleep])
+  if (active.habits || habits > 0) shown.push(['habits', habits])
   if (p.bonus > 0) shown.push(['bonus', p.bonus])
   let room = 100
   return shown.map(([key, xp]) => {

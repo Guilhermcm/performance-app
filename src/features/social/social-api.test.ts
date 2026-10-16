@@ -30,39 +30,59 @@ describe('social api', () => {
     h.rpc.mockResolvedValue({ data: { id: 'c9' }, error: null })
     await expect(api.createChallenge({
       template: 'volume_total', title: 'Toneladas', mode: 'team', target: 20,
-      starts_on: '2026-10-05', ends_on: '2026-11-03', invitees: ['b'], share_volume: true, share_nutrition: false, share_sleep: false
+      starts_on: '2026-10-05', ends_on: '2026-11-03', invitees: ['b'], share_volume: true, share_nutrition: false, share_sleep: false,
+      share_habits: false
     })).resolves.toBe('c9')
     expect(h.rpc).toHaveBeenLastCalledWith('create_challenge', {
       p_template: 'volume_total', p_title: 'Toneladas', p_mode: 'team', p_target: 20,
       p_starts_on: '2026-10-05', p_ends_on: '2026-11-03', p_invitees: ['b'], p_share_volume: true,
-      p_share_nutrition: false, p_share_sleep: false
+      p_share_nutrition: false, p_share_sleep: false, p_share_habits: false
     })
     await api.createChallenge({
       template: 'nutrition_days_on_target', title: 'No alvo', mode: 'solo', target: 20,
-      starts_on: '2026-10-05', ends_on: '2026-11-03', invitees: ['b'], share_volume: false, share_nutrition: true, share_sleep: false
+      starts_on: '2026-10-05', ends_on: '2026-11-03', invitees: ['b'], share_volume: false, share_nutrition: true, share_sleep: false,
+      share_habits: false
     })
     expect(h.rpc).toHaveBeenLastCalledWith('create_challenge', expect.objectContaining({
       p_template: 'nutrition_days_on_target', p_share_volume: false, p_share_nutrition: true, p_share_sleep: false
     }))
     await api.createChallenge({
       template: 'sleep_nights_on_target', title: 'Dormir bem', mode: 'team', target: 30,
-      starts_on: '2026-10-05', ends_on: '2026-11-03', invitees: ['b'], share_volume: false, share_nutrition: false, share_sleep: true
+      starts_on: '2026-10-05', ends_on: '2026-11-03', invitees: ['b'], share_volume: false, share_nutrition: false, share_sleep: true,
+      share_habits: false
     })
     expect(h.rpc).toHaveBeenLastCalledWith('create_challenge', {
       p_template: 'sleep_nights_on_target', p_title: 'Dormir bem', p_mode: 'team', p_target: 30,
       p_starts_on: '2026-10-05', p_ends_on: '2026-11-03', p_invitees: ['b'], p_share_volume: false,
-      p_share_nutrition: false, p_share_sleep: true
+      p_share_nutrition: false, p_share_sleep: true, p_share_habits: false
+    })
+    await api.createChallenge({
+      template: 'habit_checks', title: 'Hábitos em dia', mode: 'solo', target: 40,
+      starts_on: '2026-10-05', ends_on: '2026-11-03', invitees: ['b'], share_volume: false, share_nutrition: false, share_sleep: false,
+      share_habits: true
+    })
+    expect(h.rpc).toHaveBeenLastCalledWith('create_challenge', {
+      p_template: 'habit_checks', p_title: 'Hábitos em dia', p_mode: 'solo', p_target: 40,
+      p_starts_on: '2026-10-05', p_ends_on: '2026-11-03', p_invitees: ['b'], p_share_volume: false,
+      p_share_nutrition: false, p_share_sleep: false, p_share_habits: true
     })
 
     h.rpc.mockResolvedValue({ data: null, error: null })
     await api.joinChallenge('c9', { shareVolume: true })
-    expect(h.rpc).toHaveBeenLastCalledWith('join_challenge', { p_id: 'c9', p_share_volume: true, p_share_nutrition: false, p_share_sleep: false })
+    expect(h.rpc).toHaveBeenLastCalledWith('join_challenge', { p_id: 'c9', p_share_volume: true, p_share_nutrition: false, p_share_sleep: false,
+      p_share_habits: false })
     await api.joinChallenge('c9', { shareNutrition: true })
-    expect(h.rpc).toHaveBeenLastCalledWith('join_challenge', { p_id: 'c9', p_share_volume: false, p_share_nutrition: true, p_share_sleep: false })
+    expect(h.rpc).toHaveBeenLastCalledWith('join_challenge', { p_id: 'c9', p_share_volume: false, p_share_nutrition: true, p_share_sleep: false,
+      p_share_habits: false })
     await api.joinChallenge('c9')
-    expect(h.rpc).toHaveBeenLastCalledWith('join_challenge', { p_id: 'c9', p_share_volume: false, p_share_nutrition: false, p_share_sleep: false })
+    expect(h.rpc).toHaveBeenLastCalledWith('join_challenge', { p_id: 'c9', p_share_volume: false, p_share_nutrition: false, p_share_sleep: false,
+      p_share_habits: false })
     await api.joinChallenge('c9', { shareSleep: true })
-    expect(h.rpc).toHaveBeenLastCalledWith('join_challenge', { p_id: 'c9', p_share_volume: false, p_share_nutrition: false, p_share_sleep: true })
+    expect(h.rpc).toHaveBeenLastCalledWith('join_challenge', { p_id: 'c9', p_share_volume: false, p_share_nutrition: false, p_share_sleep: true,
+      p_share_habits: false })
+    await api.joinChallenge('c9', { shareHabits: true })
+    expect(h.rpc).toHaveBeenLastCalledWith('join_challenge', { p_id: 'c9', p_share_volume: false, p_share_nutrition: false, p_share_sleep: false,
+      p_share_habits: true })
     await api.leaveChallenge('c9')
     expect(h.rpc).toHaveBeenLastCalledWith('leave_challenge', { p_id: 'c9' })
 
@@ -92,6 +112,10 @@ describe('social api', () => {
     await expect(api.joinChallenge('c9', { shareSleep: false })).rejects.toMatchObject({ code: 'sleep_opt_in_required' })
     h.rpc.mockResolvedValue({ data: null, error: { message: 'sleep_off' } })
     await expect(api.joinChallenge('c9', { shareSleep: true })).rejects.toMatchObject({ code: 'sleep_off' })
+    h.rpc.mockResolvedValue({ data: null, error: { message: 'habits_opt_in_required' } })
+    await expect(api.joinChallenge('c9', { shareHabits: false })).rejects.toMatchObject({ code: 'habits_opt_in_required' })
+    h.rpc.mockResolvedValue({ data: null, error: { message: 'habits_off' } })
+    await expect(api.joinChallenge('c9', { shareHabits: true })).rejects.toMatchObject({ code: 'habits_off' })
     h.rpc.mockResolvedValue({ data: null, error: { message: 'boom' } })
     await expect(api.getFriends()).rejects.toMatchObject({ code: 'network' })
     h.rpc.mockRejectedValue(new TypeError('Failed to fetch'))
@@ -149,14 +173,15 @@ describe('challenge RPCs against the migrations', () => {
   it('names every parameter of create_challenge and join_challenge', async () => {
     h.rpc.mockResolvedValue({ data: { id: 'c9' }, error: null })
     await api.createChallenge({
-      template: 'sleep_nights_on_target', title: 'Dormir bem', mode: 'team', target: 5,
-      starts_on: '2026-10-05', ends_on: '2026-10-11', invitees: ['b'], share_volume: false, share_nutrition: false, share_sleep: true
+      template: 'habit_checks', title: 'Hábitos em dia', mode: 'team', target: 5,
+      starts_on: '2026-10-05', ends_on: '2026-10-11', invitees: ['b'], share_volume: false, share_nutrition: false, share_sleep: false,
+      share_habits: true
     })
     expect(Object.keys(h.rpc.mock.lastCall![1]).sort()).toEqual(sqlParams('create_challenge').sort())
-    expect(h.rpc.mock.lastCall![1]).toMatchObject({ p_share_sleep: true })
+    expect(h.rpc.mock.lastCall![1]).toMatchObject({ p_share_habits: true })
     h.rpc.mockResolvedValue({ data: null, error: null })
-    await api.joinChallenge('c9', { shareSleep: true })
-    expect(h.rpc.mock.lastCall![1]).toMatchObject({ p_share_sleep: true })
+    await api.joinChallenge('c9', { shareHabits: true })
+    expect(h.rpc.mock.lastCall![1]).toMatchObject({ p_share_habits: true })
     expect(Object.keys(h.rpc.mock.lastCall![1]).sort()).toEqual(sqlParams('join_challenge').sort())
   })
 

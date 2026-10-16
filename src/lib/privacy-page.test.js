@@ -22,8 +22,8 @@ describe('privacy policy page', () => {
 
   it('has the English version and the update date', () => {
     expect(html).toContain('id="en"')
-    expect(visible).toContain('Última atualização: 12 de outubro de 2026')
-    expect(visible).toContain('Last updated: October 12, 2026')
+    expect(visible).toContain('Última atualização: 16 de outubro de 2026')
+    expect(visible).toContain('Last updated: October 16, 2026')
   })
 
   it('covers the sleep pillar: what is kept, that it is optional and who sees it, in both languages', () => {
@@ -34,13 +34,13 @@ describe('privacy policy page', () => {
     expect(pt).toContain('o horário em que deitou, o horário em que acordou, a duração, a nota de qualidade e a observação')
     expect(pt).toContain('Só você vê seus horários, a duração, a qualidade e as observações')
     expect(pt).toContain('Seus amigos veem o nível do pilar Sono e o XP')
-    expect(pt).toContain('suas conquistas, menos as de nutrição e de sono')
+    expect(pt).toContain('suas conquistas, menos as de nutrição, de sono e de hábitos')
     expect(en).toContain('Sleep pillar')
     expect(en).toContain('The Sleep pillar is optional and starts off')
     expect(en).toContain('the time you went to bed, the time you woke up, the duration, the quality rating and the note')
     expect(en).toContain('Only you see your times, duration, quality and notes')
     expect(en).toContain('Your friends see your Sleep pillar level and XP')
-    expect(en).toContain('your achievements, except the nutrition and sleep ones')
+    expect(en).toContain('your achievements, except the nutrition, sleep and habit ones')
   })
 
   it('tells the sleep challenge needs opt-in and shows only the nights on target, in both languages', () => {
@@ -55,8 +55,45 @@ describe('privacy policy page', () => {
   it('lists the nutrition and sleep challenge counts under consent (art. 7, I), in both languages', () => {
     const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
     const en = visible.slice(visible.indexOf('Privacy Policy'))
-    expect(pt).toContain('nos desafios, o volume e as contagens de dias no alvo da Nutrição e de noites no alvo do Sono, depende do seu consentimento (art. 7º, I)')
-    expect(en).toContain('in challenges, volume and the counts of Nutrition days on target and Sleep nights on target, depends on your consent (art. 7, I)')
+    expect(pt).toContain('nos desafios, o volume e as contagens de dias no alvo da Nutrição, de noites no alvo do Sono e de checks dos Hábitos, depende do seu consentimento (art. 7º, I)')
+    expect(en).toContain('in challenges, volume and the counts of Nutrition days on target, Sleep nights on target and Habit checks, depends on your consent (art. 7, I)')
+  })
+
+  it('covers the habits pillar: what is kept, that it is optional and who sees it, in both languages', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('Pilar Hábitos')
+    expect(pt).toContain('O pilar Hábitos é opcional e vem desligado')
+    expect(pt).toContain('o nome, o ícone e a meta semanal')
+    expect(pt).toContain('os checks que você marca')
+    expect(pt).toContain('Só você vê os nomes, os ícones, as metas e os checks dos seus hábitos')
+    expect(pt).toContain('Seus amigos veem o nível do pilar Hábitos e o XP')
+    expect(pt).toContain('se o pilar estava ligado nela')
+    expect(en).toContain('Habits pillar')
+    expect(en).toContain('The Habits pillar is optional and starts off')
+    expect(en).toContain('the name, the icon and the weekly goal')
+    expect(en).toContain('the checks you mark')
+    expect(en).toContain('Only you see the names, icons, goals and checks of your habits')
+    expect(en).toContain('Your friends see your Habits pillar level and XP')
+    expect(en).toContain('whether the pillar was on that week')
+  })
+
+  it('tells the habit checks challenge needs opt-in and shows only the count, in both languages', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('No desafio de checks de hábitos, você só entra se aceitar compartilhar essa contagem')
+    expect(pt).toContain('quantos checks você marcou dentro das metas, nunca seus hábitos, os ícones ou os dias')
+    expect(en).toContain('In the Habit checks challenge, you can only join if you agree to share that count')
+    expect(en).toContain('how many checks you marked within your goals, never your habits, their icons or the days')
+  })
+
+  it('says unsent habits and checks stay on the device, and that deleting the account removes them', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('os hábitos e os checks que ainda não foram enviados')
+    expect(pt).toContain('os hábitos com seus checks e metas')
+    expect(en).toContain('habits and checks that have not been sent yet')
+    expect(en).toContain('habits with their checks and goals')
   })
 
   it('covers the nutrition pillar and Open Food Facts in both languages', () => {

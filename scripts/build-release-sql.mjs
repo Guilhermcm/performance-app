@@ -31,6 +31,13 @@ export const RELEASES = [
     last: 25,
     title: 'migrations 0021 to 0025 (Sleep, phase 3)',
     needs: '0001 to 0020'
+  },
+  {
+    name: '0026-0030_habits',
+    first: 26,
+    last: 30,
+    title: 'migrations 0026 to 0030 (Habits, phase 4a)',
+    needs: '0001 to 0025'
   }
 ].map(r => ({ ...r, out: join(RELEASE, `${r.name}.sql`) }))
 

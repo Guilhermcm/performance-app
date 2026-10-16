@@ -34,7 +34,7 @@ combinada a partir de outubro de 2026: **1c → 1d → 3 → 4 → 5 → 6** (a 
 | 1d | Plano com evidência | M | 1c | em produção desde 2026-10-12 (PR #6), sem SQL; falta a conferência das fontes em `docs/fontes-1d.md` ([spec](superpowers/specs/2026-10-12-fase-1d-plano-evidencia-design.md), [plano](superpowers/plans/2026-10-12-fase-1d-plano-evidencia.md)) |
 | 2 | Nutrição | G | 1a | concluída (2a e 2b) |
 | 3 | Sono | P | 1a | em produção desde 2026-10-12 (SQL 0021-0025 e PR #6) ([spec](superpowers/specs/2026-10-06-fase-3-sono-design.md), [plano](superpowers/plans/2026-10-12-fase-3-sono.md)) |
-| 4 | Hábitos + trackers | M | 1a | a especificar |
+| 4 | Hábitos + trackers | M | 1a | em duas subetapas ([spec](superpowers/specs/2026-10-15-fase-4-habitos-trackers-design.md)). 4a Hábitos: em produção desde 2026-10-16 ([plano](superpowers/plans/2026-10-15-fase-4a-habitos.md)). 4b Trackers: a seguir, com plano próprio |
 | 5 | Painel de performance | M | 2, 3, 4 | a especificar |
 | 6 | Foco (ActivityWatch) | P | 1a | a especificar |
 
@@ -271,16 +271,48 @@ de [docs/SETUP.md](SETUP.md) ok, e o PR #6 (1d e Sono) entrou no mesmo dia.
 
 **Objetivo:** medir qualquer coisa e transformar hábitos em consistência.
 
+**Subetapas:** a Fase 4 sai em duas, cada uma com plano, PR, SQL e roteiro de publicação próprios.
+A 4b começa agora que a 4a está em produção.
+
 **Escopo previsto**
-- **Hábitos**: diários ou N vezes por semana, check rápido, lembretes no app.
-- **Trackers genéricos**: métricas definidas pelo usuário dos tipos numérico, duração e rótulo
+- **Hábitos (4a)**: hábitos criados pela pessoa, com meta de N vezes por semana, check rápido e
+  cartão "Hábitos de hoje" na Home.
+- **Trackers genéricos (4b)**: métricas definidas pelo usuário dos tipos numérico, duração e rótulo
   (ex.: água, humor, passos, meditação, leitura), agrupadas, com gráficos de linha, pizza, "tempo
-  desde o último" e médias móveis.
-- Tabelas `habits`, `habit_checks`, `trackers`, `tracker_entries`.
-- Eventos: `habit_checked`, `habit_week_on_target`, `tracker_logged`. XP no molde padrão.
+  desde o último" e médias móveis. Trackers medem e não rendem XP.
+- Tabelas da 4a: `habits`, `habit_checks`, `habit_targets`, `habit_periods` e `habit_days`. As da
+  4b (`trackers`, `tracker_entries`) entram na própria subetapa.
 - Acende o eixo Hábitos no radar de pilares da Home.
 
 **Origem:** Habitica (hábitos/dailies), Track & Graph (modelo de tracker e gráficos).
+
+**Spec:** [2026-10-15-fase-4-habitos-trackers-design.md](superpowers/specs/2026-10-15-fase-4-habitos-trackers-design.md).
+**Plano da 4a:** [2026-10-15-fase-4a-habitos.md](superpowers/plans/2026-10-15-fase-4a-habitos.md).
+
+**Entregas da 4a**
+- Pilar opcional, ligado em Perfil > Hábitos: até 20 hábitos ativos, cada um com nome, ícone e meta
+  de 1 a 7 vezes por semana; períodos ativos e semana neutra, como nos outros pilares.
+- Check pela Home ou pela tela `/habitos`, com hoje e ontem editáveis e fila offline; lista que se
+  reordena e arquiva, e calendário do mês.
+- Dia fechado pelo servidor em D+2, XP no molde de 960 por semana, streak semanal, conquistas
+  privadas (incluindo "Hábito de ferro") e o eixo Hábitos aceso no radar.
+- Desafio `habit_checks` com opt-in; os participantes veem só a contagem de checks.
+- Migrations `0026` a `0030`, publicadas no arquivo único `supabase/release/0026-0030_habits.sql`, e
+  o job `close-habit-days`.
+
+**Status da 4a:** em produção. O SQL 0026-0030 rodou em 2026-10-16, com as conferências do roteiro
+de [docs/SETUP.md](SETUP.md), e o merge saiu no mesmo dia. **Próximo:** a 4b, Trackers.
+
+---
+
+## Lembretes por notificação push
+
+**Objetivo:** lembrar a pessoa de marcar os hábitos do dia fora do app.
+
+**Contexto:** a spec da Fase 4 resolveu o lembrete dos hábitos com o cartão "Hábitos de hoje" na Home
+e deixou a notificação push para depois. O app não tem push hoje (saiu na limpeza da base), então o
+item pede decisão própria: Web Push no navegador instalado como app, horário escolhido pela pessoa e
+opção de desligar. Fica depois da Fase 4 e pode servir também aos outros pilares.
 
 ---
 
@@ -320,5 +352,5 @@ de [docs/SETUP.md](SETUP.md) ok, e o PR #6 (1d e Sono) entrou no mesmo dia.
 
 ## Fora do roadmap por enquanto
 
-App nativo (Capacitor/loja), push notifications, AI Coach, integrações com Google Fit/Apple
+App nativo (Capacitor/loja), AI Coach, integrações com Google Fit/Apple
 Health/Strava/Garmin, monetização. Reavaliar depois da Fase 5.

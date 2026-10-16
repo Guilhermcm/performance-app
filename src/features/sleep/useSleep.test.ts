@@ -132,6 +132,84 @@ describe('useSleep', () => {
     expect(useSleep.getState().logs[TODAY]).toEqual(saved)
   })
 
+  it('keeps a night saved while a pull was on its way, and pulls again', async () => {
+    await bound()
+    let release!: (v: SleepHistory) => void
+    api.fetchNights.mockReturnValueOnce(new Promise(r => { release = r }))
+    const first = useSleep.getState().refresh()
+    await settle()
+    expect(api.fetchNights).toHaveBeenCalledTimes(2)
+    // Saved after the reads went out; its upsert goes and leaves the queue before they answer.
+    const saved = useSleep.getState().saveNight({ night: TODAY, bed_time: '23:30', wake_time: '07:10', quality: null, note: null })
+    await settle()
+    expect(api.upsertLog).toHaveBeenCalledWith(saved)
+    expect(sleepOutbox.pending(ME)).toEqual([])
+    api.fetchLogs.mockResolvedValue([saved])
+    release(history())
+    await first
+    expect(useSleep.getState().logs[TODAY]).toEqual(saved)
+    // The second pull, started as the first one ended, reads the server with the night.
+    await useSleep.getState().refresh()
+    expect(api.fetchNights).toHaveBeenCalledTimes(3)
+    expect(useSleep.getState().logs[TODAY]).toEqual(saved)
+  })
+
+  it('keeps a removal and a new target made while a pull was on its way', async () => {
+    api.fetchLogs.mockResolvedValue([logOf({ night: YESTERDAY })])
+    await bound()
+    let release!: (v: SleepHistory) => void
+    api.fetchNights.mockReturnValueOnce(new Promise(r => { release = r }))
+    const first = useSleep.getState().refresh()
+    await settle()
+    useSleep.getState().removeNight(YESTERDAY)
+    await useSleep.getState().setTarget({ goal_min: 450, bed_target: '22:30' }, '2026-10-06')
+    await settle()
+    expect(sleepOutbox.pending(ME)).toEqual([])
+    release(history())
+    await first
+    expect(useSleep.getState().logs).toEqual({})
+    expect(useSleep.getState().targetOn('2026-10-06')?.goal_min).toBe(450)
+  })
+
+  it('lays a night that left the queue during the reads over their answer', async () => {
+    await bound()
+    api.upsertLog.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    const saved = useSleep.getState().saveNight({ night: TODAY, bed_time: '23:30', wake_time: '07:10', quality: null, note: null })
+    await settle()
+    expect(sleepOutbox.pending(ME)).toHaveLength(1)
+    api.upsertLog.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    let release!: (v: SleepHistory) => void
+    api.fetchNights.mockReturnValueOnce(new Promise(r => { release = r }))
+    const pull = useSleep.getState().refresh()
+    await settle()
+    // The minute tick sends it before the reads answer.
+    await useSleep.getState().flushPending()
+    expect(sleepOutbox.pending(ME)).toEqual([])
+    release(history())
+    await pull
+    expect(useSleep.getState().logs[TODAY]).toEqual(saved)
+  })
+
+  it('does not lay a night over the answer when the flush during the reads was refused', async () => {
+    await bound()
+    api.upsertLog.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    useSleep.getState().saveNight({ night: TODAY, bed_time: '23:30', wake_time: '07:10', quality: null, note: null })
+    await settle()
+    expect(sleepOutbox.pending(ME)).toHaveLength(1)
+    api.upsertLog.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    let release!: (v: SleepHistory) => void
+    api.fetchNights.mockReturnValueOnce(new Promise(r => { release = r }))
+    const pull = useSleep.getState().refresh()
+    await settle()
+    // The minute tick sends it before the reads answer, and the server refuses it for good.
+    api.upsertLog.mockRejectedValueOnce(refused('night_closed'))
+    await useSleep.getState().flushPending()
+    expect(sleepOutbox.pending(ME)).toEqual([])
+    release(history())
+    await pull
+    expect(useSleep.getState().logs[TODAY]).toBeUndefined()
+  })
+
   it('raises the dropped notice once for closed nights', async () => {
     await bound()
     // Back after three days: the night of the day before yesterday is still in the queue.

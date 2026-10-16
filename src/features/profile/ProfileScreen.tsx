@@ -20,6 +20,8 @@ import SleepSetup from '../sleep/SleepSetup'
 import { useSleep } from '../sleep/useSleep'
 import { useLocalNow } from '../sleep/use-local-now'
 import { fmtClock, fmtDuration } from '../sleep/time'
+import HabitsSetup from '../habits/HabitsSetup'
+import { useHabits } from '../habits/useHabits'
 import DeleteAccount from './DeleteAccount'
 import { useProfile } from './useProfile'
 import { validateProfileInput } from './profile-api'
@@ -66,6 +68,8 @@ export default function ProfileScreen() {
   const [setupOpen, setSetupOpen] = useState(false)
   const [sleepSetupOpen, setSleepSetupOpen] = useState(false)
   const [sleepAsk, setSleepAsk] = useState(false)
+  const [habitsSetupOpen, setHabitsSetupOpen] = useState(false)
+  const [habitsAsk, setHabitsAsk] = useState(false)
   // A link here with focus 'share_activity' (the old feed's sharing banner) brings the switch for the
   // old workouts into view and focuses it.
   const focus = (useLocation().state as { focus?: string } | null)?.focus
@@ -168,6 +172,19 @@ export default function ProfileScreen() {
     } catch { toast(t('Could not save. Your previous values were kept.')) }
   }
 
+  // Turning Habits on goes through its setup (which opens the first habit when none is active);
+  // turning it off asks first. Habits and checks stay saved.
+  const toggleHabits = (on: boolean) => {
+    if (on) { setHabitsSetupOpen(true); return }
+    setHabitsAsk(true)
+  }
+  const turnOffHabits = async () => {
+    try {
+      await save({ habits_enabled: false })
+      setHabitsAsk(false)
+    } catch { toast(t('Could not save. Your previous values were kept.')) }
+  }
+
   const toggleShare = async (on: boolean) => {
     try { await save({ share_activity: on }) } catch { toast(t('Could not save. Your previous values were kept.')) }
   }
@@ -258,6 +275,10 @@ export default function ProfileScreen() {
         <SleepCard profile={profile} asking={sleepAsk} onToggle={toggleSleep} onEdit={() => setSleepSetupOpen(true)}
           onCancelOff={() => setSleepAsk(false)} onConfirmOff={() => void turnOffSleep()} />
         <SleepSetup open={sleepSetupOpen} onOpenChange={setSleepSetupOpen} />
+
+        <HabitsCard profile={profile} asking={habitsAsk} onToggle={toggleHabits}
+          onCancelOff={() => setHabitsAsk(false)} onConfirmOff={() => void turnOffHabits()} />
+        <HabitsSetup open={habitsSetupOpen} onOpenChange={setHabitsSetupOpen} />
 
         {/* checkin_visibility is where a new check-in's form starts (spec 4.6); each post picks its own. */}
         <section data-slot="card" aria-labelledby="sec-visibility" className="flex flex-col gap-3 rounded-2xl border border-border bg-card px-5 pb-5 pt-4">
@@ -435,6 +456,54 @@ function SleepCard({ profile, asking, onToggle, onEdit, onCancelOff, onConfirmOf
       ) : (
         <p className="pb-1 text-sm leading-snug text-muted-foreground">
           {t('Set how long you want to sleep and when you go to bed. Nights that hit both earn XP, like workouts do.')}
+        </p>
+      )}
+    </section>
+  )
+}
+
+// Perfil > Hábitos (spec 3.1): the pillar's switch and, once on, how many habits are active and the
+// way to the Habits screen, where they are created and edited. Turning it off asks first.
+function HabitsCard({ profile, asking, onToggle, onCancelOff, onConfirmOff }: {
+  profile: Profile; asking: boolean; onToggle: (on: boolean) => void; onCancelOff: () => void; onConfirmOff: () => void
+}) {
+  const navigate = useNavigate()
+  // A placeholder until the habits have loaded, rather than a 0 that may not be true.
+  const active = useHabits(s => (s.status === 'ready' || s.habits.length ? s.habits.filter(h => !h.archived_at).length : null))
+  const on = profile.habits_enabled
+  return (
+    <section data-slot="card" aria-labelledby="sec-habits" className="rounded-2xl border border-border bg-card px-5 pb-4 pt-3">
+      <div className="flex min-h-11 items-center justify-between gap-3">
+        <h2 id="sec-habits" className="text-[15px] font-semibold">{t('Habits')}</h2>
+        <Switch id="habits_enabled" aria-labelledby="sec-habits" className="relative after:absolute after:-inset-3"
+          checked={on} onCheckedChange={onToggle} />
+      </div>
+      {on ? (
+        <>
+          <dl className="divide-y divide-border">
+            {detailRow(t('Active habits'), active === null ? null : <span className="font-mono">{active}</span>)}
+          </dl>
+          {asking ? (
+            <div role="alertdialog" aria-labelledby="habits-off-question" aria-describedby="habits-off-hint" className="mt-2 flex flex-col gap-3 rounded-2xl bg-secondary/70 p-4">
+              <div className="flex flex-col gap-1">
+                <p id="habits-off-question" className="text-[15px] font-semibold leading-snug">{t('Turn off Habits?')}</p>
+                <p id="habits-off-hint" className="text-sm leading-snug text-muted-foreground">{t('Your habits and checks stay saved. You can turn it back on any time.')}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant="outline" className="h-12 rounded-xl" onClick={onCancelOff}>{t('Cancel')}</Button>
+                <Button variant="destructive" className="h-12 rounded-xl" onClick={onConfirmOff}>{t('Turn off')}</Button>
+              </div>
+            </div>
+          ) : (
+            <Button variant="ghost" className="-mx-3 mt-1 h-11 w-[calc(100%+1.5rem)] justify-between rounded-xl px-3 text-[15px]"
+              onClick={() => navigate('/habitos')}>
+              {t('Open Habits')}<ChevronRight aria-hidden className="size-4" />
+            </Button>
+          )}
+        </>
+      ) : (
+        <p className="pb-1 text-sm leading-snug text-muted-foreground">
+          {t('Choose your habits and how many times a week you want to do each one. Every check earns XP, like workouts do.')}
         </p>
       )}
     </section>

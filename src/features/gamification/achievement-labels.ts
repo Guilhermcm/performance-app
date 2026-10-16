@@ -49,7 +49,18 @@ export const ACHIEVEMENT_TEXT: Record<AchievementCode, Text> = {
   sleep_streak_4: { title: () => tn(4, '{0} weeks of sleep', 4), detail: () => tn(4, 'Meet your weekly sleep goal {0} weeks in a row.', 4) },
   sleep_streak_12: { title: () => tn(12, '{0} weeks of sleep', 12), detail: () => tn(12, 'Meet your weekly sleep goal {0} weeks in a row.', 12) },
   sleep_streak_26: { title: () => tn(26, '{0} weeks of sleep', 26), detail: () => tn(26, 'Meet your weekly sleep goal {0} weeks in a row.', 26) },
-  sleep_clock_7: { title: () => t('Clock on time'), detail: () => t('Go to bed within 30 minutes of your bedtime 7 nights in a row.') }
+  sleep_clock_7: { title: () => t('Clock on time'), detail: () => t('Go to bed within 30 minutes of your bedtime 7 nights in a row.') },
+  // Only valid checks count: the ones within each habit's weekly target, on closed days.
+  habits_first_check: { title: () => t('First check'), detail: () => t('Check off a habit for the first time.') },
+  habits_checks_50: { title: () => tn(50, '{0} checks', 50), detail: () => tn(50, 'Check off habits {0} times within your weekly goals.', 50) },
+  habits_checks_200: { title: () => tn(200, '{0} checks', 200), detail: () => tn(200, 'Check off habits {0} times within your weekly goals.', 200) },
+  habits_checks_500: { title: () => tn(500, '{0} checks', 500), detail: () => tn(500, 'Check off habits {0} times within your weekly goals.', 500) },
+  habits_checks_1000: { title: () => tn(1000, '{0} checks', 1000), detail: () => tn(1000, 'Check off habits {0} times within your weekly goals.', 1000) },
+  habits_week_target_1: { title: () => t('Habit week done'), detail: () => t('Meet the goal of every habit in a week for the first time.') },
+  habits_streak_4: { title: () => tn(4, '{0} weeks of habits', 4), detail: () => tn(4, 'Meet the goal of every habit {0} weeks in a row.', 4) },
+  habits_streak_12: { title: () => tn(12, '{0} weeks of habits', 12), detail: () => tn(12, 'Meet the goal of every habit {0} weeks in a row.', 12) },
+  habits_streak_26: { title: () => tn(26, '{0} weeks of habits', 26), detail: () => tn(26, 'Meet the goal of every habit {0} weeks in a row.', 26) },
+  habits_iron_8: { title: () => t('Iron habit'), detail: () => t('Meet the goal of the same habit 8 weeks in a row.') }
 }
 
 // A badge's name; one this build does not know yet (added on the server later) gets a generic

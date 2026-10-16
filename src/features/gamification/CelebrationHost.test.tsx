@@ -2,13 +2,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, cleanup, act } from '@testing-library/react'
 
-const h = vi.hoisted(() => ({ toast: vi.fn() }))
+const h = vi.hoisted(() => ({ toast: vi.fn(), fetchProgress: vi.fn() }))
 vi.mock('sonner', () => ({ toast: h.toast }))
+vi.mock('./progress-api', () => ({ fetchProgress: h.fetchProgress }))
 
 import CelebrationHost from './CelebrationHost'
 import { useProgress } from './useProgress'
 import { progressOf } from './test-progress'
-import type { NutritionProgress, Progress, SleepProgress } from './types'
+import type { HabitsProgress, NutritionProgress, Progress, SleepProgress } from './types'
 
 const SEEN = 'perf_nutrition_seen_v1'
 // 2026-10-03 is a Saturday, 2026-10-04 a Sunday.
@@ -24,6 +25,7 @@ beforeEach(() => {
   localStorage.clear()
   useProgress.getState().reset()
   h.toast.mockReset()
+  h.fetchProgress.mockReset()
 })
 afterEach(cleanup)
 
@@ -125,5 +127,28 @@ describe('CelebrationHost', () => {
     render(<CelebrationHost />)
     expect(h.toast).not.toHaveBeenCalled()
     expect(JSON.parse(localStorage.getItem('perf_sleep_seen_v1')!)).toEqual({ userId: 'u1', day: '2026-10-02' })
+  })
+
+  it('shows the habit week celebration once, with the XP it paid, and no toast', async () => {
+    const week = (start: string, bonus = 64): Progress => progressOf(700, {}, {
+      habits: { week: { q: 9, c: 0, xp: 0 }, streak: { current: 1, best: 1, shields: 0 }, last_week: { start, target_hit: true, bonus } } satisfies HabitsProgress
+    })
+    // The first answer on this device records the week already closed.
+    h.fetchProgress.mockResolvedValue(week('2026-09-21'))
+    await act(() => useProgress.getState().load('u1'))
+    render(<CelebrationHost />)
+    expect(screen.queryByRole('dialog')).toBeNull()
+    // The next week closes with its goal met.
+    h.fetchProgress.mockResolvedValue(week('2026-09-28'))
+    await act(() => useProgress.getState().refresh())
+    expect(screen.getByRole('dialog')).toBeTruthy()
+    expect(screen.getByText('Habit week done, +64 XP')).toBeTruthy()
+    fireEvent.click(screen.getByText('Tap to continue'))
+    expect(screen.queryByRole('dialog')).toBeNull()
+    // The same week again tells nothing.
+    await act(() => useProgress.getState().refresh())
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(useProgress.getState().pending).toEqual([])
+    expect(h.toast).not.toHaveBeenCalled()
   })
 })

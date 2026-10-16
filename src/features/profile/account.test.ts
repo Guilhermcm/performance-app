@@ -16,6 +16,7 @@ const h = vi.hoisted(() => {
     clearCheckinOutbox: vi.fn(async (_u: string) => { calls.push('clearCheckinOutbox') }),
     forgetDiaryOutbox: vi.fn((_u: string) => { calls.push('forgetDiaryOutbox') }),
     forgetSleepOutbox: vi.fn((_u: string) => { calls.push('forgetSleepOutbox') }),
+    forgetHabitsOutbox: vi.fn((_u: string) => { calls.push('forgetHabitsOutbox') }),
     checkinsReset: log('checkins.reset'),
     clearSignedUrls: log('clearSignedUrls'),
     session: { user: { id: 'u1' } } as { user: { id: string } } | null
@@ -26,6 +27,7 @@ vi.mock('../checkin/checkin-api', () => ({ removeAllPhotos: h.removeAllPhotos, c
 vi.mock('../checkin/outbox', () => ({ clearCheckinOutbox: h.clearCheckinOutbox }))
 vi.mock('../nutrition/outbox', () => ({ forgetOutbox: h.forgetDiaryOutbox }))
 vi.mock('../sleep/outbox', () => ({ sleepOutbox: { forget: h.forgetSleepOutbox } }))
+vi.mock('../habits/outbox', () => ({ habitsOutbox: { forget: h.forgetHabitsOutbox } }))
 vi.mock('../checkin/useCheckins', () => ({ useCheckins: { getState: () => ({ reset: h.checkinsReset }) } }))
 vi.mock('../../store/useStore.js', () => ({ useStore: { getState: () => ({ forgetAccount: h.forgetAccount }) } }))
 vi.mock('../gamification/events', () => ({ clearEventQueue: h.clearEventQueue }))
@@ -54,11 +56,12 @@ describe('deleteMyAccount', () => {
     expect(h.calls).toEqual([
       'removeAllPhotos', 'rpc',
       'forgetAccount', 'clearEventQueue', 'clearPendingInvite', 'profile.reset', 'progress.reset', 'social.reset',
-      'clearCheckinOutbox', 'forgetDiaryOutbox', 'forgetSleepOutbox', 'checkins.reset', 'clearSignedUrls'
+      'clearCheckinOutbox', 'forgetDiaryOutbox', 'forgetSleepOutbox', 'forgetHabitsOutbox', 'checkins.reset', 'clearSignedUrls'
     ])
     expect(h.clearCheckinOutbox).toHaveBeenCalledWith('u1')
     expect(h.forgetDiaryOutbox).toHaveBeenCalledWith('u1')
     expect(h.forgetSleepOutbox).toHaveBeenCalledWith('u1')
+    expect(h.forgetHabitsOutbox).toHaveBeenCalledWith('u1')
   })
 
   it('still deletes the account when the photos cannot be removed', async () => {

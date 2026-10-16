@@ -1,10 +1,10 @@
 // @vitest-environment happy-dom
 import { describe, it, expect } from 'vitest'
-import { celebrationsSince, completeMarker, dayResultToast, markerOf, sleepNightToast, trainingDayToast } from './celebrations'
+import { celebrationsSince, completeMarker, dayResultToast, habitWeekText, markerOf, sleepNightToast, trainingDayToast } from './celebrations'
 import { setLang } from '../../lib/i18n.js'
 import { progressOf } from './test-progress'
 import { levelFor } from './xp'
-import type { NutritionProgress, Progress, SleepProgress } from './types'
+import type { HabitsProgress, NutritionProgress, Progress, SleepProgress } from './types'
 
 const badge = (code: string) => ({ code, unlocked_at: '2026-10-07T20:00:00Z' })
 
@@ -28,6 +28,16 @@ const withSleep = (sxp: number, s: Partial<SleepProgress> = {}, over: Partial<Pr
   progressOf(700, {}, {
     pillars: { strength: { ...levelFor(700), xp: 700 }, sleep: { ...levelFor(sxp), xp: sxp } },
     sleep: sleep(s), ...over
+  })
+
+const habits = (over: Partial<HabitsProgress> = {}): HabitsProgress => ({
+  week: { q: 9, c: 4, xp: 300 }, streak: { current: 1, best: 1, shields: 0 }, last_week: null, ...over
+})
+// Strength 700 XP; habits at `hxp` XP.
+const withHabits = (hxp: number, b: Partial<HabitsProgress> = {}, over: Partial<Progress> = {}) =>
+  progressOf(700, {}, {
+    pillars: { strength: { ...levelFor(700), xp: 700 }, habits: { ...levelFor(hxp), xp: hxp } },
+    habits: habits(b), ...over
   })
 
 describe('celebrations', () => {
@@ -78,8 +88,8 @@ describe('celebrations', () => {
     const now = withNutrition(400, { last_week: { start: '2026-09-28', target_hit: true } })
     const old = { level: now.level.level, codes: [] }
     const done = completeMarker(old, now)
-    expect(done.pillarLevels).toEqual({ strength: now.level.level, nutrition: levelFor(400).level, sleep: 1 })
-    expect(done.weekTargets).toEqual({ nutrition: '2026-09-28', sleep: null })
+    expect(done.pillarLevels).toEqual({ strength: now.level.level, nutrition: levelFor(400).level, sleep: 1, habits: 1 })
+    expect(done.weekTargets).toEqual({ nutrition: '2026-09-28', sleep: null, habits: null })
     expect(celebrationsSince(done, now)).toEqual([])
     // A complete marker is left as it is.
     const seen = markerOf(withNutrition(90))
@@ -88,7 +98,7 @@ describe('celebrations', () => {
 
   it('reads a cached progress from an older build without pillars or nutrition', () => {
     const old = { ...progressOf(700), pillars: undefined, nutrition: undefined } as unknown as Progress
-    expect(markerOf(old)).toEqual({ level: old.level.level, codes: [], pillarLevels: { sleep: 1 }, weekTargets: { sleep: null } })
+    expect(markerOf(old)).toEqual({ level: old.level.level, codes: [], pillarLevels: { sleep: 1, habits: 1 }, weekTargets: { sleep: null, habits: null } })
     expect(celebrationsSince(markerOf(old), old)).toEqual([])
     expect(dayResultToast(old, null)).toBeNull()
     expect(sleepNightToast(old, null)).toBeNull()
@@ -119,15 +129,74 @@ describe('celebrations', () => {
     // Saved by the nutrition-era build: both maps there, no sleep in either.
     const old = { level: now.level.level, codes: [], pillarLevels: { strength: now.level.level }, weekTargets: {} }
     const done = completeMarker(old, now)
-    expect(done.pillarLevels).toEqual({ strength: now.level.level, sleep: levelFor(400).level })
-    expect(done.weekTargets).toEqual({ sleep: '2026-09-28' })
+    expect(done.pillarLevels).toEqual({ strength: now.level.level, sleep: levelFor(400).level, habits: 1 })
+    expect(done.weekTargets).toEqual({ sleep: '2026-09-28', habits: null })
     expect(celebrationsSince(done, now)).toEqual([])
     // A marker with sleep and no week yet is complete: the first sleep week is still celebrated.
     const fresh = markerOf(withSleep(90))
-    expect(fresh.weekTargets).toEqual({ sleep: null })
+    expect(fresh.weekTargets).toEqual({ sleep: null, habits: null })
     expect(completeMarker(fresh, now)).toBe(fresh)
     expect(celebrationsSince(fresh, withSleep(90, { last_week: { start: '2026-09-28', target_hit: true } })))
       .toEqual([{ kind: 'week_target', pillar: 'sleep', week_start: '2026-09-28' }])
+  })
+})
+
+describe('habit celebrations', () => {
+  it('celebrates the habits pillar reaching a new level', () => {
+    const seen = markerOf(withHabits(90))
+    const now = withHabits(400)
+    expect(levelFor(400).level).toBeGreaterThan(levelFor(90).level)
+    expect(celebrationsSince(seen, now)).toEqual([{ kind: 'pillar_level', pillar: 'habits', level: levelFor(400).level }])
+  })
+
+  it('celebrates the habit week once per new week, with the bonus it paid', () => {
+    const seen = markerOf(withHabits(90))
+    const hit = withHabits(90, { last_week: { start: '2026-09-28', target_hit: true, bonus: 64 } })
+    expect(celebrationsSince(seen, hit)).toEqual([{ kind: 'week_target', pillar: 'habits', week_start: '2026-09-28', xp: 64 }])
+    expect(celebrationsSince(markerOf(hit), hit)).toEqual([])
+    const next = withHabits(90, { last_week: { start: '2026-10-05', target_hit: true, bonus: 150 } })
+    expect(celebrationsSince(markerOf(hit), next)).toEqual([{ kind: 'week_target', pillar: 'habits', week_start: '2026-10-05', xp: 150 }])
+    const missed = withHabits(90, { last_week: { start: '2026-10-05', target_hit: false, bonus: 0 } })
+    expect(celebrationsSince(markerOf(hit), missed)).toEqual([])
+  })
+
+  it('tells the habit week after nutrition and sleep', () => {
+    const week = { start: '2026-09-28', target_hit: true }
+    const seen = markerOf(withHabits(90))
+    const all = withHabits(90, { last_week: { ...week, bonus: 64 } }, { nutrition: nutrition({ last_week: week }), sleep: sleep({ last_week: week }) })
+    expect(celebrationsSince(seen, all).map(c => c.kind === 'week_target' && c.pillar)).toEqual(['nutrition', 'sleep', 'habits'])
+  })
+
+  it('says the habit week is done with its XP', async () => {
+    expect(habitWeekText(64)).toBe('Habit week done, +64 XP')
+    expect(habitWeekText(1500)).toBe('Habit week done, +1,500 XP')
+    await setLang('pt-BR')
+    try {
+      expect(habitWeekText(64)).toBe('Semana de hábitos completa, +64 XP')
+    } finally {
+      await setLang('en')
+    }
+  })
+
+  it('completes a marker from before the habits pillar without celebrating it', () => {
+    const now = withHabits(400, { last_week: { start: '2026-09-28', target_hit: true, bonus: 64 } })
+    // Saved by the sleep-era build: sleep in both maps, no habits in either.
+    const old = { level: now.level.level, codes: [], pillarLevels: { strength: now.level.level, sleep: 1 }, weekTargets: { sleep: null } }
+    const done = completeMarker(old, now)
+    expect(done.pillarLevels).toEqual({ strength: now.level.level, sleep: 1, habits: levelFor(400).level })
+    expect(done.weekTargets).toEqual({ sleep: null, habits: '2026-09-28' })
+    expect(celebrationsSince(done, now)).toEqual([])
+    // A marker with habits and no week yet is complete: the first habit week is still celebrated.
+    const fresh = markerOf(withHabits(90))
+    expect(completeMarker(fresh, now)).toBe(fresh)
+    expect(celebrationsSince(fresh, withHabits(90, { last_week: { start: '2026-09-28', target_hit: true, bonus: 64 } })))
+      .toEqual([{ kind: 'week_target', pillar: 'habits', week_start: '2026-09-28', xp: 64 }])
+  })
+
+  it('reads a cached progress without the habits block', () => {
+    const old = { ...withSleep(90), habits: undefined }
+    expect(markerOf(old).weekTargets).toEqual({ sleep: null, habits: null })
+    expect(celebrationsSince(markerOf(old), old)).toEqual([])
   })
 })
 

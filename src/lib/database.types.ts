@@ -14,7 +14,7 @@ export interface Database {
           share_activity: boolean; checkin_visibility: 'friends' | 'private'; created_at: string; updated_at: string
           activity_level: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active' | null
           nutrition_pace: 'gentle' | 'standard'; nutrition_enabled: boolean; nutrition_days_per_week: number
-          sleep_enabled: boolean; sleep_nights_per_week: number
+          sleep_enabled: boolean; sleep_nights_per_week: number; habits_enabled: boolean
         }
         Insert: Partial<Database['public']['Tables']['profiles']['Row']> & { id: string; display_name: string }
         Update: Partial<Database['public']['Tables']['profiles']['Row']>
@@ -68,6 +68,43 @@ export interface Database {
           logged: boolean; duration_min: number | null; bed_diff_min: number | null; quality: number | null
           on_target: boolean; rested: boolean; closed_at: string
         }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      habit_periods: {
+        Row: { user_id: string; started_on: string; ended_on: string | null }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      habits: {
+        Row: {
+          id: string; user_id: string; name: string; icon: string; per_week: number; sort: number
+          archived_at: string | null; created_at: string; updated_at: string
+        }
+        Insert: {
+          id: string; name: string; icon: string; per_week: number; user_id?: string; sort?: number
+          archived_at?: string | null; created_at?: string; updated_at?: string
+        }
+        Update: Partial<Omit<Database['public']['Tables']['habits']['Insert'], 'id' | 'user_id'>>
+        Relationships: []
+      }
+      habit_targets: {
+        Row: { habit_id: string; user_id: string; week_start: string; target: number }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      habit_checks: {
+        // counted: null until the day closes, then whether the check was valid.
+        Row: { habit_id: string; user_id: string; day: string; created_at: string; counted: boolean | null }
+        Insert: { habit_id: string; day: string; user_id?: string; created_at?: string }
+        Update: never
+        Relationships: []
+      }
+      habit_days: {
+        Row: { user_id: string; day: string; checks: number; valid: number; xp: number; closed_at: string }
         Insert: never
         Update: never
         Relationships: []
@@ -193,7 +230,7 @@ export interface Database {
           id: string
           template:
             | 'workouts_count' | 'weeks_on_target' | 'volume_total' | 'nutrition_days_on_target' | 'checkin_days'
-            | 'sleep_nights_on_target'
+            | 'sleep_nights_on_target' | 'habit_checks'
           title: string
           mode: 'team' | 'solo'; target: number; starts_on: string; ends_on: string
           // null once the creator deleted their account; timezone is theirs, kept from then on.
@@ -207,7 +244,7 @@ export interface Database {
       challenge_members: {
         Row: {
           challenge_id: string; user_id: string; invited_by: string | null; joined_at: string | null
-          share_volume: boolean; share_nutrition: boolean; share_sleep: boolean
+          share_volume: boolean; share_nutrition: boolean; share_sleep: boolean; share_habits: boolean
           final: number | null; won: boolean | null
         }
         Insert: never

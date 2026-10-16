@@ -77,10 +77,10 @@ describe('progress card', () => {
     await xpRow(A, null, 25, '2026-10-05')
     await xpRow(A, 'strength', 30, '2026-09-28')                // last week: not in this one
     const c = await card()
-    expect(c.week.pillars).toEqual({ strength: 200, nutrition: 70, sleep: 0, bonus: 75 })
+    expect(c.week.pillars).toEqual({ strength: 200, nutrition: 70, sleep: 0, habits: 0, bonus: 75 })
     expect(c.week.xp).toBe(345)
     expect(Object.keys(c).sort()).toEqual(['achievements', 'level', 'pillars', 'streak', 'total_xp', 'week'])
-    expect((await card(B)).week.pillars).toEqual({ strength: 0, nutrition: 0, sleep: 0, bonus: 0 })
+    expect((await card(B)).week.pillars).toEqual({ strength: 0, nutrition: 0, sleep: 0, habits: 0, bonus: 0 })
   })
 
   it('hides private badges and nutrition from friends', async () => {
@@ -170,7 +170,8 @@ describe('my progress extras', () => {
     expect((await progress()).radar).toEqual({
       strength: { current: 0.75, previous: null },
       nutrition: { current: 0.5, previous: null },
-      sleep: { current: null, previous: null }
+      sleep: { current: null, previous: null },
+      habits: { current: null, previous: null }
     })
 
     // B: created on 07/09, four active weeks in each window.
@@ -185,7 +186,8 @@ describe('my progress extras', () => {
     expect((await progress(B)).radar).toEqual({
       strength: { current: 0.5, previous: 0.25 },
       nutrition: { current: null, previous: 1 },
-      sleep: { current: null, previous: null }
+      sleep: { current: null, previous: null },
+      habits: { current: null, previous: null }
     })
     // Strength (Treino) weeks close like nutrition ones since phase 1c (0020): on Monday 09/11 the
     // week of 02/11 counts for neither, on Tuesday 10/11, once its Sunday closed, for both.

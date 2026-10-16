@@ -2,7 +2,7 @@ import type { Challenge, ChallengeMember, ChallengeMode, ChallengeTemplate, NewC
 
 // Challenge rules, the same ones public.create_challenge enforces (0004_social.sql, and
 // 0015_nutrition_challenge.sql for the nutrition template, 0020_checkin_feed.sql for checkin_days,
-// 0024_sleep_challenge.sql for the sleep template), so
+// 0024_sleep_challenge.sql for the sleep template, 0029_habits_challenge.sql for the habits one), so
 // the form explains a problem before the server refuses it. supabase/tests/challenge-rules-parity.test.ts
 // runs both on the same cases.
 // Dates are local YYYY-MM-DD strings.
@@ -13,24 +13,30 @@ export const MAX_INVITEES = 19
 export const DURATIONS = [7, 14, 30, 60, 90] as const
 // What a person can create. workouts_count (now the same training days) and volume_total stay in
 // the types, MODES, GRACE and the detail screen for challenges that are already running.
-export const TEMPLATES: readonly ChallengeTemplate[] = ['checkin_days', 'weeks_on_target', 'nutrition_days_on_target', 'sleep_nights_on_target']
+export const TEMPLATES: readonly ChallengeTemplate[] = [
+  'checkin_days', 'weeks_on_target', 'nutrition_days_on_target', 'sleep_nights_on_target', 'habit_checks'
+]
 export const MODES: Record<ChallengeTemplate, readonly ChallengeMode[]> = {
   checkin_days: ['team', 'solo'],
   workouts_count: ['team', 'solo'],
   weeks_on_target: ['solo'],
   volume_total: ['team', 'solo'],
   nutrition_days_on_target: ['team', 'solo'],
-  sleep_nights_on_target: ['team', 'solo']
+  sleep_nights_on_target: ['team', 'solo'],
+  habit_checks: ['team', 'solo']
 }
 export const TARGET_STEP: Record<ChallengeTemplate, number> = {
-  checkin_days: 1, workouts_count: 1, weeks_on_target: 1, volume_total: 5, nutrition_days_on_target: 1, sleep_nights_on_target: 1
+  checkin_days: 1, workouts_count: 1, weeks_on_target: 1, volume_total: 5, nutrition_days_on_target: 1, sleep_nights_on_target: 1,
+  habit_checks: 1
 }
 const MAX_TARGET = { checkin_days: 500, workouts_count: 500, volume_total: 5000 } as const
 // public.challenge_grace: days past ends_on before a challenge closes. A nutrition day, a training
-// day (0020_checkin_feed.sql) and a night (0024_sleep_challenge.sql) are judged at the start of D+2,
-// so the last day of a challenge they pay needs two more. Volume comes from the workouts themselves.
+// day (0020_checkin_feed.sql), a night (0024_sleep_challenge.sql) and a habits day
+// (0029_habits_challenge.sql) are judged at the start of D+2, so the last day of a challenge they pay
+// needs two more. Volume comes from the workouts themselves.
 export const GRACE: Record<ChallengeTemplate, number> = {
-  checkin_days: 2, workouts_count: 2, weeks_on_target: 2, volume_total: 0, nutrition_days_on_target: 2, sleep_nights_on_target: 2
+  checkin_days: 2, workouts_count: 2, weeks_on_target: 2, volume_total: 0, nutrition_days_on_target: 2, sleep_nights_on_target: 2,
+  habit_checks: 2
 }
 
 // The two templates that count training days (a day with a check-in, or an older workout).
@@ -47,13 +53,18 @@ export const mondayOf = (iso: string): string => addDays(iso, -((new Date(utc(is
 export const nextMonday = (iso: string): string => addDays(mondayOf(iso), 7)
 export const weeksTouched = (from: string, to: string): number => Math.round((utc(mondayOf(to)) - utc(mondayOf(from))) / (7 * DAY)) + 1
 
-// The goal a challenge may ask for. Days (or nights) on target go up to one a day per person: the
-// days of the period in solo, times everyone (me and the invitees) in a team.
+// Valid habit checks a person may count a day, at most, for the goal of a habits challenge.
+const HABIT_CHECKS_PER_DAY = 10
+
+// The goal a challenge may ask for. Days (or nights) on target go up to one a day per person, and
+// habit checks to 10 a day per person: the days of the period in solo, times everyone (me and the
+// invitees) in a team.
 export function targetRange(template: ChallengeTemplate, startsOn: string, endsOn: string,
   mode: ChallengeMode = 'solo', invitees = 0): { min: number; max: number } {
   if (template === 'weeks_on_target') return { min: 1, max: weeksTouched(startsOn, endsOn) }
-  if (isPillarDays(template)) {
-    return { min: 1, max: daysInclusive(startsOn, endsOn) * (mode === 'team' ? 1 + invitees : 1) }
+  if (isPillarDays(template) || template === 'habit_checks') {
+    const perDay = template === 'habit_checks' ? HABIT_CHECKS_PER_DAY : 1
+    return { min: 1, max: perDay * daysInclusive(startsOn, endsOn) * (mode === 'team' ? 1 + invitees : 1) }
   }
   return { min: 1, max: MAX_TARGET[template] }
 }
@@ -62,8 +73,8 @@ export const clampTarget = (n: number, r: { min: number; max: number }): number 
 
 // A starting goal for the form: the weekly target over the period (times the people in a team),
 // all but one of the weeks for weeks_on_target, and about 5 t per person a week of volume.
-// `weekly` is the weekly goal of what counts: workouts, days on the nutrition target or nights on
-// the sleep target.
+// `weekly` is the weekly goal of what counts: workouts, days on the nutrition target, nights on
+// the sleep target or habit checks (habitsWeekly).
 export function suggestedTarget(template: ChallengeTemplate, mode: ChallengeMode, startsOn: string, endsOn: string,
   weekly: number, people: number): number {
   const days = daysInclusive(startsOn, endsOn)
@@ -72,18 +83,30 @@ export function suggestedTarget(template: ChallengeTemplate, mode: ChallengeMode
   const raw = isTrainingDays(template) ? weekly * weeks * heads
     : template === 'weeks_on_target' ? weeksTouched(startsOn, endsOn) - 1
     : isPillarDays(template) ? Math.round((days * weekly) / 7) * heads
+    : template === 'habit_checks' ? suggestHabitTarget(weekly, days) * heads
     : 5 * weeks * heads
   return clampTarget(raw, targetRange(template, startsOn, endsOn, mode, Math.max(0, people - 1)))
 }
 
-export type ChallengeProblem = 'title' | 'mode' | 'dates' | 'target' | 'invitees' | 'volume' | 'nutrition_off' | 'nutrition'
-  | 'sleep_off' | 'sleep'
+// The habit checks a week that a habits challenge suggests from (plan decision 19): my Q, or while it
+// is 0 (no closed week yet, or a pillar just turned on) the weekly goals of my active habits.
+export const habitsWeekly = (q: number, perWeekSum: number): number => (q > 0 ? q : perWeekSum)
 
-// nutritionOn and sleepOn: whether my Nutrition and Sleep pillars are on (profile.nutrition_enabled,
-// profile.sleep_enabled). The server checks the pillar of a pillar template after the shape, then
-// the opt-in, and so does this.
+// A habits challenge goal for one person: `weekly` checks a week (habitsWeekly) over the period, at least 1.
+export function suggestHabitTarget(weekly: number, days: number): number {
+  return Math.max(1, Math.round((weekly * days) / 7))
+}
+
+export type ChallengeProblem = 'title' | 'mode' | 'dates' | 'target' | 'invitees' | 'volume' | 'nutrition_off' | 'nutrition'
+  | 'sleep_off' | 'sleep' | 'habits_off' | 'habits'
+
+type PillarsOn = { nutritionOn?: boolean; sleepOn?: boolean; habitsOn?: boolean }
+
+// nutritionOn, sleepOn and habitsOn: whether my Nutrition, Sleep and Habits pillars are on
+// (profile.nutrition_enabled, sleep_enabled, habits_enabled). The server checks the pillar of a
+// pillar template after the shape, then the opt-in, and so does this.
 export function checkChallenge(c: NewChallenge, today: string,
-  { nutritionOn = false, sleepOn = false }: { nutritionOn?: boolean; sleepOn?: boolean } = {}): ChallengeProblem | null {
+  { nutritionOn = false, sleepOn = false, habitsOn = false }: PillarsOn = {}): ChallengeProblem | null {
   // btrim() strips spaces only and char_length() counts code points, not UTF-16 units.
   const title = [...c.title.replace(/^ +| +$/g, '')]
   if (title.length < 1 || title.length > 60) return 'title'
@@ -102,6 +125,10 @@ export function checkChallenge(c: NewChallenge, today: string,
   if (c.template === 'sleep_nights_on_target') {
     if (!sleepOn) return 'sleep_off'
     if (!c.share_sleep) return 'sleep'
+  }
+  if (c.template === 'habit_checks') {
+    if (!habitsOn) return 'habits_off'
+    if (!c.share_habits) return 'habits'
   }
   return null
 }
@@ -125,7 +152,7 @@ export function challengeShare(c: Challenge): number {
 }
 
 // An invitation I can still accept: the server refuses a join once the challenge's today is past
-// ends_on (challenge_closed), even while a nutrition challenge stays active for its grace days.
+// ends_on (challenge_closed), even while a challenge stays active for its grace days.
 export const canJoin = (c: Pick<Challenge, 'status' | 'me' | 'ends_on'>, today: string): boolean =>
   c.status === 'active' && !c.me.joined && today <= c.ends_on
 
