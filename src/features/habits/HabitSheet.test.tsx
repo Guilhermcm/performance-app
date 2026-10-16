@@ -218,6 +218,19 @@ describe('HabitSheet: an archived habit', () => {
     expect(saveHabit.mock.invocationCallOrder[0]).toBeLessThan(reactivateHabit.mock.invocationCallOrder[0])
   })
 
+  it('says the target the week keeps when it comes back with checks already made this week', () => {
+    // Sunday 18 October: one day left, but it was archived on Thursday with 2 checks, and the week kept 2.
+    vi.setSystemTime(new Date('2026-10-18T15:00:00Z'))
+    useHabits.setState({ habits: [old], targets: { [H1]: 2 }, targetsWeek: '2026-10-12' })
+    show(old)
+    expect(screen.getByText('This week it counts 2 times, since the week has already started.')).toBeTruthy()
+    cleanup()
+    // A target from another week does not count.
+    useHabits.setState({ targets: { [H1]: 2 }, targetsWeek: '2026-10-05' })
+    show(old)
+    expect(screen.getByText('This week it counts once, since the week has already started.')).toBeTruthy()
+  })
+
   it('cannot come back with 20 active habits and says why', () => {
     useHabits.setState({ habits: [old, ...manyActive(20)] })
     show(old)

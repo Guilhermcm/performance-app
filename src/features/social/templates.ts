@@ -83,7 +83,7 @@ export function suggestedTarget(template: ChallengeTemplate, mode: ChallengeMode
   const raw = isTrainingDays(template) ? weekly * weeks * heads
     : template === 'weeks_on_target' ? weeksTouched(startsOn, endsOn) - 1
     : isPillarDays(template) ? Math.round((days * weekly) / 7) * heads
-    : template === 'habit_checks' ? suggestHabitTarget(weekly, 0, days) * heads
+    : template === 'habit_checks' ? suggestHabitTarget(weekly, days) * heads
     : 5 * weeks * heads
   return clampTarget(raw, targetRange(template, startsOn, endsOn, mode, Math.max(0, people - 1)))
 }
@@ -92,9 +92,9 @@ export function suggestedTarget(template: ChallengeTemplate, mode: ChallengeMode
 // is 0 (no closed week yet, or a pillar just turned on) the weekly goals of my active habits.
 export const habitsWeekly = (q: number, perWeekSum: number): number => (q > 0 ? q : perWeekSum)
 
-// A habits challenge goal for one person: those checks a week over the period, at least 1.
-export function suggestHabitTarget(q: number, perWeekSum: number, days: number): number {
-  return Math.max(1, Math.round((habitsWeekly(q, perWeekSum) * days) / 7))
+// A habits challenge goal for one person: `weekly` checks a week (habitsWeekly) over the period, at least 1.
+export function suggestHabitTarget(weekly: number, days: number): number {
+  return Math.max(1, Math.round((weekly * days) / 7))
 }
 
 export type ChallengeProblem = 'title' | 'mode' | 'dates' | 'target' | 'invitees' | 'volume' | 'nutrition_off' | 'nutrition'

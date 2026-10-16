@@ -1955,7 +1955,6 @@ export default {
   "Add to favorites": "Favorilere ekle",
   "Remove from favorites": "Favorilerden çıkar",
   "Use between 1 and 5000 g.": "1 ile 5000 g arası.",
-  "Use between 1 and 2000 g.": "1 ile 2000 g arası.",
   "Quick add": "Hızlı ekle",
   "{0}. Calories are enough. Add macros if you know them.": "{0}. Kalori yeterli. Biliyorsan makroları da ekle.",
   "Up to 5000 kcal per item.": "Kayıt başına en fazla 5000 kcal.",
@@ -2644,8 +2643,6 @@ export default {
   "1 left in 1 day": "1 günde 1 eksik",
   "{0} left in 1 day": "1 günde {0} eksik",
   "{0} left in {1} days": "{1} günde {0} eksik",
-  "1 left, and the week ends today": "1 eksik ve hafta bugün bitiyor",
-  "{0} left, and the week ends today": "{0} eksik ve hafta bugün bitiyor",
   "Week: {0} of {1} · +{2} XP so far": "Hafta: {0}/{1} · şimdiye kadar +{2} XP",
   "See all": "Tümünü gör",
   // --- habits screen (phase 4a) ---

@@ -170,6 +170,22 @@ describe('habitWeekAwards', () => {
       .filter(a => a.reason === 'habit_check').reduce((s, a) => s + a.amount, 0)
     expect(sum).toBe(600)
   })
+  it('stops paying checks at 600 when round(600 / Q) adds up past it (Q = 80)', () => {
+    // 11 habits of 7 and one of 3: Q = 80, each check round(7.5) = 8, and 79 x 8 = 632 > 600.
+    const days = Array.from({ length: 7 }, (_, i) => `2026-10-${String(5 + i).padStart(2, '0')}`)
+    const habits = Array.from({ length: 12 }, (_, i) => ({ id: `h${String(i).padStart(2, '0')}`, sort: i, target: i < 11 ? 7 : 3 }))
+    const checks = habits.flatMap(h => days.slice(0, h.target).map(day => ({ habit: h.id, day })))
+    expect(checks).toHaveLength(80)
+    const awards = habitWeekAwards({ habits, checks })
+    const paid = awards.filter(a => a.reason === 'habit_check')
+    // The 75th check reaches 600; the five after it (the Q-th included) pay nothing and write no row.
+    expect(paid).toHaveLength(75)
+    expect(paid.every(a => a.amount === 8)).toBe(true)
+    expect(paid.reduce((s, a) => s + a.amount, 0)).toBe(600)
+    expect(awards.filter(a => a.reason === 'habit_day')).toHaveLength(7)
+    expect(awards.filter(a => a.reason === 'habit_week_target').map(a => a.amount)).toEqual([150])
+    expect(awards.reduce((s, a) => s + a.amount, 0)).toBe(960)
+  })
 })
 
 describe('weekDots', () => {

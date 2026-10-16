@@ -1958,7 +1958,6 @@ export default {
   "Add to favorites": "Hozzáadás a kedvencekhez",
   "Remove from favorites": "Eltávolítás a kedvencek közül",
   "Use between 1 and 5000 g.": "1 és 5000 g között.",
-  "Use between 1 and 2000 g.": "1 és 2000 g között.",
   "Quick add": "Gyors rögzítés",
   "{0}. Calories are enough. Add macros if you know them.": "{0}. Elég a kalória. A makrókat add meg, ha tudod.",
   "Up to 5000 kcal per item.": "Tételenként legfeljebb 5000 kcal.",
@@ -2647,8 +2646,6 @@ export default {
   "1 left in 1 day": "még 1, 1 nap alatt",
   "{0} left in 1 day": "még {0}, 1 nap alatt",
   "{0} left in {1} days": "még {0}, {1} nap alatt",
-  "1 left, and the week ends today": "még 1, és ma vége a hétnek",
-  "{0} left, and the week ends today": "még {0}, és ma vége a hétnek",
   "Week: {0} of {1} · +{2} XP so far": "Hét: {0}/{1} · eddig +{2} XP",
   "See all": "Összes megtekintése",
   // --- habits screen (phase 4a) ---

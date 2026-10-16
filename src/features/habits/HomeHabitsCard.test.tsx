@@ -94,15 +94,16 @@ describe('HomeHabitsCard', () => {
     expect(run.textContent).not.toContain('faltam')
   })
 
-  it('words the last days of the week without a count of zero days', () => {
+  it('on Sunday prompts only the habits that can still move, never one already checked today', () => {
     const SUNDAY = '2026-10-18'
     vi.setSystemTime(at('09:00', SUNDAY))
     store([habitOf({ id: H1, name: 'Read' }), habitOf({ id: H2, name: 'Walk', sort: 1 })],
       [check(H1, MONDAY), check(H1, SUNDAY), check(H2, MONDAY)], { [H1]: 3, [H2]: 3 })
     render(<HomeHabitsCard />)
     const [read, walk] = rows()
-    // Read was checked today: one still missing and no day after today.
-    expect(read.textContent).toContain('1 left, and the week ends today')
+    // Read was checked today: one still missing, but nothing is left to do about it, so no prompt.
+    expect(read.textContent).toContain('2 of 3 this week')
+    expect(read.textContent).not.toMatch(/left/)
     // Walk has today: two missing in one day.
     expect(walk.textContent).toContain('2 left in 1 day')
   })

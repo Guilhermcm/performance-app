@@ -1966,7 +1966,6 @@ export default {
   "Add to favorites": "เพิ่มในรายการโปรด",
   "Remove from favorites": "นำออกจากรายการโปรด",
   "Use between 1 and 5000 g.": "ระหว่าง 1 ถึง 5000 ก.",
-  "Use between 1 and 2000 g.": "ระหว่าง 1 ถึง 2000 ก.",
   "Quick add": "เพิ่มด่วน",
   "{0}. Calories are enough. Add macros if you know them.": "{0} ใส่แค่แคลอรีก็พอ รู้มาโครก็ใส่เพิ่มได้",
   "Up to 5000 kcal per item.": "สูงสุด 5000 kcal ต่อรายการ",
@@ -2655,8 +2654,6 @@ export default {
   "1 left in 1 day": "เหลือ 1 ครั้งใน 1 วัน",
   "{0} left in 1 day": "เหลือ {0} ครั้งใน 1 วัน",
   "{0} left in {1} days": "เหลือ {0} ครั้งใน {1} วัน",
-  "1 left, and the week ends today": "เหลือ 1 ครั้ง และสัปดาห์นี้จบวันนี้",
-  "{0} left, and the week ends today": "เหลือ {0} ครั้ง และสัปดาห์นี้จบวันนี้",
   "Week: {0} of {1} · +{2} XP so far": "สัปดาห์: {0} จาก {1} · +{2} XP จนถึงตอนนี้",
   "See all": "ดูทั้งหมด",
   // --- habits screen (phase 4a) ---

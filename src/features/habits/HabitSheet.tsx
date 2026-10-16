@@ -13,6 +13,7 @@ import { toHabitError } from './habits-api'
 import { HABIT_ICONS, iconFor } from './icons'
 import { iconLabel, perWeekLabel } from './labels'
 import { newTarget } from './week'
+import { weekStartOf } from '../gamification/xp'
 import type { Habit } from './types'
 
 // Spec 3.2: a name of 1 to 40 characters (trimmed), N from 1 to 7.
@@ -60,7 +61,11 @@ function SheetBody({ habit, onDone }: { habit?: Habit; onDone: () => void }) {
   const adds = creating || archived
   const full = adds && activeCount >= MAX_ACTIVE_HABITS
   const trimmed = name.trim()
-  const thisWeek = newTarget(perWeek, todayIn(timezone))
+  const today = todayIn(timezone)
+  // Reactivating never goes below the target the week already kept (the server's
+  // greatest(existing, min(N, days left))), e.g. archived on Thursday with 2 checks.
+  const kept = useHabits(s => (habit && s.targetsWeek === weekStartOf(today) ? s.targets[habit.id] ?? 0 : 0))
+  const thisWeek = archived ? Math.max(kept, newTarget(perWeek, today)) : newTarget(perWeek, today)
   const newN = !!habit && !archived && perWeek !== habit.per_week
   const changed = !habit || trimmed !== habit.name || icon !== habit.icon || perWeek !== habit.per_week
   const canGo = trimmed.length > 0 && !full

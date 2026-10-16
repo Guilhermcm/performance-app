@@ -1955,7 +1955,6 @@ export default {
   "Add to favorites": "加入收藏",
   "Remove from favorites": "取消收藏",
   "Use between 1 and 5000 g.": "请输入 1 到 5000 克。",
-  "Use between 1 and 2000 g.": "请输入 1 到 2000 克。",
   "Quick add": "快速记录",
   "{0}. Calories are enough. Add macros if you know them.": "{0}。填热量就够了，知道宏量的话也可以填上。",
   "Up to 5000 kcal per item.": "每条最多 5000 千卡。",
@@ -2644,8 +2643,6 @@ export default {
   "1 left in 1 day": "1 天内还差 1 次",
   "{0} left in 1 day": "1 天内还差 {0} 次",
   "{0} left in {1} days": "{1} 天内还差 {0} 次",
-  "1 left, and the week ends today": "还差 1 次，本周今天结束",
-  "{0} left, and the week ends today": "还差 {0} 次，本周今天结束",
   "Week: {0} of {1} · +{2} XP so far": "本周：{0}/{1} · 目前 +{2} XP",
   "See all": "查看全部",
   // --- habits screen (phase 4a) ---

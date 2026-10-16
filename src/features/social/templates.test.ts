@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   GRACE, MODES, TARGET_STEP, TEMPLATES, addDays, challengeShare, checkChallenge, daysInclusive, daysLeft, mondayOf, nextMonday,
-  canJoin, pendingInvites, rankMembers, resultOn, suggestHabitTarget, suggestedTarget, targetRange, weeksTouched
+  canJoin, pendingInvites, rankMembers, resultOn, habitsWeekly, suggestHabitTarget, suggestedTarget, targetRange, weeksTouched
 } from './templates'
 import { challengeOf } from './test-social'
 import type { NewChallenge } from './types'
@@ -319,11 +319,11 @@ describe('habit_checks', () => {
   })
 
   it('suggests Q checks a week over the period, or the weekly goals of the active habits while Q is 0 (plan decision 19)', () => {
-    expect(suggestHabitTarget(10, 10, 14)).toBe(20)
-    expect(suggestHabitTarget(10, 3, 14)).toBe(20)
-    expect(suggestHabitTarget(0, 6, 7)).toBe(6)
-    expect(suggestHabitTarget(0, 0, 7)).toBe(1)
-    expect(suggestHabitTarget(5, 0, 30)).toBe(21)
+    expect(suggestHabitTarget(habitsWeekly(10, 10), 14)).toBe(20)
+    expect(suggestHabitTarget(habitsWeekly(10, 3), 14)).toBe(20)
+    expect(suggestHabitTarget(habitsWeekly(0, 6), 7)).toBe(6)
+    expect(suggestHabitTarget(habitsWeekly(0, 0), 7)).toBe(1)
+    expect(suggestHabitTarget(habitsWeekly(5, 0), 30)).toBe(21)
     // Per person in a team, and never past the range.
     expect(suggestedTarget(HABITS, 'solo', '2026-10-05', '2026-10-18', 10, 3)).toBe(20)
     expect(suggestedTarget(HABITS, 'team', '2026-10-05', '2026-10-18', 10, 3)).toBe(60)

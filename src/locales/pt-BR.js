@@ -1344,7 +1344,6 @@ export const PT_BR_OVERRIDES = {
   "Add to favorites": "Adicionar aos favoritos",
   "Remove from favorites": "Remover dos favoritos",
   "Use between 1 and 5000 g.": "Use entre 1 e 5000 g.",
-  "Use between 1 and 2000 g.": "Use entre 1 e 2000 g.",
   "Quick add": "Registro rápido",
   "{0}. Calories are enough. Add macros if you know them.": "{0}. Só as calorias já bastam. Coloque os macros se souber.",
   "Up to 5000 kcal per item.": "Até 5000 kcal por item.",
@@ -2035,8 +2034,6 @@ export const PT_BR_OVERRIDES = {
   "1 left in 1 day": "falta 1 em 1 dia",
   "{0} left in 1 day": "faltam {0} em 1 dia",
   "{0} left in {1} days": "faltam {0} em {1} dias",
-  "1 left, and the week ends today": "falta 1 e a semana acaba hoje",
-  "{0} left, and the week ends today": "faltam {0} e a semana acaba hoje",
   "Week: {0} of {1} · +{2} XP so far": "Semana: {0} de {1} · +{2} XP até agora",
   "See all": "Ver todos",
   // --- habits screen (phase 4a) ---

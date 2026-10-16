@@ -4,7 +4,8 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 
-// The fixed list of icon keys a habit can use (plan decision 16). The server accepts the same keys.
+// The fixed list of icon keys a habit can use (plan decision 16). The server checks only the key's
+// shape (lowercase letters, digits and hyphens), so a key from another version shows as 'check' here.
 // 'check' comes first and is the default.
 const ICONS: Record<string, LucideIcon> = {
   check: Check,

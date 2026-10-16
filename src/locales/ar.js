@@ -2008,7 +2008,6 @@ export default {
   "Add to favorites": "إضافة إلى المفضلة",
   "Remove from favorites": "إزالة من المفضلة",
   "Use between 1 and 5000 g.": "بين 1 و5000 غ.",
-  "Use between 1 and 2000 g.": "بين 1 و2000 غ.",
   "Quick add": "إضافة سريعة",
   "{0}. Calories are enough. Add macros if you know them.": "{0}. السعرات تكفي. أضف المغذيات إن كنت تعرفها.",
   "Up to 5000 kcal per item.": "حتى 5000 kcal لكل عنصر.",
@@ -2697,8 +2696,6 @@ export default {
   "1 left in 1 day": "بقي 1 خلال يوم 1",
   "{0} left in 1 day": "بقي {0} خلال يوم 1",
   "{0} left in {1} days": "بقي {0} خلال {1} أيام",
-  "1 left, and the week ends today": "بقي 1 والأسبوع ينتهي اليوم",
-  "{0} left, and the week ends today": "بقي {0} والأسبوع ينتهي اليوم",
   "Week: {0} of {1} · +{2} XP so far": "الأسبوع: {0} من {1} · +{2} XP حتى الآن",
   "See all": "عرض الكل",
   // --- habits screen (phase 4a) ---

@@ -1973,7 +1973,6 @@ export default {
   "Add to favorites": "Добавить в избранное",
   "Remove from favorites": "Убрать из избранного",
   "Use between 1 and 5000 g.": "От 1 до 5000 г.",
-  "Use between 1 and 2000 g.": "От 1 до 2000 г.",
   "Quick add": "Быстрая запись",
   "{0}. Calories are enough. Add macros if you know them.": "{0}. Достаточно калорий. Добавьте БЖУ, если знаете.",
   "Up to 5000 kcal per item.": "До 5000 ккал на запись.",
@@ -2713,8 +2712,6 @@ export default {
   "1 left in 1 day": "ещё 1, остался 1 день",
   "{0} left in 1 day": "ещё {0}, остался 1 день",
   "{0} left in {1} days": "ещё {0}, дней осталось: {1}",
-  "1 left, and the week ends today": "ещё 1, а неделя заканчивается сегодня",
-  "{0} left, and the week ends today": "ещё {0}, а неделя заканчивается сегодня",
   "Week: {0} of {1} · +{2} XP so far": "Неделя: {0} из {1} · +{2} XP пока",
   "See all": "Показать все",
   // --- habits screen (phase 4a) ---

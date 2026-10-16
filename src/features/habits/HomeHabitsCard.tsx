@@ -19,10 +19,10 @@ const MAX_ROWS = 6
 
 type Row = { habit: Habit; sort: number; target: number; done: number; today: boolean; late: string | null }
 
-// "2 left in 2 days" for a late habit (plan decision 11); with no day left after today's check,
-// that the week ends today.
-function lateText(missing: number, days: number): string {
-  if (days <= 0) return missing === 1 ? t('1 left, and the week ends today') : tn(missing, '{0} left, and the week ends today', missing)
+// "2 left in 2 days" for a late habit (plan decision 11). With no day left after today's check
+// (Sunday, already checked) there is nothing to prompt, so no text: only habits that can still move.
+function lateText(missing: number, days: number): string | null {
+  if (days <= 0) return null
   if (days === 1) return missing === 1 ? t('1 left in 1 day') : tn(missing, '{0} left in 1 day', missing)
   return tn(missing, '{0} left in {1} days', missing, days)
 }

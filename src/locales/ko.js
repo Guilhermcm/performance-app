@@ -1955,7 +1955,6 @@ export default {
   "Add to favorites": "즐겨찾기에 추가",
   "Remove from favorites": "즐겨찾기에서 제거",
   "Use between 1 and 5000 g.": "1~5000g 사이로 입력하세요.",
-  "Use between 1 and 2000 g.": "1~2000g 사이로 입력하세요.",
   "Quick add": "빠른 기록",
   "{0}. Calories are enough. Add macros if you know them.": "{0}. 칼로리만 있으면 돼요. 매크로는 알면 넣어 주세요.",
   "Up to 5000 kcal per item.": "항목당 최대 5000kcal.",
@@ -2644,8 +2643,6 @@ export default {
   "1 left in 1 day": "1일 동안 1회 남음",
   "{0} left in 1 day": "1일 동안 {0}회 남음",
   "{0} left in {1} days": "{1}일 동안 {0}회 남음",
-  "1 left, and the week ends today": "1회 남았고 이번 주는 오늘 끝나요",
-  "{0} left, and the week ends today": "{0}회 남았고 이번 주는 오늘 끝나요",
   "Week: {0} of {1} · +{2} XP so far": "이번 주: {1}회 중 {0}회 · 지금까지 +{2} XP",
   "See all": "모두 보기",
   // --- habits screen (phase 4a) ---

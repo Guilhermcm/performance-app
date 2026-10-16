@@ -1975,7 +1975,6 @@ export default {
   "Add to favorites": "Zu Favoriten hinzufügen",
   "Remove from favorites": "Aus Favoriten entfernen",
   "Use between 1 and 5000 g.": "Zwischen 1 und 5000 g.",
-  "Use between 1 and 2000 g.": "Zwischen 1 und 2000 g.",
   "Quick add": "Schnell eintragen",
   "{0}. Calories are enough. Add macros if you know them.": "{0}. Kalorien reichen. Makros kannst du ergänzen, wenn du sie kennst.",
   "Up to 5000 kcal per item.": "Bis zu 5000 kcal pro Eintrag.",
@@ -2664,8 +2663,6 @@ export default {
   "1 left in 1 day": "noch 1 in 1 Tag",
   "{0} left in 1 day": "noch {0} in 1 Tag",
   "{0} left in {1} days": "noch {0} in {1} Tagen",
-  "1 left, and the week ends today": "noch 1, und die Woche endet heute",
-  "{0} left, and the week ends today": "noch {0}, und die Woche endet heute",
   "Week: {0} of {1} · +{2} XP so far": "Woche: {0} von {1} · +{2} XP bisher",
   "See all": "Alle ansehen",
   // --- habits screen (phase 4a) ---

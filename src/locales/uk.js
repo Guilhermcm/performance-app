@@ -1970,7 +1970,6 @@ export default {
   "Add to favorites": "Додати в обране",
   "Remove from favorites": "Прибрати з обраного",
   "Use between 1 and 5000 g.": "Від 1 до 5000 г.",
-  "Use between 1 and 2000 g.": "Від 1 до 2000 г.",
   "Quick add": "Швидкий запис",
   "{0}. Calories are enough. Add macros if you know them.": "{0}. Досить калорій. Додайте БЖВ, якщо знаєте.",
   "Up to 5000 kcal per item.": "До 5000 ккал на запис.",
@@ -2710,8 +2709,6 @@ export default {
   "1 left in 1 day": "ще 1, залишився 1 день",
   "{0} left in 1 day": "ще {0}, залишився 1 день",
   "{0} left in {1} days": "ще {0}, днів залишилося: {1}",
-  "1 left, and the week ends today": "ще 1, а тиждень закінчується сьогодні",
-  "{0} left, and the week ends today": "ще {0}, а тиждень закінчується сьогодні",
   "Week: {0} of {1} · +{2} XP so far": "Тиждень: {0} з {1} · +{2} XP поки що",
   "See all": "Показати всі",
   // --- habits screen (phase 4a) ---

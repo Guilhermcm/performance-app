@@ -1955,7 +1955,6 @@ export default {
   "Add to favorites": "पसंदीदा में जोड़ें",
   "Remove from favorites": "पसंदीदा से हटाएँ",
   "Use between 1 and 5000 g.": "1 से 5000 g के बीच।",
-  "Use between 1 and 2000 g.": "1 से 2000 g के बीच।",
   "Quick add": "झटपट जोड़ें",
   "{0}. Calories are enough. Add macros if you know them.": "{0}। सिर्फ़ कैलोरी काफ़ी है। मैक्रो पता हों तो जोड़ें।",
   "Up to 5000 kcal per item.": "प्रति आइटम 5000 kcal तक।",
@@ -2644,8 +2643,6 @@ export default {
   "1 left in 1 day": "1 दिन में 1 बाकी",
   "{0} left in 1 day": "1 दिन में {0} बाकी",
   "{0} left in {1} days": "{1} दिनों में {0} बाकी",
-  "1 left, and the week ends today": "1 बाकी और हफ़्ता आज खत्म होता है",
-  "{0} left, and the week ends today": "{0} बाकी और हफ़्ता आज खत्म होता है",
   "Week: {0} of {1} · +{2} XP so far": "हफ़्ता: {1} में से {0} · अब तक +{2} XP",
   "See all": "सभी देखें",
   // --- habits screen (phase 4a) ---
