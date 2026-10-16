@@ -97,8 +97,15 @@ export interface Database {
         Relationships: []
       }
       habit_checks: {
-        Row: { habit_id: string; user_id: string; day: string; created_at: string }
+        // counted: null until the day closes, then whether the check was valid.
+        Row: { habit_id: string; user_id: string; day: string; created_at: string; counted: boolean | null }
         Insert: { habit_id: string; day: string; user_id?: string; created_at?: string }
+        Update: never
+        Relationships: []
+      }
+      habit_days: {
+        Row: { user_id: string; day: string; checks: number; valid: number; xp: number; closed_at: string }
+        Insert: never
         Update: never
         Relationships: []
       }

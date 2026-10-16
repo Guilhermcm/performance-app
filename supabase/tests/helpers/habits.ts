@@ -68,3 +68,10 @@ export async function targetOf(db: PGlite, habitId: string, week: string): Promi
     'select target from public.habit_targets where habit_id = $1 and week_start = $2', [habitId, week])
   return rows[0]?.target ?? null
 }
+
+// Closes the pending days of a person the way the server does (as the database owner) and returns
+// how many days it closed.
+export async function closeHabitsAs(db: PGlite, uid: string): Promise<number> {
+  const { rows } = await db.query<{ n: number }>('select public.close_habit_days($1) as n', [uid])
+  return rows[0].n
+}

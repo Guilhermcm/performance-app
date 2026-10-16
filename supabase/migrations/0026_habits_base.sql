@@ -240,6 +240,12 @@ begin
           and (ended_on is null or ended_on >= new.day)) then
     raise exception 'pillar_off' using errcode = 'P0001';
   end if;
+
+  -- Only the closing marks a check valid (habit_checks.counted, added in 0027).
+  if tg_op = 'INSERT' then
+    new.counted := null;
+    return new;
+  end if;
   return v_row;
 end $$;
 

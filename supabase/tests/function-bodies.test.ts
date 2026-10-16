@@ -50,6 +50,8 @@ const REDEFINED: { fn: string; base: string; in: string; changed: string[] }[] =
     fn: 'join_challenge', base: '0015_nutrition_challenge.sql', in: '0024_sleep_challenge.sql',
     changed: ["share_nutrition = (v_c.template = 'nutrition_days_on_target')"],
   },
+  // Habits: the habits branch goes in before the Treino one; nothing of the sleep body changes.
+  { fn: 'award_xp', base: '0022_sleep_close.sql', in: '0027_habits_close.sql', changed: [] },
 ]
 
 describe('redefined function bodies', () => {
