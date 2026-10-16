@@ -1,8 +1,8 @@
 // The engine of the offline queues kept in localStorage (the food diary, sleep). One key holds
 // every account's queue as { [userId]: Op[] }; ops go out in the order they arrived, a refusal the
 // server will never change is dropped with its reason, anything else (no network, 5xx, a lost
-// session) stops the run and keeps the rest, nothing is sent without a live session, and the queue
-// stays through a sign-out: it is per account, so only that same account ever sends it.
+// session) stops the run and keeps the rest, and the queue stays through a sign-out: it is per
+// account, and each op goes only while the live session is that same account's.
 import { supabase } from '@/lib/supabase'
 import { classify, type RefusedReason } from '@/lib/supabase-errors'
 
@@ -25,11 +25,18 @@ export type LocalOutbox<Op> = {
 
 type Queues<Op> = Record<string, Op[]>
 
-// Without a live session a request goes out as anon and fails (42501): send nothing, drop nothing.
-async function hasSession(): Promise<boolean> {
+// Asked before every op, not once per run. Without a live session a request goes out as anon and
+// fails (42501); with another account's session (a sign-out and sign-in while a run was on its way)
+// it would go out as that account, and an insert whose user_id comes from auth.uid() would land in
+// it. Either way: send nothing more, drop nothing, keep the rest for its own account. supabase-js
+// always fills session.user; a session without one (the stores' test stubs) has no owner to compare.
+async function sessionIs(userId: string): Promise<boolean> {
   try {
     const { data } = await supabase.auth.getSession()
-    return !!data?.session
+    const session = data?.session as { user?: { id?: string } } | null | undefined
+    if (!session) return false
+    const owner = session.user?.id
+    return owner == null || owner === userId
   } catch { return false }
 }
 
@@ -66,11 +73,11 @@ export function createLocalOutbox<Op>(o: { key: string; same: (a: Op, b: Op) => 
   }
 
   async function run(userId: string): Promise<FlushResult> {
-    if (!(await hasSession())) return { sent: 0, left: pending(userId).length, dropped: 0, reasons: [] }
     let sent = 0
     let dropped = 0
     const reasons = new Set<RefusedReason>()
     for (const op of pending(userId)) {
+      if (!(await sessionIs(userId))) break
       try {
         await o.send(op)
         sent++

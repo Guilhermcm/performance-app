@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const auth = vi.hoisted(() => ({ session: { access_token: 't' } as object | null }))
+const auth = vi.hoisted(() => ({ session: { access_token: 't', user: { id: 'me' } } as object | null }))
 vi.mock('@/lib/supabase', () => ({ supabase: { auth: { getSession: async () => ({ data: { session: auth.session } }) } } }))
 
 import { createLocalOutbox } from './local-outbox'
@@ -14,7 +14,7 @@ const box = createLocalOutbox<Op>({ key: KEY, same: (a, b) => a.id === b.id, sen
 const pg = (code: string, message: string) => Object.assign(new Error(message), { code })
 
 beforeEach(() => {
-  localStorage.clear(); box.clear(); auth.session = { access_token: 't' }
+  localStorage.clear(); box.clear(); auth.session = { access_token: 't', user: { id: ME } }
   send.mockReset().mockResolvedValue(undefined)
 })
 
@@ -68,6 +68,36 @@ describe('createLocalOutbox', () => {
     auth.session = null
     await expect(box.flush(ME)).resolves.toEqual({ sent: 0, left: 1, dropped: 0, reasons: [] })
     expect(send).not.toHaveBeenCalled()
+  })
+
+  it('sends nothing while the session belongs to another account', async () => {
+    box.enqueue(ME, { id: 'a', v: 1 })
+    auth.session = { access_token: 't', user: { id: OTHER } }
+    await expect(box.flush(ME)).resolves.toEqual({ sent: 0, left: 1, dropped: 0, reasons: [] })
+    expect(send).not.toHaveBeenCalled()
+  })
+
+  it('stops a flush started as one account once the session switches to another', async () => {
+    for (const id of ['a', 'b', 'c']) box.enqueue(ME, { id, v: 1 })
+    box.enqueue(OTHER, { id: 'z', v: 1 })
+    const sentAs: [string, string][] = []
+    let release!: () => void
+    send.mockImplementation(op => {
+      sentAs.push([op.id, (auth.session as { user: { id: string } }).user.id])
+      return op.id === 'a' ? new Promise<void>(r => { release = r }) : Promise.resolve()
+    })
+    const run = box.flush(ME)
+    await new Promise(r => setTimeout(r, 0))
+    // ME signs out and OTHER signs in while 'a' is still on its way.
+    auth.session = { access_token: 't', user: { id: OTHER } }
+    release()
+    await expect(run).resolves.toEqual({ sent: 1, left: 2, dropped: 0, reasons: [] })
+    expect(sentAs).toEqual([['a', ME]])
+    expect(box.pending(ME).map(o => o.id)).toEqual(['b', 'c'])
+    // OTHER's own queue still goes, and only it.
+    await box.flush(OTHER)
+    expect(sentAs).toEqual([['a', ME], ['z', OTHER]])
+    expect(box.pending(ME).map(o => o.id)).toEqual(['b', 'c'])
   })
 
   it('forgets one account and keeps the others', () => {
