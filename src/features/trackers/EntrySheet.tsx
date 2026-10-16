@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
@@ -54,9 +54,17 @@ export default function EntrySheet({ tracker, entry, mode, open, onOpenChange }:
 
 type DayChoice = 'today' | 'yesterday' | 'other'
 
-// The last value as the field shows it: the language's decimal separator, no thousands separator.
-const numberText = (n: number, decimals: number): string =>
-  new Intl.NumberFormat(dateLocale(), { minimumFractionDigits: decimals, maximumFractionDigits: decimals, useGrouping: false }).format(n)
+// A value as the field shows it: the language's decimal separator, no thousands separator, the
+// tracker's decimals (an edit keeps up to the 2 the column stores).
+const numberText = (n: number, decimals: number, most = decimals): string =>
+  new Intl.NumberFormat(dateLocale(), { minimumFractionDigits: decimals, maximumFractionDigits: Math.max(decimals, most), useGrouping: false }).format(n)
+
+// Still being typed: a lone minus, or a separator with nothing after it yet ("1," or "-").
+const halfTyped = (text: string) => /^[-−]?(\d*[.,])?$/.test(text.trim())
+// Longer than the ten integer digits numeric(12, 2) holds.
+const tooLong = (text: string) => /^[-−]?0*\d{11,}([.,]\d*)?$/.test(text.trim())
+// Some browsers give a time field HH:MM:SS; the seconds are always zero here.
+const timeOf = (s: string) => (/^\d{2}:\d{2}:\d{2}$/.test(s) ? s.slice(0, 5) : s)
 
 type Start = { text: string; hours: string; minutes: string; option: string }
 
@@ -66,7 +74,7 @@ function startOf(tracker: Tracker, entry: TrackerEntry | undefined): Start {
   const from = entry ?? useTrackers.getState().lastEntryOf(tracker.id)
   const start: Start = { text: '', hours: '', minutes: '', option: entry?.option ?? '' }
   if (!from) return start
-  if (tracker.kind === 'number' && from.value != null) start.text = numberText(from.value, tracker.decimals ?? 0)
+  if (tracker.kind === 'number' && from.value != null) start.text = numberText(from.value, tracker.decimals ?? 0, entry ? 2 : undefined)
   if (tracker.kind === 'duration' && from.minutes != null) {
     start.hours = String(Math.floor(from.minutes / 60))
     start.minutes = String(from.minutes % 60)
@@ -88,6 +96,10 @@ function SheetBody({ tracker, entry, quick, onDone }: { tracker: Tracker; entry?
   const [time, setTime] = useState(() => entry?.at.slice(0, 5) ?? fromMinutes(now.minutes))
   const [note, setNote] = useState(entry?.note ?? '')
   const [asking, setAsking] = useState(false)
+  // The value field was left: a half-typed number may be warned about now.
+  const [left, setLeft] = useState(false)
+  // A fast second tap must not queue a second entry while the sheet closes.
+  const saved = useRef(false)
   const id = useId()
 
   const earliest = shiftDay(now.today, -(WINDOW_DAYS - 1))
@@ -98,8 +110,10 @@ function SheetBody({ tracker, entry, quick, onDone }: { tracker: Tracker; entry?
   let minutesValue: number | null = null
   let problem: string | null = null
   if (tracker.kind === 'number') {
-    const n = parseNumberInput(text, dateLocale(), tracker.decimals ?? 0)
-    if (text.trim() !== '' && n === null) problem = t('Use only digits and one decimal separator, without a thousands separator.')
+    // An edit that leaves the field as it started keeps the stored value, with all its decimals.
+    const n = entry?.value != null && text === start.text ? entry.value : parseNumberInput(text, dateLocale(), tracker.decimals ?? 0)
+    if (n === null && tooLong(text)) problem = t('That number is too big.')
+    else if (text.trim() !== '' && n === null) problem = halfTyped(text) && !left ? null : t('Use only digits and one decimal separator, without a thousands separator.')
     else if (n !== null && Math.abs(n) >= VALUE_LIMIT) problem = t('That number is too big.')
     else value = n
   } else if (tracker.kind === 'duration') {
@@ -113,19 +127,22 @@ function SheetBody({ tracker, entry, quick, onDone }: { tracker: Tracker; entry?
   const dayProblem = !quick && choice === 'other'
     && !(/^\d{4}-\d{2}-\d{2}$/.test(otherDay) && otherDay <= now.today && (otherDay >= earliest || otherDay === entry?.day))
     ? t('Choose a day up to today and within the last 90 days.') : null
-  const timeOk = quick || /^([01]\d|2[0-3]):[0-5]\d$/.test(time)
+  const at = timeOf(time)
+  const timeOk = quick || /^([01]\d|2[0-3]):[0-5]\d$/.test(at)
   const hasValue = tracker.kind === 'number' ? value !== null : tracker.kind === 'duration' ? minutesValue !== null : !!option
   const canGo = hasValue && !dayProblem && timeOk
 
   const save = (picked: string | null) => {
+    if (saved.current) return
+    saved.current = true
     // The moment of the tap, not of the render: a quick entry is "now".
-    const at = new Date()
-    const today = todayIn(timezone, at)
+    const moment = new Date()
+    const today = todayIn(timezone, moment)
     const day = quick || choice === 'today' ? today : choice === 'yesterday' ? shiftDay(today, -1) : otherDay
     useTrackers.getState().saveEntry({
       ...(entry ? { id: entry.id } : {}),
       tracker_id: tracker.id, day,
-      at: quick ? fromMinutes(minutesIn(timezone, at)) : time,
+      at: quick ? fromMinutes(minutesIn(timezone, moment)) : at,
       value: tracker.kind === 'number' ? value : null,
       minutes: tracker.kind === 'duration' ? minutesValue : null,
       option: tracker.kind === 'label' ? picked : null,
@@ -164,9 +181,14 @@ function SheetBody({ tracker, entry, quick, onDone }: { tracker: Tracker; entry?
           <div className="flex flex-col gap-2">
             <label htmlFor={id + '-value'} className="text-sm font-medium text-muted-foreground">{t('Value')}</label>
             <div className="flex items-center gap-3">
+              {/* The decimal keypad of iOS has no minus key. */}
+              <Button type="button" variant="outline" size="icon" className={cn('size-11 shrink-0 rounded-xl text-lg', MONO)} aria-label={t('Change sign')}
+                onClick={() => { setText(x => (/^\s*[-−]/.test(x) ? x.replace(/^\s*[-−]/, '') : '-' + x.trim())); setLeft(false) }}>
+                <span aria-hidden>±</span>
+              </Button>
               <Input id={id + '-value'} value={text} autoComplete="off" enterKeyHint="done" autoFocus={quick}
                 inputMode={(tracker.decimals ?? 0) > 0 ? 'decimal' : 'numeric'} aria-invalid={!!problem} aria-describedby={problem ? id + '-problem' : undefined}
-                className={cn('h-14 rounded-xl text-2xl', MONO)} onChange={e => setText(e.target.value)} />
+                className={cn('h-14 rounded-xl text-2xl', MONO)} onChange={e => { setText(e.target.value); setLeft(false) }} onBlur={() => setLeft(true)} />
               {tracker.unit && <span className={cn('shrink-0 text-lg text-muted-foreground [overflow-wrap:anywhere]', MONO)}>{tracker.unit}</span>}
             </div>
           </div>
@@ -235,7 +257,9 @@ function SheetBody({ tracker, entry, quick, onDone }: { tracker: Tracker; entry?
 
             <div className="flex flex-col gap-2">
               <label htmlFor={id + '-time'} className="text-sm font-medium text-muted-foreground">{t('Time of day')}</label>
-              <Input id={id + '-time'} type="time" step={60} value={time} aria-invalid={!timeOk} className={cn(FIELD, MONO)} onChange={e => setTime(e.target.value)} />
+              <Input id={id + '-time'} type="time" step={60} value={time} aria-invalid={!timeOk}
+                aria-describedby={timeOk ? undefined : id + '-time-problem'} className={cn(FIELD, MONO)} onChange={e => setTime(e.target.value)} />
+              {!timeOk && <p id={id + '-time-problem'} role="alert" className="text-sm leading-snug text-destructive">{t('Choose a time.')}</p>}
             </div>
 
             <div className="flex flex-col gap-2">

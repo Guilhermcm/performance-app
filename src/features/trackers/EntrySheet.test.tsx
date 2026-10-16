@@ -90,6 +90,60 @@ describe('EntrySheet: quick number', () => {
     expect(button('Salvar').disabled).toBe(false)
   })
 
+  it('waits for the blur before warning about half-typed input', () => {
+    show(water, 'quick')
+    for (const text of ['-', '1.', '1,', '-2.']) {
+      type('Value', text)
+      expect(screen.queryByRole('alert'), text).toBeNull()
+      expect(button('Save').disabled).toBe(true)
+    }
+    fireEvent.blur(field('Value'))
+    expect(screen.getByRole('alert').textContent).toContain('decimal separator')
+    type('Value', '2.5')
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('says a number past 10 integer digits is too big', () => {
+    show(water, 'quick')
+    type('Value', '12345678901')
+    expect(screen.getByRole('alert').textContent).toBe('That number is too big.')
+    expect(button('Save').disabled).toBe(true)
+  })
+
+  it('flips the sign with a 44 px button, since the decimal keypad has no minus', async () => {
+    show(water, 'quick')
+    const sign = button('Change sign')
+    expect(sign.className).toContain('size-11')
+    type('Value', '3.5')
+    fireEvent.click(sign)
+    expect(field('Value').value).toBe('-3.5')
+    fireEvent.click(sign)
+    expect(field('Value').value).toBe('3.5')
+    fireEvent.click(sign)
+    fireEvent.click(button('Save'))
+    expect(saveEntry.mock.calls[0][0].value).toBe(-3.5)
+    cleanup()
+    await setLang('pt-BR')
+    show(water, 'quick')
+    fireEvent.click(button('Trocar o sinal'))
+    expect(field('Valor').value).toBe('-')
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('queues one entry when Save is tapped twice fast', () => {
+    show(water, 'quick')
+    type('Value', '2')
+    fireEvent.click(button('Save'))
+    fireEvent.click(button('Save'))
+    expect(saveEntry).toHaveBeenCalledTimes(1)
+  })
+
+  it('says the entry will take today and the time now, in pt-BR as what is to come', async () => {
+    await setLang('pt-BR')
+    show(water, 'quick')
+    expect(screen.getByText('Fica com a data de hoje e a hora de agora.')).toBeTruthy()
+  })
+
   it('writes the local day and time of the profile time zone (Tokyo, 00:30 on the 17th)', () => {
     useProfile.setState({ status: 'ready', profile: { id: 'u1', timezone: 'Asia/Tokyo' } as unknown as Profile })
     show(water, 'quick')
@@ -158,6 +212,13 @@ describe('EntrySheet: quick label', () => {
     expect(saveEntry).toHaveBeenCalledWith({ tracker_id: T1, day: '2026-10-16', at: '12:30', value: null, minutes: null, option: 'bbbb2222', note: null })
     expect(onOpenChange).toHaveBeenCalledWith(false)
   })
+
+  it('queues one entry when an option is tapped twice fast', () => {
+    show(mood, 'quick')
+    fireEvent.click(button('Fine'))
+    fireEvent.click(button('Great'))
+    expect(saveEntry).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe('EntrySheet: full', () => {
@@ -217,6 +278,19 @@ describe('EntrySheet: full', () => {
     expect(saveEntry.mock.calls[0][0]).toMatchObject({ option: 'cccc3333', value: null, minutes: null })
   })
 
+  it('says why Save is off when the time is cleared, and takes a time with seconds', () => {
+    show(water, 'full')
+    type('Value', '2')
+    type('Time of day', '')
+    expect(button('Save').disabled).toBe(true)
+    expect(screen.getByRole('alert').textContent).toBe('Choose a time.')
+    expect(field('Time of day').getAttribute('aria-describedby')).toBeTruthy()
+    type('Time of day', '08:15:00')
+    expect(screen.queryByRole('alert')).toBeNull()
+    fireEvent.click(button('Save'))
+    expect(saveEntry.mock.calls[0][0]).toMatchObject({ at: '08:15' })
+  })
+
   it('starts the time of a new entry at the local time now (Tokyo)', () => {
     useProfile.setState({ status: 'ready', profile: { id: 'u1', timezone: 'Asia/Tokyo' } as unknown as Profile })
     show(water, 'full')
@@ -241,6 +315,20 @@ describe('EntrySheet: editing', () => {
     type('Value', '4')
     fireEvent.click(button('Save'))
     expect(saveEntry).toHaveBeenCalledWith({ id: 'e-old', tracker_id: T1, day: '2026-10-10', at: '07:05', value: 4, minutes: null, option: null, note: 'Hot day' })
+  })
+
+  it('keeps the stored precision of a value the tracker now writes with fewer decimals, until it changes', () => {
+    const precise = entryOf('2026-10-10', { id: 'e-precise', value: 1.85 })
+    show(water, 'full', precise)
+    expect(field('Value').value).toBe('1.85')
+    type('Note', 'Late')
+    fireEvent.click(button('Save'))
+    expect(saveEntry.mock.calls[0][0]).toMatchObject({ id: 'e-precise', value: 1.85, note: 'Late' })
+    cleanup(); saveEntry.mockReset()
+    show(water, 'full', precise)
+    type('Value', '1.84')
+    fireEvent.click(button('Save'))
+    expect(saveEntry.mock.calls[0][0].value).toBe(1.8)
   })
 
   it('reads today and yesterday as their own choices, and an empty note as null', () => {
