@@ -41,14 +41,19 @@ const PAGE = 1000
 // The entries of every tracker from `from` on (plan decision 5: the last 90 days), oldest first,
 // read a page at a time until one comes back short, so the cap never drops the newest ones.
 export async function fetchEntries(from: string): Promise<TrackerEntry[]> {
-  const out: TrackerEntry[] = []
+  // By id: a write between two reads can move a row onto the next page; the later copy stays.
+  const out = new Map<string, TrackerEntry>()
   for (let start = 0; ; start += PAGE) {
     const rows = await run<Row[]>(supabase.from('tracker_entries').select('id, tracker_id, day, at, value, minutes, option, note, updated_at')
       .gte('day', from).order('day', { ascending: true }).order('at', { ascending: true }).order('id', { ascending: true })
       .range(start, start + PAGE - 1) as never)
     const page = rows ?? []
-    for (const r of page) out.push(toEntry(r))
-    if (page.length < PAGE) return out
+    for (const r of page) {
+      const e = toEntry(r)
+      out.delete(e.id)
+      out.set(e.id, e)
+    }
+    if (page.length < PAGE) return [...out.values()]
   }
 }
 

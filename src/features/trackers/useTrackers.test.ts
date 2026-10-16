@@ -177,6 +177,73 @@ describe('useTrackers', () => {
     expect(useTrackers.getState().droppedNotice).toBeNull()
   })
 
+  // A server that checks an entry against the tracker it has at that moment, as the guard does:
+  // the option must exist and the value must fit the decimals; a new entry needs an active tracker.
+  function fakeServer(start: Tracker) {
+    const server = { tracker: start, entries: new Map<string, TrackerEntry>(), order: [] as string[] }
+    api.upsertTracker.mockImplementation(async (x: Tracker) => { server.tracker = x; server.order.push(`tracker:${x.archived_at ? 'archived' : 'active'}`) })
+    api.upsertEntry.mockImplementation(async (e: TrackerEntry) => {
+      const t = server.tracker
+      if (t.archived_at && !server.entries.has(e.id)) throw refused('tracker_archived')
+      if (t.kind === 'label' && !t.options?.some(o => o.id === e.option)) throw refused('invalid_value')
+      if (t.kind === 'number' && e.value != null && Number(e.value.toFixed(t.decimals ?? 2)) !== e.value) throw refused('invalid_value')
+      server.entries.set(e.id, e); server.order.push('entry')
+    })
+    return server
+  }
+
+  it('sends an entry relabeled offline after the tracker edit that added its option', async () => {
+    const mood = trackerOf({ id: T2, name: 'Mood', icon: 'smile', kind: 'label', unit: null, decimals: null, aggregate: null, sort: 1,
+      options: [{ id: 'a', text: 'good' }, { id: 'b', text: 'bad' }] })
+    api.fetchTrackers.mockResolvedValue([trackerOf(), mood])
+    await bound()
+    api.upsertEntry.mockRejectedValue(offline()); api.upsertTracker.mockRejectedValue(offline())
+    const e = useTrackers.getState().saveEntry(draft({ tracker_id: T2, value: null, option: 'a' }))
+    const edit = useTrackers.getState().saveTracker({ ...mood, options: [...mood.options!, { id: 'c', text: 'great' }] })
+    const relabeled = useTrackers.getState().saveEntry({ ...draft({ tracker_id: T2, value: null, option: 'c' }), id: e.id })
+    await settle()
+    expect(trackersOutbox.pending(ME)).toEqual([{ op: 'tracker', row: edit }, { op: 'entry', row: relabeled }])
+    const server = fakeServer(mood)
+    await useTrackers.getState().refresh()
+    expect(server.entries.get(e.id)?.option).toBe('c')
+    expect(trackersOutbox.pending(ME)).toEqual([])
+    expect(useTrackers.getState().droppedNotice).toBeNull()
+  })
+
+  it('sends an entry edited offline after the tracker edit that raised its decimals', async () => {
+    const steps = trackerOf({ decimals: 0 })
+    api.fetchTrackers.mockResolvedValue([steps, WEIGHT])
+    await bound()
+    api.upsertEntry.mockRejectedValue(offline()); api.upsertTracker.mockRejectedValue(offline())
+    const e = useTrackers.getState().saveEntry(draft({ value: 2 }))
+    useTrackers.getState().saveTracker({ ...steps, decimals: 1 })
+    useTrackers.getState().saveEntry({ ...draft({ value: 2.5 }), id: e.id })
+    await settle()
+    const server = fakeServer(steps)
+    await useTrackers.getState().refresh()
+    expect(server.entries.get(e.id)?.value).toBe(2.5)
+    expect(server.order).toEqual(['tracker:active', 'entry'])
+    expect(useTrackers.getState().droppedNotice).toBeNull()
+  })
+
+  it('sends an entry edited offline after an option edit and before a later archive', async () => {
+    const mood = trackerOf({ id: T2, name: 'Mood', icon: 'smile', kind: 'label', unit: null, decimals: null, aggregate: null, sort: 1,
+      options: [{ id: 'a', text: 'good' }, { id: 'b', text: 'bad' }] })
+    api.fetchTrackers.mockResolvedValue([trackerOf(), mood])
+    await bound()
+    api.upsertEntry.mockRejectedValue(offline()); api.upsertTracker.mockRejectedValue(offline())
+    const e = useTrackers.getState().saveEntry(draft({ tracker_id: T2, value: null, option: 'a' }))
+    useTrackers.getState().saveTracker({ ...mood, options: [...mood.options!, { id: 'c', text: 'great' }] })
+    useTrackers.getState().archiveTracker(T2)
+    useTrackers.getState().saveEntry({ ...draft({ tracker_id: T2, value: null, option: 'c' }), id: e.id })
+    await settle()
+    const server = fakeServer(mood)
+    await useTrackers.getState().refresh()
+    expect(server.order).toEqual(['tracker:active', 'entry', 'tracker:archived'])
+    expect(server.entries.get(e.id)?.option).toBe('c')
+    expect(useTrackers.getState().droppedNotice).toBeNull()
+  })
+
   it('sends a tracker made offline before its entries, and its rename after them', async () => {
     await withTrackers()
     api.upsertTracker.mockRejectedValue(offline())

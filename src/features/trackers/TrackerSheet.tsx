@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { cn } from '@/lib/utils'
 import { t } from '../../lib/i18n.js'
-import { MAX_ACTIVE_TRACKERS, useTrackers } from './useTrackers'
+import { MAX_ACTIVE_TRACKERS, OPTIONS_MAX, useTrackers } from './useTrackers'
 import { toTrackerError } from './trackers-api'
 import { HABIT_ICONS, iconFor } from '../habits/icons'
 import { iconLabel } from '../habits/labels'
@@ -18,7 +18,6 @@ const NAME_MAX = 40
 const UNIT_MAX = 12
 const OPTION_MAX = 24
 const OPTIONS_MIN = 2
-const OPTIONS_MAX = 8
 const DEFAULT_ICON = 'check'
 const DECIMALS = [0, 1, 2]
 const KINDS: TrackerKind[] = ['number', 'duration', 'label']

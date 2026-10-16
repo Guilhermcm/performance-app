@@ -33,14 +33,18 @@ describe('createLocalOutbox', () => {
     expect(box.pending(ME)).toEqual([{ id: 'b', v: 1 }, { id: 'a', v: 2 }])
   })
 
-  it('with inPlace, puts the newest op where the first match was', () => {
-    const inPlace = createLocalOutbox<Op>({ key: KEY, same: (a, b) => a.id === b.id, send, inPlace: true })
-    inPlace.enqueue(ME, { id: 'a', v: 1 })
-    inPlace.enqueue(ME, { id: 'b', v: 1 })
-    inPlace.enqueue(ME, { id: 'a', v: 2 })
-    expect(inPlace.pending(ME)).toEqual([{ id: 'a', v: 2 }, { id: 'b', v: 1 }])
-    inPlace.enqueue(ME, { id: 'c', v: 1 })
-    expect(inPlace.pending(ME)).toEqual([{ id: 'a', v: 2 }, { id: 'b', v: 1 }, { id: 'c', v: 1 }])
+  it('with place, puts the newest op where it says, given where the first match was', () => {
+    const placed = createLocalOutbox<Op>({ key: KEY, same: (a, b) => a.id === b.id, send, place: (_rest, at) => at })
+    placed.enqueue(ME, { id: 'a', v: 1 })
+    placed.enqueue(ME, { id: 'b', v: 1 })
+    placed.enqueue(ME, { id: 'a', v: 2 })
+    expect(placed.pending(ME)).toEqual([{ id: 'a', v: 2 }, { id: 'b', v: 1 }])
+    // A new item has nothing to replace: the end, without asking.
+    placed.enqueue(ME, { id: 'c', v: 1 })
+    expect(placed.pending(ME)).toEqual([{ id: 'a', v: 2 }, { id: 'b', v: 1 }, { id: 'c', v: 1 }])
+    const after = createLocalOutbox<Op>({ key: KEY, same: (a, b) => a.id === b.id, send, place: (_rest, at) => at + 1 })
+    after.enqueue(ME, { id: 'a', v: 3 })
+    expect(after.pending(ME)).toEqual([{ id: 'b', v: 1 }, { id: 'a', v: 3 }, { id: 'c', v: 1 }])
   })
 
   it('drops a refusal for good with its reason and goes on', async () => {

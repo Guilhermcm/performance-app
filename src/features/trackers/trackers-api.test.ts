@@ -57,6 +57,16 @@ describe('trackers api', () => {
     expect(second.calls).toContainEqual(['range', [1000, 1999]])
   })
 
+  it('keeps one copy of a row that a write between two pages moved onto the next page, the later one', async () => {
+    const row = (i: number, over = {}) => ({ ...entryOf('2026-10-05', { id: `q${i}` }), at: '09:30:00', ...over })
+    const first = chain({ data: Array.from({ length: 1000 }, (_, i) => row(i)), error: null })
+    const second = chain({ data: [row(999, { note: 'later' }), row(1000)], error: null })
+    h.from.mockReturnValueOnce(first.proxy).mockReturnValueOnce(second.proxy)
+    const entries = await api.fetchEntries('2026-07-18')
+    expect(entries).toHaveLength(1001)
+    expect(entries.filter(e => e.id === 'q999')).toEqual([expect.objectContaining({ note: 'later' })])
+  })
+
   it('upserts a tracker on its id, without the user id or the creation time', async () => {
     const c = chain({ error: null }); h.from.mockReturnValue(c.proxy)
     const x = trackerOf({ archived_at: '2026-10-05T10:00:00.000Z', updated_at: '2026-10-05T10:00:00.000Z' })
