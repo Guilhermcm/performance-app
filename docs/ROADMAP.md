@@ -34,7 +34,7 @@ combinada a partir de outubro de 2026: **1c → 1d → 3 → 4 → 5 → 6** (a 
 | 1d | Plano com evidência | M | 1c | em produção desde 2026-10-12 (PR #6), sem SQL; falta a conferência das fontes em `docs/fontes-1d.md` ([spec](superpowers/specs/2026-10-12-fase-1d-plano-evidencia-design.md), [plano](superpowers/plans/2026-10-12-fase-1d-plano-evidencia.md)) |
 | 2 | Nutrição | G | 1a | concluída (2a e 2b) |
 | 3 | Sono | P | 1a | em produção desde 2026-10-12 (SQL 0021-0025 e PR #6) ([spec](superpowers/specs/2026-10-06-fase-3-sono-design.md), [plano](superpowers/plans/2026-10-12-fase-3-sono.md)) |
-| 4 | Hábitos + trackers | M | 1a | em duas subetapas ([spec](superpowers/specs/2026-10-15-fase-4-habitos-trackers-design.md)). 4a Hábitos: concluída no código em 2026-10-16, aguarda o SQL 0026-0030 em produção e o merge no mesmo dia ([plano](superpowers/plans/2026-10-15-fase-4a-habitos.md)). 4b Trackers: a seguir, com plano próprio |
+| 4 | Hábitos + trackers | M | 1a | em duas subetapas ([spec](superpowers/specs/2026-10-15-fase-4-habitos-trackers-design.md)). 4a Hábitos: em produção desde 2026-10-16 ([plano](superpowers/plans/2026-10-15-fase-4a-habitos.md)). 4b Trackers: a seguir, com plano próprio |
 | 5 | Painel de performance | M | 2, 3, 4 | a especificar |
 | 6 | Foco (ActivityWatch) | P | 1a | a especificar |
 
@@ -272,7 +272,7 @@ de [docs/SETUP.md](SETUP.md) ok, e o PR #6 (1d e Sono) entrou no mesmo dia.
 **Objetivo:** medir qualquer coisa e transformar hábitos em consistência.
 
 **Subetapas:** a Fase 4 sai em duas, cada uma com plano, PR, SQL e roteiro de publicação próprios.
-A 4b só começa depois do merge da 4a.
+A 4b começa agora que a 4a está em produção.
 
 **Escopo previsto**
 - **Hábitos (4a)**: hábitos criados pela pessoa, com meta de N vezes por semana, check rápido e
@@ -300,8 +300,8 @@ A 4b só começa depois do merge da 4a.
 - Migrations `0026` a `0030`, publicadas no arquivo único `supabase/release/0026-0030_habits.sql`, e
   o job `close-habit-days`.
 
-**Status da 4a:** concluída no código. Falta rodar o SQL 0026-0030 em produção, com as conferências
-do roteiro de [docs/SETUP.md](SETUP.md), e fazer o merge no mesmo dia. **Próximo:** a 4b, Trackers.
+**Status da 4a:** em produção. O SQL 0026-0030 rodou em 2026-10-16, com as conferências do roteiro
+de [docs/SETUP.md](SETUP.md), e o merge saiu no mesmo dia. **Próximo:** a 4b, Trackers.
 
 ---
 
