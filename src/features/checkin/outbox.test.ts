@@ -119,6 +119,41 @@ describe('check-in outbox', () => {
     await expect(flushCheckins(ME, send)).resolves.toEqual({ sent: 2, refused: [] })
   })
 
+  it('sends nothing while the session belongs to another account', async () => {
+    await enqueueCheckin(ME, create('a'))
+    auth.session = { access_token: 't', user: { id: OTHER } }
+    const send = vi.fn(async (_op: CheckinOp) => {})
+    await expect(flushCheckins(ME, send)).resolves.toEqual({ sent: 0, refused: [] })
+    expect(send).not.toHaveBeenCalled()
+    expect(await ids(ME)).toEqual(['a'])
+  })
+
+  it('stops a flush started as one account once the session switches to another', async () => {
+    auth.session = { access_token: 't', user: { id: ME } }
+    for (const id of ['a', 'b', 'c']) await enqueueCheckin(ME, create(id))
+    await enqueueCheckin(OTHER, create('z'))
+    const sentAs: [string, string][] = []
+    let release!: () => void
+    let started!: () => void
+    const inFlight = new Promise<void>(r => { started = r })
+    const send = async (op: CheckinOp) => {
+      sentAs.push([op.id, (auth.session as { user: { id: string } }).user.id])
+      if (op.id === 'a') { started(); await new Promise<void>(r => { release = r }) }
+    }
+    const run = flushCheckins(ME, send)
+    await inFlight
+    // ME signs out and OTHER signs in while 'a' is still on its way.
+    auth.session = { access_token: 't', user: { id: OTHER } }
+    release()
+    await expect(run).resolves.toEqual({ sent: 1, refused: [] })
+    expect(sentAs).toEqual([['a', ME]])
+    expect(await ids(ME)).toEqual(['b', 'c'])
+    // OTHER's own queue still goes, and only it.
+    await flushCheckins(OTHER, send)
+    expect(sentAs).toEqual([['a', ME], ['z', OTHER]])
+    expect(await ids(ME)).toEqual(['b', 'c'])
+  })
+
   it('is idempotent: the same op twice is one op, a second flush sends nothing', async () => {
     await enqueueCheckin(ME, create('a'))
     await enqueueCheckin(ME, create('a'))
