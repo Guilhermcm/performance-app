@@ -2090,6 +2090,23 @@ export const PT_BR_OVERRIDES = {
   "Some entries for archived trackers were not saved.": "Alguns registros de trackers arquivados não foram salvos.",
   "Some entries dated after today were not saved.": "Alguns registros com data depois de hoje não foram salvos.",
   "Some tracker changes could not be saved.": "Algumas mudanças nos trackers não foram salvas.",
+  // --- trackers: entry sheet (phase 4b) ---
+  "Add entry": "Novo registro",
+  "Edit entry": "Editar registro",
+  "Saved for today, at the current time.": "Salvo com a data de hoje e a hora de agora.",
+  "Value": "Valor",
+  "Option": "Opção",
+  "Another day": "Outro dia",
+  "Time of day": "Hora",
+  "Use only digits and one decimal separator, without a thousands separator.": "Use só números e um separador decimal, sem separador de milhar.",
+  "That number is too big.": "Esse número é grande demais.",
+  "The duration has to be between 1 minute and 24 hours.": "A duração precisa ficar entre 1 minuto e 24 horas.",
+  "Choose a day up to today and within the last 90 days.": "Escolha um dia de hoje até 90 dias atrás.",
+  "Delete entry": "Apagar registro",
+  "Delete this entry?": "Apagar este registro?",
+  "It leaves your history and your statistics.": "Ele sai do seu histórico e das suas estatísticas.",
+  "Entry saved": "Registro salvo",
+  "Entry deleted": "Registro apagado",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }
