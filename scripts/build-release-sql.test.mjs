@@ -7,7 +7,16 @@ const byName = name => RELEASES.find(r => r.name === name)
 describe('release SQL bundles', () => {
   it('has the named ranges, in order', () => {
     expect(RELEASES.map(r => r.name)).toEqual(
-      ['0007-0016_nutrition', '0017-0020_checkin', '0021-0025_sleep', '0026-0030_habits'])
+      ['0007-0016_nutrition', '0017-0020_checkin', '0021-0025_sleep', '0026-0030_habits', '0031_trackers'])
+  })
+
+  it('0031_trackers holds only migration 0031', () => {
+    expect(releaseFiles(byName('0031_trackers'))).toEqual(['0031_trackers.sql'])
+  })
+
+  it('the trackers header says it is for a database that already has 0001 to 0030', () => {
+    const sql = buildReleaseSql(byName('0031_trackers'))
+    expect(sql.split('\n').slice(0, 5).join('\n')).toContain('already has 0001 to 0030')
   })
 
   it('0026-0030_habits holds migrations 0026 to 0030, in order', () => {

@@ -3,14 +3,16 @@ import { describe, expect, it } from 'vitest'
 import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { SHIM } from './helpers/db'
+import { SHIM, asUser } from './helpers/db'
 
 const MIGRATIONS = fileURLToPath(new URL('../migrations/', import.meta.url))
 const BUNDLE = fileURLToPath(new URL('../release/0007-0016_nutrition.sql', import.meta.url))
 const CHECKIN_BUNDLE = fileURLToPath(new URL('../release/0017-0020_checkin.sql', import.meta.url))
 const SLEEP_BUNDLE = fileURLToPath(new URL('../release/0021-0025_sleep.sql', import.meta.url))
 const HABITS_BUNDLE = fileURLToPath(new URL('../release/0026-0030_habits.sql', import.meta.url))
+const TRACKERS_BUNDLE = fileURLToPath(new URL('../release/0031_trackers.sql', import.meta.url))
 const U = '00000000-0000-4000-8000-000000000001'
+const V = '00000000-0000-4000-8000-000000000002'
 
 // Production already runs 0001 to 0006 with real people in it; the owner pastes the bundle once in
 // the SQL Editor. This replays that: the old schema, an existing profile, then the bundle in one go.
@@ -217,6 +219,63 @@ describe('release bundle 0026-0030', () => {
     const closed = await db.query<{ n: number }>('select public.close_all_sleep_nights() as n')
     expect(closed.rows[0].n).toBe(1)
     expect(await progress()).toBe('1')
+    await db.close()
+  })
+})
+
+// Fifth release: production already has 0001 to 0030 (the Habits bundle ran), with a profile that
+// has Habits on and a habit checked. The trackers bundle only creates two tables, so it goes in
+// whole, once, in the SQL Editor, before or after the client.
+describe('release bundle 0031', () => {
+  it('applies in one run on a database that has 0001 to 0030 and existing rows', async () => {
+    const db = new PGlite()
+    await db.exec(SHIM)
+    for (const file of readdirSync(MIGRATIONS).filter(f => /^000[1-6]_.*\.sql$/.test(f)).sort()) {
+      await db.exec(readFileSync(join(MIGRATIONS, file), 'utf8'))
+    }
+    await db.exec(readFileSync(BUNDLE, 'utf8'))
+    await db.exec(readFileSync(CHECKIN_BUNDLE, 'utf8'))
+    await db.exec(readFileSync(SLEEP_BUNDLE, 'utf8'))
+    await db.exec(readFileSync(HABITS_BUNDLE, 'utf8'))
+    for (const [id, email] of [[U, 'old@test.dev'], [V, 'other@test.dev']]) {
+      await db.query('insert into auth.users (id, email) values ($1, $2)', [id, email])
+      await db.query(`insert into public.profiles (id, display_name) values ($1, 'Old user')`, [id])
+    }
+    await db.query(`update public.profiles set habits_enabled = true where id = $1`, [U])
+
+    await db.exec(readFileSync(TRACKERS_BUNDLE, 'utf8'))
+
+    const rls = await db.query<{ relname: string; relrowsecurity: boolean }>(
+      `select relname, relrowsecurity from pg_class
+        where relname in ('trackers', 'tracker_entries') and relkind = 'r' order by relname`)
+    expect(rls.rows).toEqual([
+      { relname: 'tracker_entries', relrowsecurity: true },
+      { relname: 'trackers', relrowsecurity: true },
+    ])
+    // Nothing existing is redefined: Habits stays on, and the challenge functions are still one each.
+    const profile = await db.query<{ habits_enabled: boolean }>(
+      'select habits_enabled from public.profiles where id = $1', [U])
+    expect(profile.rows).toEqual([{ habits_enabled: true }])
+    const fns = await db.query<{ proname: string; n: number }>(
+      `select proname, count(*)::int as n from pg_proc
+        where proname in ('create_challenge', 'join_challenge') group by proname order by proname`)
+    expect(fns.rows).toEqual([{ proname: 'create_challenge', n: 1 }, { proname: 'join_challenge', n: 1 }])
+
+    // A person writes a tracker and an entry as themselves; another account sees neither.
+    const tracker = '00000000-0000-4000-8000-0000000000a1'
+    await asUser(db, U, async () => {
+      await db.query(
+        `insert into public.trackers (id, name, icon, kind, unit, decimals, aggregate)
+         values ($1, 'Água', 'droplet', 'number', 'L', 1, 'sum')`, [tracker])
+      await db.query(
+        `insert into public.tracker_entries (id, tracker_id, day, at, value)
+         values ('00000000-0000-4000-8000-0000000000b1', $1, public.my_local_today(), '09:30', 1.8)`, [tracker])
+    })
+    const count = async (uid: string) => asUser(db, uid, async () => (await db.query<{ t: number; e: number }>(
+      `select (select count(*) from public.trackers)::int as t,
+              (select count(*) from public.tracker_entries)::int as e`)).rows[0])
+    expect(await count(U)).toEqual({ t: 1, e: 1 })
+    expect(await count(V)).toEqual({ t: 0, e: 0 })
     await db.close()
   })
 })
