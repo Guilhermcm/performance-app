@@ -61,7 +61,7 @@
   --pillar-strength: oklch(0.6 0.17 45);
   --pillar-nutrition: oklch(0.58 0.15 150);
   --pillar-sleep: oklch(0.52 0.16 275);
-  --pillar-habits: oklch(0.65 0.15 75);
+  --pillar-habits: oklch(0.47 0.105 65);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -80,7 +80,7 @@ export default function HabitRow({ habit, week, days, run, canMove, onMove, onTo
           <ChevronDown aria-hidden className="size-5" />
         </Button>
       </div>
-      <div role="group" aria-label={name} className="grid grid-cols-7">
+      <div role="group" aria-label={name} className="-mx-2 grid grid-cols-7">
         {days.map((d, i) => {
           const isToday = i === todayAt
           const future = i > todayAt
