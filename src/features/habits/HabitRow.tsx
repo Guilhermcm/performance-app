@@ -4,11 +4,8 @@ import { cn } from '@/lib/utils'
 import { dateLocale, t, tn } from '../../lib/i18n.js'
 import { iconFor } from './icons'
 import { perWeekLabel, weekCountLabel } from './labels'
-import type { WeekDot } from './week'
+import { RUN_CAP, type WeekDot } from './week'
 import type { Habit } from './types'
-
-// From this many weeks on, the run reads "8+" (spec 7.3).
-const RUN_CAP = 8
 
 const noon = (iso: string) => new Date(iso + 'T12:00:00')
 const weekday = (iso: string, style: 'long' | 'narrow') => noon(iso).toLocaleDateString(dateLocale(), { weekday: style })
@@ -36,16 +33,15 @@ type Props = {
 }
 
 // One active habit on /habitos (spec 7.3): icon, name, "3 times a week", this week's count and run,
-// the arrows that reorder it (plan decision 13), and the week's seven days. Today and yesterday are
-// buttons that check or uncheck; the other days only show. Each day says its name and state, and a
+// the arrows that reorder it (plan decision 13), and the week's seven days. Today and yesterday
+// (while inside a period of the pillar) are buttons that check or uncheck; the other days only show. Each day says its name and state, and a
 // check shows a mark, never colour alone. Tapping the name opens the habit to edit.
 export default function HabitRow({ habit, week, days, run, canMove, onMove, onToggle, onEdit }: Props) {
   const Icon = iconFor(habit.icon)
   const name = habit.name
   const complete = week.target > 0 && week.done >= week.target
   const streak = runLabel(run)
-  // Today is the last markable day; yesterday, the one before it in this week.
-  const todayAt = days.map(d => d.markable).lastIndexOf(true)
+  const todayAt = days.findIndex(d => d.today)
   return (
     <li className="flex flex-col gap-1 border-b border-border px-2 py-2 last:border-b-0">
       <div className="flex items-center gap-1">
@@ -82,7 +78,7 @@ export default function HabitRow({ habit, week, days, run, canMove, onMove, onTo
       </div>
       <div role="group" aria-label={name} className="-mx-2 grid grid-cols-7">
         {days.map((d, i) => {
-          const isToday = i === todayAt
+          const isToday = d.today
           const future = i > todayAt
           const dayName = isToday ? t('Today') : d.markable ? t('Yesterday') : weekday(d.day, 'long')
           const label = d.checked ? t('{0}, done', dayName) : future ? t('{0}, still ahead', dayName) : t('{0}, not done', dayName)

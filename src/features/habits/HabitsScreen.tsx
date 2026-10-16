@@ -12,10 +12,11 @@ import { useProgress } from '../gamification/useProgress'
 import { SHIELD_MAX } from '../gamification/xp'
 import { useLocalNow } from '../sleep/use-local-now'
 import { SLEEP_CARD as CARD } from '../sleep/card'
-import { droppedNoticeText, useHabits } from './useHabits'
+import { RECENT_DAYS, droppedNoticeText, useHabits } from './useHabits'
 import { toHabitError } from './habits-api'
 import { habitRun, weekDots } from './week'
 import { iconFor } from './icons'
+import { shiftDay } from '../nutrition/days'
 import HabitRow from './HabitRow'
 import HabitSheet, { fullText } from './HabitSheet'
 import HabitsSetup from './HabitsSetup'
@@ -32,13 +33,14 @@ export default function HabitsScreen() {
   const profile = useProfile(s => s.profile)
   const online = useOnline()
   const status = useHabits(s => s.status)
-  const dropped = useHabits(s => s.droppedNotice)
+  const dropped = useHabits(s => (s.droppedNotice ? s.droppedReason ?? 'refused' : null))
   const [setupOpen, setSetupOpen] = useState(false)
 
-  // Checks the server refused after a stretch offline (their day had closed): said once, then forgotten.
+  // Checks the server refused for good (their day had closed after a stretch offline, or another
+  // rule): said once, then forgotten.
   useEffect(() => {
     if (!dropped) return
-    toast(droppedNoticeText())
+    toast(droppedNoticeText(dropped))
     useHabits.getState().dismissDropped()
   }, [dropped])
 
@@ -152,8 +154,8 @@ function Habits({ timezone, failed }: { timezone: string | null | undefined; fai
               {active.map((habit, i) => {
                 const { target = 0, done = 0 } = week.byHabit[habit.id] ?? {}
                 return (
-                  <HabitRow key={habit.id} habit={habit} week={{ target, done }} days={weekDots(habit.id, checks, today)}
-                    run={recent ? habitRun(habit.id, recent, today) : 0}
+                  <HabitRow key={habit.id} habit={habit} week={{ target, done }} days={weekDots(habit.id, checks, today, recent?.periods ?? null)}
+                    run={recent ? habitRun(habit.id, recent, today, shiftDay(today, -(RECENT_DAYS - 1))) : 0}
                     canMove={{ up: i > 0, down: i < active.length - 1 }}
                     onMove={dir => move(habit.id, dir)} onToggle={day => toggleCheck(habit.id, day)}
                     onEdit={() => setSheet({ habit, open: true })} />

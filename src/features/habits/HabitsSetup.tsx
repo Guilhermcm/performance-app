@@ -35,7 +35,8 @@ export default function HabitsSetup({ open, onOpenChange }: Props) {
     void (async () => {
       const { profile, save } = latest.current
       if (!profile) return
-      if (!profile.habits_enabled) {
+      const turningOn = !profile.habits_enabled
+      if (turningOn) {
         try {
           await save({ habits_enabled: true })
         } catch {
@@ -47,9 +48,10 @@ export default function HabitsSetup({ open, onOpenChange }: Props) {
       }
       // Whether a habit is active only counts once the habits have loaded. Nothing waits on the
       // store being ready: a pull that fails leaves the creation open, and the server has the last
-      // word on the limit.
+      // word on the limit. Just turned on, it pulls anyway: the periods it holds must know the new
+      // one began today, so yesterday is not offered for a check.
       const store = useHabits.getState()
-      if (store.status !== 'ready') await store.refresh()
+      if (turningOn || store.status !== 'ready') await store.refresh()
       if (!current()) return
       if (useHabits.getState().active().length === 0) {
         setCreating(true)

@@ -104,6 +104,18 @@ describe('HabitDaySheet', () => {
     expect(toggleCheck).toHaveBeenLastCalledWith(H2, SUNDAY)
   })
 
+  it('on the day the pillar was turned on leaves yesterday read only: it was before the pillar', () => {
+    store({ recent: recent({ periods: [{ started_on: MONDAY, ended_on: null }] }) })
+    render(<HabitDaySheet day={SUNDAY} open onOpenChange={() => {}} />)
+    const sheet = screen.getByRole('dialog')
+    expect(within(sheet).getAllByRole('button').map(b => b.textContent)).toEqual(['Close'])
+    expect(within(sheet).getByText('Not tracked')).toBeTruthy()
+    // Today is still open.
+    cleanup()
+    render(<HabitDaySheet day={MONDAY} open onOpenChange={() => {}} />)
+    expect(screen.getByRole('button', { name: 'Correr' })).toBeTruthy()
+  })
+
   it('checks today the same way', () => {
     render(<HabitDaySheet day={MONDAY} open onOpenChange={() => {}} />)
     fireEvent.click(screen.getByRole('button', { name: 'Correr' }))

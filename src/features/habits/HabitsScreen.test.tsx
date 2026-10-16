@@ -212,13 +212,20 @@ describe('HabitsScreen', () => {
   })
 
   it('says once that the queue dropped checks from closed days, then forgets it', () => {
-    store({ droppedNotice: true })
+    store({ droppedNotice: true, droppedReason: 'day_closed' })
     const { rerender } = render(<HabitsScreen />)
-    expect(h.toast).toHaveBeenCalledWith(droppedNoticeText())
+    expect(h.toast).toHaveBeenCalledWith('Some checks from days that already closed were not saved.')
     expect(h.toast).toHaveBeenCalledTimes(1)
     expect(useHabits.getState().droppedNotice).toBe(false)
     rerender(<HabitsScreen />)
     expect(h.toast).toHaveBeenCalledTimes(1)
+  })
+
+  it('says it in general words when the checks were refused for another reason', () => {
+    store({ droppedNotice: true, droppedReason: 'refused' })
+    render(<HabitsScreen />)
+    expect(h.toast).toHaveBeenCalledWith('Some checks could not be saved.')
+    expect(h.toast).toHaveBeenCalledWith(droppedNoticeText('refused'))
   })
 
   it('shows the month of checks in the history slot, and Sunday from Monday through the day sheet', () => {

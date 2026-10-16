@@ -2583,6 +2583,7 @@ export default {
   "Meet the goal of the same habit 8 weeks in a row.": "Atteins l’objectif d’une même habitude 8 semaines d’affilée.",
   // --- habits store (phase 4a) ---
   "Some checks from days that already closed were not saved.": "Certaines coches de jours déjà clos n'ont pas été enregistrées.",
+  "Some checks could not be saved.": "Certaines coches n'ont pas pu être enregistrées.",
   // --- habits profile card and habit sheet (phase 4a) ---
   "Every day": "Tous les jours",
   "Once a week": "Une fois par semaine",

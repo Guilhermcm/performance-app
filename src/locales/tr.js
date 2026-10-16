@@ -2583,6 +2583,7 @@ export default {
   "Meet the goal of the same habit 8 weeks in a row.": "Aynı alışkanlığın hedefini 8 hafta üst üste tuttur.",
   // --- habits store (phase 4a) ---
   "Some checks from days that already closed were not saved.": "Kapanmış günlere ait bazı işaretler kaydedilmedi.",
+  "Some checks could not be saved.": "Bazı işaretler kaydedilemedi.",
   // --- habits profile card and habit sheet (phase 4a) ---
   "Every day": "Her gün",
   "Once a week": "Haftada bir",

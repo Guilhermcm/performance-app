@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import * as api from './habits-api'
 import { habitsOutbox, type HabitOp } from './outbox'
 import { HABITS_CACHE_KEY, HABITS_HISTORY_KEY } from './storage-keys'
-import { habitWeekAwards, newTarget, weekSummary } from './week'
+import { canMark, habitWeekAwards, newTarget, weekSummary } from './week'
 import { weekStartOf } from '../gamification/xp'
 import { useProgress } from '../gamification/useProgress'
 import { useProfile } from '../profile/useProfile'
@@ -19,8 +19,13 @@ export const MAX_ACTIVE_HABITS = 20
 // History months kept on the phone; the most recent stay.
 const MAX_MONTHS = 24
 
-// The text for droppedNotice, for the screen that shows it.
-export const droppedNoticeText = (): string => t('Some checks from days that already closed were not saved.')
+// Why queued writes were dropped: 'day_closed' only when every drop was a closed day (as in useNutrition).
+export type DroppedReason = 'day_closed' | 'refused'
+
+// The text for droppedNotice, for the screen that shows it: a closed day says so; any other refusal
+// (the pillar was off that day, an archived habit, too many habits) gets the general words.
+export const droppedNoticeText = (reason: DroppedReason | null): string =>
+  reason === 'day_closed' ? t('Some checks from days that already closed were not saved.') : t('Some checks could not be saved.')
 
 type Targets = Record<string, number>
 type Data = { habits: Habit[]; checks: HabitCheck[]; targets: Targets; targetsWeek: string | null; recent: HabitHistory | null }
@@ -103,7 +108,7 @@ function applyPending(ops: HabitOp[], d: Pick<Data, 'habits' | 'checks' | 'targe
   const habits = new Map(d.habits.map(h => [h.id, h]))
   const checks = new Map(d.checks.map(c => [keyOf(c.habit_id, c.day), c]))
   for (const op of ops) {
-    if (op.op === 'habit' || op.day < yesterday) continue
+    if (op.op === 'habit' || op.op === 'sort' || op.day < yesterday) continue
     const k = keyOf(op.habit_id, op.day)
     if (op.op === 'uncheck') checks.delete(k)
     else if (!checks.has(k)) checks.set(k, { habit_id: op.habit_id, day: op.day, counted: null })
@@ -111,6 +116,12 @@ function applyPending(ops: HabitOp[], d: Pick<Data, 'habits' | 'checks' | 'targe
   const laid = [...checks.values()].sort(byDay)
   const targets = { ...d.targets }
   for (const op of ops) {
+    if (op.op === 'sort') {
+      // A reorder moves the habit and touches nothing else of it.
+      const h = habits.get(op.id)
+      if (h) habits.set(op.id, { ...h, sort: op.sort })
+      continue
+    }
     if (op.op !== 'habit') continue
     retarget(habits.get(op.row.id), op.row, targets, laid, today)
     habits.set(op.row.id, op.row)
@@ -133,6 +144,7 @@ export type HabitsStore = {
   recent: HabitHistory | null
   // Some queued writes were refused for good (a day that closed meanwhile); raised once per drop.
   droppedNotice: boolean
+  droppedReason: DroppedReason | null
   bind(userId: string): Promise<void>
   refresh(): Promise<void>
   // Sends what is waiting in the queue, if anything; no pull.
@@ -145,9 +157,10 @@ export type HabitsStore = {
   archiveHabit(id: string): void
   // Throws too_many_habits like saveHabit.
   reactivateHabit(id: string): void
-  // Swaps the sort with the active habit above (-1) or below (1) (plan decision 13).
+  // Moves an active habit one place up (-1) or down (1) (plan decision 13): the active habits are
+  // renumbered 0..n-1 in the new order, and each one whose sort changed queues its sort alone.
   move(id: string, dir: -1 | 1): void
-  // Today and yesterday only; any other day is left as it is.
+  // Today, and yesterday while it is inside a period of the pillar (canMark); any other day is left as it is.
   toggleCheck(habitId: string, day: string): void
   active(): Habit[]
   // The week of `today`: Q, C and the XP it is on track for over every check (plan decision 12).
@@ -181,7 +194,10 @@ export const useHabits = create<HabitsStore>((set, get) => {
     const gen = generation
     const r = await habitsOutbox.flush(userId)
     if (gen !== generation) return
-    if (r.dropped > 0) set({ droppedNotice: true })
+    if (r.dropped > 0) {
+      const onlyClosed = r.reasons.every(x => x === 'day_closed') && get().droppedReason !== 'refused'
+      set({ droppedNotice: true, droppedReason: onlyClosed ? 'day_closed' : 'refused' })
+    }
   }
   const queue = (op: HabitOp) => {
     const userId = get().userId
@@ -214,6 +230,7 @@ export const useHabits = create<HabitsStore>((set, get) => {
     stale: false,
     ...empty(),
     droppedNotice: false,
+    droppedReason: null,
 
     // Called once a signed-in account has a ready profile (App.jsx): the saved copy at once, then
     // what is waiting in the queue goes out and everything is pulled.
@@ -224,7 +241,7 @@ export const useHabits = create<HabitsStore>((set, get) => {
       refreshing = null
       pullAgain = false
       set({
-        userId, droppedNotice: false,
+        userId, droppedNotice: false, droppedReason: null,
         status: saved ? 'ready' : 'loading', stale: !!saved,
         habits: saved?.habits ?? [], checks: saved?.checks ?? [], targets: saved?.targets ?? {},
         targetsWeek: saved?.targetsWeek ?? null, recent: saved?.recent ?? null
@@ -242,8 +259,11 @@ export const useHabits = create<HabitsStore>((set, get) => {
         // A queue that cannot go now must not stop the pull; it is tried again on the next refresh.
         try { await flush() } catch { /* kept for the next refresh */ }
         if (gen !== generation) return
-        // What is still queued now may go out while the reads are on their way, and leave the queue.
+        // What is still queued now may go out while the reads are on their way, and leave the queue:
+        // laid over the answer if it went, left out if the server refused it (review T7).
         const queued = habitsOutbox.pending(userId)
+        const refused = new Set<string>()
+        const stop = habitsOutbox.onRefused((u, op) => { if (u === userId) refused.add(JSON.stringify(op)) })
         const today = todayNow()
         const yesterday = shiftDay(today, -1)
         const week = weekStartOf(today)
@@ -252,11 +272,11 @@ export const useHabits = create<HabitsStore>((set, get) => {
           const [habits, checks, targets, recent] = await Promise.all([
             api.fetchHabits(), api.fetchChecks(week < yesterday ? week : yesterday, today), api.fetchTargets(week),
             api.fetchHistory(shiftDay(today, -(RECENT_DAYS - 1)), today)
-          ])
+          ]).finally(stop)
           if (gen !== generation) return
           if (writes !== seen) { pullAgain = true; return }
           const server = { habits, checks, targets: Object.fromEntries(targets.map(x => [x.habit_id, x.target])) }
-          const ops = [...queued, ...habitsOutbox.pending(userId)]
+          const ops = [...queued.filter(op => !refused.has(JSON.stringify(op))), ...habitsOutbox.pending(userId)]
           set({ ...applyPending(ops, server, today), targetsWeek: week, recent, status: 'ready', stale: false })
           persist()
           // Reading the history closes the due days on the server, which can pay XP.
@@ -284,10 +304,10 @@ export const useHabits = create<HabitsStore>((set, get) => {
       refreshing = null
       pullAgain = false
       drop()
-      set({ userId: null, status: 'idle', stale: false, ...empty(), droppedNotice: false })
+      set({ userId: null, status: 'idle', stale: false, ...empty(), droppedNotice: false, droppedReason: null })
     },
 
-    dismissDropped() { set({ droppedNotice: false }) },
+    dismissDropped() { set({ droppedNotice: false, droppedReason: null }) },
 
     saveHabit(input) {
       const now = new Date().toISOString()
@@ -330,12 +350,18 @@ export const useHabits = create<HabitsStore>((set, get) => {
       const order = [...list]
       ;[order[i], order[j]] = [order[j], order[i]]
       const now = new Date().toISOString()
-      order.forEach((h, sort) => { if (h.sort !== sort) write({ ...h, sort, updated_at: now }) })
+      const moved = new Map(order.flatMap((h, sort) => (h.sort !== sort ? [[h.id, sort] as const] : [])))
+      if (!moved.size) return
+      writes++
+      set({ habits: get().habits.map(h => (moved.has(h.id) ? { ...h, sort: moved.get(h.id)! } : h)).sort(byOrder) })
+      persist()
+      // Only the sort goes (review M2): a full row from this copy could undo another device's archive or rename.
+      for (const [id, sort] of moved) queue({ op: 'sort', id, sort, updated_at: now })
     },
 
     toggleCheck(habitId, day) {
       const today = todayNow()
-      if (day !== today && day !== shiftDay(today, -1)) return
+      if (!canMark(day, today, get().recent?.periods ?? null)) return
       const { checks } = get()
       const had = checks.some(c => c.habit_id === habitId && c.day === day)
       writes++

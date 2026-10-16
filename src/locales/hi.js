@@ -2583,6 +2583,7 @@ export default {
   "Meet the goal of the same habit 8 weeks in a row.": "लगातार 8 हफ़्ते एक ही आदत का लक्ष्य पूरा करें।",
   // --- habits store (phase 4a) ---
   "Some checks from days that already closed were not saved.": "पहले से बंद दिनों के कुछ चेक सेव नहीं हुए।",
+  "Some checks could not be saved.": "कुछ चेक सेव नहीं हो सके।",
   // --- habits profile card and habit sheet (phase 4a) ---
   "Every day": "हर दिन",
   "Once a week": "हफ़्ते में एक बार",

@@ -6,13 +6,14 @@ import HabitRow from './HabitRow'
 import { weekDots } from './week'
 import { setLang } from '../../lib/i18n.js'
 import { habitOf, H1 } from './test-habits'
-import type { HabitCheck } from './types'
+import type { HabitCheck, HabitPeriod } from './types'
 
 // The week of Monday 2026-10-12.
 const MONDAY = '2026-10-12'
 const TUESDAY = '2026-10-13'
 const WEDNESDAY = '2026-10-14'
 const check = (day: string): HabitCheck => ({ habit_id: H1, day, counted: null })
+const ON: HabitPeriod[] = [{ started_on: '2026-09-01', ended_on: null }]
 
 type Over = Partial<Parameters<typeof HabitRow>[0]>
 const onMove = vi.fn()
@@ -20,7 +21,7 @@ const onToggle = vi.fn()
 const onEdit = vi.fn()
 const row = (over: Over = {}) => render(
   <ul>
-    <HabitRow habit={habitOf()} week={{ target: 3, done: 2 }} days={weekDots(H1, [check(MONDAY), check(TUESDAY)], WEDNESDAY)}
+    <HabitRow habit={habitOf()} week={{ target: 3, done: 2 }} days={weekDots(H1, [check(MONDAY), check(TUESDAY)], WEDNESDAY, ON)}
       run={0} canMove={{ up: true, down: true }} onMove={onMove} onToggle={onToggle} onEdit={onEdit} {...over} />
   </ul>
 )
@@ -57,13 +58,21 @@ describe('HabitRow', () => {
   })
 
   it('on Monday makes only today a button (plan decision 14)', () => {
-    row({ days: weekDots(H1, [check('2026-10-11')], MONDAY) })
+    row({ days: weekDots(H1, [check('2026-10-11')], MONDAY, ON) })
     expect(dots().getAllByRole('button').map(b => b.getAttribute('aria-label'))).toEqual(['Today, not done'])
     expect(dots().getAllByRole('img')).toHaveLength(6)
   })
 
+  it('on the day the pillar was turned on makes only today a button: yesterday was before it', () => {
+    row({ days: weekDots(H1, [], WEDNESDAY, [{ started_on: WEDNESDAY, ended_on: null }]) })
+    expect(dots().getAllByRole('button').map(b => b.getAttribute('aria-label'))).toEqual(['Today, not done'])
+    expect(dots().getAllByRole('img').map(d => d.getAttribute('aria-label')).slice(0, 2)).toEqual([
+      'Monday, not done', 'Tuesday, not done'
+    ])
+  })
+
   it('says a past day without a check as not done', () => {
-    row({ days: weekDots(H1, [], '2026-10-16') })
+    row({ days: weekDots(H1, [], '2026-10-16', ON) })
     expect(dots().getAllByRole('img').map(d => d.getAttribute('aria-label')).slice(0, 3)).toEqual([
       'Monday, not done', 'Tuesday, not done', 'Wednesday, not done'
     ])

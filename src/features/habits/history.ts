@@ -2,7 +2,7 @@
 // MonthCalendar. The grid, the periods and what to ask the server come from the nutrition history
 // (same {started_on, ended_on} periods); only the states and their words are the habits' own.
 import { createElement, type ReactNode } from 'react'
-import { Check, Circle, CircleDashed, CircleDot, Clock, Minus } from 'lucide-react'
+import { Check, Circle, CircleDashed, CircleDot, Clock, Minus, type LucideIcon } from 'lucide-react'
 import type { CalendarCell, CalendarWeek } from '@/components/calendar/MonthCalendar'
 import { t, tn } from '../../lib/i18n.js'
 import { buildMonth, firstMonth, monthOf, monthRange } from '../nutrition/history'
@@ -16,14 +16,18 @@ import type { Habit, HabitCheck, HabitDay, HabitHistory, HabitPeriod, HabitTarge
 // period; future is a day still to come.
 export type HabitDayState = 'all' | 'partial' | 'none' | 'inactive' | 'open' | 'future'
 
-// Icon and words per state, never colour alone: the same shapes as the other calendars.
-export const HABIT_DAY_STATE: Record<HabitDayState, { label: () => string; icon: () => ReactNode }> = {
-  all: { label: () => t('All checked'), icon: () => createElement(Check, { className: 'size-3.5', strokeWidth: 3 }) },
-  partial: { label: () => t('Partly checked'), icon: () => createElement(CircleDot, { className: 'size-3' }) },
-  none: { label: () => t('Nothing checked'), icon: () => createElement(Circle, { className: 'size-3' }) },
-  open: { label: () => t('Still open'), icon: () => createElement(CircleDashed, { className: 'size-3.5' }) },
-  inactive: { label: () => t('Not tracked'), icon: () => createElement(Minus, { className: 'size-3' }) },
-  future: { label: () => t('Not yet'), icon: () => createElement(Clock, { className: 'size-3' }) },
+// Icon and words per state, never colour alone: the same shapes as the other calendars. `Icon` is
+// the shape itself, for a place that draws it at its own size (HabitDaySheet); `icon` is the cell's.
+type StateLook = { label: () => string; Icon: LucideIcon; icon: () => ReactNode }
+const look = (label: () => string, Icon: LucideIcon, className: string, strokeWidth?: number): StateLook =>
+  ({ label, Icon, icon: () => createElement(Icon, strokeWidth ? { className, strokeWidth } : { className }) })
+export const HABIT_DAY_STATE: Record<HabitDayState, StateLook> = {
+  all: look(() => t('All checked'), Check, 'size-3.5', 3),
+  partial: look(() => t('Partly checked'), CircleDot, 'size-3'),
+  none: look(() => t('Nothing checked'), Circle, 'size-3'),
+  open: look(() => t('Still open'), CircleDashed, 'size-3.5'),
+  inactive: look(() => t('Not tracked'), Minus, 'size-3'),
+  future: look(() => t('Not yet'), Clock, 'size-3'),
 }
 export const HABIT_LEGEND: HabitDayState[] = ['all', 'partial', 'none', 'open', 'inactive', 'future']
 

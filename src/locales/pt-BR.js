@@ -1974,6 +1974,7 @@ export const PT_BR_OVERRIDES = {
   "Meet the goal of the same habit 8 weeks in a row.": "Cumpra a meta do mesmo hábito 8 semanas seguidas.",
   // --- habits store (phase 4a) ---
   "Some checks from days that already closed were not saved.": "Alguns checks de dias já fechados não foram salvos.",
+  "Some checks could not be saved.": "Alguns checks não foram salvos.",
   // --- habits profile card and habit sheet (phase 4a) ---
   "Every day": "Todo dia",
   "Once a week": "1 por semana",

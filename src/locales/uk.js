@@ -2643,6 +2643,7 @@ export default {
   "Meet the goal of the same habit 8 weeks in a row.": "Виконуйте мету однієї й тієї ж звички 8 тижнів поспіль.",
   // --- habits store (phase 4a) ---
   "Some checks from days that already closed were not saved.": "Деякі позначки за вже закриті дні не збереглися.",
+  "Some checks could not be saved.": "Деякі позначки не вдалося зберегти.",
   // --- habits profile card and habit sheet (phase 4a) ---
   "Every day": "Щодня",
   "Once a week": "Раз на тиждень",

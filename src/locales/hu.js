@@ -2586,6 +2586,7 @@ export default {
   "Meet the goal of the same habit 8 weeks in a row.": "Teljesítsd ugyanannak a szokásnak a célját 8 héten át egymás után.",
   // --- habits store (phase 4a) ---
   "Some checks from days that already closed were not saved.": "Néhány pipa a már lezárt napokról nem lett mentve.",
+  "Some checks could not be saved.": "Néhány pipát nem sikerült menteni.",
   // --- habits profile card and habit sheet (phase 4a) ---
   "Every day": "Minden nap",
   "Once a week": "Hetente egyszer",

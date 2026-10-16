@@ -2,7 +2,8 @@
 // All dates are local YYYY-MM-DD strings; the week starts on Monday.
 import { weekStartOf } from '../gamification/xp'
 import { shiftDay } from '../nutrition/days'
-import type { Habit, HabitCheck, HabitHistory } from './types'
+import { activeOn } from '../nutrition/history'
+import type { Habit, HabitCheck, HabitHistory, HabitPeriod } from './types'
 
 type Check = Pick<HabitCheck, 'habit_id' | 'day'>
 type Sorted = Pick<Habit, 'id' | 'sort'>
@@ -47,7 +48,7 @@ export function validChecks(
     left.set(c.habit_id, room - 1)
     valid.push(c)
   }
-  return valid.sort(cmp)
+  return valid
 }
 
 // Q = sum of the targets, C = sum of min(checks, target). `done` counts every check of the habit.
@@ -121,11 +122,16 @@ export function cardOrder<T extends { sort: number; done: number; target: number
   return [...rows].sort((a, b) => Number(!missing(a)) - Number(!missing(b)) || a.sort - b.sort)
 }
 
+// From this many weeks on, a run reads "8+" (spec 7.3).
+export const RUN_CAP = 8
+
 // Consecutive judged weeks (week_start <= today - 8, so the week closed at least 2 days ago) where
 // the habit had a target above 0 and its counted checks reached it, from the latest one backwards.
-// A week without a target row ends the run.
+// A week without a target row ends the run. `from` is the first day the history holds: a run still
+// unbroken when it reaches the week the window cuts (a target there, its checks partly outside) goes
+// on past what the phone can see, so it reads the cap.
 export function habitRun(
-  habitId: string, history: Pick<HabitHistory, 'targets' | 'checks'>, today: string,
+  habitId: string, history: Pick<HabitHistory, 'targets' | 'checks'>, today: string, from: string,
 ): number {
   const targets = new Map<string, number>()
   for (const t of history.targets) if (t.habit_id === habitId) targets.set(t.week_start, t.target)
@@ -138,23 +144,33 @@ export function habitRun(
   let run = 0
   for (let ws = weekStartOf(shiftDay(today, -8)); ; ws = shiftDay(ws, -7)) {
     const target = targets.get(ws)
-    if (!target || (counted.get(ws) ?? 0) < target) break
+    if (!target) break
+    if (ws < from) return Math.max(run, RUN_CAP)
+    if ((counted.get(ws) ?? 0) < target) break
     run++
   }
   return run
 }
 
-export type WeekDot = { day: string; checked: boolean; markable: boolean }
+// Whether a check on `day` can still change (spec 4): today, and yesterday while it is inside a
+// period of the pillar. On the day the pillar is turned on, yesterday is before it (the server
+// would refuse it with pillar_off); `periods` null (no history on the phone yet) leaves only today.
+export function canMark(day: string, today: string, periods: HabitPeriod[] | null): boolean {
+  if (day === today) return true
+  return day === shiftDay(today, -1) && !!periods && activeOn(periods, day)
+}
+
+export type WeekDot = { day: string; checked: boolean; markable: boolean; today: boolean }
 
 // The seven days of the week of `today`, Monday first, for one habit (spec 7.3): whether it has a
-// check, and whether it can still change (today and yesterday). On Monday yesterday is in the week
-// before, so only today is markable; Sunday goes through the calendar's day sheet (plan decision 14).
-export function weekDots(habitId: string, checks: Check[], today: string): WeekDot[] {
+// check, whether it can still change (canMark) and which one is today. On Monday yesterday is in
+// the week before, so only today is markable; Sunday goes through the calendar's day sheet (plan
+// decision 14).
+export function weekDots(habitId: string, checks: Check[], today: string, periods: HabitPeriod[] | null): WeekDot[] {
   const ws = weekStartOf(today)
-  const yesterday = shiftDay(today, -1)
   const mine = new Set(checks.filter(c => c.habit_id === habitId).map(c => c.day))
   return Array.from({ length: 7 }, (_, i) => {
     const day = shiftDay(ws, i)
-    return { day, checked: mine.has(day), markable: day === today || day === yesterday }
+    return { day, checked: mine.has(day), markable: canMark(day, today, periods), today: day === today }
   })
 }

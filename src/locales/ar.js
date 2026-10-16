@@ -2636,6 +2636,7 @@ export default {
   "Meet the goal of the same habit 8 weeks in a row.": "حقق هدف العادة نفسها 8 أسابيع متتالية.",
   // --- habits store (phase 4a) ---
   "Some checks from days that already closed were not saved.": "لم تُحفظ بعض العلامات من أيام أُغلقت بالفعل.",
+  "Some checks could not be saved.": "تعذر حفظ بعض العلامات.",
   // --- habits profile card and habit sheet (phase 4a) ---
   "Every day": "كل يوم",
   "Once a week": "مرة في الأسبوع",

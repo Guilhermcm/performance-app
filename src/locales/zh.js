@@ -2583,6 +2583,7 @@ export default {
   "Meet the goal of the same habit 8 weeks in a row.": "连续 8 周完成同一个习惯的目标。",
   // --- habits store (phase 4a) ---
   "Some checks from days that already closed were not saved.": "已结算日期的部分打卡没有保存。",
+  "Some checks could not be saved.": "部分打卡无法保存。",
   // --- habits profile card and habit sheet (phase 4a) ---
   "Every day": "每天",
   "Once a week": "每周 1 次",

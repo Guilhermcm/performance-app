@@ -66,6 +66,18 @@ describe('HabitsSetup', () => {
     expect(h.toast).toHaveBeenCalledWith('The Habits pillar is on.')
   })
 
+  it('pulls the habits again once the pillar is on, so the periods know today began one', async () => {
+    withProfile()
+    withHabits([habitOf()])
+    refresh.mockImplementation(async () => {
+      // The pull runs after the profile was saved.
+      expect(useProfile.getState().profile?.habits_enabled).toBe(true)
+    })
+    show()
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false))
+    expect(refresh).toHaveBeenCalledTimes(1)
+  })
+
   it('does not write the profile again when the pillar is already on', async () => {
     withProfile({ habits_enabled: true })
     withHabits([])

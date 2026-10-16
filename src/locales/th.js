@@ -2594,6 +2594,7 @@ export default {
   "Meet the goal of the same habit 8 weeks in a row.": "ทำเป้าของนิสัยเดียวกันได้ 8 สัปดาห์ติดต่อกัน",
   // --- habits store (phase 4a) ---
   "Some checks from days that already closed were not saved.": "เช็กบางรายการของวันที่ปิดไปแล้วไม่ได้บันทึก",
+  "Some checks could not be saved.": "เช็กบางรายการบันทึกไม่ได้",
   // --- habits profile card and habit sheet (phase 4a) ---
   "Every day": "ทุกวัน",
   "Once a week": "สัปดาห์ละครั้ง",

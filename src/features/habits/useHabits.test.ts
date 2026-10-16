@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 vi.mock('@/lib/supabase', () => ({ supabase: { auth: { getSession: async () => ({ data: { session: { access_token: 't' } } }) } } }))
 const api = vi.hoisted(() => ({
   fetchHabits: vi.fn(), upsertHabit: vi.fn(), fetchChecks: vi.fn(), insertCheck: vi.fn(), deleteCheck: vi.fn(),
-  fetchTargets: vi.fn(), fetchHistory: vi.fn()
+  fetchTargets: vi.fn(), fetchHistory: vi.fn(), updateHabitSort: vi.fn()
 }))
 vi.mock('./habits-api', async orig => ({ ...(await orig<typeof import('./habits-api')>()), ...api }))
 const progress = vi.hoisted(() => ({ refresh: vi.fn() }))
@@ -220,7 +220,62 @@ describe('useHabits', () => {
     await useHabits.getState().refresh()
     await useHabits.getState().flushPending()
     expect(useHabits.getState().droppedNotice).toBe(false)
-    expect(droppedNoticeText()).toBe('Some checks from days that already closed were not saved.')
+    expect(useHabits.getState().droppedReason).toBeNull()
+    expect(droppedNoticeText('day_closed')).toBe('Some checks from days that already closed were not saved.')
+  })
+
+  it('says a closed day only when every drop was one', async () => {
+    await withHabits()
+    habitsOutbox.enqueue(ME, { op: 'check', habit_id: H1, day: MON })
+    api.insertCheck.mockRejectedValueOnce(refused('day_closed'))
+    await useHabits.getState().flushPending()
+    expect(useHabits.getState()).toMatchObject({ droppedNotice: true, droppedReason: 'day_closed' })
+    useHabits.getState().dismissDropped()
+    // Refused for another reason (the pillar was off that day, an archived habit, too many habits).
+    api.insertCheck.mockRejectedValue(refused('pillar_off'))
+    habitsOutbox.enqueue(ME, { op: 'check', habit_id: H1, day: TODAY })
+    await useHabits.getState().flushPending()
+    expect(useHabits.getState()).toMatchObject({ droppedNotice: true, droppedReason: 'refused' })
+    expect(droppedNoticeText('refused')).toBe('Some checks could not be saved.')
+    // A closed day after another refusal, before the notice was shown, keeps the general words.
+    api.insertCheck.mockRejectedValue(refused('day_closed'))
+    habitsOutbox.enqueue(ME, { op: 'check', habit_id: H2, day: TODAY })
+    await useHabits.getState().flushPending()
+    expect(useHabits.getState().droppedReason).toBe('refused')
+  })
+
+  it('ignores yesterday when it is before the pillar was turned on', async () => {
+    api.fetchHistory.mockResolvedValue(history({ periods: [{ started_on: TODAY, ended_on: null }] }))
+    await withHabits()
+    useHabits.getState().toggleCheck(H1, TUE)
+    expect(useHabits.getState().checks).toEqual([])
+    expect(habitsOutbox.pending(ME)).toEqual([])
+    useHabits.getState().toggleCheck(H1, TODAY)
+    expect(useHabits.getState().checks).toEqual([checkOf(H1, TODAY)])
+    // Inside a period, yesterday still works.
+    useHabits.setState({ recent: history() })
+    useHabits.getState().toggleCheck(H1, TUE)
+    expect(useHabits.getState().checks).toEqual([checkOf(H1, TUE), checkOf(H1, TODAY)])
+  })
+
+  it('does not lay a write over the answer when the flush during the reads was refused', async () => {
+    await withHabits()
+    // Queued while offline; the reads go out, and the minute tick sends it: the server refuses it.
+    api.insertCheck.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    useHabits.getState().toggleCheck(H1, TODAY)
+    await settle()
+    expect(habitsOutbox.pending(ME)).toHaveLength(1)
+    api.insertCheck.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    let release!: (v: HabitHistory) => void
+    api.fetchHistory.mockReturnValueOnce(new Promise(r => { release = r }))
+    const pull = useHabits.getState().refresh()
+    await settle()
+    api.insertCheck.mockRejectedValueOnce(refused('pillar_off'))
+    await useHabits.getState().flushPending()
+    expect(habitsOutbox.pending(ME)).toEqual([])
+    release(history())
+    await pull
+    expect(useHabits.getState().checks).toEqual([])
   })
 
   it('uses the days-left target for a habit created offline', async () => {
@@ -289,7 +344,11 @@ describe('useHabits', () => {
     await bound()
     useHabits.getState().move(H2, -1)
     expect(useHabits.getState().active().map(h => [h.id, h.sort])).toEqual([[H2, 0], [H1, 1]])
-    expect(habitsOutbox.pending(ME).map(o => (o.op === 'habit' ? [o.row.id, o.row.sort] : null))).toEqual([[H2, 0], [H1, 1]])
+    // Only the sort goes: a copy from before another device archived or renamed a habit cannot undo it.
+    expect(habitsOutbox.pending(ME)).toEqual([
+      { op: 'sort', id: H2, sort: 0, updated_at: NOW.toISOString() }, { op: 'sort', id: H1, sort: 1, updated_at: NOW.toISOString() }
+    ])
+    for (const op of habitsOutbox.pending(ME)) expect(Object.keys(op).sort()).toEqual(['id', 'op', 'sort', 'updated_at'])
     // Nothing above the first one.
     useHabits.getState().move(H2, -1)
     expect(habitsOutbox.pending(ME)).toHaveLength(2)
@@ -302,7 +361,22 @@ describe('useHabits', () => {
     useHabits.getState().move(H3, -1)
     expect(useHabits.getState().active().map(h => [h.id, h.sort])).toEqual([[H1, 0], [H3, 1], [H2, 2]])
     // H1 already had 0: only the two others go.
-    expect(habitsOutbox.pending(ME).map(o => (o.op === 'habit' ? [o.row.id, o.row.sort] : null))).toEqual([[H3, 1], [H2, 2]])
+    expect(habitsOutbox.pending(ME).map(o => (o.op === 'sort' ? [o.id, o.sort] : null))).toEqual([[H3, 1], [H2, 2]])
+  })
+
+  it('lays a queued reorder over the server copy by its sort alone', async () => {
+    api.fetchHabits.mockResolvedValue([habitOf({ sort: 0 }), habitOf({ id: H2, name: 'Walk', sort: 1 })])
+    await bound()
+    api.updateHabitSort.mockRejectedValue(new TypeError('Failed to fetch'))
+    useHabits.getState().move(H2, -1)
+    await settle()
+    // Meanwhile another device archived and renamed Walk; the pull lays only the new order on it.
+    const later = '2026-10-07T15:30:00.000Z'
+    api.fetchHabits.mockResolvedValue([habitOf({ sort: 0 }), habitOf({ id: H2, name: 'Walk 5k', sort: 1, archived_at: later, updated_at: later })])
+    await useHabits.getState().refresh()
+    const walk = useHabits.getState().habits.find(h => h.id === H2)!
+    expect(walk).toMatchObject({ name: 'Walk 5k', archived_at: later, sort: 0 })
+    expect(useHabits.getState().habits.find(h => h.id === H1)!.sort).toBe(1)
   })
 
   it('adds up the week and the XP it is on track for', async () => {

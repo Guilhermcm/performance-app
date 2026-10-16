@@ -9,6 +9,7 @@ vi.mock('@/lib/supabase', () => ({
     from: (table: string) => ({
       upsert: (row: Record<string, string>) =>
         table === 'habits' ? db.answer('habit', row.name, row) : db.answer('check', `${row.habit_id}:${row.day}`, row),
+      update: (row: Record<string, unknown>) => ({ eq: (_c: string, id: string) => db.answer('sort', id, row) }),
       delete: () => ({ eq: (_c: string, habit: string) => ({ eq: (_d: string, day: string) => db.answer('uncheck', `${habit}:${day}`) }) })
     })
   }
@@ -72,6 +73,19 @@ describe('habits outbox', () => {
     expect(habitsOutbox.pending(ME)).toHaveLength(3)
     await expect(habitsOutbox.flush(ME)).resolves.toMatchObject({ sent: 3, left: 0, dropped: 0 })
     expect(sent()).toEqual([['habit', 'Walk'], ['check', `${H2}:2026-10-05`], ['habit', 'Walk 5k']])
+  })
+
+  it('sends a reorder as the sort alone, after the habit, and never collapses it', async () => {
+    habitsOutbox.enqueue(ME, { op: 'habit', row: habitOf({ id: H2, name: 'Walk' }) })
+    habitsOutbox.enqueue(ME, { op: 'sort', id: H2, sort: 1, updated_at: '2026-10-05T10:00:00.000Z' })
+    habitsOutbox.enqueue(ME, { op: 'sort', id: H2, sort: 0, updated_at: '2026-10-05T10:01:00.000Z' })
+    expect(habitsOutbox.pending(ME)).toHaveLength(3)
+    await expect(habitsOutbox.flush(ME)).resolves.toMatchObject({ sent: 3, left: 0, dropped: 0 })
+    expect(db.answer.mock.calls.map(c => [c[0], c[1], c[2]])).toEqual([
+      ['habit', 'Walk', expect.anything()],
+      ['sort', H2, { sort: 1, updated_at: '2026-10-05T10:00:00.000Z' }],
+      ['sort', H2, { sort: 0, updated_at: '2026-10-05T10:01:00.000Z' }]
+    ])
   })
 
   it('keeps the queue on sign-out and sends it on the next sign-in of the same account', async () => {

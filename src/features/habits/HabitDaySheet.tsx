@@ -1,4 +1,4 @@
-import { Check, Circle, CircleDashed, CircleDot, Sparkles, type LucideIcon } from 'lucide-react'
+import { Check, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { cn } from '@/lib/utils'
@@ -8,15 +8,11 @@ import { useLocalNow } from '../sleep/use-local-now'
 import { nightDate as dayDate } from '../sleep/labels'
 import { shiftDay } from '../nutrition/days'
 import { fmtNumber } from '../nutrition/labels'
-import { HABIT_DAY_STATE, closedState, openChecks } from './history'
+import { HABIT_DAY_STATE, closedState, openChecks, type HabitDayState } from './history'
+import { canMark } from './week'
 import { iconFor } from './icons'
 import { useHabits } from './useHabits'
 import type { Habit, HabitHistory } from './types'
-
-// The calendar's shapes, so the sheet reads like the day it was opened from.
-const STATUS_ICON: Record<'all' | 'partial' | 'none' | 'open' | 'pending', LucideIcon> = {
-  all: Check, partial: CircleDot, none: Circle, open: CircleDashed, pending: CircleDashed,
-}
 
 type Props = {
   day: string
@@ -28,9 +24,10 @@ type Props = {
 
 // A day of the habits calendar (spec 7.3, plan decision 14). A closed day lists the habits checked
 // that day in list order, and says which check went over its habit's goal for the week and so did
-// not count; it is read only. Today and yesterday list the active habits, each a check that goes
-// through the store's queue (useHabits.toggleCheck): on a Monday this is how Sunday gets checked,
-// since the seven dots of each row are the current week.
+// not count; it is read only. Today and yesterday (while inside a period of the pillar, canMark)
+// list the active habits, each a check that goes through the store's queue (useHabits.toggleCheck):
+// on a Monday this is how Sunday gets checked, since the seven dots of each row are the current week.
+// The status speaks with the calendar's own shapes and words (HABIT_DAY_STATE).
 export default function HabitDaySheet({ day, open, onOpenChange, history }: Props) {
   const profile = useProfile(s => s.profile)
   const { today } = useLocalNow(profile?.timezone)
@@ -39,11 +36,12 @@ export default function HabitDaySheet({ day, open, onOpenChange, history }: Prop
   const recent = useHabits(s => s.recent)
   const toggleCheck = useHabits(s => s.toggleCheck)
 
-  const markable = day === today || day === shiftDay(today, -1)
+  const periods = [...(history?.periods ?? []), ...(recent?.periods ?? [])]
+  const markable = canMark(day, today, history || recent ? periods : null)
   const source = [history, recent].find(s => s?.days.some(d => d.day === day)) ?? null
   const row = source?.days.find(d => d.day === day) ?? null
 
-  let state: 'all' | 'partial' | 'none' | 'open' | 'pending'
+  let state: Exclude<HabitDayState, 'future'> | 'pending'
   let list: { habit: Habit; over: boolean }[] = []
   if (markable) state = 'open'
   else if (row && source) {
@@ -55,9 +53,10 @@ export default function HabitDaySheet({ day, open, onOpenChange, history }: Prop
     // Closed on the server but its row has not reached the phone: the checks known so far, to confirm.
     const ids = new Set(openChecks(day, [...(history?.checks ?? []), ...(recent?.checks ?? []), ...checks], habits))
     list = habits.filter(h => ids.has(h.id)).map(habit => ({ habit, over: false }))
-    state = list.length ? 'pending' : 'none'
+    // Yesterday lands here only outside every period: the pillar was not on yet.
+    state = list.length ? 'pending' : day === shiftDay(today, -1) ? 'inactive' : 'none'
   }
-  const StatusIcon = STATUS_ICON[state]
+  const StatusIcon = HABIT_DAY_STATE[state === 'pending' ? 'open' : state].Icon
   const statusText = state === 'pending' ? t('To confirm') : HABIT_DAY_STATE[state].label()
   const done = new Set(openChecks(day, checks, habits))
   const active = habits.filter(h => !h.archived_at)

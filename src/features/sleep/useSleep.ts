@@ -173,20 +173,23 @@ export const useSleep = create<SleepStore>((set, get) => {
         // A queue that cannot go now must not stop the pull; it is tried again on the next refresh.
         try { await flush() } catch { /* kept for the next refresh */ }
         if (gen !== generation) return
-        // What is still queued now may go out while the reads are on their way, and leave the queue.
+        // What is still queued now may go out while the reads are on their way, and leave the queue:
+        // laid over the answer if it went, left out if the server refused it.
         const queued = sleepOutbox.pending(userId)
+        const refused = new Set<string>()
+        const stop = sleepOutbox.onRefused((u, op) => { if (u === userId) refused.add(JSON.stringify(op)) })
         const today = todayNow()
         const yesterday = shiftDay(today, -1)
         const before = new Set(get().closed.map(n => n.night))
         try {
           const [logs, targets, history] = await Promise.all([
             api.fetchLogs(yesterday, today), api.fetchTargets(), api.fetchNights(shiftDay(today, -(CLOSED_DAYS - 1)), today)
-          ])
+          ]).finally(stop)
           if (gen !== generation) return
           if (writes !== seen) { pullAgain = true; return }
           const byNight = Object.fromEntries(logs.map(l => [l.night, l]))
           set({
-            logs: applyPending([...queued, ...sleepOutbox.pending(userId)], byNight, yesterday), targets: sortTargets(targets),
+            logs: applyPending([...queued.filter(op => !refused.has(JSON.stringify(op))), ...sleepOutbox.pending(userId)], byNight, yesterday), targets: sortTargets(targets),
             closed: history.nights, periods: history.periods, weeks: history.weeks, status: 'ready', stale: false
           })
           persist()

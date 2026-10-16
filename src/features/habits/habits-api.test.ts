@@ -37,6 +37,13 @@ describe('habits api', () => {
     expect(opts).toEqual({ onConflict: 'id' })
   })
 
+  it('writes only the sort of a habit on a reorder, never its other fields', async () => {
+    const c = chain({ error: null }); h.from.mockReturnValue(c.proxy)
+    await api.updateHabitSort(H1, 2, '2026-10-05T10:00:00.000Z')
+    expect(h.from).toHaveBeenCalledWith('habits')
+    expect(c.calls).toEqual([['update', [{ sort: 2, updated_at: '2026-10-05T10:00:00.000Z' }]], ['eq', ['id', H1]]])
+  })
+
   it('reads the checks of a range', async () => {
     const c = chain({ data: [{ habit_id: H1, user_id: 'u', day: '2026-10-05', created_at: 'x', counted: null }], error: null })
     h.from.mockReturnValue(c.proxy)

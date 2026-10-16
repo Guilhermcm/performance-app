@@ -35,6 +35,13 @@ export async function upsertHabit(h: Habit): Promise<void> {
   await run(supabase.from('habits').upsert(row as never, { onConflict: 'id' }) as never)
 }
 
+// A reorder sends the sort alone, as an update: a full row from a copy that has not heard of another
+// device's archive or rename would undo it (the newest updated_at wins on the whole row). A habit the
+// server does not have matches no row and changes nothing.
+export async function updateHabitSort(id: string, sort: number, updatedAt: string): Promise<void> {
+  await run(supabase.from('habits').update({ sort, updated_at: updatedAt } as never).eq('id', id) as never)
+}
+
 export async function fetchChecks(from: string, to: string): Promise<HabitCheck[]> {
   const rows = await run<Row[]>(supabase.from('habit_checks').select('habit_id, day, counted').gte('day', from).lte('day', to).order('day', { ascending: true }) as never)
   return (rows ?? []).map(toCheck)

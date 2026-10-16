@@ -190,6 +190,26 @@ describe('useSleep', () => {
     expect(useSleep.getState().logs[TODAY]).toEqual(saved)
   })
 
+  it('does not lay a night over the answer when the flush during the reads was refused', async () => {
+    await bound()
+    api.upsertLog.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    useSleep.getState().saveNight({ night: TODAY, bed_time: '23:30', wake_time: '07:10', quality: null, note: null })
+    await settle()
+    expect(sleepOutbox.pending(ME)).toHaveLength(1)
+    api.upsertLog.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    let release!: (v: SleepHistory) => void
+    api.fetchNights.mockReturnValueOnce(new Promise(r => { release = r }))
+    const pull = useSleep.getState().refresh()
+    await settle()
+    // The minute tick sends it before the reads answer, and the server refuses it for good.
+    api.upsertLog.mockRejectedValueOnce(refused('night_closed'))
+    await useSleep.getState().flushPending()
+    expect(sleepOutbox.pending(ME)).toEqual([])
+    release(history())
+    await pull
+    expect(useSleep.getState().logs[TODAY]).toBeUndefined()
+  })
+
   it('raises the dropped notice once for closed nights', async () => {
     await bound()
     // Back after three days: the night of the day before yesterday is still in the queue.
