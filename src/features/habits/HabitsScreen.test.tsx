@@ -107,6 +107,18 @@ describe('HabitsScreen', () => {
     expect(within(screen.getByTestId('habits-week')).getByText('0 weeks')).toBeTruthy()
   })
 
+  it('has a Trackers shortcut at the top that opens /trackers, with the pillar on or off', () => {
+    render(<HabitsScreen />)
+    fireEvent.click(screen.getByRole('button', { name: 'Trackers' }))
+    expect(h.nav).toHaveBeenCalledWith('/trackers')
+    cleanup()
+    h.nav.mockReset()
+    profile({ habits_enabled: false })
+    render(<HabitsScreen />)
+    fireEvent.click(screen.getByRole('button', { name: 'Trackers' }))
+    expect(h.nav).toHaveBeenCalledWith('/trackers')
+  })
+
   it('lists the active habits in order with their week, and moves them with the arrows', () => {
     store({ checks: [check(H1, MONDAY)] })
     render(<HabitsScreen />)

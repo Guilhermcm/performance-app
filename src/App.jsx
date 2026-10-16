@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef } from 'react'
 import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation, useNavigationType } from 'react-router-dom'
 import { useStore } from './store/useStore.js'
 import { useUI } from './store/useUI.js'
@@ -44,6 +44,9 @@ import NutritionScreen from './features/nutrition/NutritionScreen.tsx'
 import NutritionHistoryScreen from './features/nutrition/HistoryScreen.tsx'
 import SleepScreen from './features/sleep/SleepScreen.tsx'
 import HabitsScreen from './features/habits/HabitsScreen.tsx'
+import TrackersScreen from './features/trackers/TrackersScreen.tsx'
+// The detail loads on demand (its charts are heavy); Task 7 of the plan replaces the placeholder.
+const TrackerDetail = lazy(() => import('./features/trackers/TrackerDetail.tsx'))
 import SocialScreen from './features/social/SocialScreen.tsx'
 import ChallengeDetail from './features/social/ChallengeDetail.tsx'
 import InviteScreen, { InviteRoute } from './features/social/InviteScreen.tsx'
@@ -258,6 +261,8 @@ function Shell() {
                 <Route path="/nutricao/historico" element={<NutritionHistoryScreen />} />
                 <Route path="/sono" element={<SleepScreen />} />
                 <Route path="/habitos" element={<HabitsScreen />} />
+                <Route path="/trackers" element={<TrackersScreen />} />
+                <Route path="/trackers/:id" element={<Suspense fallback={null}><TrackerDetail /></Suspense>} />
                 <Route path="/social" element={<Navigate to="/social/feed" replace />} />
                 <Route path="/social/desafios/:id" element={<ChallengeDetail />} />
                 <Route path="/social/:section" element={<SocialScreen />} />

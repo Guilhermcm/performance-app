@@ -2829,4 +2829,11 @@ export default {
   "It leaves your list and takes no new entries. Its history stays, and you can reactivate it any time.": "Он исчезнет из списка и больше не принимает новых записей. История останется, и вы сможете вернуть его в любой момент.",
   "Create tracker": "Создать трекер",
   "You already have {0} active trackers, the most allowed. Archive one to make room.": "У вас уже {0} активных трекеров, это максимум. Архивируйте один, чтобы освободить место.",
+  "Trackers": "Трекеры",
+  "Your trackers": "Ваши трекеры",
+  "Create your first tracker": "Создайте первый трекер",
+  "Follow what matters to you, like weight, water or mood, and log it in one tap.": "Следите за тем, что важно для вас, например за весом, водой или настроением, и записывайте одним касанием.",
+  "Nothing in the last 90 days": "Ничего за последние 90 дней",
+  "Could not load your trackers.": "Не удалось загрузить трекеры.",
+  "Log for {0}": "Добавить запись: {0}",
 }

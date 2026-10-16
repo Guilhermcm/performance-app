@@ -2826,4 +2826,11 @@ export default {
   "It leaves your list and takes no new entries. Its history stays, and you can reactivate it any time.": "Він зникне зі списку й більше не приймає нових записів. Історія залишиться, а повернути його можна будь-коли.",
   "Create tracker": "Створити трекер",
   "You already have {0} active trackers, the most allowed. Archive one to make room.": "У вас уже {0} активних трекерів, це максимум. Заархівуйте один, щоб звільнити місце.",
+  "Trackers": "Трекери",
+  "Your trackers": "Ваші трекери",
+  "Create your first tracker": "Створіть перший трекер",
+  "Follow what matters to you, like weight, water or mood, and log it in one tap.": "Стежте за тим, що важливе для вас, наприклад за вагою, водою чи настроєм, і записуйте одним дотиком.",
+  "Nothing in the last 90 days": "Нічого за останні 90 днів",
+  "Could not load your trackers.": "Не вдалося завантажити трекери.",
+  "Log for {0}": "Додати запис: {0}",
 }

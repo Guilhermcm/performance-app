@@ -2754,4 +2754,11 @@ export default {
   "It leaves your list and takes no new entries. Its history stays, and you can reactivate it any time.": "Eltűnik a listádról, és nem fogad új bejegyzést. Az előzményei megmaradnak, és bármikor újraaktiválhatod.",
   "Create tracker": "Követő létrehozása",
   "You already have {0} active trackers, the most allowed. Archive one to make room.": "Már {0} aktív követőd van, ennyi a megengedett maximum. Archiválj egyet, hogy legyen hely.",
+  "Trackers": "Követők",
+  "Your trackers": "Követőid",
+  "Create your first tracker": "Hozd létre az első követődet",
+  "Follow what matters to you, like weight, water or mood, and log it in one tap.": "Kövesd, ami fontos neked, például a súlyt, a vizet vagy a hangulatot, és rögzítsd egy érintéssel.",
+  "Nothing in the last 90 days": "Semmi az elmúlt 90 napban",
+  "Could not load your trackers.": "Nem sikerült betölteni a követőidet.",
+  "Log for {0}": "Bejegyzés ehhez: {0}",
 }

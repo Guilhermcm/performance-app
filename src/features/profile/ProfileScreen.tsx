@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Check, ChevronRight, CodeXml, Lock, LogOut, Pencil, ShieldCheck, Users } from 'lucide-react'
+import { Activity, ArrowLeft, Check, ChevronRight, CodeXml, Lock, LogOut, Pencil, ShieldCheck, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -279,6 +279,15 @@ export default function ProfileScreen() {
         <HabitsCard profile={profile} asking={habitsAsk} onToggle={toggleHabits}
           onCancelOff={() => setHabitsAsk(false)} onConfirmOff={() => void turnOffHabits()} />
         <HabitsSetup open={habitsSetupOpen} onOpenChange={setHabitsSetupOpen} />
+
+        {/* Trackers have no pillar and no switch: the row is the way in (spec 8.6). */}
+        <section data-slot="card" className="rounded-2xl border border-border bg-card px-5 py-1">
+          <Button variant="ghost" className="-mx-3 h-12 w-[calc(100%+1.5rem)] justify-between rounded-xl px-3 text-[15px] font-semibold"
+            onClick={() => navigate('/trackers')}>
+            <span className="flex items-center gap-2"><Activity aria-hidden className="size-4 text-muted-foreground" />{t('Trackers')}</span>
+            <ChevronRight aria-hidden className="size-4" />
+          </Button>
+        </section>
 
         {/* checkin_visibility is where a new check-in's form starts (spec 4.6); each post picks its own. */}
         <section data-slot="card" aria-labelledby="sec-visibility" className="flex flex-col gap-3 rounded-2xl border border-border bg-card px-5 pb-5 pt-4">

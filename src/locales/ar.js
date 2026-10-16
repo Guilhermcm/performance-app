@@ -2804,4 +2804,11 @@ export default {
   "It leaves your list and takes no new entries. Its history stays, and you can reactivate it any time.": "يختفي من قائمتك ولا يقبل إدخالات جديدة. يبقى سجله، ويمكنك إعادة تفعيله في أي وقت.",
   "Create tracker": "إنشاء متتبع",
   "You already have {0} active trackers, the most allowed. Archive one to make room.": "لديك بالفعل {0} متتبعًا نشطًا، وهذا الحد الأقصى. أرشف واحدًا لإفساح المجال.",
+  "Trackers": "المتتبعات",
+  "Your trackers": "متتبعاتك",
+  "Create your first tracker": "أنشئ أول متتبع لك",
+  "Follow what matters to you, like weight, water or mood, and log it in one tap.": "تابع ما يهمك، مثل الوزن أو الماء أو المزاج، وسجّله بلمسة واحدة.",
+  "Nothing in the last 90 days": "لا شيء في آخر 90 يومًا",
+  "Could not load your trackers.": "تعذّر تحميل متتبعاتك.",
+  "Log for {0}": "سجّل في {0}",
 }

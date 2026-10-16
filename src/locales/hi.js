@@ -2751,4 +2751,11 @@ export default {
   "It leaves your list and takes no new entries. Its history stays, and you can reactivate it any time.": "यह आपकी सूची से हट जाता है और नई एंट्री नहीं लेता। इसका इतिहास बना रहता है, और आप इसे कभी भी फिर से चालू कर सकते हैं।",
   "Create tracker": "ट्रैकर बनाएँ",
   "You already have {0} active trackers, the most allowed. Archive one to make room.": "आपके पास पहले से {0} चालू ट्रैकर हैं, यही अधिकतम सीमा है। जगह बनाने के लिए एक को आर्काइव करें।",
+  "Trackers": "ट्रैकर",
+  "Your trackers": "आपके ट्रैकर",
+  "Create your first tracker": "अपना पहला ट्रैकर बनाएँ",
+  "Follow what matters to you, like weight, water or mood, and log it in one tap.": "जो आपके लिए मायने रखता है, जैसे वज़न, पानी या मूड, उसे ट्रैक करें और एक टैप में दर्ज करें।",
+  "Nothing in the last 90 days": "पिछले 90 दिनों में कुछ नहीं",
+  "Could not load your trackers.": "आपके ट्रैकर लोड नहीं हो सके।",
+  "Log for {0}": "{0} में दर्ज करें",
 }

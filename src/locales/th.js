@@ -2762,4 +2762,11 @@ export default {
   "It leaves your list and takes no new entries. Its history stays, and you can reactivate it any time.": "ตัวติดตามจะหายจากรายการและไม่รับรายการใหม่ ประวัติยังอยู่ และคุณเปิดใช้อีกครั้งได้ทุกเมื่อ",
   "Create tracker": "สร้างตัวติดตาม",
   "You already have {0} active trackers, the most allowed. Archive one to make room.": "คุณมีตัวติดตามที่ใช้งานอยู่ {0} ตัวแล้ว ซึ่งเป็นจำนวนสูงสุด เก็บถาวรหนึ่งตัวเพื่อเพิ่มที่ว่าง",
+  "Trackers": "ตัวติดตาม",
+  "Your trackers": "ตัวติดตามของคุณ",
+  "Create your first tracker": "สร้างตัวติดตามแรกของคุณ",
+  "Follow what matters to you, like weight, water or mood, and log it in one tap.": "ติดตามสิ่งที่สำคัญกับคุณ เช่น น้ำหนัก น้ำดื่ม หรืออารมณ์ แล้วบันทึกได้ในแตะเดียว",
+  "Nothing in the last 90 days": "ไม่มีข้อมูลใน 90 วันที่ผ่านมา",
+  "Could not load your trackers.": "โหลดตัวติดตามของคุณไม่ได้",
+  "Log for {0}": "บันทึกให้ {0}",
 }

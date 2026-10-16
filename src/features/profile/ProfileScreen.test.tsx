@@ -441,4 +441,13 @@ describe('ProfileScreen', () => {
       expect(screen.queryByRole('dialog', { name: 'Habit sheet' })).toBeNull()
     })
   })
+
+  describe('Trackers row', () => {
+    it('opens /trackers whatever the Habits switch says', () => {
+      P = { ...BASE, habits_enabled: false }
+      show()
+      fireEvent.click(screen.getByRole('button', { name: 'Trackers' }))
+      expect(screen.getByTestId('path').textContent).toBe('/trackers')
+    })
+  })
 })

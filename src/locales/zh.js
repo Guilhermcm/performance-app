@@ -2751,4 +2751,11 @@ export default {
   "It leaves your list and takes no new entries. Its history stays, and you can reactivate it any time.": "它会从列表中消失，也不再接收新记录。历史记录会保留，随时可以重新启用。",
   "Create tracker": "创建追踪项",
   "You already have {0} active trackers, the most allowed. Archive one to make room.": "你已有 {0} 个启用中的追踪项，已达上限。归档一个来腾出位置。",
+  "Trackers": "追踪项",
+  "Your trackers": "你的追踪项",
+  "Create your first tracker": "创建第一个追踪项",
+  "Follow what matters to you, like weight, water or mood, and log it in one tap.": "追踪对你重要的事，比如体重、饮水或心情，点一下就能记录。",
+  "Nothing in the last 90 days": "最近 90 天没有记录",
+  "Could not load your trackers.": "无法加载你的追踪项。",
+  "Log for {0}": "为{0}添加记录",
 }

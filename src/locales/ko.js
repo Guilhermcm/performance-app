@@ -2751,4 +2751,11 @@ export default {
   "It leaves your list and takes no new entries. Its history stays, and you can reactivate it any time.": "목록에서 빠지고 새 기록을 받지 않아요. 기록은 그대로 남고, 언제든 다시 켤 수 있어요.",
   "Create tracker": "트래커 만들기",
   "You already have {0} active trackers, the most allowed. Archive one to make room.": "이미 활성 트래커가 {0}개예요. 가능한 최대 개수예요. 하나를 보관해서 자리를 만들어 주세요.",
+  "Trackers": "트래커",
+  "Your trackers": "내 트래커",
+  "Create your first tracker": "첫 트래커 만들기",
+  "Follow what matters to you, like weight, water or mood, and log it in one tap.": "몸무게, 물, 기분처럼 중요한 것을 추적하고 한 번의 탭으로 기록하세요.",
+  "Nothing in the last 90 days": "최근 90일간 기록 없음",
+  "Could not load your trackers.": "트래커를 불러오지 못했어요.",
+  "Log for {0}": "{0}에 기록 추가",
 }

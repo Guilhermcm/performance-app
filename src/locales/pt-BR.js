@@ -2142,6 +2142,13 @@ export const PT_BR_OVERRIDES = {
   "It leaves your list and takes no new entries. Its history stays, and you can reactivate it any time.": "Ele sai da sua lista e não recebe registros novos. O histórico fica, e você pode reativar quando quiser.",
   "Create tracker": "Criar tracker",
   "You already have {0} active trackers, the most allowed. Archive one to make room.": "Você já tem {0} trackers ativos, o máximo permitido. Arquive um para abrir espaço.",
+  "Trackers": "Trackers",
+  "Your trackers": "Seus trackers",
+  "Create your first tracker": "Crie seu primeiro tracker",
+  "Follow what matters to you, like weight, water or mood, and log it in one tap.": "Acompanhe o que importa para você, como peso, água ou humor, e registre com um toque.",
+  "Nothing in the last 90 days": "Nada nos últimos 90 dias",
+  "Could not load your trackers.": "Não foi possível carregar seus trackers.",
+  "Log for {0}": "Registrar em {0}",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

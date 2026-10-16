@@ -2751,4 +2751,11 @@ export default {
   "It leaves your list and takes no new entries. Its history stays, and you can reactivate it any time.": "Listenden çıkar ve yeni kayıt almaz. Geçmişi kalır, istediğin zaman yeniden etkinleştirebilirsin.",
   "Create tracker": "İzleyici oluştur",
   "You already have {0} active trackers, the most allowed. Archive one to make room.": "Zaten {0} etkin izleyicin var, izin verilen en çok bu. Yer açmak için birini arşivle.",
+  "Trackers": "İzleyiciler",
+  "Your trackers": "İzleyicilerin",
+  "Create your first tracker": "İlk izleyicini oluştur",
+  "Follow what matters to you, like weight, water or mood, and log it in one tap.": "Kilo, su ya da ruh hali gibi senin için önemli olanı takip et ve tek dokunuşla kaydet.",
+  "Nothing in the last 90 days": "Son 90 günde kayıt yok",
+  "Could not load your trackers.": "İzleyiciler yüklenemedi.",
+  "Log for {0}": "{0} için kayıt ekle",
 }

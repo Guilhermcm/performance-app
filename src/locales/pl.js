@@ -2825,4 +2825,11 @@ export default {
   "It leaves your list and takes no new entries. Its history stays, and you can reactivate it any time.": "Znika z listy i nie przyjmuje nowych wpisów. Jego historia zostaje, a w każdej chwili możesz go znów aktywować.",
   "Create tracker": "Utwórz tracker",
   "You already have {0} active trackers, the most allowed. Archive one to make room.": "Masz już {0} aktywnych trackerów, to maksimum. Zarchiwizuj jeden, aby zrobić miejsce.",
+  "Trackers": "Trackery",
+  "Your trackers": "Twoje trackery",
+  "Create your first tracker": "Utwórz pierwszy tracker",
+  "Follow what matters to you, like weight, water or mood, and log it in one tap.": "Śledź to, co dla ciebie ważne, na przykład wagę, wodę czy nastrój, i zapisuj to jednym dotknięciem.",
+  "Nothing in the last 90 days": "Nic w ostatnich 90 dniach",
+  "Could not load your trackers.": "Nie udało się wczytać trackerów.",
+  "Log for {0}": "Dodaj wpis dla: {0}",
 }
