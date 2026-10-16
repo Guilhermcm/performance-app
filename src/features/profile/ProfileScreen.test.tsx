@@ -372,12 +372,12 @@ describe('ProfileScreen', () => {
       expect(card().getByText('—')).toBeTruthy()
     })
 
-    it('turns the pillar on and opens the creation when there is no active habit', async () => {
+    it('opens the creation when there is no active habit, and turns the pillar on only after a save', async () => {
       useHabits.setState({ habits: [archived] })
       show()
       fireEvent.click(screen.getByRole('switch', { name: 'Habits' }))
       await waitFor(() => expect(screen.getByRole('dialog', { name: 'Habit sheet' })).toBeTruthy())
-      expect(h.save).toHaveBeenCalledWith({ habits_enabled: true })
+      expect(h.save).not.toHaveBeenCalled()
     })
 
     it('asks before turning the pillar off, and keeps it on if the person cancels', () => {

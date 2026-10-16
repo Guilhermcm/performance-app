@@ -2763,4 +2763,5 @@ export default {
   "Over the goal": "Сверх цели",
   "No habit checked on this day.": "В этот день не отмечено ни одной привычки.",
   "Habits were off this month, so no day counts here.": "В этом месяце «Привычки» были выключены, поэтому здесь не учитывается ни один день.",
+  "The habit was saved, but Habits is still off. Tap again to turn it on.": "Привычка сохранена, но раздел «Привычки» всё ещё выключен. Нажмите ещё раз, чтобы включить.",
 }

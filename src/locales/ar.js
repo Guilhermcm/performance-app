@@ -2741,4 +2741,5 @@ export default {
   "Over the goal": "فوق الهدف",
   "No habit checked on this day.": "لم تُعلَّم أي عادة في هذا اليوم.",
   "Habits were off this month, so no day counts here.": "كانت العادات متوقفة هذا الشهر، لذا لا يُحتسب أي يوم هنا.",
+  "The habit was saved, but Habits is still off. Tap again to turn it on.": "تم حفظ العادة، لكن العادات ما زالت متوقفة. اضغط مرة أخرى لتشغيلها.",
 }

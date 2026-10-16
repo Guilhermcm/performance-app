@@ -2699,4 +2699,5 @@ export default {
   "Over the goal": "เกินเป้า",
   "No habit checked on this day.": "วันนี้ไม่มีนิสัยที่เช็กไว้",
   "Habits were off this month, so no day counts here.": "เดือนนี้ปิดนิสัยไว้ จึงไม่มีวันใดนับที่นี่",
+  "The habit was saved, but Habits is still off. Tap again to turn it on.": "บันทึกนิสัยแล้ว แต่ส่วนนิสัยยังปิดอยู่ แตะอีกครั้งเพื่อเปิด",
 }

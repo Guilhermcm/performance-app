@@ -29,24 +29,24 @@ const chars = (s: string) => Array.from(s)
 
 export const fullText = () => t('You already have {0} active habits, the most allowed. Archive one to make room.', MAX_ACTIVE_HABITS)
 
-type Props = { habit?: Habit; open: boolean; onOpenChange: (open: boolean) => void }
+type Props = { habit?: Habit; open: boolean; onOpenChange: (open: boolean) => void; onSaved?: () => void }
 
 // Creating and editing a habit (spec 3.2, 3.3 and 7.3): name, icon and N. An archived habit can be
 // edited and brought back; an active one can be archived after a confirmation.
-export default function HabitSheet({ habit, open, onOpenChange }: Props) {
+export default function HabitSheet({ habit, open, onOpenChange, onSaved }: Props) {
   // A fresh form each time the sheet opens; the closing animation keeps the last one.
   const [session, setSession] = useState(0)
   useEffect(() => { if (open) setSession(n => n + 1) }, [open])
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[92dvh]">
-        <SheetBody key={session} habit={habit} onDone={() => onOpenChange(false)} />
+        <SheetBody key={session} habit={habit} onSaved={onSaved} onDone={() => onOpenChange(false)} />
       </DrawerContent>
     </Drawer>
   )
 }
 
-function SheetBody({ habit, onDone }: { habit?: Habit; onDone: () => void }) {
+function SheetBody({ habit, onSaved, onDone }: { habit?: Habit; onSaved?: () => void; onDone: () => void }) {
   const timezone = useProfile(s => s.profile?.timezone)
   const activeCount = useHabits(s => s.habits.filter(h => !h.archived_at).length)
   const [name, setName] = useState(habit?.name ?? '')
@@ -87,6 +87,7 @@ function SheetBody({ habit, onDone }: { habit?: Habit; onDone: () => void }) {
         saveHabit({ id: habit.id, ...fields })
         toast(t('Saved'))
       }
+      onSaved?.()
       onDone()
     } catch (e) {
       toast(toHabitError(e) === 'too_many_habits' ? fullText() : t('Could not save. Your previous values were kept.'))
