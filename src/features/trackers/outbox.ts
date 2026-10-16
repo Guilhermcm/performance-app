@@ -4,7 +4,7 @@ import { TRACKERS_OUTBOX_KEY } from './storage-keys'
 import type { Tracker, TrackerEntry } from './types'
 
 // An entry write and its delete are one item per entry id: the newest replaces the older one in the
-// queue. A tracker write never replaces another: the engine moves the newer op to the end, so an
+// queue, in its place, so an entry made before an archive still goes before it. A tracker write never replaces another: the engine moves the newer op to the end, so an
 // edit made after an entry would take the tracker's creation behind that entry, which the server
 // refuses (tracker_not_found) for a tracker it does not have yet. Every edit goes, in order, and the
 // server keeps the newest updated_at. A reorder carries only the sort, never a full row, so it
@@ -23,6 +23,7 @@ export const entryIdOf = (op: EntryOp): string => (op.op === 'entry' ? op.row.id
 export const trackersOutbox = createLocalOutbox<TrackerOp>({
   key: TRACKERS_OUTBOX_KEY,
   same: (a, b) => isEntry(a) && isEntry(b) && entryIdOf(a) === entryIdOf(b),
+  inPlace: true,
   send: op => {
     if (op.op === 'tracker') return api.upsertTracker(op.row)
     if (op.op === 'sort') return api.updateTrackerSort(op.id, op.sort, op.updated_at)

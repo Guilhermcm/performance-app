@@ -35,11 +35,21 @@ export async function fetchTrackers(): Promise<Tracker[]> {
   return (rows ?? []).map(toTracker)
 }
 
-// The entries of every tracker from `from` on (plan decision 5: the last 90 days, in one read).
+// The API answers at most 1000 rows a request (Supabase's "Max rows") and says nothing when it cuts.
+const PAGE = 1000
+
+// The entries of every tracker from `from` on (plan decision 5: the last 90 days), oldest first,
+// read a page at a time until one comes back short, so the cap never drops the newest ones.
 export async function fetchEntries(from: string): Promise<TrackerEntry[]> {
-  const rows = await run<Row[]>(supabase.from('tracker_entries').select('id, tracker_id, day, at, value, minutes, option, note, updated_at')
-    .gte('day', from).order('day', { ascending: true }).order('at', { ascending: true }).order('id', { ascending: true }) as never)
-  return (rows ?? []).map(toEntry)
+  const out: TrackerEntry[] = []
+  for (let start = 0; ; start += PAGE) {
+    const rows = await run<Row[]>(supabase.from('tracker_entries').select('id, tracker_id, day, at, value, minutes, option, note, updated_at')
+      .gte('day', from).order('day', { ascending: true }).order('at', { ascending: true }).order('id', { ascending: true })
+      .range(start, start + PAGE - 1) as never)
+    const page = rows ?? []
+    for (const r of page) out.push(toEntry(r))
+    if (page.length < PAGE) return out
+  }
 }
 
 // The id comes from the device, so creating and editing are the same upsert and a resend changes

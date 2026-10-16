@@ -2780,4 +2780,12 @@ export default {
   "This tracker no longer exists": "Este tracker ya no existe",
   "See your trackers": "Ver tus trackers",
   "Archived. You can still edit and delete its entries.": "Archivado. Aún puedes editar y borrar sus registros.",
+  // --- trackers: final fixes (phase 4b) ---
+  "An option you removed has older entries, and keeping it would go over 8 options. Your changes were not saved.": "Una opción que quitaste tiene registros antiguos, y mantenerla superaría las 8 opciones. Tus cambios no se guardaron.",
+  "Move {0} up": "Subir {0}",
+  "Move {0} down": "Bajar {0}",
+  "You have no active trackers.": "No tienes trackers activos.",
+  "Change sign": "Cambiar el signo",
+  "Choose a time.": "Elige una hora.",
+  "Each option needs a different name.": "Cada opción necesita un nombre distinto.",
 }

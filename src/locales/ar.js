@@ -2833,4 +2833,12 @@ export default {
   "This tracker no longer exists": "هذا المتتبع لم يعد موجودًا",
   "See your trackers": "عرض متتبعاتك",
   "Archived. You can still edit and delete its entries.": "مؤرشف. ما زال بإمكانك تعديل تسجيلاته وحذفها.",
+  // --- trackers: final fixes (phase 4b) ---
+  "An option you removed has older entries, and keeping it would go over 8 options. Your changes were not saved.": "خيار أزلته له إدخالات أقدم، والإبقاء عليه سيتجاوز 8 خيارات. لم تُحفظ تغييراتك.",
+  "Move {0} up": "تحريك {0} لأعلى",
+  "Move {0} down": "تحريك {0} لأسفل",
+  "You have no active trackers.": "ليس لديك متتبعات نشطة.",
+  "Change sign": "تغيير الإشارة",
+  "Choose a time.": "اختر وقتًا.",
+  "Each option needs a different name.": "يحتاج كل خيار إلى اسم مختلف.",
 }

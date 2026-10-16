@@ -2780,4 +2780,12 @@ export default {
   "This tracker no longer exists": "这个追踪项已不存在",
   "See your trackers": "查看你的追踪项",
   "Archived. You can still edit and delete its entries.": "已归档。仍可编辑和删除它的记录。",
+  // --- trackers: final fixes (phase 4b) ---
+  "An option you removed has older entries, and keeping it would go over 8 options. Your changes were not saved.": "你删除的选项有较早的记录，保留它会超过 8 个选项。你的更改未保存。",
+  "Move {0} up": "上移 {0}",
+  "Move {0} down": "下移 {0}",
+  "You have no active trackers.": "你没有活跃的追踪项。",
+  "Change sign": "切换正负号",
+  "Choose a time.": "请选择时间。",
+  "Each option needs a different name.": "每个选项需要不同的名称。",
 }

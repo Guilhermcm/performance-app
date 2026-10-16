@@ -45,13 +45,23 @@ describe('trackers outbox', () => {
     expect(sent()).toEqual([['tracker', 'Weight'], ['entry', 'e1'], ['entry', 'e2'], ['tracker', 'Body weight']])
   })
 
-  it('collapses an entry and its delete into the newest op', () => {
+  it('collapses an entry and its delete into the newest op, in the place of the first', () => {
     trackersOutbox.enqueue(ME, entry('e1'))
     trackersOutbox.enqueue(ME, entry('e2'))
     trackersOutbox.enqueue(ME, entry('e1', { value: 2 }))
-    expect(trackersOutbox.pending(ME)).toEqual([entry('e2'), entry('e1', { value: 2 })])
+    expect(trackersOutbox.pending(ME)).toEqual([entry('e1', { value: 2 }), entry('e2')])
     trackersOutbox.enqueue(ME, del('e1'))
-    expect(trackersOutbox.pending(ME)).toEqual([entry('e2'), del('e1')])
+    expect(trackersOutbox.pending(ME)).toEqual([del('e1'), entry('e2')])
+  })
+
+  it('keeps an entry edit ahead of an archive queued after the entry', async () => {
+    const archived = trackerOf({ archived_at: '2026-10-05T10:00:00.000Z' })
+    trackersOutbox.enqueue(ME, entry('e1'))
+    trackersOutbox.enqueue(ME, { op: 'tracker', row: archived })
+    trackersOutbox.enqueue(ME, entry('e1', { value: 2 }))
+    expect(trackersOutbox.pending(ME)).toEqual([entry('e1', { value: 2 }), { op: 'tracker', row: archived }])
+    await trackersOutbox.flush(ME)
+    expect(sent()).toEqual([['entry', 'e1'], ['tracker', 'Water']])
   })
 
   it('never collapses tracker or sort writes', async () => {

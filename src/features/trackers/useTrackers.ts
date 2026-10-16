@@ -14,14 +14,18 @@ export const MAX_ACTIVE_TRACKERS = 30
 export const WINDOW_DAYS = 90
 
 // Why queued writes were dropped: one rule only when every drop was that rule. option_in_use is an
-// edit saved again with the options the server kept, not a loss.
-export type DroppedReason = 'tracker_archived' | 'future_day' | 'option_in_use' | 'refused'
+// edit saved again with the options the server kept, not a loss; too_many_options is one that could
+// not be, since putting the kept options back would pass 8.
+export const OPTIONS_MAX = 8
+export type DroppedReason = 'tracker_archived' | 'future_day' | 'option_in_use' | 'too_many_options' | 'refused'
 
+// The words for a reason, read when the notice shows, so they follow the language of that moment.
 export const droppedNoticeText = (reason: DroppedReason): string =>
   reason === 'tracker_archived' ? t('Some entries for archived trackers were not saved.')
     : reason === 'future_day' ? t('Some entries dated after today were not saved.')
       : reason === 'option_in_use' ? t('An option you removed has older entries, so it was kept.')
-        : t('Some tracker changes could not be saved.')
+        : reason === 'too_many_options' ? t('An option you removed has older entries, and keeping it would go over 8 options. Your changes were not saved.')
+          : t('Some tracker changes could not be saved.')
 
 const SPECIFIC: readonly string[] = ['tracker_archived', 'future_day', 'option_in_use']
 const reasonOf = (details: string[]): DroppedReason => {
@@ -36,9 +40,10 @@ const reasonOf = (details: string[]): DroppedReason => {
 // archive state is the edit's too: an archive or reactivation is a full-row write like any edit.
 function keepOptions(edit: Tracker, server: Tracker): Tracker {
   const ids = new Set((edit.options ?? []).map(o => o.id))
+  const options = [...(edit.options ?? []), ...(server.options ?? []).filter(o => !ids.has(o.id))]
   return {
     ...server, name: edit.name, icon: edit.icon, unit: edit.unit, decimals: edit.decimals, aggregate: edit.aggregate,
-    archived_at: edit.archived_at, options: [...(edit.options ?? []), ...(server.options ?? []).filter(o => !ids.has(o.id))], updated_at: new Date().toISOString()
+    archived_at: edit.archived_at, options, updated_at: new Date().toISOString()
   }
 }
 
@@ -95,8 +100,8 @@ export type TrackersStore = {
   entries: TrackerEntry[]
   // The first day of the window: today - 89 in the profile time zone, as of the last pull.
   from: string
-  // Some queued writes were refused for good; the words for it, raised once per drop.
-  droppedNotice: string | null
+  // Some queued writes were refused for good, and why (droppedNoticeText has the words); raised once per drop.
+  droppedNotice: DroppedReason | null
   bind(userId: string): Promise<void>
   refresh(): Promise<void>
   // Sends what is waiting in the queue, if anything; a pull follows only when something was refused.
@@ -126,6 +131,10 @@ export type TrackersStore = {
 const empty = (): Data => ({ trackers: [], entries: [], from: '' })
 
 const tooManyTrackers = () => classify({ code: 'P0001', message: 'too_many_trackers' })
+
+// A new drop over a notice not shown yet: the same reason stays, a different one takes the general words.
+const notice = (shown: DroppedReason | null, reason: DroppedReason): DroppedReason =>
+  shown && shown !== reason ? 'refused' : reason
 
 // Bumped by reset() and bind(): an answer from before a sign-out must not land in the next account's store.
 let generation = 0
@@ -165,11 +174,10 @@ export const useTrackers = create<TrackersStore>((set, get) => {
     })
     const waiting = new Set(trackersOutbox.pending(userId).flatMap(op => (op.op === 'entry' ? [op.row.id] : op.op === 'delete' ? [op.id] : [])))
     const gone = new Set(refused.flatMap(({ op }) => (op.op === 'entry' && !waiting.has(op.row.id) ? [op.row.id] : [])))
-    const text = droppedNoticeText(reasonOf(details))
-    const shown = get().droppedNotice
+    const reason = reasonOf(details)
     set(s => ({
       entries: gone.size ? s.entries.filter(e => !gone.has(e.id)) : s.entries,
-      droppedNotice: shown && shown !== text ? droppedNoticeText('refused') : text
+      droppedNotice: notice(s.droppedNotice, reason)
     }))
     persist()
     if (pull) void get().refresh()
@@ -237,7 +245,12 @@ export const useTrackers = create<TrackersStore>((set, get) => {
           retries = []
           for (const edit of edits) {
             const server = trackers.find(x => x.id === edit.id)
-            if (server) write(keepOptions(edit, server), true)
+            if (!server) continue
+            const next = keepOptions(edit, server)
+            // Over 8 the server would refuse it again: its copy stays, and the notice says why.
+            if ((next.options?.length ?? 0) > OPTIONS_MAX) {
+              set(s => ({ droppedNotice: s.droppedNotice === 'option_in_use' ? 'too_many_options' : notice(s.droppedNotice, 'too_many_options') }))
+            } else write(next, true)
           }
         } catch {
           if (gen !== generation) return

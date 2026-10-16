@@ -2094,7 +2094,7 @@ export const PT_BR_OVERRIDES = {
   // --- trackers: entry sheet (phase 4b) ---
   "Add entry": "Novo registro",
   "Edit entry": "Editar registro",
-  "Saved for today, at the current time.": "Salvo com a data de hoje e a hora de agora.",
+  "Saved for today, at the current time.": "Fica com a data de hoje e a hora de agora.",
   "Value": "Valor",
   "Option": "Opção",
   "Another day": "Outro dia",
@@ -2114,7 +2114,7 @@ export const PT_BR_OVERRIDES = {
   "Choose a name, an icon and what you want to record.": "Escolha um nome, um ícone e o que você quer registrar.",
   "Type": "Tipo",
   "Number": "Número",
-  "Choice": "Escolha",
+  "Choice": "Rótulo",
   "A value you type, like weight or liters.": "Um valor que você digita, como peso ou litros.",
   "Time spent, in hours and minutes.": "Tempo gasto, em horas e minutos.",
   "One pick from a list you write, like mood.": "Uma escolha numa lista que você mesmo escreve, como humor.",
@@ -2171,6 +2171,14 @@ export const PT_BR_OVERRIDES = {
   "This tracker no longer exists": "Esse tracker não existe mais",
   "See your trackers": "Ver seus trackers",
   "Archived. You can still edit and delete its entries.": "Arquivado. Você ainda pode editar e apagar os registros.",
+  // --- trackers: final fixes (phase 4b) ---
+  "An option you removed has older entries, and keeping it would go over 8 options. Your changes were not saved.": "Uma opção que você removeu tem registros antigos, e mantê-la passaria de 8 opções. Suas mudanças não foram salvas.",
+  "Move {0} up": "Mover {0} para cima",
+  "Move {0} down": "Mover {0} para baixo",
+  "You have no active trackers.": "Você não tem trackers ativos.",
+  "Change sign": "Trocar o sinal",
+  "Choose a time.": "Escolha uma hora.",
+  "Each option needs a different name.": "Cada opção precisa de um nome diferente.",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

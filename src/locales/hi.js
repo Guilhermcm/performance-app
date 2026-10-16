@@ -2780,4 +2780,12 @@ export default {
   "This tracker no longer exists": "यह ट्रैकर अब मौजूद नहीं है",
   "See your trackers": "अपने ट्रैकर देखें",
   "Archived. You can still edit and delete its entries.": "आर्काइव किया गया। इसकी एंट्री अब भी बदली और हटाई जा सकती हैं।",
+  // --- trackers: final fixes (phase 4b) ---
+  "An option you removed has older entries, and keeping it would go over 8 options. Your changes were not saved.": "आपने जो विकल्प हटाया उसकी पुरानी एंट्री हैं, और उसे रखने पर 8 से ज़्यादा विकल्प हो जाएँगे। आपके बदलाव सेव नहीं हुए।",
+  "Move {0} up": "{0} को ऊपर ले जाएँ",
+  "Move {0} down": "{0} को नीचे ले जाएँ",
+  "You have no active trackers.": "आपके पास कोई सक्रिय ट्रैकर नहीं है।",
+  "Change sign": "चिह्न बदलें",
+  "Choose a time.": "समय चुनें।",
+  "Each option needs a different name.": "हर विकल्प का नाम अलग होना चाहिए।",
 }

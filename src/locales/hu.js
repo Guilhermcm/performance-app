@@ -2783,4 +2783,12 @@ export default {
   "This tracker no longer exists": "Ez a követő már nem létezik",
   "See your trackers": "Követőid megtekintése",
   "Archived. You can still edit and delete its entries.": "Archiválva. A bejegyzéseit továbbra is szerkesztheted és törölheted.",
+  // --- trackers: final fixes (phase 4b) ---
+  "An option you removed has older entries, and keeping it would go over 8 options. Your changes were not saved.": "Az egyik eltávolított lehetőséghez régebbi bejegyzések tartoznak, és megtartva 8-nál több lehetőség lenne. A módosításaid nem lettek mentve.",
+  "Move {0} up": "{0} feljebb",
+  "Move {0} down": "{0} lejjebb",
+  "You have no active trackers.": "Nincs aktív követőd.",
+  "Change sign": "Előjel váltása",
+  "Choose a time.": "Válassz időpontot.",
+  "Each option needs a different name.": "Minden lehetőségnek más nevet kell adni.",
 }

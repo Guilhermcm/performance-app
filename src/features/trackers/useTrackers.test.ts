@@ -158,6 +158,25 @@ describe('useTrackers', () => {
     expect(trackersOutbox.pending(ME)).toEqual([{ op: 'delete', id: e.id }])
   })
 
+  it('keeps an entry edited after its tracker was archived offline ahead of the archive', async () => {
+    await withTrackers()
+    api.upsertEntry.mockRejectedValue(offline())
+    const e = useTrackers.getState().saveEntry(draft())
+    useTrackers.getState().archiveTracker(T1)
+    const edited = useTrackers.getState().saveEntry({ ...draft({ value: 2 }), id: e.id })
+    await settle()
+    const archived = useTrackers.getState().trackers.find(x => x.id === T1)!
+    expect(trackersOutbox.pending(ME)).toEqual([{ op: 'entry', row: edited }, { op: 'tracker', row: archived }])
+    // The server takes the entry while the tracker is still active, then the archive.
+    let isArchived = false
+    api.upsertEntry.mockImplementation(async () => { if (isArchived) throw refused('tracker_archived') })
+    api.upsertTracker.mockImplementation(async (x: Tracker) => { isArchived = !!x.archived_at })
+    await useTrackers.getState().refresh()
+    expect(api.upsertEntry).toHaveBeenLastCalledWith(edited)
+    expect(trackersOutbox.pending(ME)).toEqual([])
+    expect(useTrackers.getState().droppedNotice).toBeNull()
+  })
+
   it('sends a tracker made offline before its entries, and its rename after them', async () => {
     await withTrackers()
     api.upsertTracker.mockRejectedValue(offline())
@@ -186,7 +205,7 @@ describe('useTrackers', () => {
     expect(trackersOutbox.pending(ME)).toEqual([])
     expect(useTrackers.getState().entries).toEqual([])
     expect(cache().entries).toEqual([])
-    expect(useTrackers.getState().droppedNotice).toBe(droppedNoticeText('tracker_archived'))
+    expect(useTrackers.getState().droppedNotice).toBe('tracker_archived')
     expect(droppedNoticeText('tracker_archived')).toBe('Some entries for archived trackers were not saved.')
     useTrackers.getState().dismissDropped()
     await useTrackers.getState().refresh()
@@ -199,12 +218,13 @@ describe('useTrackers', () => {
     useTrackers.getState().saveEntry(draft({ day: '2026-10-17' }))
     await settle(); await settle()
     expect(useTrackers.getState().entries).toEqual([])
-    expect(useTrackers.getState().droppedNotice).toBe('Some entries dated after today were not saved.')
+    expect(useTrackers.getState().droppedNotice).toBe('future_day')
+    expect(droppedNoticeText('future_day')).toBe('Some entries dated after today were not saved.')
     // A different refusal before the notice was dismissed takes the general words.
     api.upsertEntry.mockRejectedValue(refused('tracker_archived'))
     useTrackers.getState().saveEntry(draft())
     await settle(); await settle()
-    expect(useTrackers.getState().droppedNotice).toBe(droppedNoticeText('refused'))
+    expect(useTrackers.getState().droppedNotice).toBe('refused')
     expect(droppedNoticeText('refused')).toBe('Some tracker changes could not be saved.')
   })
 
@@ -215,7 +235,7 @@ describe('useTrackers', () => {
     useTrackers.getState().saveEntry({ ...draft({ day: '2026-10-15', value: 2.345 }), id: 'e1' })
     await settle(); await settle(); await settle()
     expect(useTrackers.getState().entries).toEqual([e])
-    expect(useTrackers.getState().droppedNotice).toBe(droppedNoticeText('refused'))
+    expect(useTrackers.getState().droppedNotice).toBe('refused')
   })
 
   it('keeps an option that still has older entries and saves the rest of the edit again', async () => {
@@ -237,7 +257,7 @@ describe('useTrackers', () => {
     expect(api.upsertTracker).toHaveBeenCalledTimes(2)
     expect(api.upsertTracker).toHaveBeenLastCalledWith(kept)
     expect(trackersOutbox.pending(ME)).toEqual([{ op: 'tracker', row: kept, kept: true }])
-    expect(useTrackers.getState().droppedNotice).toBe(droppedNoticeText('option_in_use'))
+    expect(useTrackers.getState().droppedNotice).toBe('option_in_use')
     expect(droppedNoticeText('option_in_use')).toBe('An option you removed has older entries, so it was kept.')
     useTrackers.getState().dismissDropped()
     api.upsertTracker.mockResolvedValue(undefined)
@@ -263,6 +283,23 @@ describe('useTrackers', () => {
     // What the server has stays on screen.
     expect(useTrackers.getState().trackers[1]).toEqual(mood)
     expect(useTrackers.getState().droppedNotice).not.toBeNull()
+  })
+
+  it('never saves an edit again with more than 8 options: the server copy stays, with its own words', async () => {
+    const letters = 'abcdefgh'.split('')
+    const mood = trackerOf({ id: T2, name: 'Mood', icon: 'smile', kind: 'label', unit: null, decimals: null, aggregate: null, sort: 1,
+      options: letters.map(id => ({ id, text: id })) })
+    api.fetchTrackers.mockResolvedValue([trackerOf(), mood])
+    await bound()
+    // h has entries older than the window; the edit swaps it for a new option, still 8 in the sheet.
+    api.upsertTracker.mockRejectedValue(refused('option_in_use'))
+    useTrackers.getState().saveTracker({ ...mood, name: 'Mood today', options: [...mood.options!.slice(0, 7), { id: 'n', text: 'new' }] })
+    await settle(); await settle(); await settle()
+    expect(api.upsertTracker).toHaveBeenCalledTimes(1)
+    expect(trackersOutbox.pending(ME)).toEqual([])
+    expect(useTrackers.getState().trackers[1]).toEqual(mood)
+    expect(useTrackers.getState().droppedNotice).toBe('too_many_options')
+    expect(droppedNoticeText('too_many_options')).toBe('An option you removed has older entries, and keeping it would go over 8 options. Your changes were not saved.')
   })
 
   // A label tracker on the server whose option b has entries older than the window: removing b is refused.
@@ -439,7 +476,7 @@ describe('useTrackers', () => {
 
   it('drops everything on reset, and an answer for the previous account lands nowhere', async () => {
     await withTrackers([entryOf(TODAY, { id: 'e1' })])
-    useTrackers.setState({ droppedNotice: 'x' })
+    useTrackers.setState({ droppedNotice: 'refused' })
     let release!: (v: TrackerEntry[]) => void
     api.fetchEntries.mockReturnValue(new Promise(r => { release = r }))
     const late = useTrackers.getState().refresh()

@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { toast } from 'sonner'
 import { ArrowLeft, ChevronDown, ChevronUp, CloudOff, Plus, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -13,6 +12,7 @@ import { SLEEP_CARD as CARD } from '../sleep/card'
 import { iconFor } from '../habits/icons'
 import { useTrackers } from './useTrackers'
 import { formatValue, whenText } from './format'
+import { useDroppedNotice } from './useDroppedNotice'
 import TrackerSheet from './TrackerSheet'
 import EntrySheet from './EntrySheet'
 import type { Tracker, TrackerEntry } from './types'
@@ -25,14 +25,7 @@ export default function TrackersScreen() {
   const profile = useProfile(s => s.profile)
   const online = useOnline()
   const status = useTrackers(s => s.status)
-  const dropped = useTrackers(s => s.droppedNotice)
-
-  // Writes the server refused for good: said once, then forgotten.
-  useEffect(() => {
-    if (!dropped) return
-    toast(dropped)
-    useTrackers.getState().dismissDropped()
-  }, [dropped])
+  useDroppedNotice()
 
   const goBack = () => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/home'))
   return (

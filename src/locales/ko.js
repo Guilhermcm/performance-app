@@ -2780,4 +2780,12 @@ export default {
   "This tracker no longer exists": "이 트래커는 더 이상 없어요",
   "See your trackers": "내 트래커 보기",
   "Archived. You can still edit and delete its entries.": "보관됨. 기록은 계속 수정하고 삭제할 수 있어요.",
+  // --- trackers: final fixes (phase 4b) ---
+  "An option you removed has older entries, and keeping it would go over 8 options. Your changes were not saved.": "삭제한 선택지에 이전 기록이 있어 유지해야 하는데, 그러면 선택지가 8개를 넘습니다. 변경 사항이 저장되지 않았습니다.",
+  "Move {0} up": "{0} 위로 이동",
+  "Move {0} down": "{0} 아래로 이동",
+  "You have no active trackers.": "활성 트래커가 없습니다.",
+  "Change sign": "부호 바꾸기",
+  "Choose a time.": "시간을 선택하세요.",
+  "Each option needs a different name.": "선택지마다 다른 이름이 필요합니다.",
 }

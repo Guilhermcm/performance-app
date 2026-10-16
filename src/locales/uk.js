@@ -2864,4 +2864,12 @@ export default {
   "Most frequent: {0}, {1} of {2} entries|one": "Найчастіше: {0}, {1} з {2} запису",
   "Most frequent: {0}, {1} of {2} entries|few": "Найчастіше: {0}, {1} з {2} записів",
   "Most frequent: {0}, {1} of {2} entries|many": "Найчастіше: {0}, {1} з {2} записів",
+  // --- trackers: final fixes (phase 4b) ---
+  "An option you removed has older entries, and keeping it would go over 8 options. Your changes were not saved.": "Вилучений варіант має старі записи, а з ним варіантів було б більше 8. Зміни не збережено.",
+  "Move {0} up": "Перемістити {0} вгору",
+  "Move {0} down": "Перемістити {0} вниз",
+  "You have no active trackers.": "У вас немає активних трекерів.",
+  "Change sign": "Змінити знак",
+  "Choose a time.": "Виберіть час.",
+  "Each option needs a different name.": "Кожен варіант має мати іншу назву.",
 }

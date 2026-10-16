@@ -10,7 +10,8 @@ export type FlushResult = { sent: number; left: number; dropped: number; reasons
 
 export type LocalOutbox<Op> = {
   pending(userId: string): Op[]
-  // The newest op replaces an older one that `same` matches, so a queue never grows past the items touched.
+  // The newest op replaces an older one that `same` matches, so a queue never grows past the items
+  // touched. It goes to the end, or with `inPlace` where the first match was.
   enqueue(userId: string, op: Op): void
   // One run at a time per account; a caller that arrives meanwhile runs on what is left after it.
   flush(userId: string): Promise<FlushResult>
@@ -34,7 +35,9 @@ async function hasSession(): Promise<boolean> {
   } catch { return false }
 }
 
-export function createLocalOutbox<Op>(o: { key: string; same: (a: Op, b: Op) => boolean; send: (op: Op) => Promise<void> }): LocalOutbox<Op> {
+export function createLocalOutbox<Op>(o: {
+  key: string; same: (a: Op, b: Op) => boolean; send: (op: Op) => Promise<void>; inPlace?: boolean
+}): LocalOutbox<Op> {
   const readAll = (): Queues<Op> => {
     try {
       const q: unknown = JSON.parse(localStorage.getItem(o.key) || '{}')
@@ -54,7 +57,11 @@ export function createLocalOutbox<Op>(o: { key: string; same: (a: Op, b: Op) => 
 
   function enqueue(userId: string, op: Op): void {
     const all = readAll()
-    all[userId] = [...(all[userId] ?? []).filter(x => !o.same(x, op)), op]
+    const list = all[userId] ?? []
+    const at = o.inPlace ? list.findIndex(x => o.same(x, op)) : -1
+    all[userId] = at < 0
+      ? [...list.filter(x => !o.same(x, op)), op]
+      : list.flatMap((x, i) => (i === at ? [op] : o.same(x, op) ? [] : [x]))
     writeAll(all)
   }
 

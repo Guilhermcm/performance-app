@@ -33,6 +33,16 @@ describe('createLocalOutbox', () => {
     expect(box.pending(ME)).toEqual([{ id: 'b', v: 1 }, { id: 'a', v: 2 }])
   })
 
+  it('with inPlace, puts the newest op where the first match was', () => {
+    const inPlace = createLocalOutbox<Op>({ key: KEY, same: (a, b) => a.id === b.id, send, inPlace: true })
+    inPlace.enqueue(ME, { id: 'a', v: 1 })
+    inPlace.enqueue(ME, { id: 'b', v: 1 })
+    inPlace.enqueue(ME, { id: 'a', v: 2 })
+    expect(inPlace.pending(ME)).toEqual([{ id: 'a', v: 2 }, { id: 'b', v: 1 }])
+    inPlace.enqueue(ME, { id: 'c', v: 1 })
+    expect(inPlace.pending(ME)).toEqual([{ id: 'a', v: 2 }, { id: 'b', v: 1 }, { id: 'c', v: 1 }])
+  })
+
   it('drops a refusal for good with its reason and goes on', async () => {
     for (const id of ['a', 'b', 'c']) box.enqueue(ME, { id, v: 1 })
     send.mockImplementation(async op => {

@@ -189,10 +189,10 @@ describe('TrackersScreen', () => {
   })
 
   it('says once that the queue dropped entries, then forgets it', () => {
-    store({ droppedNotice: 'Algumas mudanças nos trackers não puderam ser salvas.' })
+    store({ droppedNotice: 'refused' })
     render(<TrackersScreen />)
     expect(h.toast).toHaveBeenCalledTimes(1)
-    expect(h.toast).toHaveBeenCalledWith('Algumas mudanças nos trackers não puderam ser salvas.')
+    expect(h.toast).toHaveBeenCalledWith('Algumas mudanças nos trackers não foram salvas.')
     expect(dismissDropped).toHaveBeenCalledTimes(1)
   })
 

@@ -39,6 +39,24 @@ describe('trackers api', () => {
     expect(c.calls.filter(x => x[0] === 'lte')).toEqual([])
   })
 
+  it('reads the entries in pages of 1000 until a page comes back short', async () => {
+    const row = (i: number) => ({ ...entryOf('2026-10-05', { id: `p${i}` }), at: '09:30:00', value: String(i) })
+    const first = chain({ data: Array.from({ length: 1000 }, (_, i) => row(i)), error: null })
+    const second = chain({ data: [row(1000), row(1001), row(1002)], error: null })
+    h.from.mockReturnValueOnce(first.proxy).mockReturnValueOnce(second.proxy)
+    const entries = await api.fetchEntries('2026-07-18')
+    expect(entries).toHaveLength(1003)
+    expect(entries[1002]).toMatchObject({ id: 'p1002', at: '09:30', value: 1002 })
+    expect(h.from).toHaveBeenCalledTimes(2)
+    const order = [['order', ['day', { ascending: true }]], ['order', ['at', { ascending: true }]], ['order', ['id', { ascending: true }]]]
+    for (const c of [first, second]) {
+      expect(c.calls).toContainEqual(['gte', ['day', '2026-07-18']])
+      expect(c.calls.filter(x => x[0] === 'order')).toEqual(order)
+    }
+    expect(first.calls).toContainEqual(['range', [0, 999]])
+    expect(second.calls).toContainEqual(['range', [1000, 1999]])
+  })
+
   it('upserts a tracker on its id, without the user id or the creation time', async () => {
     const c = chain({ error: null }); h.from.mockReturnValue(c.proxy)
     const x = trackerOf({ archived_at: '2026-10-05T10:00:00.000Z', updated_at: '2026-10-05T10:00:00.000Z' })

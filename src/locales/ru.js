@@ -2867,4 +2867,12 @@ export default {
   "Most frequent: {0}, {1} of {2} entries|one": "Чаще всего: {0}, {1} из {2} записи",
   "Most frequent: {0}, {1} of {2} entries|few": "Чаще всего: {0}, {1} из {2} записей",
   "Most frequent: {0}, {1} of {2} entries|many": "Чаще всего: {0}, {1} из {2} записей",
+  // --- trackers: final fixes (phase 4b) ---
+  "An option you removed has older entries, and keeping it would go over 8 options. Your changes were not saved.": "У удалённого варианта есть старые записи, а с ним вариантов было бы больше 8. Изменения не сохранены.",
+  "Move {0} up": "Переместить {0} вверх",
+  "Move {0} down": "Переместить {0} вниз",
+  "You have no active trackers.": "У вас нет активных трекеров.",
+  "Change sign": "Сменить знак",
+  "Choose a time.": "Выберите время.",
+  "Each option needs a different name.": "У каждого варианта должно быть своё название.",
 }

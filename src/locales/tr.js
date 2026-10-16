@@ -2780,4 +2780,12 @@ export default {
   "This tracker no longer exists": "Bu izleyici artık yok",
   "See your trackers": "İzleyicilerine git",
   "Archived. You can still edit and delete its entries.": "Arşivlendi. Kayıtlarını yine de düzenleyip silebilirsin.",
+  // --- trackers: final fixes (phase 4b) ---
+  "An option you removed has older entries, and keeping it would go over 8 options. Your changes were not saved.": "Kaldırdığın bir seçeneğin eski kayıtları var ve onu tutmak 8 seçeneği aşar. Değişikliklerin kaydedilmedi.",
+  "Move {0} up": "{0} yukarı taşı",
+  "Move {0} down": "{0} aşağı taşı",
+  "You have no active trackers.": "Etkin izleyicin yok.",
+  "Change sign": "İşareti değiştir",
+  "Choose a time.": "Bir saat seç.",
+  "Each option needs a different name.": "Her seçeneğin adı farklı olmalı.",
 }

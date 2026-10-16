@@ -2791,4 +2791,12 @@ export default {
   "This tracker no longer exists": "ตัวติดตามนี้ไม่มีแล้ว",
   "See your trackers": "ดูตัวติดตามของคุณ",
   "Archived. You can still edit and delete its entries.": "เก็บถาวรแล้ว ยังแก้ไขและลบบันทึกของตัวติดตามนี้ได้",
+  // --- trackers: final fixes (phase 4b) ---
+  "An option you removed has older entries, and keeping it would go over 8 options. Your changes were not saved.": "ตัวเลือกที่คุณลบมีบันทึกเก่าอยู่ และถ้าเก็บไว้จะเกิน 8 ตัวเลือก การเปลี่ยนแปลงของคุณจึงไม่ได้บันทึก",
+  "Move {0} up": "เลื่อน {0} ขึ้น",
+  "Move {0} down": "เลื่อน {0} ลง",
+  "You have no active trackers.": "คุณไม่มีตัวติดตามที่ใช้งานอยู่",
+  "Change sign": "สลับเครื่องหมายบวกลบ",
+  "Choose a time.": "เลือกเวลา",
+  "Each option needs a different name.": "แต่ละตัวเลือกต้องมีชื่อไม่ซ้ำกัน",
 }

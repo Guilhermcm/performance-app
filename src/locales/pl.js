@@ -2863,4 +2863,12 @@ export default {
   "Most frequent: {0}, {1} of {2} entries|one": "Najczęściej: {0}, {1} z {2} wpisu",
   "Most frequent: {0}, {1} of {2} entries|few": "Najczęściej: {0}, {1} z {2} wpisów",
   "Most frequent: {0}, {1} of {2} entries|many": "Najczęściej: {0}, {1} z {2} wpisów",
+  // --- trackers: final fixes (phase 4b) ---
+  "An option you removed has older entries, and keeping it would go over 8 options. Your changes were not saved.": "Usunięta opcja ma starsze wpisy, a jej zachowanie dałoby więcej niż 8 opcji. Zmiany nie zostały zapisane.",
+  "Move {0} up": "Przesuń {0} w górę",
+  "Move {0} down": "Przesuń {0} w dół",
+  "You have no active trackers.": "Nie masz aktywnych trackerów.",
+  "Change sign": "Zmień znak",
+  "Choose a time.": "Wybierz godzinę.",
+  "Each option needs a different name.": "Każda opcja musi mieć inną nazwę.",
 }
