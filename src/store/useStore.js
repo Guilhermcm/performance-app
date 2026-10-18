@@ -178,6 +178,9 @@ export const DEF = {
   // cleared) replaces that role's curated exercise-id whitelist with a single user-chosen
   // exercise id; the stamp is what lets a sync keep the choice made last (lib/sync-merge.js).
   balanceTemplate: DEFAULT_TEMPLATE_ID, balanceOverrides: {},
+  // The running plan (phase 1e, src/features/run/run-actions.ts): null until the questionnaire
+  // applies one. A state saved before this key existed overlays onto DEF and reads as no plan.
+  runPlan: null,
 }
 const clone = o => JSON.parse(JSON.stringify(o))
 

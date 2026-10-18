@@ -206,6 +206,10 @@ export const EN_OVERRIDES = {
   'People in this challenge see how many tonnes you lift. Never the load of each exercise.': 'People in this challenge see how many tonnes you lift, but not the load of each exercise.',
   // The analysis group (src/features/plan/analysis-copy.ts) is plural in English; the key stays singular.
   'hamstring': 'hamstrings',
+  // The pace range key is the Portuguese-shaped source (spec §4.2); English reads "to".
+  '{0} a {1} /km': '{0} to {1} /km',
+  // "Hard" is already the Stats recovery filter; the zone has its own key and reads the same.
+  'Hard zone': 'Hard',
 }
 
 export default EN_OVERRIDES
