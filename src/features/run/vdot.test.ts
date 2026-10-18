@@ -44,7 +44,7 @@ describe('predictMinutes', () => {
 })
 
 describe('zonePaces', () => {
-  it('gives the Daniels ranges for VDOT 50, rounded to 5 s', () => {
+  it('asserts the spec §4.2 fraction-model values for VDOT 50, not the Daniels table, rounded to 5 s', () => {
     const z = zonePaces(50)
     expect(z.easy.slow).toBeGreaterThanOrEqual(sec(5, 45))
     expect(z.easy.slow).toBeLessThanOrEqual(sec(5, 55))
