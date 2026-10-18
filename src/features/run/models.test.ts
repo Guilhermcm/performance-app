@@ -86,6 +86,24 @@ describe('buildPlan: shape', () => {
     expect(half.map(w => main(w, 'tempo') ?? main(w, 'intervals'))).toEqual([moderate(2, 8), hard(5, 2), moderate(3, 10)])
   })
 
+  it('reaches the top rung at every 10k and half deadline when a recovery week leaves a single regular session', () => {
+    const regular = (weeks: PlanWeek[], phase: string) => weeks.filter(w => w.phase === phase && !w.recovery)
+    const hasMain = (weeks: PlanWeek[], type: string, main: Item) => weeks.some(w => w.sessions.some(s => s.type === type && JSON.stringify(s.blocks[1]) === JSON.stringify(main)))
+    for (const goal of ['10k', 'half'] as const) {
+      const f = FAMILIES[goal]
+      for (const days of f.days as (3 | 4)[]) {
+        for (let weeks = f.finishWeeks!; weeks <= f.minWeeks + 8; weeks++) {
+          const p = plan({ goal, days, weeks })
+          const tag = `${goal} ${days}d ${weeks}w`
+          expect(hasMain(regular(p, 'specific'), 'tempo', { zone: 'moderate', min: goal === '10k' ? 20 : 30 }), tag).toBe(true)
+          if (goal === 'half') {
+            expect(hasMain(regular(p, 'build'), 'tempo', { repeat: 3, blocks: [{ zone: 'moderate', min: 10 }, { zone: 'easy', min: 2 }] }), tag).toBe(true)
+          }
+        }
+      }
+    }
+  })
+
   it('gives a recovery week the bottom rung of its workout ladder (repetitions may still shorten)', () => {
     // Bottom rung per family and phase: [minutes per block, repetitions].
     const bottom = (goal: RunGoal, phase: string): [number, number] =>
