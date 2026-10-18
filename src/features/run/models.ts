@@ -193,8 +193,9 @@ type Slot = { phase: Phase; recovery: boolean; planned: 'tempo' | 'intervals' | 
 // Which quality workout each week gets, and where it sits on its ladder. Each workout type climbs
 // its own ladder by its own occurrences within the phase, so the first Intervalado of the build is
 // the bottom rung (5 × 2). A recovery week takes the bottom rung of its type (Intervalado becomes the
-// light Ritmo) and is not a rung of the climb; when that leaves a single regular session of the type
-// in the phase, it takes the top rung, so the climb still reaches it.
+// light Ritmo) and is not a rung of the climb. When that leaves a single regular session of the type
+// in the phase, it takes the top rung if the recovery week comes before it (build) or always
+// (specific, so the plan reaches its peak workout).
 function slots(a: Answers, phases: Phase[]): Slot[] {
   const out: Slot[] = phases.map((phase, i) => {
     const index = i + 1
@@ -209,8 +210,10 @@ function slots(a: Answers, phases: Phase[]): Slot[] {
   for (const phase of ['build', 'specific'] as const) {
     for (const kind of ['tempo', 'intervals'] as const) {
       const at = out.filter(s => s.phase === phase && s.kind === kind && !s.recovery)
-      const lost = out.some(s => s.phase === phase && s.recovery && s.planned === kind)
-      at.forEach((s, j) => { s.p = at.length > 1 ? j / (at.length - 1) : lost ? 1 : 0 })
+      // In the build a lone session takes the top rung only after its recovery week, so the first
+      // session of a type stays the bottom rung; in the specific phase it always reaches the peak.
+      const lost = (s: Slot) => out.some((r, k) => r.phase === phase && r.recovery && r.planned === kind && (phase === 'specific' || k < out.indexOf(s)))
+      at.forEach((s, j) => { s.p = at.length > 1 ? j / (at.length - 1) : lost(s) ? 1 : 0 })
     }
   }
   return out

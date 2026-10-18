@@ -86,30 +86,61 @@ describe('buildPlan: shape', () => {
     expect(half.map(w => main(w, 'tempo') ?? main(w, 'intervals'))).toEqual([moderate(2, 8), hard(5, 2), moderate(3, 10)])
   })
 
-  it('reaches the top rung at every 10k and half deadline when a recovery week leaves a single regular session', () => {
-    const regular = (weeks: PlanWeek[], phase: string) => weeks.filter(w => w.phase === phase && !w.recovery)
-    const hasMain = (weeks: PlanWeek[], type: string, main: Item) => weeks.some(w => w.sessions.some(s => s.type === type && JSON.stringify(s.blocks[1]) === JSON.stringify(main)))
-    for (const goal of ['10k', 'half'] as const) {
-      const f = FAMILIES[goal]
-      for (const days of f.days as (3 | 4)[]) {
-        for (let weeks = f.finishWeeks!; weeks <= f.minWeeks + 8; weeks++) {
-          const p = plan({ goal, days, weeks })
-          const tag = `${goal} ${days}d ${weeks}w`
-          expect(hasMain(regular(p, 'specific'), 'tempo', { zone: 'moderate', min: goal === '10k' ? 20 : 30 }), tag).toBe(true)
-          if (goal === 'half') {
-            expect(hasMain(regular(p, 'build'), 'tempo', { repeat: 3, blocks: [{ zone: 'moderate', min: 10 }, { zone: 'easy', min: 2 }] }), tag).toBe(true)
-          }
+  // Every 10k and half deadline (planWeeks clamps anything longer to minWeeks + 8) and day count.
+  const RACE_PLANS = (['10k', 'half'] as const).flatMap(goal => {
+    const f = FAMILIES[goal]
+    return (f.days as (3 | 4)[]).flatMap(days =>
+      Array.from({ length: f.minWeeks + 8 - f.finishWeeks! + 1 }, (_, k) => ({ goal, days, weeks: f.finishWeeks! + k })))
+  })
+
+  it('reaches the specific-phase peak (continuous Ritmo) at every 10k and half deadline', () => {
+    const peakMain = (goal: '10k' | 'half') => JSON.stringify({ zone: 'moderate', min: goal === '10k' ? 20 : 30 })
+    for (const c of RACE_PLANS) {
+      const specific = plan(c).filter(w => w.phase === 'specific' && !w.recovery)
+      const reached = specific.some(w => w.sessions.some(s => s.type === 'tempo' && JSON.stringify(s.blocks[1]) === peakMain(c.goal)))
+      expect(reached, name(c)).toBe(true)
+    }
+  })
+
+  it('opens each workout type at its bottom rung in the build, and in a specific phase with 2+ regular weeks of it', () => {
+    // Bottom rung per phase and type: [zone, minutes per block, repetitions].
+    const bottom = (goal: RunGoal, phase: string, type: string): [string, number, number] =>
+      type === 'intervals' ? ['hard', 2, 5] : phase === 'specific' ? ['moderate', goal === '10k' ? 12 : 15, 2] : ['moderate', 8, 2]
+    let seen = 0
+    for (const c of RACE_PLANS) {
+      const weeks = plan(c)
+      for (const phase of ['build', 'specific']) {
+        for (const type of ['tempo', 'intervals']) {
+          const first = weeks.find(w => w.phase === phase && has(w, type))
+          if (!first) continue
+          // A lone regular specific week takes the peak even before its recovery week.
+          if (phase === 'specific' && weeks.filter(w => w.phase === phase && !w.recovery && has(w, type)).length < 2) continue
+          seen++
+          const main = first.sessions.find(s => s.type === type)!.blocks[1]
+          const [zone, min, reps] = bottom(c.goal, phase, type)
+          const block = 'repeat' in main ? main.blocks[0] : main
+          const tag = `${name(c)} ${phase} ${type} week ${first.index}`
+          expect(block, tag).toEqual({ zone, min })
+          expect('repeat' in main ? main.repeat : 1, tag).toBeLessThanOrEqual(reps)
         }
       }
     }
+    expect(seen).toBeGreaterThan(50)
   })
 
   it('gives a recovery week the bottom rung of its workout ladder (repetitions may still shorten)', () => {
     // Bottom rung per family and phase: [minutes per block, repetitions].
     const bottom = (goal: RunGoal, phase: string): [number, number] =>
       goal === 'maintain' ? [10, 2] : phase === 'specific' && goal === '10k' ? [12, 2] : phase === 'specific' && goal === 'half' ? [15, 2] : [8, 2]
+    // Every race deadline from the finish plan to minWeeks + 8 (longer ones clamp to it), and maintain.
+    const all = VARIANTS.filter(v => v.goal !== 'start').flatMap(v => {
+      const f = FAMILIES[v.goal]
+      const deadlines: (number | undefined)[] = v.goal === 'maintain' ? [undefined]
+        : Array.from({ length: f.minWeeks + 8 - f.finishWeeks! + 1 }, (_, k) => f.finishWeeks! + k)
+      return deadlines.map(weeks => ({ ...v, weeks }))
+    })
     let seen = 0
-    for (const c of CASES.filter(c => c.goal !== 'start')) {
+    for (const c of all) {
       for (const reference of [RACE, { kind: 'continuous', minutes: 25 } as Reference, { kind: 'none' } as Reference]) {
         for (const w of plan({ ...c, reference }).filter(w => w.recovery)) {
           const q = w.sessions.find(s => s.type === 'tempo' || s.type === 'intervals')
