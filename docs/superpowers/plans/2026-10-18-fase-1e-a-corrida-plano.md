@@ -143,7 +143,7 @@ src/features/run/
   - polimento: 1 semana em `5k`, 2 em `10k`/`half`, com −40% e −25%;
   - prazo 4 semanas acima do mínimo → 4 semanas de base a mais; prazo 20 semanas acima → 8 a mais e o resto adiado (a montagem retorna só as semanas do plano);
   - `checkAnswers`: `10k` com 5 semanas → `too_short` sem `finishWeeks`; `half` com 10 semanas → `too_short` com `finishWeeks: 10`; meta `10k` em 40:00 com VDOT 38 e 10 semanas → `time_out_of_reach` com `possibleMinutes` coerente com `VDOT + 2,5`; referência de 4 meses atrás → `reference_too_old`; `10k` com 2 dias → `days_not_allowed`;
-  - `start`: as 8 semanas da Decisão 7; com `continuous` de 25 min, começa na semana em que o bloco contínuo mais longo ≥ 15 min (semana 6);
+  - `start`: as 8 semanas da Decisão 7; com `continuous` de 25 min, começa na semana em que o bloco contínuo mais longo ≥ 15 min (semana 7, a de `20` contínuo);
   - `maintain`: 8 semanas, recuperação em 4 e 8, Ritmo a partir da 3;
   - limites (Review Focus 2): `continuous` de 3 min em `5k` → Leve de 20 min na semana 1; nenhum bloco fora de 1 a 300 min; nenhum treino com mais de 12 itens.
 - [ ] **Step 2:** FAIL.
