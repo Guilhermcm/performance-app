@@ -26,14 +26,16 @@ export type Phase = 'base' | 'build' | 'specific' | 'taper'
 
 export type Week = { index: number; phase: Phase; recovery: boolean; sessions: Session[] }
 
-export type RunAnswers = {
+// Questionnaire answers (spec §3). `targetMinutes` only with goalType `time`; the deadline is
+// `raceDate` (ISO) or `weeks`; `longDay` follows S.week (0 = Sunday to 6 = Saturday).
+export type Answers = {
   goal: RunGoal
-  goalType: GoalType
-  targetTime?: number
+  goalType?: GoalType
+  targetMinutes?: number
   raceDate?: string
   weeks?: number
   reference: Reference
-  days: number
+  days: 2 | 3 | 4
   longDay: number
 }
 
@@ -44,7 +46,7 @@ export type RunPlan = {
   targetTime?: number
   raceDate?: string
   startDate: string
-  answers: RunAnswers
+  answers: Answers
   vdot?: number
   vdotSource: 'race' | 'run' | null
   vdotDate?: string
