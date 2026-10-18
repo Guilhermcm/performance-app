@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { FAMILIES, buildPlan, checkAnswers, weekMinutes, type PlanWeek } from './models'
+import { FAMILIES, MIN_VDOT, buildPlan, checkAnswers, weekMinutes, type PlanWeek } from './models'
 import type { Answers, Item, Reference, RunGoal } from './types'
 import { predictMinutes, vdotFrom } from './vdot'
 
@@ -10,14 +10,18 @@ const GOALS = Object.keys(FAMILIES) as RunGoal[]
 const answers = (o: Partial<Answers> = {}): Answers => ({
   goal: '5k', goalType: 'finish', reference: o.goal === 'start' ? { kind: 'none' } : RACE, days: 3, longDay: 0, ...o
 })
-const plan = (o: Partial<Answers> = {}) => buildPlan(answers(o), TODAY, null).weeks
+const vdotOf = (r: Reference) => (r.kind === 'race' ? vdotFrom(r.distanceM, r.minutes) : null)
+const plan = (o: Partial<Answers> = {}) => {
+  const a = answers(o)
+  return buildPlan(a, TODAY, vdotOf(a.reference)).weeks
+}
 
 // Every family with every allowed number of days, at the minimum deadline and with longer and
 // shorter ones.
 const VARIANTS = GOALS.flatMap(goal => FAMILIES[goal].days.map(days => ({ goal, days: days as 2 | 3 | 4 })))
 const DEADLINES = (goal: RunGoal) => {
   const min = FAMILIES[goal].minWeeks
-  return goal === 'maintain' ? [undefined] : [min, min + 1, min + 4, min + 7, min + 20, FAMILIES[goal].finishWeeks]
+  return goal === 'maintain' ? [undefined] : [min, min + 1, min + 4, min + 7, min + 20, FAMILIES[goal].finishWeeks!]
 }
 const CASES = VARIANTS.flatMap(v => DEADLINES(v.goal).map(weeks => ({ ...v, weeks })))
 const name = (c: { goal: string; days: number; weeks?: number }) => `${c.goal}, ${c.days} days, ${c.weeks ?? '-'} weeks`
@@ -64,8 +68,99 @@ describe('buildPlan: shape', () => {
     expect(plan({ goal: '5k', days: 3, weeks: 8 }).filter(w => w.phase === 'specific').map(quality)).toEqual(['intervals', 'intervals'])
   })
 
+  it('climbs each workout ladder by its own occurrences: the first Intervalado is 5 x 2, the last 6 x 3', () => {
+    const main = (w: PlanWeek, type: string) => w.sessions.find(s => s.type === type)?.blocks[1]
+    const hard = (reps: number, min: number) => ({ repeat: reps, blocks: [{ zone: 'hard', min }, { zone: 'easy', min: 2 }] })
+    const moderate = (reps: number, min: number) => ({ repeat: reps, blocks: [{ zone: 'moderate', min }, { zone: 'easy', min: 2 }] })
+    for (const [goal, weeks] of [['5k', 8], ['10k', 10], ['10k', 12], ['half', 12], ['half', 14]] as const) {
+      const build = plan({ goal, days: 4, weeks }).filter(w => w.phase === 'build')
+      const ints = build.filter(w => has(w, 'intervals')).map(w => main(w, 'intervals'))
+      const temps = build.filter(w => has(w, 'tempo') && !w.recovery).map(w => main(w, 'tempo'))
+      if (ints.length) expect(ints[0], `${goal} ${weeks}`).toEqual(hard(5, 2))
+      if (ints.length > 1) expect(ints.at(-1), `${goal} ${weeks}`).toEqual(hard(6, 3))
+      if (temps.length) expect(temps[0], `${goal} ${weeks}`).toEqual(moderate(2, 8))
+      if (temps.length > 1) expect(temps.at(-1), `${goal} ${weeks}`).toEqual(moderate(3, 10))
+    }
+    // half 12: build weeks 5, 6, 7 are tempo, intervals, tempo: the second tempo is the top rung.
+    const half = plan({ goal: 'half', days: 4, weeks: 12 }).filter(w => w.phase === 'build')
+    expect(half.map(w => main(w, 'tempo') ?? main(w, 'intervals'))).toEqual([moderate(2, 8), hard(5, 2), moderate(3, 10)])
+  })
+
+  // Every 10k and half deadline (planWeeks clamps anything longer to minWeeks + 8) and day count.
+  const RACE_PLANS = (['10k', 'half'] as const).flatMap(goal => {
+    const f = FAMILIES[goal]
+    return (f.days as (3 | 4)[]).flatMap(days =>
+      Array.from({ length: f.minWeeks + 8 - f.finishWeeks! + 1 }, (_, k) => ({ goal, days, weeks: f.finishWeeks! + k })))
+  })
+
+  it('reaches the specific-phase peak (continuous Ritmo) at every 10k and half deadline', () => {
+    const peakMain = (goal: '10k' | 'half') => JSON.stringify({ zone: 'moderate', min: goal === '10k' ? 20 : 30 })
+    for (const c of RACE_PLANS) {
+      const specific = plan(c).filter(w => w.phase === 'specific' && !w.recovery)
+      const reached = specific.some(w => w.sessions.some(s => s.type === 'tempo' && JSON.stringify(s.blocks[1]) === peakMain(c.goal)))
+      expect(reached, name(c)).toBe(true)
+    }
+  })
+
+  it('opens each workout type at its bottom rung in the build, and in a specific phase with 2+ regular weeks of it', () => {
+    // Bottom rung per phase and type: [zone, minutes per block, repetitions].
+    const bottom = (goal: RunGoal, phase: string, type: string): [string, number, number] =>
+      type === 'intervals' ? ['hard', 2, 5] : phase === 'specific' ? ['moderate', goal === '10k' ? 12 : 15, 2] : ['moderate', 8, 2]
+    let seen = 0
+    for (const c of RACE_PLANS) {
+      const weeks = plan(c)
+      for (const phase of ['build', 'specific']) {
+        for (const type of ['tempo', 'intervals']) {
+          const first = weeks.find(w => w.phase === phase && has(w, type))
+          if (!first) continue
+          // A lone regular specific week takes the peak even before its recovery week.
+          if (phase === 'specific' && weeks.filter(w => w.phase === phase && !w.recovery && has(w, type)).length < 2) continue
+          seen++
+          const main = first.sessions.find(s => s.type === type)!.blocks[1]
+          const [zone, min, reps] = bottom(c.goal, phase, type)
+          const block = 'repeat' in main ? main.blocks[0] : main
+          const tag = `${name(c)} ${phase} ${type} week ${first.index}`
+          expect(block, tag).toEqual({ zone, min })
+          expect('repeat' in main ? main.repeat : 1, tag).toBeLessThanOrEqual(reps)
+        }
+      }
+    }
+    expect(seen).toBeGreaterThan(50)
+  })
+
+  it('gives a recovery week the bottom rung of its workout ladder (repetitions may still shorten)', () => {
+    // Bottom rung per family and phase: [minutes per block, repetitions].
+    const bottom = (goal: RunGoal, phase: string): [number, number] =>
+      goal === 'maintain' ? [10, 2] : phase === 'specific' && goal === '10k' ? [12, 2] : phase === 'specific' && goal === 'half' ? [15, 2] : [8, 2]
+    // Every race deadline from the finish plan to minWeeks + 8 (longer ones clamp to it), and maintain.
+    const all = VARIANTS.filter(v => v.goal !== 'start').flatMap(v => {
+      const f = FAMILIES[v.goal]
+      const deadlines: (number | undefined)[] = v.goal === 'maintain' ? [undefined]
+        : Array.from({ length: f.minWeeks + 8 - f.finishWeeks! + 1 }, (_, k) => f.finishWeeks! + k)
+      return deadlines.map(weeks => ({ ...v, weeks }))
+    })
+    let seen = 0
+    for (const c of all) {
+      for (const reference of [RACE, { kind: 'continuous', minutes: 25 } as Reference, { kind: 'none' } as Reference]) {
+        for (const w of plan({ ...c, reference }).filter(w => w.recovery)) {
+          const q = w.sessions.find(s => s.type === 'tempo' || s.type === 'intervals')
+          if (!q) continue
+          seen++
+          expect(q.type, name(c)).toBe('tempo')
+          const main = q.blocks[1]
+          const [min, reps] = bottom(c.goal, w.phase)
+          const block = 'repeat' in main ? main.blocks[0] : main
+          expect(block, `${name(c)} week ${w.index}`).toEqual({ zone: 'moderate', min })
+          expect('repeat' in main ? main.repeat : 1, `${name(c)} week ${w.index}`).toBeLessThanOrEqual(reps)
+        }
+      }
+    }
+    expect(seen).toBeGreaterThan(50)
+  })
+
   it('builds the Decision 5 workouts: warm up, quality blocks, cool down', () => {
-    const tenK = plan({ goal: '10k', days: 4, weeks: 10 })
+    // 12 weeks: both specific weeks are regular (in 10 weeks the last one is a recovery week, bottom rung).
+    const tenK = plan({ goal: '10k', days: 4, weeks: 12 })
     const spec = tenK.filter(w => w.phase === 'specific').map(w => w.sessions.find(s => s.type === 'tempo')!.blocks)
     expect(spec[0][0]).toEqual({ zone: 'easy', min: 10 })
     expect(spec[0][1]).toEqual({ repeat: 2, blocks: [{ zone: 'moderate', min: 12 }, { zone: 'easy', min: 2 }] })
@@ -86,37 +181,93 @@ describe('buildPlan: shape', () => {
   })
 })
 
+// Every non-start family × days × deadline (shortest finish plan to 29 weeks past it) × reference,
+// low and high, against spec §5.3. Tolerance: 1 minute of rounding on top of each bound.
+const SWEEP_REFS: Reference[] = [
+  { kind: 'race', distanceM: 5000, minutes: 25, date: '2026-10-01' },
+  { kind: 'race', distanceM: 5000, minutes: 15, date: '2026-10-01' },
+  { kind: 'race', distanceM: 10000, minutes: 90, date: '2026-10-01' },
+  { kind: 'race', distanceM: 21097.5, minutes: 150, date: '2026-10-01' },
+  { kind: 'race', distanceM: 1000, minutes: 40, date: '2026-10-01' },
+  ...[1, 10, 20, 25, 40, 50, 180].map(minutes => ({ kind: 'continuous' as const, minutes })),
+  { kind: 'none' }
+]
+
+type Violation = { key: string; detail: string; ref: Reference }
+
+function volumeViolations(goal: RunGoal, days: 2 | 3 | 4): Violation[] {
+  const out: Violation[] = []
+  const f = FAMILIES[goal]
+  const deadlines = goal === 'maintain' ? [undefined] : Array.from({ length: 30 }, (_, k) => f.finishWeeks! + k)
+  for (const weeksAsked of deadlines) {
+    for (const ref of SWEEP_REFS) {
+      const weeks = buildPlan(answers({ goal, days, weeks: weeksAsked, reference: ref }), TODAY, vdotOf(ref)).weeks
+      const fail = (w: PlanWeek | null, rule: string, detail: string) =>
+        out.push({ key: `${goal} ${days}d ${weeksAsked ?? '-'}w${w ? ` week ${w.index}` : ''} ${rule}`, detail, ref })
+      const taper = weeks.filter(w => w.phase === 'taper')
+      const top = weekMinutes(peak(weeks))
+      weeks.forEach((w, i) => {
+        const m = weekMinutes(w)
+        const prev = lastRegularBefore(weeks, i)
+        const long = weekMinutes({ sessions: w.sessions.filter(s => s.type === 'long') })
+        if (w.sessions.some(s => weekMinutes({ sessions: [s] }) > long)) fail(w, 'longest', `Longão ${long}`)
+        if (w.recovery !== (w.index % 4 === 0 && w.phase !== 'taper')) fail(w, 'flag', String(w.recovery))
+        if (prev && m > 1.1 * weekMinutes(prev) + 1) fail(w, '110%', `${m} of ${weekMinutes(prev)}`)
+        if (w.recovery) {
+          if (has(w, 'intervals')) fail(w, 'intervals', '')
+          const r = weekMinutes(prev!)
+          if (m < 0.7 * r - 1 || m > 0.8 * r + 1) fail(w, 'recovery', `${m} of ${r}`)
+        }
+        if (w.phase === 'taper') {
+          const share = w === taper.at(-1) ? 0.6 : 0.75
+          if (Math.abs(m - share * top) > 0.05 * top + 1) fail(w, 'taper', `${m} of peak ${top}, want ${share}`)
+        }
+      })
+      if (goal !== 'maintain' && taper.length !== (goal === '5k' ? 1 : 2)) fail(null, 'taper weeks', String(taper.length))
+    }
+  }
+  return out
+}
+
+// References whose first easy run is the 20 min floor (Decision 4's clamp, `none`, VDOT < 15).
+const LOW_START = (r: Reference) => (r.kind === 'continuous' && r.minutes <= 25) || r.kind === 'none' || (r.kind === 'race' && vdotFrom(r.distanceM, r.minutes) < MIN_VDOT)
+
+// Weeks that cannot meet §5.3 with a 20 min first easy run (short deadlines), because of the floors: quality warm up
+// and cool down 5 min, Intervalado at least 2 repetitions, the continuous Ritmo blocks (20 min in
+// 10k, 30 min in half) cannot be split, Leve at least 10 min, and the Longão at least as long as the
+// quality session. Each one is over its target even with every session at its floor. Reported to the
+// controller; any other violation, or any of these with a higher reference, fails.
+const FLOOR_LIMITED = [
+  // 5k race week: shortest Intervalado 5 + 2 × (3 + 3) + 5 = 22, Longão 22 (+ Leve 10): 44 or 54 min
+  // against 60% of a 49 to 78 min peak.
+  '5k 2d 5w week 5 taper', '5k 2d 6w week 6 taper', '5k 2d 7w week 7 taper', '5k 2d 8w week 8 taper', '5k 2d 9w week 9 taper',
+  '5k 3d 5w week 5 taper', '5k 3d 6w week 6 taper', '5k 3d 7w week 7 taper',
+  // 10k finish plans, race week: Ritmo 12 (22) + Longão 22 + Leve 10 = 54 against 60% of a 73 or 81 peak.
+  '10k 3d 6w week 6 taper', '10k 3d 7w week 7 taper',
+  // half 3 days, 8 weeks: Ritmo 15 (25) + 25 + 10 = 60 against 75% of 73 (recovery) and 60% of 90
+  // (race week); Ritmo 30 continuous (40) + 40 + 10 = 90 over 110% of 80.
+  'half 3d 8w week 4 recovery', 'half 3d 8w week 6 110%', 'half 3d 8w week 8 taper'
+]
+
+describe('buildPlan: volume (spec §5.3, exhaustive)', () => {
+  it.each(VARIANTS.filter(v => v.goal !== 'start'))('$goal, $days days: 110%, recovery 70 to 80%, taper 60% and 75%, Longão the longest', v => {
+    const found = volumeViolations(v.goal, v.days)
+    expect(found.filter(x => !LOW_START(x.ref)).map(x => `${x.key}: ${x.detail} ${JSON.stringify(x.ref)}`)).toEqual([])
+    const prefix = `${v.goal} ${v.days}d `
+    expect([...new Set(found.map(x => x.key))].sort()).toEqual(FLOOR_LIMITED.filter(k => k.startsWith(prefix)).sort())
+  })
+
+  it('the floor-limited weeks happen for every low reference alike, and only those', () => {
+    const lows = SWEEP_REFS.filter(LOW_START)
+    expect(lows).toHaveLength(6)
+    for (const v of VARIANTS.filter(v => v.goal !== 'start')) {
+      const found = volumeViolations(v.goal, v.days)
+      for (const key of new Set(found.map(x => x.key))) expect(found.filter(x => x.key === key), key).toHaveLength(lows.length)
+    }
+  })
+})
+
 describe('buildPlan: volume', () => {
-  it.each(CASES.filter(c => c.goal !== 'start'))('$goal, $days days, $weeks weeks: no week above 110% of the last regular week', c => {
-    const weeks = plan(c)
-    weeks.forEach((w, i) => {
-      const ref = lastRegularBefore(weeks, i)
-      if (ref) expect(weekMinutes(w), `week ${w.index}`).toBeLessThanOrEqual(1.1 * weekMinutes(ref))
-    })
-  })
-
-  it.each(CASES.filter(c => c.goal !== 'start'))('$goal, $days days, $weeks weeks: recovery every 4 weeks, about 75% and no intervals', c => {
-    const weeks = plan(c)
-    weeks.forEach((w, i) => {
-      expect(w.recovery, `week ${w.index}`).toBe(w.index % 4 === 0 && w.phase !== 'taper')
-      if (!w.recovery) return
-      expect(has(w, 'intervals')).toBe(false)
-      const ratio = weekMinutes(w) / weekMinutes(weeks[i - 1])
-      expect(ratio, `week ${w.index}`).toBeGreaterThanOrEqual(0.7)
-      expect(ratio, `week ${w.index}`).toBeLessThanOrEqual(0.8)
-    })
-  })
-
-  it.each(CASES.filter(c => c.goal === '5k' || c.goal === '10k' || c.goal === 'half'))('$goal, $days days, $weeks weeks: taper of 1 or 2 weeks, 25% and 40% less', c => {
-    const weeks = plan(c)
-    const taper = weeks.filter(w => w.phase === 'taper')
-    expect(taper).toHaveLength(c.goal === '5k' ? 1 : 2)
-    expect(weeks.slice(-taper.length)).toEqual(taper)
-    const top = weekMinutes(peak(weeks))
-    expect(weekMinutes(taper.at(-1)!) / top).toBeCloseTo(0.6, 1)
-    if (taper.length === 2) expect(weekMinutes(taper[0]) / top).toBeCloseTo(0.75, 1)
-  })
-
   it('raises easy and long runs 8% a week up to the family caps', () => {
     const easyMin = (w: PlanWeek) => (w.sessions.find(s => s.type === 'easy')!.blocks[0] as { min: number }).min
     const longMin = (w: PlanWeek) => (w.sessions.find(s => s.type === 'long')!.blocks[0] as { min: number }).min
@@ -222,6 +373,15 @@ describe('checkAnswers', () => {
     expect(checkAnswers(answers({ goal: '10k', weeks: 10, reference: recent }), TODAY)).toEqual({ ok: true, weeks: 10 })
   })
 
+  it('clamps the 3-month cutoff to the end of a shorter month', () => {
+    const at = (date: string, today: string) => checkAnswers(answers({ goal: '10k', weeks: 10, reference: { ...RACE, date } }), today)
+    expect(at('2026-02-28', '2026-05-31')).toEqual({ ok: true, weeks: 10 })
+    expect(at('2026-03-01', '2026-05-31')).toEqual({ ok: true, weeks: 10 })
+    expect(at('2026-02-27', '2026-05-31')).toEqual({ ok: false, reason: 'reference_too_old' })
+    expect(at('2028-02-29', '2028-05-31')).toEqual({ ok: true, weeks: 10 })
+    expect(at('2028-02-28', '2028-05-31')).toEqual({ ok: false, reason: 'reference_too_old' })
+  })
+
   it('days outside the family range are not allowed', () => {
     expect(checkAnswers(answers({ goal: '10k', weeks: 10, days: 2 }), TODAY)).toEqual({ ok: false, reason: 'days_not_allowed' })
     expect(checkAnswers(answers({ goal: 'start', weeks: 8, days: 4 }), TODAY)).toEqual({ ok: false, reason: 'days_not_allowed' })
@@ -268,7 +428,22 @@ describe('start', () => {
 
   it('below 20 continuous minutes, starts at week 1', () => {
     expect(plan({ goal: 'start', days: 2, weeks: 8, reference: { kind: 'continuous', minutes: 19 } })).toHaveLength(8)
-    expect(checkAnswers(answers({ goal: 'start', days: 2, weeks: 6 }), TODAY)).toEqual({ ok: false, reason: 'too_short', minWeeks: 8 })
+  })
+
+  it('ignores the deadline: no extra base, no delay, never too short', () => {
+    expect(plan({ goal: 'start', days: 2, weeks: 20 })).toHaveLength(8)
+    expect(checkAnswers(answers({ goal: 'start', days: 2, weeks: 20 }), TODAY)).toEqual({ ok: true, weeks: 8 })
+    expect(checkAnswers(answers({ goal: 'start', days: 2, weeks: 4 }), TODAY)).toEqual({ ok: true, weeks: 8 })
+    expect(checkAnswers(answers({ goal: 'start', days: 3, raceDate: '2027-10-01' }), TODAY)).toEqual({ ok: true, weeks: 8 })
+  })
+
+  it('returns its own copies of the table blocks', () => {
+    const a = plan({ goal: 'start', days: 2 })
+    expect(a[0].sessions[0].blocks).not.toBe(a[0].sessions[1].blocks)
+    const item = a[0].sessions[0].blocks[0] as { repeat: number }
+    item.repeat = 99
+    expect(a[0].sessions[1].blocks[0]).toEqual(rw(8, 1, 2))
+    expect(plan({ goal: 'start', days: 2 })[0].sessions[0].blocks).toEqual([rw(8, 1, 2)])
   })
 })
 
@@ -292,7 +467,8 @@ describe('maintain', () => {
       expect(tempoWeeks(weeks)).toEqual([3, 4, 5, 6, 7, 8])
       for (const w of weeks.filter(w => has(w, 'tempo'))) {
         expect(w.sessions.filter(s => s.type === 'tempo')).toHaveLength(1)
-        expect(w.sessions.find(s => s.type === 'tempo')!.blocks[1]).toEqual({ repeat: 2, blocks: [{ zone: 'moderate', min: 10 }, { zone: 'easy', min: 2 }] })
+        // Recovery weeks may shorten it (fewer repetitions) to reach 75%.
+        if (!w.recovery) expect(w.sessions.find(s => s.type === 'tempo')!.blocks[1]).toEqual({ repeat: 2, blocks: [{ zone: 'moderate', min: 10 }, { zone: 'easy', min: 2 }] })
       }
     }
     expect(tempoWeeks(plan({ goal: 'maintain', days: 2 }))).toEqual([])
@@ -305,6 +481,19 @@ describe('limits (Review Focus 2)', () => {
     const easy = weeks[0].sessions.filter(s => s.type === 'easy')
     expect(easy.length).toBeGreaterThan(0)
     for (const s of easy) expect(s.blocks).toEqual([{ zone: 'easy', min: 20 }])
+  })
+
+  it(`a reference VDOT below ${MIN_VDOT} counts as no VDOT: by feel, lowest start`, () => {
+    const slow: Reference = { kind: 'race', distanceM: 1000, minutes: 40, date: '2026-10-01' }
+    expect(vdotFrom(1000, 40)).toBeLessThan(MIN_VDOT)
+    const r = buildPlan(answers({ goal: '5k', reference: slow }), TODAY, vdotFrom(1000, 40))
+    expect(r.vdot).toBeNull()
+    expect(r.weeks[0].sessions.find(s => s.type === 'easy')!.blocks).toEqual([{ zone: 'easy', min: 20 }])
+    expect(buildPlan(answers({ goal: '5k' }), TODAY, 14.9).vdot).toBeNull()
+    expect(buildPlan(answers({ goal: '5k' }), TODAY, Number.NaN).vdot).toBeNull()
+    expect(buildPlan(answers({ goal: '5k' }), TODAY, 15).vdot).toBe(15)
+    expect(buildPlan(answers({ goal: '5k' }), TODAY, 38.3).vdot).toBe(38.3)
+    expect(buildPlan(answers({ goal: 'start' }), TODAY, null).vdot).toBeNull()
   })
 
   const REFS: Reference[] = [
@@ -321,7 +510,7 @@ describe('limits (Review Focus 2)', () => {
 
   it(`every block within 1 to 300 minutes and every workout within 12 items (${ALL.length} plans)`, () => {
     for (const c of ALL) {
-      const weeks = buildPlan(answers(c), TODAY, c.reference.kind === 'race' ? vdotFrom(c.reference.distanceM, c.reference.minutes) : null).weeks
+      const weeks = buildPlan(answers(c), TODAY, vdotOf(c.reference)).weeks
       for (const w of weeks) {
         expect(Number.isFinite(weekMinutes(w)), name(c)).toBe(true)
         for (const s of w.sessions) {
