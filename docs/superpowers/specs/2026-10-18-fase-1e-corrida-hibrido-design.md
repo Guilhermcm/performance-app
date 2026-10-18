@@ -1,7 +1,8 @@
 # Fase 1e: Corrida e treino híbrido
 
 - **Data:** 2026-10-18
-- **Status:** design aprovado por seções em 2026-10-18; spec em revisão.
+- **Status:** design aprovado por seções e spec aprovada em 2026-10-18; plano da 1e-a em
+  [2026-10-18-fase-1e-a-corrida-plano.md](../plans/2026-10-18-fase-1e-a-corrida-plano.md).
 - **Subetapas:** **1e-a** (questionário, modelos, ritmos, semana híbrida e cartão do dia; só cliente) e
   **1e-b** (check-in de corrida, bônus de detalhado, feed, acompanhamento e sugestões; com uma
   migration). Cada uma com plano e PR próprios. A 1e-b começa depois do merge da 1e-a.
