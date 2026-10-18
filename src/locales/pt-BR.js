@@ -2296,6 +2296,10 @@ export const PT_BR_OVERRIDES = {
   "Your pace today gives about {0} for 5 km.": "Seu ritmo de hoje dá cerca de {0} nos 5 km.",
   "Your pace today gives about {0} for 10 km.": "Seu ritmo de hoje dá cerca de {0} nos 10 km.",
   "Your pace today gives about {0} for the half marathon.": "Seu ritmo de hoje dá cerca de {0} na meia maratona.",
+  // --- run: race plan that starts later (phase 1e-a, R2) ---
+  "Race plan starts on {0}": "O plano da prova começa em {0}",
+  "Until then, run to stay in shape": "Até lá, correr para manter a forma",
+  "Keeps you running until the race plan starts.": "Você continua correndo até o plano da prova começar.",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

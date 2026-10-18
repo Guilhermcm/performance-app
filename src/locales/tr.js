@@ -2905,4 +2905,8 @@ export default {
   "Your pace today gives about {0} for 5 km.": "Bugünkü temponla 5 km’de yaklaşık {0} çıkıyor.",
   "Your pace today gives about {0} for 10 km.": "Bugünkü temponla 10 km’de yaklaşık {0} çıkıyor.",
   "Your pace today gives about {0} for the half marathon.": "Bugünkü temponla yarı maratonda yaklaşık {0} çıkıyor.",
+  // --- run: race plan that starts later (phase 1e-a, R2) ---
+  "Race plan starts on {0}": "Yarış planı {0} tarihinde başlar",
+  "Until then, run to stay in shape": "O zamana kadar formunu korumak için koş",
+  "Keeps you running until the race plan starts.": "Yarış planı başlayana kadar koşmaya devam edersin.",
 }

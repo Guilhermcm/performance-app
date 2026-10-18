@@ -2992,4 +2992,8 @@ export default {
   "Your pace today gives about {0} for 5 km.": "Ваш сьогоднішній темп дає приблизно {0} на 5 км.",
   "Your pace today gives about {0} for 10 km.": "Ваш сьогоднішній темп дає приблизно {0} на 10 км.",
   "Your pace today gives about {0} for the half marathon.": "Ваш сьогоднішній темп дає приблизно {0} на напівмарафоні.",
+  // --- run: race plan that starts later (phase 1e-a, R2) ---
+  "Race plan starts on {0}": "План до забігу починається {0}",
+  "Until then, run to stay in shape": "До того бігати, щоб тримати форму",
+  "Keeps you running until the race plan starts.": "Ви продовжуєте бігати, доки не почнеться план до забігу.",
 }

@@ -1,6 +1,7 @@
 // Names and texts of the running plan (spec §3, §4.2 and §5.2). Each string is a literal t() call
 // so check-source-strings finds it; the pt-BR wording follows the spec's tables.
-import { t } from '../../lib/i18n.js'
+import { t, tn } from '../../lib/i18n.js'
+import { fmtDate } from '../../lib/format.js'
 import type { FitWarning } from './fit'
 import type { Item, Phase, RunGoal, SessionType, Zone } from './types'
 
@@ -63,9 +64,17 @@ export function phaseName(p: Phase): string {
     case 'base': return t('Base')
     case 'build': return t('Build')
     case 'specific': return t('Specific')
-    default: return t('Taper')
+    case 'taper': return t('Taper')
+    // The weeks before a race plan that starts later (spec §5.3), and maintain plans' own name.
+    default: return goalName('maintain')
   }
 }
+
+/** "1 week", "{0} weeks". */
+export const weeksText = (n: number) => (n === 1 ? t('1 week') : tn(n, '{0} weeks', n))
+
+/** A date shown to the person, with the year only when it is not this year's. */
+export const dayText = (iso: string, today: string) => fmtDate(iso, false, iso.slice(0, 4) !== today.slice(0, 4))
 
 // A block in the short form of the day card: minutes and zone, without the unit.
 function blockShort(zone: Zone, min: number): string {

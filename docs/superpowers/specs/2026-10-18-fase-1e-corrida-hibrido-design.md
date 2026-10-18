@@ -162,7 +162,10 @@ soma dos minutos.
   da regra dos 110%. Nas semanas de recuperação, cada tipo de treino usa o seu degrau mais leve. A
   fase específica sempre chega ao treino mais forte dela. Semanas muito pequenas, de planos que
   começam com 20 minutos de Leve, podem ficar abaixo das proporções de polimento e de recuperação,
-  porque os treinos já estão no tamanho mínimo.
+  porque os treinos já estão no tamanho mínimo. Quando o plano da prova começa mais tarde, o
+  questionário mostra a data de início antes de "Criar plano" e oferece, já ligado, seguir um ciclo
+  de `maintain` até lá. Essas semanas vêm primeiro no plano, com a fase `maintain`, e partem do
+  mesmo Leve e do mesmo Longão da primeira semana da prova, para a passagem respeitar os 110%.
 - **Ritmos do plano:** os treinos guardam zonas, não ritmos; a faixa de ritmo é calculada na hora com o
   VDOT atual do plano, então atualizar a referência muda os ritmos de todos os treinos seguintes.
 
@@ -182,7 +185,10 @@ soma dos minutos.
 `S.week` (rotinas de musculação por dia) não muda. `day` é o dia da semana em que a corrida foi
 encaixada naquela semana. O dia da semana segue `getDay()`, 0 = domingo a 6 = sábado, a mesma
 convenção de `S.week` (Decisão 1 do plano da 1e-a; a versão aprovada desta spec dizia 0 = segunda).
-As semanas do plano começam no primeiro dia da semana da pessoa (`S.weekStart`).
+As semanas do plano começam no primeiro dia da semana da pessoa no momento em que o plano foi criado,
+guardado em `weekStart` (planos salvos antes disso usam `S.weekStart`), então mudar o início da semana
+depois não muda os treinos de dia. Num plano `maintain` que começou no meio da semana, `openingDays`
+guarda os dias da primeira semana do calendário; os ciclos seguintes usam a semana inteira.
 
 ### 6.2 Encaixe
 

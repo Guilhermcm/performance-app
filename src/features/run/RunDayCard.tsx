@@ -13,7 +13,7 @@ import { useStore } from '../../store/useStore.js'
 import { moveWarnings, weekWarnings, type FitWarning } from './fit'
 import { fitWarningText, sessionName } from './labels'
 import { weekMinutes } from './models'
-import { currentWeek, moveSession, sessionsOn, strengthWeek, type RunState } from './run-actions'
+import { currentWeek, moveSession, planWeekStart, sessionsOn, strengthWeek, type RunState } from './run-actions'
 import SessionBlocks from './SessionBlocks'
 import type { Session, Week } from './types'
 
@@ -34,18 +34,20 @@ export default function RunDayCard({ day, iso }: { day: number; iso: string }) {
   const plan = S.runPlan
   const week = currentWeek(plan, iso, ws)
   const sessions = sessionsOn(plan, iso, ws)
-  if (!week || !sessions.length) return null
+  if (!plan || !week || !sessions.length) return null
+  // The run's plan week, on the week start the plan was made with (it may differ from S.weekStart).
+  const pws = planWeekStart(plan, ws)
 
   const strength = strengthWeek(S)
   const routines = S.routines || []
   const warnings = weekWarnings(week.sessions, strength, routines)
   const today = todayISO()
-  // Days this week still to come, today included, in the order the week is shown.
-  const open = weekOrder(ws).filter(d => weekDayIso(iso, ws, d) >= today)
+  // Days of the run's plan week still to come, today included, in the plan week's order.
+  const open = weekOrder(pws).filter(d => weekDayIso(iso, pws, d) >= today)
   const targets = (s: Session) => open.filter(d => d !== s.day)
 
   const move = (s: Session, to: number) => {
-    update(draft => { moveSession(draft, week.index, s.id, to) })
+    update(draft => { moveSession(draft, week.index, s.id, to, iso) })
     setMoving(null)
   }
 
@@ -57,7 +59,7 @@ export default function RunDayCard({ day, iso }: { day: number; iso: string }) {
             <h3 id={`run-${iso}-${s.id}`} className="text-[15px] font-semibold">{sessionName(s.type)}</h3>
             <span className="shrink-0 font-mono text-sm text-muted-foreground tabular-nums">{t('{0} min', weekMinutes({ sessions: [s] }))}</span>
           </div>
-          <div className="mt-1"><SessionBlocks session={s} vdot={plan?.vdot} /></div>
+          <div className="mt-1"><SessionBlocks session={s} vdot={plan.vdot} /></div>
           <Warnings list={warnings[s.id]} type={s.type} />
           {targets(s).length > 0 && (
             <Button variant="outline" size="sm" className="mt-2 h-11 w-full rounded-lg"
@@ -68,7 +70,7 @@ export default function RunDayCard({ day, iso }: { day: number; iso: string }) {
 
       <Drawer open={!!moving} onOpenChange={o => { if (!o) setMoving(null) }}>
         <DrawerContent>
-          {moving && <MovePicker session={moving} days={targets(moving)} iso={iso} ws={ws}
+          {moving && <MovePicker session={moving} days={targets(moving)} iso={iso} ws={pws}
             warningsAt={d => moveWarnings(moving.id, d, placementOf(week), week.sessions, { week: strength, routines })}
             onPick={d => move(moving, d)} onCancel={() => setMoving(null)} />}
         </DrawerContent>

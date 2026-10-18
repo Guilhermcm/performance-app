@@ -2916,4 +2916,8 @@ export default {
   "Your pace today gives about {0} for 5 km.": "เพซวันนี้ของคุณได้ราว {0} ที่ 5 กม.",
   "Your pace today gives about {0} for 10 km.": "เพซวันนี้ของคุณได้ราว {0} ที่ 10 กม.",
   "Your pace today gives about {0} for the half marathon.": "เพซวันนี้ของคุณได้ราว {0} ที่ฮาล์ฟมาราธอน",
+  // --- run: race plan that starts later (phase 1e-a, R2) ---
+  "Race plan starts on {0}": "แผนแข่งเริ่ม {0}",
+  "Until then, run to stay in shape": "ระหว่างนี้วิ่งเพื่อรักษาฟอร์ม",
+  "Keeps you running until the race plan starts.": "คุณจะได้วิ่งต่อไปจนกว่าแผนแข่งจะเริ่ม",
 }

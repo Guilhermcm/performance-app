@@ -2991,4 +2991,8 @@ export default {
   "Your pace today gives about {0} for 5 km.": "Twoje dzisiejsze tempo daje około {0} na 5 km.",
   "Your pace today gives about {0} for 10 km.": "Twoje dzisiejsze tempo daje około {0} na 10 km.",
   "Your pace today gives about {0} for the half marathon.": "Twoje dzisiejsze tempo daje około {0} w półmaratonie.",
+  // --- run: race plan that starts later (phase 1e-a, R2) ---
+  "Race plan starts on {0}": "Plan startowy zaczyna się {0}",
+  "Until then, run to stay in shape": "Do tego czasu biegaj, żeby utrzymać formę",
+  "Keeps you running until the race plan starts.": "Biegasz dalej, aż zacznie się plan startowy.",
 }

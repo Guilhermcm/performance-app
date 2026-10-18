@@ -12,7 +12,9 @@ import { useStore } from '../../store/useStore.js'
 import { applyRunPlan, calendarAnswers } from './run-actions'
 import { checkAnswers } from './models'
 import { predictMinutes, vdotFrom } from './vdot'
-import RunQuestionnaire, { formatClock, parseClock } from './RunQuestionnaire'
+import RunQuestionnaire from './RunQuestionnaire'
+import { formatClock, parseClock } from './clock'
+import { dayText } from './labels'
 import type { Answers } from './types'
 
 type AnyState = Record<string, any>
@@ -259,6 +261,30 @@ describe('RunQuestionnaire: today', () => {
     expect(button('Continue').disabled).toBe(false)
   })
 
+  it('rejects a pace faster than 2:30 per km, a likely m:ss typed for h:mm (R2 M5-5)', () => {
+    show()
+    toReference('10 km', '12')
+    fireEvent.click(radio('I have a recent time'))
+    type('Distance (km)', '5')
+    type('Time', '10:00')
+    type('Date', '2026-10-01')
+    expect(screen.getByText('That is 2:00 per km. Check the distance and the time.')).toBeTruthy()
+    expect(button('Continue').disabled).toBe(true)
+    // 2:30 per km itself is accepted.
+    type('Time', '12:30')
+    expect(screen.queryByText(/per km/)).toBeNull()
+    expect(button('Continue').disabled).toBe(false)
+  })
+
+  it('announces an issue politely instead of as an alert (R2 M5-2)', () => {
+    show()
+    toReference('10 km', '12')
+    fireEvent.click(radio('I have a recent time'))
+    type('Distance (km)', '5'); type('Time', '25:00'); type('Date', '2026-06-01')
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(screen.getByRole('status').textContent).toContain('more than 3 months old')
+  })
+
   it('reads a decimal comma in the distance', () => {
     show()
     toReference('Half marathon', '16')
@@ -386,6 +412,8 @@ describe('RunQuestionnaire: days and creating', () => {
     fireEvent.click(button('Redo plan'))
     expect(applyRunPlan).not.toHaveBeenCalled()
     expect(screen.getByText('Replace your current running plan?')).toBeTruthy()
+    // The confirmation takes the focus (R2 M5-1).
+    expect(document.activeElement).toBe(button('Cancel'))
     fireEvent.click(button('Cancel'))
     expect(screen.queryByText('Replace your current running plan?')).toBeNull()
     expect(applyRunPlan).not.toHaveBeenCalled()
@@ -393,5 +421,61 @@ describe('RunQuestionnaire: days and creating', () => {
     fireEvent.click(button('Replace'))
     expect(vi.mocked(applyRunPlan).mock.calls[0][1]).toEqual(initial)
     expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+})
+
+describe('RunQuestionnaire: replacing and starting later (R2)', () => {
+  it('asks before replacing a plan it cannot read, even without earlier answers (M6-1)', () => {
+    setS({ runPlan: { version: 2, weeks: [] } })
+    show()
+    fireEvent.click(radio('Stay in shape')); next()
+    fireEvent.click(radio('I run without stopping')); type('How many minutes?', '30'); next()
+    fireEvent.click(button('Redo plan'))
+    expect(screen.getByText('Replace your current running plan?')).toBeTruthy()
+    expect(applyRunPlan).not.toHaveBeenCalled()
+    fireEvent.click(button('Replace'))
+    expect(applyRunPlan).toHaveBeenCalledTimes(1)
+    expect(S().runPlan.version).toBe(1)
+  })
+
+  // 5 km in 30 weeks: the plan takes 16, so the race plan starts 14 weeks after this week's Monday.
+  const toDays = () => {
+    toReference('5 km', '30')
+    fireEvent.click(radio('I run without stopping')); type('How many minutes?', '30'); next()
+  }
+
+  it('shows when the race plan starts and runs maintain weeks until then by default', () => {
+    show()
+    toDays()
+    expect(screen.getByText('Race plan starts on ' + dayText('2027-01-18', TODAY))).toBeTruthy()
+    const bridge = screen.getByRole('switch', { name: /Until then, run to stay in shape/ })
+    expect(bridge.getAttribute('aria-checked')).toBe('true')
+    expect(screen.getByText('30 weeks')).toBeTruthy()
+    fireEvent.click(button('Create plan'))
+    expect(vi.mocked(applyRunPlan).mock.calls[0][1]).toMatchObject({ goal: '5k', weeks: 30, bridge: true })
+    expect(S().runPlan.startDate).toBe(TODAY)
+    expect(S().runPlan.weeks[0].phase).toBe('maintain')
+    expect(S().runPlan.weeks).toHaveLength(30)
+  })
+
+  it('opting out waits for the race plan, as before', () => {
+    show()
+    toDays()
+    fireEvent.click(screen.getByRole('switch', { name: /Until then, run to stay in shape/ }))
+    expect(screen.getByText('16 weeks')).toBeTruthy()
+    fireEvent.click(button('Create plan'))
+    expect(vi.mocked(applyRunPlan).mock.calls[0][1]).toMatchObject({ bridge: false })
+    expect(S().runPlan.startDate).toBe('2027-01-18')
+    expect(S().runPlan.weeks).toHaveLength(16)
+  })
+
+  it('says nothing about starting later when the race plan starts at once', () => {
+    show()
+    toReference('5 km', '12')
+    fireEvent.click(radio('I run without stopping')); type('How many minutes?', '30'); next()
+    expect(screen.queryByText(/Race plan starts on/)).toBeNull()
+    expect(screen.queryByRole('switch')).toBeNull()
+    fireEvent.click(button('Create plan'))
+    expect('bridge' in vi.mocked(applyRunPlan).mock.calls[0][1]).toBe(false)
   })
 })

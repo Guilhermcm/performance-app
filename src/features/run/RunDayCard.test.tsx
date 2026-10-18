@@ -126,4 +126,18 @@ describe('RunDayCard', () => {
     expect(screen.getByRole('heading', { name: 'Long run' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: /Change day/ })).toBeNull()
   })
+
+  it('maps dates with the week start the plan was made with, not the one of now (R2 M4-2)', () => {
+    // Made with Monday weeks: Sunday the 18th is week 1's long run. The person now starts weeks on Sunday.
+    setS({ weekStart: 0, runPlan: { ...planWith([long(SUN), intervals(WED), tempo(FRI)]), weekStart: 1 } })
+    render(<RunDayCard day={SUN} iso="2026-10-18" />)
+    expect(screen.getByRole('heading', { name: 'Long run' })).toBeTruthy()
+    cleanup()
+    // Change day offers the rest of the plan's week (to Sunday the 18th), not the Sunday week.
+    render(<RunDayCard day={WED} iso="2026-10-14" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Change day: Interval run' }))
+    const options = within(screen.getByRole('dialog')).getAllByRole('button').filter(b => b.dataset.day != null)
+    expect(options.map(b => b.dataset.day)).toEqual([String(THU), String(FRI), '6', String(SUN)])
+  })
 })
+

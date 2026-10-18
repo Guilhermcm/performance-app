@@ -2905,4 +2905,8 @@ export default {
   "Your pace today gives about {0} for 5 km.": "आज की आपकी पेस से 5 किमी में लगभग {0} बनता है।",
   "Your pace today gives about {0} for 10 km.": "आज की आपकी पेस से 10 किमी में लगभग {0} बनता है।",
   "Your pace today gives about {0} for the half marathon.": "आज की आपकी पेस से हाफ मैराथन में लगभग {0} बनता है।",
+  // --- run: race plan that starts later (phase 1e-a, R2) ---
+  "Race plan starts on {0}": "रेस प्लान {0} से शुरू होगा",
+  "Until then, run to stay in shape": "तब तक फ़िट रहने के लिए दौड़ें",
+  "Keeps you running until the race plan starts.": "रेस प्लान शुरू होने तक आप दौड़ते रहेंगे।",
 }

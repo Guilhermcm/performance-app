@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { applyRunPlan, calendarAnswers, currentWeek, endRunPlan, moveSession, refitFuture, sessionsOn, type RunState } from './run-actions'
+import { applyRunPlan, calendarAnswers, currentWeek, endRunPlan, moveSession, raceStartOf, raceWeeksStart, refitFuture, sessionsOn, type RunState } from './run-actions'
 import { fitWeek } from './fit'
 import type { Answers, RunPlan } from './types'
 
@@ -284,9 +284,13 @@ describe('currentWeek and sessionsOn', () => {
     expect(sessionsOn(plan, sunday, 1).map(s => s.id)).toEqual([plan.weeks[0].sessions.find(s => s.type === 'long')!.id])
     expect(currentWeek(plan, sunday, 1)?.index).toBe(1)
     expect(currentWeek(plan, addDays(MONDAY, 7), 1)?.index).toBe(2)
-    // The same plan read with a Sunday week: that Sunday opens week 2.
-    expect(currentWeek(plan, sunday, 0)?.index).toBe(2)
-    expect(sessionsOn(plan, sunday, 0).map(s => s.id)).toEqual([plan.weeks[1].sessions.find(s => s.type === 'long')!.id])
+    // The plan keeps the week start it was made with: read with a Sunday week, Sunday stays in week 1.
+    expect(plan.weekStart).toBe(1)
+    expect(currentWeek(plan, sunday, 0)?.index).toBe(1)
+    // A plan saved before RunPlan.weekStart maps with the week start it is read with: that Sunday opens week 2.
+    const old = { ...plan, weekStart: undefined }
+    expect(currentWeek(old, sunday, 0)?.index).toBe(2)
+    expect(sessionsOn(old, sunday, 0).map(s => s.id)).toEqual([plan.weeks[1].sessions.find(s => s.type === 'long')!.id])
     for (const w of plan.weeks) {
       const days = w.sessions.map(s => s.day)
       const iso = addDays(MONDAY, (w.index - 1) * 7 + ((days[0] - MON + 7) % 7))
@@ -305,5 +309,111 @@ describe('currentWeek and sessionsOn', () => {
     expect(plan.weeks).toHaveLength(8)
     expect(currentWeek(plan, addDays(MONDAY, 8 * 7), 1)).toBe(plan.weeks[0])
     expect(currentWeek(plan, addDays(MONDAY, 11 * 7), 1)).toBe(plan.weeks[3])
+  })
+})
+
+describe('a race plan that starts later (spec §5.3, R2 I6-1)', () => {
+  // 5k: at most 16 weeks; the race is on the Sunday 30 weeks out, so 14 weeks wait.
+  const raceDate = addDays(MONDAY, 30 * 7 - 1)
+  const fiveK = (extra: Partial<Answers> = {}): Answers =>
+    ({ goal: '5k', goalType: 'finish', raceDate, reference: { kind: 'continuous', minutes: 30 }, days: 3, longDay: SUN, ...extra })
+
+  it('says when the race plan starts and how many weeks wait before it', () => {
+    expect(raceStartOf(fiveK(), MONDAY, 1)).toEqual({ raceStart: addDays(MONDAY, 14 * 7), waitWeeks: 14 })
+    expect(raceStartOf(tenK({ weeks: 14 }), MONDAY, 1)).toEqual({ raceStart: MONDAY, waitWeeks: 0 })
+  })
+
+  it('with the bridge, runs maintain weeks from week 1 and still ends in the race week', () => {
+    const plan = applyRunPlan(state(1), fiveK({ bridge: true }), MONDAY)
+    expect(plan.startDate).toBe(MONDAY)
+    expect(plan.weeks).toHaveLength(30)
+    expect(plan.weeks.slice(0, 14).every(w => w.phase === 'maintain')).toBe(true)
+    expect(plan.weeks[14].phase).toBe('base')
+    expect(plan.weeks.map(w => w.index)).toEqual(Array.from({ length: 30 }, (_, i) => i + 1))
+    expect(plan.weeks[14].sessions.map(s => s.id)).toEqual(['w15-s1', 'w15-s2', 'w15-s3'])
+    expect(new Set(plan.weeks.flatMap(w => w.sessions.map(s => s.id))).size).toBe(90)
+    // Before the race weeks, today is in a bridge week.
+    expect(currentWeek(plan, MONDAY, 1)).toBe(plan.weeks[0])
+    expect(currentWeek(plan, MONDAY, 1)!.phase).toBe('maintain')
+    expect(raceWeeksStart(plan, 1)).toBe(addDays(MONDAY, 14 * 7))
+    const last = plan.weeks[29]
+    expect(currentWeek(plan, raceDate, 1)).toBe(last)
+    expect(last.phase).toBe('taper')
+    expect(currentWeek(plan, addDays(raceDate, 1), 1)).toBeNull()
+  })
+
+  it('a bridge started on a Friday keeps week 1 to the days left (Decision 2)', () => {
+    const plan = applyRunPlan(state(0), fiveK({ bridge: true }), FRIDAY)
+    // A Sunday week: Friday and Saturday are left, too few for 3 runs, so week 1 is next week.
+    expect(plan.startDate).toBe(addDays(FRIDAY, 2))
+    expect(plan.weeks[0].phase).toBe('maintain')
+    expect(currentWeek(plan, raceDate, 0)).toBe(plan.weeks.at(-1))
+  })
+
+  it('without the bridge, waits as before', () => {
+    for (const bridge of [false, undefined]) {
+      const plan = applyRunPlan(state(1), fiveK({ bridge }), MONDAY)
+      expect(plan.weeks).toHaveLength(16)
+      expect(plan.startDate).toBe(addDays(MONDAY, 14 * 7))
+      expect(currentWeek(plan, MONDAY, 1)).toBeNull()
+      expect(raceWeeksStart(plan, 1)).toBeNull()
+    }
+  })
+
+  it('no bridge when the race plan starts at once', () => {
+    const plan = applyRunPlan(state(1), tenK({ weeks: 14, bridge: true }), MONDAY)
+    expect(plan.weeks).toHaveLength(14)
+    expect(plan.weeks.some(w => w.phase === 'maintain')).toBe(false)
+  })
+})
+
+describe('the plan keeps its week start (R2 M4-2)', () => {
+  it('a Sunday race stays in the last week after the person switches to a Sunday week', () => {
+    const raceDate = addDays(MONDAY, 12 * 7 - 1) // a Sunday, 12 weeks out
+    const S = state(1)
+    const plan = applyRunPlan(S, tenK({ weeks: undefined, raceDate }), MONDAY)
+    const last = plan.weeks.at(-1)!
+    const raceRuns = sessionsOn(plan, raceDate, 1)
+    S.weekStart = 0
+    expect(currentWeek(plan, raceDate, 0)).toBe(last)
+    expect(sessionsOn(plan, raceDate, 0)).toEqual(raceRuns)
+    // Every session still falls on the same date.
+    for (let i = 0; i < 12 * 7; i++) {
+      const iso = addDays(MONDAY, i)
+      expect(sessionsOn(plan, iso, 0)).toEqual(sessionsOn(plan, iso, 1))
+    }
+    // refitFuture counts weeks with the plan's start too: on the race Sunday nothing after it moves.
+    const before = clone(plan.weeks)
+    refitFuture(S, raceDate)
+    expect(plan.weeks).toEqual(before)
+  })
+})
+
+describe('a maintain plan begun mid-week (R2 M4-4)', () => {
+  it('keeps week 1 to the days left only in the first calendar week; later cycles use every day', () => {
+    // Thursday in a Monday week: Thu to Sun left, Monday has legs.
+    const S = state(1)
+    const plan = applyRunPlan(S, { goal: 'maintain', reference: { kind: 'continuous', minutes: 30 }, days: 3, longDay: SUN }, THURSDAY)
+    const first = currentWeek(plan, THURSDAY, 1)!
+    expect(first.sessions.every(s => [THU, FRI, SAT, SUN].includes(s.day))).toBe(true)
+    const again = currentWeek(plan, addDays(THURSDAY, 8 * 7), 1)!
+    expect(again).toBe(plan.weeks[0])
+    const free = fitWeek(plan.weeks[0].sessions, { week: { [MON]: ['leg'], [WED]: ['upper'] }, routines: [LEG, UPPER], longDay: SUN }).placement
+    expect(Object.fromEntries(again.sessions.map(s => [s.id, s.day]))).toEqual(free)
+    // A move in the first calendar week changes that week only; in a later cycle, the template.
+    const id = first.sessions.find(s => s.type !== 'long')!.id
+    const to = [THU, FRI, SAT].find(d => !first.sessions.some(s => s.day === d))!
+    const templateDay = plan.weeks[0].sessions.find(s => s.id === id)!.day
+    moveSession(S, 1, id, to, THURSDAY)
+    expect(currentWeek(S.runPlan, THURSDAY, 1)!.sessions.find(s => s.id === id)!.day).toBe(to)
+    expect(S.runPlan!.weeks[0].sessions.find(s => s.id === id)!.day).toBe(templateDay)
+    moveSession(S, 1, id, TUE, addDays(THURSDAY, 8 * 7))
+    expect(S.runPlan!.weeks[0].sessions.find(s => s.id === id)!.day).toBe(TUE)
+    expect(currentWeek(S.runPlan, THURSDAY, 1)!.sessions.find(s => s.id === id)!.day).toBe(to)
+  })
+
+  it('a maintain plan begun on Monday has no opening days', () => {
+    const plan = applyRunPlan(state(1), { goal: 'maintain', reference: { kind: 'continuous', minutes: 30 }, days: 3, longDay: SUN }, MONDAY)
+    expect(plan.openingDays).toBeUndefined()
   })
 })

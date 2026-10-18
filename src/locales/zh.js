@@ -2905,4 +2905,8 @@ export default {
   "Your pace today gives about {0} for 5 km.": "按你今天的配速，5 公里大约 {0}。",
   "Your pace today gives about {0} for 10 km.": "按你今天的配速，10 公里大约 {0}。",
   "Your pace today gives about {0} for the half marathon.": "按你今天的配速，半程马拉松大约 {0}。",
+  // --- run: race plan that starts later (phase 1e-a, R2) ---
+  "Race plan starts on {0}": "比赛计划从 {0} 开始",
+  "Until then, run to stay in shape": "在此之前，跑步保持状态",
+  "Keeps you running until the race plan starts.": "在比赛计划开始前继续跑步。",
 }

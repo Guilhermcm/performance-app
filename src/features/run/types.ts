@@ -22,7 +22,8 @@ export type SessionType = 'runwalk' | 'easy' | 'long' | 'tempo' | 'intervals'
 // 6 = Saturday (getDay()).
 export type Session = { id: string; type: SessionType; blocks: Item[]; day: number }
 
-export type Phase = 'base' | 'build' | 'specific' | 'taper'
+// `maintain`: the weeks of a maintain cycle run before a race plan that starts later (spec §5.3).
+export type Phase = 'base' | 'build' | 'specific' | 'taper' | 'maintain'
 
 export type Week = { index: number; phase: Phase; recovery: boolean; sessions: Session[] }
 
@@ -37,6 +38,8 @@ export type Answers = {
   reference: Reference
   days: 2 | 3 | 4
   longDay: number
+  // Race goals: run a maintain cycle until a race plan that starts later begins (spec §5.3).
+  bridge?: boolean
 }
 
 export type RunPlan = {
@@ -50,6 +53,12 @@ export type RunPlan = {
   vdot?: number
   vdotSource: 'race' | 'run' | null
   vdotDate?: string
+  // The person's week start when the plan was made; dates map to plan weeks with it, so changing
+  // S.weekStart later does not move sessions. Missing in plans saved before it: S.weekStart.
+  weekStart?: 0 | 1
+  // Maintain plans whose week 1 started mid-week: the days of week 1's sessions in that first
+  // calendar week only (Decision 2). Later cycles use the sessions' own days.
+  openingDays?: Record<string, number>
   weeks: Week[]
   dismissed: Record<string, string>
 }

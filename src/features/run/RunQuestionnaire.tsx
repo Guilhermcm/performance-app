@@ -10,14 +10,17 @@ import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, D
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Progress } from '@/components/ui/progress'
+import { Switch } from '@/components/ui/switch'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { cn } from '@/lib/utils'
 import { dateLocale, t, tn } from '../../lib/i18n.js'
-import { DAYN, fmtDate, todayISO, weekOrder, weekStartOf } from '../../lib/format.js'
+import { DAYN, todayISO, weekOrder, weekStartOf } from '../../lib/format.js'
 import { useStore } from '../../store/useStore.js'
-import { FAMILIES, buildPlan, checkAnswers, weekMinutes, type CheckResult } from './models'
-import { applyRunPlan, calendarAnswers, type RunState } from './run-actions'
-import { goalName, sessionName } from './labels'
+import { formatClock, parseClock } from './clock'
+import { addDays, utc } from './dates'
+import { FAMILIES, buildBridge, buildPlan, checkAnswers, isRace, weekMinutes, type CheckResult } from './models'
+import { applyRunPlan, calendarAnswers, raceStartOf, type RunState } from './run-actions'
+import { dayText, goalName, sessionName, weeksText } from './labels'
 import { formatPace, predictMinutes, vdotFrom } from './vdot'
 import type { Answers, GoalType, Reference, RunGoal } from './types'
 
@@ -25,8 +28,6 @@ import type { Answers, GoalType, Reference, RunGoal } from './types'
 type Props = { open: boolean; onOpenChange: (open: boolean) => void; initial?: Answers; onCreated?: () => void }
 
 const GOALS: RunGoal[] = ['start', '5k', '10k', 'half', 'maintain']
-type RaceGoal = '5k' | '10k' | 'half'
-const isRace = (g: RunGoal | null): g is RaceGoal => g === '5k' || g === '10k' || g === 'half'
 
 // Spec §3: a race date from today + 4 weeks to today + 52 weeks, or a number of weeks in the same
 // range; a race reference of 1 to 42.195 km in 3 min to 6 h; 1 to 180 continuous minutes.
@@ -47,30 +48,7 @@ const PACE_FASTEST = 2.5
 // From 40 continuous minutes, the start plan would be its last week only.
 const START_ENOUGH = 40
 
-const DAY_MS = 86400000
-const utc = (iso: string) => {
-  const [y, m, d] = iso.split('-').map(Number)
-  return Date.UTC(y, m - 1, d)
-}
-const addDays = (iso: string, n: number) => new Date(utc(iso) + n * DAY_MS).toISOString().slice(0, 10)
 const isIso = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(utc(s))
-
-/** A time typed as h:mm:ss or m:ss, in minutes; null when it is not one. */
-export function parseClock(text: string): number | null {
-  const m = /^(\d{1,3}):([0-5]\d)(?::([0-5]\d))?$/.exec(text.trim())
-  if (!m) return null
-  const [a, b] = [Number(m[1]), Number(m[2])]
-  return m[3] === undefined ? a + b / 60 : a * 60 + b + Number(m[3]) / 60
-}
-
-/** Minutes as h:mm:ss from one hour, m:ss below it, to the second. */
-export function formatClock(minutes: number): string {
-  const total = Math.round(minutes * 60)
-  const h = Math.floor(total / 3600)
-  const m = Math.floor((total % 3600) / 60)
-  const ss = String(total % 60).padStart(2, '0')
-  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`
-}
 
 // Distances read with a decimal comma or point and are shown in the app language's way.
 const formatKm = (km: number) => new Intl.NumberFormat(dateLocale(), { maximumFractionDigits: 4, useGrouping: false }).format(km)
@@ -80,7 +58,6 @@ const parseDecimal = (s: string) => {
 }
 const parseWhole = (s: string) => (/^\d+$/.test(s.trim()) ? Number(s.trim()) : null)
 
-const weeksText = (n: number) => (n === 1 ? t('1 week') : tn(n, '{0} weeks', n))
 const weekdayShort = (d: number) => new Date(Date.UTC(2026, 0, 4 + d)).toLocaleDateString(dateLocale(), { weekday: 'short', timeZone: 'UTC' })
 
 // What is being typed; the answers come out of it once every field reads.
@@ -100,6 +77,8 @@ type Draft = {
   longDay: number
   // The person took the shorter plan to finish a race whose deadline is under the minimum.
   shortOk: boolean
+  // Run a maintain cycle until a race plan that starts later begins (spec §5.3); on by default.
+  bridge: boolean
 }
 
 function draftOf(a?: Answers): Draft {
@@ -118,7 +97,8 @@ function draftOf(a?: Answers): Draft {
     minutes: r?.kind === 'continuous' ? String(r.minutes) : '',
     days: a?.days ?? 3,
     longDay: a?.longDay ?? 0,
-    shortOk: false
+    shortOk: false,
+    bridge: a?.bridge ?? true
   }
 }
 
@@ -240,6 +220,11 @@ function Body({ initial, onDone, onCreated }: { initial?: Answers; onDone: () =>
   const [step, setStep] = useState(0)
   const [dir, setDir] = useState(1)
   const [confirming, setConfirming] = useState(false)
+  // Replacing a plan always asks first, an unreadable one included (spec §3).
+  const hasPlan = useStore((s: { S: RunState }) => !!s.S.runPlan)
+  const replacing = !!initial || hasPlan
+  const cancelReplace = useRef<HTMLButtonElement>(null)
+  useEffect(() => { if (confirming) cancelReplace.current?.focus() }, [confirming])
   const id = useId()
   const title = useRef<HTMLHeadingElement>(null)
   const moved = useRef(false)
@@ -292,10 +277,15 @@ function Body({ initial, onDone, onCreated }: { initial?: Answers; onDone: () =>
     setConfirming(false)
   }
 
+  // A race plan that starts later: when, and whether the weeks until then run a maintain cycle.
+  const wait = last && answers && isRace(answers.goal) && settled(fullCheck) ? raceStartOf(answers, today, ws) : null
+  const waiting = !!wait && wait.waitWeeks > 0
+
   const create = () => {
     if (!answers || !canGo) return
-    if (initial && !confirming) { setConfirming(true); return }
-    useStore.getState().update((S: RunState) => { applyRunPlan(S, answers, today) })
+    if (replacing && !confirming) { setConfirming(true); return }
+    const final: Answers = waiting ? { ...answers, bridge: d.bridge } : answers
+    useStore.getState().update((S: RunState) => { applyRunPlan(S, final, today) })
     onDone()
     onCreated?.()
   }
@@ -314,7 +304,7 @@ function Body({ initial, onDone, onCreated }: { initial?: Answers; onDone: () =>
     let use: () => void
     if (d.deadline === 'date' && partial) {
       const date = addDays(d.raceDate, 7 * (min - (counted(partial).weeks ?? min)))
-      label = fmtDate(date, false, date.slice(0, 4) !== today.slice(0, 4))
+      label = dayText(date, today)
       use = () => set({ raceDate: date })
     } else {
       label = weeksText(min)
@@ -380,7 +370,7 @@ function Body({ initial, onDone, onCreated }: { initial?: Answers; onDone: () =>
         : issue.reason === 'reference_too_old' ? tooOld()
           : null
   const issueBox = issueBody && (
-    <div role="alert" className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">{issueBody}</div>
+    <div role="status" aria-live="polite" className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">{issueBody}</div>
   )
 
   // ---- steps ----
@@ -527,7 +517,21 @@ function Body({ initial, onDone, onCreated }: { initial?: Answers; onDone: () =>
               </ToggleGroup>
             </div>
           )}
-          {!issue && answers && settled(fullCheck) && <Preview answers={counted(answers)} today={today} />}
+          {waiting && wait && (
+            <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
+              <p className="text-[15px] font-semibold">{t('Race plan starts on {0}', dayText(wait.raceStart, today))}</p>
+              <div className="flex items-center justify-between gap-3">
+                <Label htmlFor={id + '-bridge'} className="flex flex-col items-start gap-1 text-[15px] font-normal">
+                  <span>{t('Until then, run to stay in shape')}</span>
+                  <span className="text-sm text-muted-foreground">{t('Keeps you running until the race plan starts.')}</span>
+                </Label>
+                <Switch id={id + '-bridge'} checked={d.bridge} onCheckedChange={v => set({ bridge: v })} />
+              </div>
+            </div>
+          )}
+          {!issue && answers && settled(fullCheck) && (
+            <Preview answers={counted(answers)} today={today} bridge={waiting && d.bridge && wait ? { from: answers, weeks: wait.waitWeeks } : null} />
+          )}
         </div>
       )
     }
@@ -542,7 +546,7 @@ function Body({ initial, onDone, onCreated }: { initial?: Answers; onDone: () =>
           <Button type="button" variant="ghost" size="icon" aria-label={t('Back')}
             className={index === 0 ? 'invisible size-11 rounded-full' : 'size-11 rounded-full'}
             disabled={index === 0} onClick={() => go(index - 1)}>
-            <ArrowLeft className="size-5" />
+            <ArrowLeft className="size-5 rtl:rotate-180" />
           </Button>
           <Progress value={((index + 1) / steps.length) * 100} aria-label={t('Step {0} of {1}', index + 1, steps.length)}
             className="h-1.5 flex-1 bg-muted [&>[data-slot=progress-indicator]]:duration-300 [&>[data-slot=progress-indicator]]:ease-out motion-reduce:[&>[data-slot=progress-indicator]]:transition-none" />
@@ -571,13 +575,13 @@ function Body({ initial, onDone, onCreated }: { initial?: Answers; onDone: () =>
               </p>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <Button type="button" variant="outline" className="h-12 rounded-xl" onClick={() => setConfirming(false)}>{t('Cancel')}</Button>
+              <Button ref={cancelReplace} type="button" variant="outline" className="h-12 rounded-xl" onClick={() => setConfirming(false)}>{t('Cancel')}</Button>
               <Button type="button" className="h-12 rounded-xl font-semibold" onClick={create}>{t('Replace')}</Button>
             </div>
           </div>
         ) : (
           <Button type="submit" form={id + '-form'} className="h-12 rounded-xl text-[15px] font-semibold" disabled={!canGo}>
-            {!last ? t('Continue') : initial ? t('Redo plan') : t('Create plan')}
+            {!last ? t('Continue') : replacing ? t('Redo plan') : t('Create plan')}
           </Button>
         )}
       </DrawerFooter>
@@ -586,10 +590,13 @@ function Body({ initial, onDone, onCreated }: { initial?: Answers; onDone: () =>
 }
 
 // What the answers build: the plan length and the first week's runs. `answers` are as counted.
-function Preview({ answers, today }: { answers: Answers; today: string }) {
+// With `bridge`, the maintain weeks before the race plan come first (applyRunPlan's order).
+type BridgePreview = { from: Answers; weeks: number } | null
+function Preview({ answers, today, bridge }: { answers: Answers; today: string; bridge: BridgePreview }) {
   const labelId = useId()
   const ref = answers.reference
-  const { weeks } = buildPlan(answers, today, ref.kind === 'race' ? vdotFrom(ref.distanceM, ref.minutes) : null)
+  const built = buildPlan(answers, today, ref.kind === 'race' ? vdotFrom(ref.distanceM, ref.minutes) : null)
+  const weeks = bridge ? [...buildBridge(bridge.from, bridge.weeks, built.vdot), ...built.weeks] : built.weeks
   const first = weeks[0]
   if (!first) return null
   return (

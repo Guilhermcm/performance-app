@@ -14,13 +14,11 @@ vi.mock('./run-actions', async importOriginal => {
   return { ...real, refitFuture: vi.fn(real.refitFuture) }
 })
 // The questionnaire has its own tests; here it stands in as a dialog that applies fixed answers.
-vi.mock('./RunQuestionnaire', async importOriginal => {
-  const real = await importOriginal<typeof import('./RunQuestionnaire')>()
+vi.mock('./RunQuestionnaire', async () => {
   const { useStore } = await import('../../store/useStore.js')
   const { applyRunPlan } = await import('./run-actions')
   type P = { open: boolean; onOpenChange: (o: boolean) => void; initial?: unknown; onCreated?: () => void }
   return {
-    ...real,
     default: ({ open, onOpenChange, initial, onCreated }: P) => {
       if (!open) return null
       h.initial = initial
@@ -40,7 +38,7 @@ import { useStore } from '../../store/useStore.js'
 import { useProfile } from '../profile/useProfile'
 import { fmtDate } from '../../lib/format.js'
 import { refitFuture } from './run-actions'
-import { formatClock } from './RunQuestionnaire'
+import { formatClock } from './clock'
 import { formatPaceRange, predictMinutes, zonePaces } from './vdot'
 import RunPlanScreen from './RunPlanScreen'
 import type { Phase, RunPlan, Session, Week } from './types'
@@ -188,4 +186,14 @@ describe('RunPlanScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Update goal to 4' }))
     expect(save).toHaveBeenCalledWith({ days_per_week: 4 })
   })
+
+  it('with maintain weeks before the race plan, names them and says when the race plan starts (R2 I6-1)', () => {
+    const bridged = plan({ weeks: weeks().map((w, i) => (i < 2 ? { ...w, phase: 'maintain' as Phase, recovery: false } : w)) })
+    setS({ runPlan: bridged })
+    render(<RunPlanScreen />)
+    expect(screen.getByText('Race plan starts on ' + fmtDate('2026-10-26'))).toBeTruthy()
+    const phases = within(region('Phases')).getAllByRole('listitem').map(li => li.textContent)
+    expect(phases[0]).toBe('Stay in shape2 weeks')
+  })
 })
+

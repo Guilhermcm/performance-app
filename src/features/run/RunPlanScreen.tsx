@@ -10,22 +10,21 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { cn } from '@/lib/utils'
-import { t, tn } from '../../lib/i18n.js'
+import { t } from '../../lib/i18n.js'
 import { DAYN, todayISO, weekOrder, weekStartOf } from '../../lib/format.js'
 import { useStore } from '../../store/useStore.js'
-import { goalName, phaseName, sessionName, zoneFeel, zoneName } from './labels'
-import { weekMinutes } from './models'
-import { currentWeek, endRunPlan, isReadable, refitFuture, type RunState } from './run-actions'
-import { DaysGoalOffer, dayText } from './RunPlanEntry'
-import RunQuestionnaire, { formatClock } from './RunQuestionnaire'
+import { formatClock } from './clock'
+import DaysGoalOffer from './DaysGoalOffer'
+import { dayText, goalName, phaseName, sessionName, weeksText, zoneFeel, zoneName } from './labels'
+import { isRace, weekMinutes } from './models'
+import { currentWeek, endRunPlan, isReadable, raceWeeksStart, refitFuture, type RunState } from './run-actions'
+import RunQuestionnaire from './RunQuestionnaire'
 import SessionBlocks, { zonesOf } from './SessionBlocks'
 import { formatPaceRange, predictMinutes, zonePaces } from './vdot'
 import type { Phase, RunPlan, Week } from './types'
 
 type AppStore = { S: RunState; update: (mut: (S: RunState) => void) => void }
 
-const weeksText = (n: number) => (n === 1 ? t('1 week') : tn(n, '{0} weeks', n))
-const RACES = ['5k', '10k', 'half']
 
 // Consecutive weeks of the same phase, in order.
 function phaseRuns(weeks: Week[]): { phase: Phase; count: number }[] {
@@ -148,15 +147,17 @@ export default function RunPlanScreen() {
 }
 
 function Tags({ plan, today, ws }: { plan: RunPlan; today: string; ws: 0 | 1 }) {
-  const race = RACES.includes(plan.goal)
+  const race = isRace(plan.goal)
   const tags = [goalName(plan.goal)]
   if (race) tags.push(plan.goalType === 'time' && plan.targetTime ? t('Target {0}', formatClock(plan.targetTime)) : t('Finish the race'))
   if (plan.raceDate) tags.push(t('Race on {0}', dayText(plan.raceDate, today)))
   else if (race && plan.answers?.weeks) tags.push(weeksText(plan.answers.weeks))
   else if (plan.goal === 'maintain') tags.push(t('8-week cycle that starts over'))
   else tags.push(weeksText(plan.weeks.length))
+  const raceStart = raceWeeksStart(plan, ws)
   if (today < plan.startDate) tags.push(t('Starts on {0}', dayText(plan.startDate, today)))
   else if (!currentWeek(plan, today, ws)) tags.push(t('Plan finished'))
+  else if (raceStart && today < raceStart) tags.push(t('Race plan starts on {0}', dayText(raceStart, today)))
   return (
     <ul className="mt-3 flex list-none flex-wrap items-center gap-2">
       {tags.map(tag => <li key={tag} className="rounded-full bg-muted px-3 py-1.5 text-sm font-medium tabular-nums">{tag}</li>)}
@@ -171,8 +172,9 @@ function WeekList({ plan, today, ws }: { plan: RunPlan; today: string; ws: 0 | 1
     <Part id="weeks" title={t('Weeks')}>
       <ol className="flex list-none flex-col gap-2">
         {plan.weeks.map(w => {
-          const now = w === current
-          const sessions = [...w.sessions].sort((a, b) => order.indexOf(a.day) - order.indexOf(b.day))
+          // By index: a maintain plan's first calendar week is a copy with its opening days.
+          const now = w.index === current?.index
+          const sessions = [...(now && current ? current : w).sessions].sort((a, b) => order.indexOf(a.day) - order.indexOf(b.day))
           return (
             <li key={w.index} data-week={w.index} aria-current={now ? 'true' : undefined}
               className={cn('rounded-2xl border bg-card px-4 py-3', now ? 'border-2 border-primary' : 'border-border')}>

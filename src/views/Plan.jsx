@@ -155,7 +155,7 @@ export default function Plan() {
             <div className="row between">
               <div className="tt">{t(DAYN[d])}</div>
               <button className="iconbtn sm" aria-label={t('Add routine')} title={t('Add routine')}
-                style={{ width: 30, height: 30, margin: '-5px 3px', fontSize: 15 }}
+                style={{ width: 44, height: 44, margin: '-12px -4px', fontSize: 15 }}
                 onClick={() => dayAssignSheet(d)}><Icon name="plus" /></button>
             </div>
             <RunDayCard day={d} iso={iso} />

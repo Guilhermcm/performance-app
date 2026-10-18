@@ -113,6 +113,14 @@ describe('Plan: run cards in the week schedule', () => {
     })
   }
 
+  it('during the maintain weeks before a race plan, the entry says when the race plan starts (R2 I6-1)', () => {
+    const p = plan()
+    setS({ runPlan: { ...p, goal: '10k', weeks: p.weeks.map(w => ({ ...w, phase: 'maintain' })).concat([{ index: 3, phase: 'base', recovery: false, sessions: [] }]) } })
+    render(<Plan />)
+    const entry = screen.getByRole('button', { name: /Running plan/ })
+    expect(entry.textContent).toContain('Stay in shape · Race plan starts on ' + fmtDate('2026-10-19'))
+  })
+
   it('says when the plan starts and shows no runs before it', () => {
     setS({ runPlan: plan({ startDate: '2026-12-07' }) })
     render(<Plan />)

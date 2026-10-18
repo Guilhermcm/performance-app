@@ -2958,4 +2958,8 @@ export default {
   "Your pace today gives about {0} for 5 km.": "وتيرتك اليوم تعطي نحو {0} في 5 كم.",
   "Your pace today gives about {0} for 10 km.": "وتيرتك اليوم تعطي نحو {0} في 10 كم.",
   "Your pace today gives about {0} for the half marathon.": "وتيرتك اليوم تعطي نحو {0} في نصف الماراثون.",
+  // --- run: race plan that starts later (phase 1e-a, R2) ---
+  "Race plan starts on {0}": "تبدأ خطة السباق في {0}",
+  "Until then, run to stay in shape": "حتى ذلك الحين، اجرِ للحفاظ على لياقتك",
+  "Keeps you running until the race plan starts.": "تواصل الجري حتى تبدأ خطة السباق.",
 }

@@ -2905,4 +2905,8 @@ export default {
   "Your pace today gives about {0} for 5 km.": "오늘 페이스로는 5km 약 {0}입니다.",
   "Your pace today gives about {0} for 10 km.": "오늘 페이스로는 10km 약 {0}입니다.",
   "Your pace today gives about {0} for the half marathon.": "오늘 페이스로는 하프 마라톤 약 {0}입니다.",
+  // --- run: race plan that starts later (phase 1e-a, R2) ---
+  "Race plan starts on {0}": "레이스 플랜은 {0}에 시작합니다",
+  "Until then, run to stay in shape": "그때까지 몸 상태 유지하며 달리기",
+  "Keeps you running until the race plan starts.": "레이스 플랜이 시작될 때까지 계속 달립니다.",
 }

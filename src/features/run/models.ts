@@ -1,6 +1,7 @@
 // Running plan models (spec §5, plan Decisions 4 to 8): families, questionnaire checks and the plan
 // builder. Pure functions. Sessions come out without `day`; fitting them into the week is fit.ts.
 import type { Answers, Block, Item, Phase, RunGoal, Session, SessionType, Week } from './types'
+import { DAY_MS, utc } from './dates'
 import { predictMinutes, requiredVdot, vdotFrom } from './vdot'
 
 export type { Answers }
@@ -12,7 +13,8 @@ export type PlanWeek = Omit<Week, 'sessions'> & { sessions: PlanSession[] }
 // field, or a walk): the plan goes by feel, as with `continuous` and `none`.
 export const MIN_VDOT = 15
 
-type RaceGoal = '5k' | '10k' | 'half'
+export type RaceGoal = '5k' | '10k' | 'half'
+export const isRace = (g: RunGoal | null | undefined): g is RaceGoal => g === '5k' || g === '10k' || g === 'half'
 type Family = {
   days: number[]
   minWeeks: number
@@ -52,12 +54,6 @@ const VOLUME: Record<RaceGoal | 'maintain', { raceEasy: number; easyCap: number;
 }
 
 const MAX_EXTRA_BASE = 8
-const DAY_MS = 86400000
-
-const utc = (iso: string) => {
-  const [y, m, d] = iso.split('-').map(Number)
-  return Date.UTC(y, m - 1, d)
-}
 
 const minutesOf = (items: Item[]) =>
   items.reduce((sum, it) => sum + ('repeat' in it ? it.repeat * it.blocks.reduce((s, b) => s + b.min, 0) : it.min), 0)
@@ -134,10 +130,12 @@ const phaseList = (p: ReturnType<typeof split>): Phase[] => [
 
 const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x))
 
-function firstEasy(a: Answers, vdot: number | null): number {
+type Volume = (typeof VOLUME)[RaceGoal]
+
+function firstEasy(a: Answers, vdot: number | null, v: Volume): number {
   const ref = a.reference
   if (ref.kind === 'continuous') return clamp(Math.round(ref.minutes * 0.8), 20, 40)
-  if (ref.kind === 'race' && vdot != null) return VOLUME[a.goal as RaceGoal | 'maintain'].raceEasy
+  if (ref.kind === 'race' && vdot != null) return v.raceEasy
   // `none` (meant for `start` only, Decision 4) and a race without a usable VDOT: the lowest start.
   return 20
 }
@@ -290,11 +288,11 @@ function nearest(at: (s: number) => Sized, all: Quality[] | null, target: number
   return out
 }
 
-function buildRace(a: Answers, total: number, vdot: number | null): PlanWeek[] {
-  const v = VOLUME[a.goal as RaceGoal | 'maintain']
+// `v` defaults to the goal's volumes; a bridge (buildBridge) passes the race goal's.
+function buildRace(a: Answers, total: number, vdot: number | null, v: Volume = VOLUME[a.goal as RaceGoal | 'maintain']): PlanWeek[] {
   const plan = slots(a, phasesOf(a, total))
   const maintain = a.goal === 'maintain'
-  let e = firstEasy(a, vdot)
+  let e = firstEasy(a, vdot, v)
   let l = Math.min(v.longCap, Math.round(e * 1.3))
   const weeks: PlanWeek[] = []
   // Minutes of the last week that is neither recovery nor taper: the 110% reference and the peak.
@@ -361,6 +359,23 @@ export function buildPlan(a: Answers, today: string, vdot: number | null): { wee
   const v = usableVdot(vdot)
   if (a.goal === 'start') return { weeks: buildStart(a), vdot: v }
   return { weeks: buildRace(a, planWeeks(a, today), v), vdot: v }
+}
+
+/**
+ * The weeks before a race plan that starts later (spec §5.3: "até lá, o app oferece maintain"):
+ * `count` weeks of the maintain cycle (Decision 8) with the race answers' days and reference,
+ * repeating the 8-week cycle, phase `maintain`. They start from the race plan's own first easy and
+ * long minutes, so the race plan's first week (base: the same easy and long runs) is never more
+ * than the bridge's regular weeks. Indexes and ids run from 1; the caller renumbers the race weeks.
+ */
+export function buildBridge(a: Answers, count: number, vdot: number | null): PlanWeek[] {
+  if (!isRace(a.goal) || count < 1) return []
+  const cycle = buildRace({ ...a, goal: 'maintain', goalType: undefined, targetMinutes: undefined }, FAMILIES.maintain.minWeeks, usableVdot(vdot), VOLUME[a.goal])
+  return Array.from({ length: count }, (_, i) => {
+    const w = cycle[i % cycle.length]
+    const index = i + 1
+    return { index, phase: 'maintain' as Phase, recovery: w.recovery, sessions: w.sessions.map((x, k) => ({ ...x, id: `w${index}-s${k + 1}`, blocks: copy(x.blocks) })) }
+  })
 }
 
 // ---- questionnaire checks ----

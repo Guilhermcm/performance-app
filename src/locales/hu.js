@@ -2908,4 +2908,8 @@ export default {
   "Your pace today gives about {0} for 5 km.": "A mai tempód 5 km-en nagyjából {0} időt ad.",
   "Your pace today gives about {0} for 10 km.": "A mai tempód 10 km-en nagyjából {0} időt ad.",
   "Your pace today gives about {0} for the half marathon.": "A mai tempód félmaratonon nagyjából {0} időt ad.",
+  // --- run: race plan that starts later (phase 1e-a, R2) ---
+  "Race plan starts on {0}": "A versenyterv kezdete: {0}",
+  "Until then, run to stay in shape": "Addig fuss a forma megtartásáért",
+  "Keeps you running until the race plan starts.": "Addig is futsz, amíg a versenyterv el nem indul.",
 }
