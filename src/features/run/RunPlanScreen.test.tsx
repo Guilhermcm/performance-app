@@ -209,6 +209,24 @@ describe('RunPlanScreen', () => {
     expect(within(region('Weeks')).getAllByRole('listitem').filter(li => li.dataset.race)).toHaveLength(0)
   })
 
+  it('on the eve and on race day past the last week, shows the race, not "Plan finished" (final review fix 1)', () => {
+    // The race on Tuesday 8 December, Monday weeks: the plan ends on Sunday the 6th.
+    setS({ runPlan: plan({ raceDate: '2026-12-08' }) })
+    vi.setSystemTime(new Date('2026-12-07T15:00:00'))
+    render(<RunPlanScreen />)
+    expect(screen.getByText('Race on ' + fmtDate('2026-12-08'))).toBeTruthy()
+    expect(screen.queryByText('Plan finished')).toBeNull()
+    cleanup()
+    vi.setSystemTime(new Date('2026-12-08T15:00:00'))
+    render(<RunPlanScreen />)
+    expect(within(screen.getByRole('banner')).getByText('Race day')).toBeTruthy()
+    expect(screen.queryByText('Plan finished')).toBeNull()
+    cleanup()
+    vi.setSystemTime(new Date('2026-12-09T15:00:00'))
+    render(<RunPlanScreen />)
+    expect(screen.getByText('Plan finished')).toBeTruthy()
+  })
+
   it('with maintain weeks before the race plan, names them and says when the race plan starts (R2 I6-1)', () => {
     const bridged = plan({ weeks: weeks().map((w, i) => (i < 2 ? { ...w, phase: 'maintain' as Phase, recovery: false } : w)) })
     setS({ runPlan: bridged })

@@ -1,6 +1,6 @@
 // The running plan's row on /plan (spec §6.4): "Build a running plan" opens the questionnaire when
-// there is none; with a plan, the row says where it stands (this week, when it starts, finished or
-// unreadable) and opens /plan/corrida. After a plan is applied, DaysGoalOffer offers to update the
+// there is none; with a plan, the row says where it stands (this week, when it starts, the race
+// when it falls after the last week, finished or unreadable) and opens /plan/corrida. After a plan is applied, DaysGoalOffer offers to update the
 // weekly days goal (spec §6.3).
 import { useState, type ReactElement } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -11,7 +11,7 @@ import LegacyIcon from '../../components/Icon.jsx'
 import { useStore } from '../../store/useStore.js'
 import DaysGoalOffer from './DaysGoalOffer'
 import { dayText, goalName } from './labels'
-import { currentWeek, isReadable, raceWeeksStart, type RunState } from './run-actions'
+import { currentWeek, isReadable, raceAhead, raceOn, raceWeeksStart, type RunState } from './run-actions'
 import RunQuestionnaire from './RunQuestionnaire'
 import type { RunPlan } from './types'
 
@@ -22,8 +22,13 @@ const Icon = LegacyIcon as unknown as (p: { name: string; className?: string }) 
 export function planStatus(plan: RunPlan, today: string, ws: 0 | 1): string {
   if (!isReadable(plan)) return t('This plan can’t be read in this version of the app.')
   if (today < plan.startDate) return t('Starts on {0}', dayText(plan.startDate, today))
+  if (raceOn(plan, today)) return `${goalName(plan.goal)} · ${t('Race day')}`
   const week = currentWeek(plan, today, ws)
-  if (!week) return t('Plan finished')
+  if (!week) {
+    // A race early in the week falls after the last week: until then the row shows the race.
+    if (raceAhead(plan, today)) return `${goalName(plan.goal)} · ${t('Race on {0}', dayText(plan.raceDate!, today))}`
+    return t('Plan finished')
+  }
   // The maintain weeks before a race plan that starts later.
   const race = raceWeeksStart(plan, ws)
   if (week.phase === 'maintain' && race && today < race) return `${goalName('maintain')} · ${t('Race plan starts on {0}', dayText(race, today))}`

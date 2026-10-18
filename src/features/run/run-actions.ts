@@ -87,6 +87,13 @@ export function raceBounds(raceDate: string | undefined, weekFirst: string): { d
   return eve >= weekFirst ? { days, raceDay: weekdayOf(raceDate) } : { days }
 }
 
+/**
+ * Whether the race of a race plan this build reads is still ahead of `today` or is today. A race
+ * early in the week falls after the plan's last week, so the plan is not finished until it is past.
+ */
+export const raceAhead = (plan: RunPlan | null | undefined, today: string): boolean =>
+  isReadable(plan) && isRace(plan.goal) && typeof plan.raceDate === 'string' && plan.raceDate >= today
+
 /** Whether `iso` is the race day of a race plan this build reads: the day card shows the race. */
 export const raceOn = (plan: RunPlan | null | undefined, iso: string): boolean =>
   isReadable(plan) && isRace(plan.goal) && plan.raceDate === iso

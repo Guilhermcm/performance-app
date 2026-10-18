@@ -18,7 +18,7 @@ import { formatClock } from './clock'
 import DaysGoalOffer from './DaysGoalOffer'
 import { dayText, goalName, phaseName, sessionName, weeksText, zoneFeel, zoneName } from './labels'
 import { isRace, weekMinutes } from './models'
-import { currentWeek, endRunPlan, isReadable, planWeekStart, raceOn, raceWeeksStart, refitFuture, type RunState } from './run-actions'
+import { currentWeek, endRunPlan, isReadable, planWeekStart, raceAhead, raceOn, raceWeeksStart, refitFuture, type RunState } from './run-actions'
 import RunQuestionnaire from './RunQuestionnaire'
 import SessionBlocks, { zonesOf } from './SessionBlocks'
 import { formatPaceRange, predictMinutes, zonePaces } from './vdot'
@@ -157,7 +157,10 @@ function Tags({ plan, today, ws }: { plan: RunPlan; today: string; ws: 0 | 1 }) 
   else tags.push(weeksText(plan.weeks.length))
   const raceStart = raceWeeksStart(plan, ws)
   if (today < plan.startDate) tags.push(t('Starts on {0}', dayText(plan.startDate, today)))
-  else if (!currentWeek(plan, today, ws)) tags.push(t('Plan finished'))
+  // A race early in the week falls after the last week: until it is past, the race tag above says
+  // when it is, and race day says so.
+  else if (raceOn(plan, today)) tags.push(t('Race day'))
+  else if (!currentWeek(plan, today, ws) && !raceAhead(plan, today)) tags.push(t('Plan finished'))
   else if (raceStart && today < raceStart) tags.push(t('Race plan starts on {0}', dayText(raceStart, today)))
   return (
     <ul className="mt-3 flex list-none flex-wrap items-center gap-2">
