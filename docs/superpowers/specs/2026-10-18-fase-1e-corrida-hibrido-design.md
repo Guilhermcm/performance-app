@@ -166,6 +166,11 @@ soma dos minutos.
   questionário mostra a data de início antes de "Criar plano" e oferece, já ligado, seguir um ciclo
   de `maintain` até lá. Essas semanas vêm primeiro no plano, com a fase `maintain`, e partem do
   mesmo Leve e do mesmo Longão da primeira semana da prova, para a passagem respeitar os 110%.
+- **Semana da prova (1e-a):** os treinos ficam nos dias antes da prova. A véspera não tem Ritmo,
+  Intervalado nem Longão, porque o dia da prova conta como dia forte. Quando faltam dias, sai primeiro
+  o Longão e depois um Leve; o treino de qualidade sempre fica. Se a prova cai no primeiro ou no
+  segundo dia da semana da pessoa, a última semana do plano é a anterior. No dia da prova, o Plano
+  mostra "Dia da prova" com a distância.
 - **Ritmos do plano:** os treinos guardam zonas, não ritmos; a faixa de ritmo é calculada na hora com o
   VDOT atual do plano, então atualizar a referência muda os ritmos de todos os treinos seguintes.
 
