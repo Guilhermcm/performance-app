@@ -2788,4 +2788,6 @@ export default {
   "Change sign": "Trocar o sinal",
   "Choose a time.": "Escolhe uma hora.",
   "Each option needs a different name.": "Cada opção precisa de um nome diferente.",
+  // --- run: pace range (phase 1e-a) ---
+  "{0} a {1} /km": "{0} a {1} /km",
 }

@@ -2788,4 +2788,6 @@ export default {
   "Change sign": "切换正负号",
   "Choose a time.": "请选择时间。",
   "Each option needs a different name.": "每个选项需要不同的名称。",
+  // --- run: pace range (phase 1e-a) ---
+  "{0} a {1} /km": "{0} 到 {1} /km",
 }

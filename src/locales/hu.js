@@ -2791,4 +2791,6 @@ export default {
   "Change sign": "Előjel váltása",
   "Choose a time.": "Válassz időpontot.",
   "Each option needs a different name.": "Minden lehetőségnek más nevet kell adni.",
+  // --- run: pace range (phase 1e-a) ---
+  "{0} a {1} /km": "{0} és {1} között /km",
 }

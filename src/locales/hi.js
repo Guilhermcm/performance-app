@@ -2788,4 +2788,6 @@ export default {
   "Change sign": "चिह्न बदलें",
   "Choose a time.": "समय चुनें।",
   "Each option needs a different name.": "हर विकल्प का नाम अलग होना चाहिए।",
+  // --- run: pace range (phase 1e-a) ---
+  "{0} a {1} /km": "{0} से {1} /km",
 }

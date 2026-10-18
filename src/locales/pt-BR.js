@@ -2179,6 +2179,8 @@ export const PT_BR_OVERRIDES = {
   "Change sign": "Trocar o sinal",
   "Choose a time.": "Escolha uma hora.",
   "Each option needs a different name.": "Cada opção precisa de um nome diferente.",
+  // --- run: pace range (phase 1e-a) ---
+  "{0} a {1} /km": "{0} a {1} /km",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

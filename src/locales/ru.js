@@ -2875,4 +2875,6 @@ export default {
   "Change sign": "Сменить знак",
   "Choose a time.": "Выберите время.",
   "Each option needs a different name.": "У каждого варианта должно быть своё название.",
+  // --- run: pace range (phase 1e-a) ---
+  "{0} a {1} /km": "{0} до {1} /km",
 }

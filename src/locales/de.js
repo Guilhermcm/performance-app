@@ -2808,4 +2808,6 @@ export default {
   "Change sign": "Vorzeichen wechseln",
   "Choose a time.": "Wähle eine Uhrzeit.",
   "Each option needs a different name.": "Jede Option braucht einen anderen Namen.",
+  // --- run: pace range (phase 1e-a) ---
+  "{0} a {1} /km": "{0} bis {1} /km",
 }

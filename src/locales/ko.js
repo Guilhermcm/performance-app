@@ -2788,4 +2788,6 @@ export default {
   "Change sign": "부호 바꾸기",
   "Choose a time.": "시간을 선택하세요.",
   "Each option needs a different name.": "선택지마다 다른 이름이 필요합니다.",
+  // --- run: pace range (phase 1e-a) ---
+  "{0} a {1} /km": "{0}에서 {1} /km",
 }

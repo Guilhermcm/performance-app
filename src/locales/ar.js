@@ -2841,4 +2841,6 @@ export default {
   "Change sign": "تغيير الإشارة",
   "Choose a time.": "اختر وقتًا.",
   "Each option needs a different name.": "يحتاج كل خيار إلى اسم مختلف.",
+  // --- run: pace range (phase 1e-a) ---
+  "{0} a {1} /km": "{0} إلى {1} /km",
 }

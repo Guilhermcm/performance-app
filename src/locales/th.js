@@ -2799,4 +2799,6 @@ export default {
   "Change sign": "สลับเครื่องหมายบวกลบ",
   "Choose a time.": "เลือกเวลา",
   "Each option needs a different name.": "แต่ละตัวเลือกต้องมีชื่อไม่ซ้ำกัน",
+  // --- run: pace range (phase 1e-a) ---
+  "{0} a {1} /km": "{0} ถึง {1} /km",
 }
