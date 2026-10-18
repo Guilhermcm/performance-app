@@ -11,9 +11,9 @@
 // The race (final review I1 and M6): the plan's last week is the one holding the day two days
 // before the race, the last day a quality run can take, so a race on the first or second day of
 // the person's week ends the plan the week before. In that week sessions go only on days before
-// the race, race day counts as a hard day for the fit (no Ritmo or Intervalado the day before), and
-// a session that finds no day is dropped: the Longão first, then the extra easy runs, never the
-// quality run. Race day itself shows the race (raceOn), never a run.
+// the race, race day counts as a hard day for the fit (no Ritmo, Intervalado or Longão the day
+// before), and a session that finds no day is dropped: the Longão first, then the extra easy runs,
+// never the quality run. Race day itself shows the race (raceOn), never a run.
 import { weekOrder, weekStartOf } from '../../lib/format.js'
 import { addDays, weekdayOf, weekStartDate, weeksBetween } from './dates'
 import { fitWeek } from './fit'
@@ -92,10 +92,13 @@ export const raceOn = (plan: RunPlan | null | undefined, iso: string): boolean =
   isReadable(plan) && isRace(plan.goal) && plan.raceDate === iso
 
 // A week that has fewer days than sessions before the race drops the Longão first, then the extra
-// easy runs; the quality run always stays. It always finds a day off the race's eve: when the eve
-// is in the week, so is the day before it (raceWeekOf).
-function trimmed<T extends { type: string }>(sessions: T[], room: number): T[] {
-  const out = [...sessions]
+// easy runs; the quality run always stays. The Longão is also dropped when it finds no day off the
+// race's eve beside the quality run's (`offEve`: the days before the race other than the eve). The
+// quality run always finds one: when the eve is in the week, so is the day before it (raceWeekOf).
+function trimmed<T extends { type: string }>(sessions: T[], room: number, offEve: number): T[] {
+  let out = [...sessions]
+  const offEveNeed = (list: T[]) => list.filter(s => s.type === 'long' || s.type === 'tempo' || s.type === 'intervals').length
+  if (offEveNeed(out) > offEve) out = out.filter(s => s.type !== 'long')
   for (const type of ['long', 'easy']) {
     for (let k = out.length - 1; k >= 0 && out.length > room; k--) if (out[k].type === type) out.splice(k, 1)
   }
@@ -109,7 +112,8 @@ function fitPlanWeek(fit: Fit, sessions: PlanSession[], weekFirst: string, raceD
   if (!race) return fit(sessions, allowed)
   const days = allowed ? race.days.filter(d => allowed.includes(d)) : race.days
   if (!days.length) return []
-  return fit(trimmed(sessions, days.length), days, race.raceDay)
+  const offEve = race.raceDay === undefined ? days.length : days.filter(d => (d + 1) % 7 !== race.raceDay).length
+  return fit(trimmed(sessions, days.length, offEve), days, race.raceDay)
 }
 
 // The day two days before the race: the last day a quality run can take, so the plan's last week

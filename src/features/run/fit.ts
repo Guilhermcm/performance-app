@@ -8,7 +8,8 @@
 //
 // A race week passes `raceDay`, the race's weekday when the day before the race is in the week:
 // race day then counts as a hard day, so no Ritmo or Intervalado goes on the day before it
-// (final review I1 and M6). The caller keeps the sessions to the days before the race.
+// (final review I1 and M6), and no Longão either (the race is the long effort). The caller keeps
+// the sessions to the days before the race.
 import { loadOfRoutine } from '../../lib/muscles.js'
 import type { SessionType } from './types'
 
@@ -129,7 +130,7 @@ function costOf(days: number[], sessions: FitSession[], ctx: FitContext, facts: 
   let eve = 0
   sessions.forEach((s, i) => {
     if (s.type === 'long') longGap += gap(days[i], ctx.longDay)
-    if (beforeRace(s, days[i], facts)) eve++
+    if (beforeRace(s, days[i], facts) || (s.type === 'long' && facts.race !== undefined && next(days[i]) === facts.race)) eve++
     const w = warningsOf(s, days[i], at, sessions, facts)
     if (w.includes('after_leg_day')) afterLeg++
     if (w.includes('hard_in_a_row')) inARow++
@@ -146,9 +147,9 @@ function costOf(days: number[], sessions: FitSession[], ctx: FitContext, facts: 
     if (facts.race !== undefined) gaps.push((facts.race - days[i] + 7) % 7 || 7)
     farness += gaps.length ? Math.min(...gaps) : 7
   })
-  // A quality run the day before the race comes first, then one session a day, before even the
-  // long run's day: the race is the week's goal, and the race week keeps no more sessions than its
-  // days (run-actions.ts). Elsewhere a free day is always left, so the order changes nothing there.
+  // No quality run and no Longão the day before the race comes first, then one session a day,
+  // before even the long run's day: the race is the week's goal, and the race week keeps no more
+  // sessions than it has days for (run-actions.ts). Elsewhere a free day is always left, so the order changes nothing there.
   return [eve, stacked, longGap, afterLeg, inARow, sharedHard, gentleOnStrength, -farness, ...days]
 }
 
@@ -159,8 +160,8 @@ const before = (a: number[], b: number[]) => {
 
 /**
  * Places the week's sessions on weekdays. Tries every placement (at most four sessions on seven
- * days) and keeps the best by spec §6.2: in a race week, no quality run the day before the race
- * first; then no two sessions on one day, the long run on the preferred day (the nearest allowed
+ * days) and keeps the best by spec §6.2: in a race week, no quality run and no long run the day
+ * before the race first; then no two sessions on one day, the long run on the preferred day (the nearest allowed
  * one when it is gone), no quality run after leg, no two hard days in a row (race day counts as a
  * hard day), no hard run on a strength day, easy runs on free days; ties go to the day farthest
  * from the nearest hard day, then to the lowest weekday. Nothing is ever dropped: a rule that cannot hold is

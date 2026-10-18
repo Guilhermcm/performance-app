@@ -151,9 +151,9 @@ describe('applyRunPlan', () => {
                   expect(iso < raceDate).toBe(true)
                   expect(iso >= plan.startDate).toBe(true)
                 }
-                // Race day is a hard day: no Ritmo or Intervalado the day before.
+                // Race day is a hard day: no Ritmo or Intervalado the day before, and no Longão either.
                 const eve = addDays(raceDate, -1)
-                expect(placed.filter(p => p.iso === eve && isQuality(p.s.type))).toEqual([])
+                expect(placed.filter(p => p.iso === eve && (isQuality(p.s.type) || p.s.type === 'long'))).toEqual([])
                 // The plan ends in the week holding the last day a quality run can take (two days
                 // before the race), with its two taper weeks.
                 const last = plan.weeks.at(-1)!
@@ -162,9 +162,15 @@ describe('applyRunPlan', () => {
                 // The quality run stays; a race week too short drops the Longão first, then easy runs.
                 const days = answers.days
                 expect(last.sessions.filter(s => isQuality(s.type))).toHaveLength(1)
-                const room = new Set(Array.from({ length: 7 }, (_, j) => addDays(weekDate(plan, plan.weeks.length - 1, ws), j)).filter(iso => iso < raceDate)).size
-                expect(last.sessions).toHaveLength(Math.min(days, room))
-                if (room < days) expect(last.sessions.some(s => s.type === 'long')).toBe(false)
+                const lastFirst = weekDate(plan, plan.weeks.length - 1, ws)
+                const room = new Set(Array.from({ length: 7 }, (_, j) => addDays(lastFirst, j)).filter(iso => iso < raceDate)).size
+                // Days off the eve, for the quality run and the Longão.
+                const offEve = eve >= lastFirst ? room - 1 : room
+                // When the Longão finds no day off the eve (2 days for 2 runs, e.g. a 5k on 2 days with
+                // the race on the third day of the week), it is dropped: the race is the long effort.
+                const longDropped = room < days || offEve < 2
+                expect(last.sessions).toHaveLength(room < days ? room : longDropped ? days - 1 : days)
+                expect(last.sessions.some(s => s.type === 'long')).toBe(!longDropped)
                 expect(new Set(last.sessions.map(s => s.day)).size).toBe(last.sessions.length)
                 // The race is marked on its date, which holds no run.
                 expect(raceOn(plan, raceDate)).toBe(true)
