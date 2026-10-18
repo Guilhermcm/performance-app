@@ -208,6 +208,8 @@ export const EN_OVERRIDES = {
   'hamstring': 'hamstrings',
   // The pace range key is the Portuguese-shaped source (spec §4.2); English reads "to".
   '{0} a {1} /km': '{0} to {1} /km',
+  // "Hard" is already the Stats recovery filter; the zone has its own key and reads the same.
+  'Hard zone': 'Hard',
 }
 
 export default EN_OVERRIDES

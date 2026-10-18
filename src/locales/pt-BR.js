@@ -2181,6 +2181,29 @@ export const PT_BR_OVERRIDES = {
   "Each option needs a different name.": "Cada opção precisa de um nome diferente.",
   // --- run: pace range (phase 1e-a) ---
   "{0} a {1} /km": "{0} a {1} /km",
+  // --- run: zones, sessions and goals (phase 1e-a) ---
+  "Easy": "Leve",
+  "Moderate": "Moderado",
+  "Hard zone": "Forte",
+  "Walk": "Caminhada",
+  "you can hold a conversation": "dá para conversar",
+  "short sentences only": "só frases curtas",
+  "only a few words": "só poucas palavras",
+  "brisk walk to recover": "caminhar firme, recuperando",
+  "Run/walk": "Corre e caminha",
+  "Easy run": "Leve",
+  "Long run": "Longão",
+  "Tempo run": "Ritmo",
+  "Interval run": "Intervalado",
+  "Start running": "Começar a correr",
+  "5 km": "5 km",
+  "10 km": "10 km",
+  "Half marathon": "Meia maratona",
+  "Stay in shape": "Manter a forma",
+  "{0} min easy": "{0} min leve",
+  "{0} min moderate": "{0} min moderado",
+  "{0} min hard": "{0} min forte",
+  "{0} min walk": "{0} min caminhando",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }
