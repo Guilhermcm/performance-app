@@ -11,6 +11,7 @@ const CHECKIN_BUNDLE = fileURLToPath(new URL('../release/0017-0020_checkin.sql',
 const SLEEP_BUNDLE = fileURLToPath(new URL('../release/0021-0025_sleep.sql', import.meta.url))
 const HABITS_BUNDLE = fileURLToPath(new URL('../release/0026-0030_habits.sql', import.meta.url))
 const TRACKERS_BUNDLE = fileURLToPath(new URL('../release/0031_trackers.sql', import.meta.url))
+const RUN_BUNDLE = fileURLToPath(new URL('../release/0032_run.sql', import.meta.url))
 const U = '00000000-0000-4000-8000-000000000001'
 const V = '00000000-0000-4000-8000-000000000002'
 
@@ -276,6 +277,75 @@ describe('release bundle 0031', () => {
               (select count(*) from public.tracker_entries)::int as e`)).rows[0])
     expect(await count(U)).toEqual({ t: 1, e: 1 })
     expect(await count(V)).toEqual({ t: 0, e: 0 })
+    await db.close()
+  })
+})
+
+// Sixth release: production already has 0001 to 0031. The run bundle redefines four functions and
+// adds two helpers, so it goes in whole, once, in the SQL Editor, BEFORE the client that sends
+// detail.run is merged.
+describe('release bundle 0032', () => {
+  it('applies in one run on a database that has 0001 to 0031 and existing rows', async () => {
+    const db = new PGlite()
+    await db.exec(SHIM)
+    for (const file of readdirSync(MIGRATIONS).filter(f => /^000[1-6]_.*\.sql$/.test(f)).sort()) {
+      await db.exec(readFileSync(join(MIGRATIONS, file), 'utf8'))
+    }
+    await db.exec(readFileSync(BUNDLE, 'utf8'))
+    await db.exec(readFileSync(CHECKIN_BUNDLE, 'utf8'))
+    await db.exec(readFileSync(SLEEP_BUNDLE, 'utf8'))
+    await db.exec(readFileSync(HABITS_BUNDLE, 'utf8'))
+    await db.exec(readFileSync(TRACKERS_BUNDLE, 'utf8'))
+    for (const [id, email] of [[U, 'old@test.dev'], [V, 'other@test.dev']]) {
+      await db.query('insert into auth.users (id, email) values ($1, $2)', [id, email])
+      await db.query(`insert into public.profiles (id, display_name) values ($1, 'Old user')`, [id])
+    }
+    // An existing run check-in without detail.run, posted before the release.
+    const old = '00000000-0000-4000-8000-0000000000c1'
+    await db.query(
+      `insert into public.checkins (id, user_id, day, activity, title, visibility, photo_path)
+       values ($1, $2, public.local_today($2), 'run', 'Corrida', 'friends', $3)`, [old, U, `${U}/${old}.jpg`])
+
+    await db.exec(readFileSync(RUN_BUNDLE, 'utf8'))
+
+    // The two helpers are new; the four redefined functions are still one each, with the new bodies.
+    const helpers = await db.query<{ proname: string }>(
+      `select proname from pg_proc where proname in ('valid_run_items', 'valid_run_detail') order by proname`)
+    expect(helpers.rows).toEqual([{ proname: 'valid_run_detail' }, { proname: 'valid_run_items' }])
+    const bodies = await db.query<{ proname: string; n: number; new_body: boolean }>(
+      `select proname, count(*)::int as n,
+              bool_and(prosrc ~ (case proname
+                when 'checkins_guard' then 'valid_run_detail'
+                when 'close_training_days' then '.run. -> .rpe.'
+                else 'run_type' end)) as new_body
+         from pg_proc
+        where proname in ('checkins_guard', 'close_training_days', 'checkin_feed_item', 'get_checkin')
+        group by proname order by proname`)
+    expect(bodies.rows).toEqual([
+      { proname: 'checkin_feed_item', n: 1, new_body: true },
+      { proname: 'checkins_guard', n: 1, new_body: true },
+      { proname: 'close_training_days', n: 1, new_body: true },
+      { proname: 'get_checkin', n: 1, new_body: true },
+    ])
+
+    // The old check-in is still there, and the feed item shows a run with no type and no distance.
+    const item = await db.query<{ item: Record<string, unknown> }>(
+      'select public.checkin_feed_item($1, $2) as item', [old, V])
+    expect(item.rows[0].item).toMatchObject({ activity: 'run', run_type: null, distance_km: null })
+
+    // A client posts a valid run check-in; an invalid one is refused with invalid_run_detail.
+    const post = async (id: string, run: unknown) => asUser(db, U, () => db.query(
+      `insert into public.checkins (id, day, activity, title, visibility, photo_path, detail)
+       values ($1, public.my_local_today(), 'run', 'Corrida', 'friends', $2, $3::jsonb)`,
+      [id, `${U}/${id}.jpg`, JSON.stringify({ run })]))
+    await post('00000000-0000-4000-8000-0000000000c2', { status: 'unplanned', distance_km: 6.2, rpe: 7 })
+    await expect(post('00000000-0000-4000-8000-0000000000c3', { status: 'unplanned', distance_km: 0.05 }))
+      .rejects.toThrow(/invalid_run_detail/)
+    const shown = (await db.query<{ item: Record<string, unknown> }>(
+      'select public.checkin_feed_item($1, $2) as item',
+      ['00000000-0000-4000-8000-0000000000c2', V])).rows[0].item
+    expect(shown).toMatchObject({ run_type: null, distance_km: 6.2 })
+    expect(Object.keys(shown)).not.toContain('rpe')
     await db.close()
   })
 })

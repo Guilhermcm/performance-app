@@ -4,14 +4,14 @@
 
 1. Crie um projeto em https://supabase.com/dashboard (região: São Paulo, South America).
 2. SQL Editor → em um projeto novo, cole e rode, em ordem, cada arquivo de `supabase/migrations/`,
-   de `0001_init.sql` a `0031_trackers.sql`, um por consulta. Antes de rodar a `0013`, ative
+   de `0001_init.sql` a `0032_run.sql`, um por consulta. Antes de rodar a `0013`, ative
    o `pg_cron` (veja a seção 7). Em um projeto que já tem `0001` a `0006`, siga o roteiro abaixo; em
    um que já tem até a `0016`, siga o roteiro do check-in; em um que já tem até a `0020`, siga o
    roteiro do Sono; em um que já tem até a `0025`, siga o roteiro dos Hábitos; em um que já tem até a `0030`,
-   siga o roteiro dos Trackers.
+   siga o roteiro dos Trackers; em um que já tem até a `0031`, siga o roteiro do registro de corrida.
    A `0006` cria a exclusão de conta pelo próprio app (Perfil > Excluir minha conta) e precisa rodar
    como `postgres`, o usuário padrão do SQL Editor, porque apaga a linha da conta em `auth.users`.
-   As `0007` a `0030` também rodam como `postgres`: as funções que fecham os dias e pagam o XP
+   As `0007` a `0032` também rodam como `postgres`: as funções que fecham os dias e pagam o XP
    escrevem como dono das tabelas.
 3. Project Settings → API: copie `Project URL` e a chave `anon public`.
 
@@ -319,6 +319,71 @@ Passo a passo:
    rótulo); registre um valor em cada um pelo "+"; abra um deles e veja o gráfico em 30 e em 90 dias;
    registre em um dia anterior pelo botão "Novo registro" do detalhe, que abre a folha completa; arquive um tracker e confirme que ele sai da
    lista ativa e continua nos arquivados.
+
+### Roteiro: banco de produção que já tem a 0001 a 0031 (registro de corrida)
+
+Use este roteiro para levar um banco que já roda os Trackers (`0001` a `0031`) até a `0032`, a
+migration do registro de corrida (fase 1e-b). Aqui a ordem importa: **a `0032` roda em produção
+antes do merge**, porque o cliente novo envia `detail.run` nos check-ins de corrida. Se o merge
+sair primeiro, o banco antigo aceita o campo sem validar, o dia com distância ou esforço não conta
+como detalhado (sem os 30 XP do treino detalhado) e o feed não mostra o tipo de treino nem a
+distância.
+
+O cliente atual continua funcionando igual depois do SQL: ele não envia `detail.run`, os check-ins
+antigos seguem válidos e as duas chaves novas do feed (`run_type` e `distance_km`) são ignoradas por
+quem não as conhece. Por isso rodar o SQL antes é seguro.
+
+O que muda no banco quando a `0032` roda:
+
+- Entram duas funções auxiliares, `valid_run_items(jsonb)` e `valid_run_detail(jsonb, text)`, sem
+  acesso para `public` e `anon`. A `authenticated` executa, porque o `checkins_guard` roda como quem
+  escreve (`security invoker`).
+- O `checkins_guard` passa a recusar um `detail.run` inválido de um cliente, no insert e no update,
+  com o erro `invalid_run_detail`. Vale só para `activity = 'run'`; `detail.run` num check-in de
+  outra atividade também é recusado. O dono do banco passa, como nas outras regras.
+- O `close_training_days` conta como detalhado o dia com um check-in de corrida que tenha distância
+  ou esforço. O `award_xp` não muda: 30 XP por dia detalhado, no máximo 3 por semana somando
+  musculação e corrida.
+- O `checkin_feed_item` (usado pelo feed e pelo feed de desafio) e o `get_checkin` ganham
+  `run_type` e `distance_km`, nulos fora de corrida. O esforço, os blocos e o plano nunca aparecem
+  para outras pessoas. Quem fez o check-in continua vendo o `detail` inteiro em `get_checkin`.
+- Nenhuma tabela nova, nenhuma assinatura de função muda e os check-ins que já existem ficam como
+  estão.
+
+Passo a passo:
+
+1. No SQL Editor, rode o arquivo único `supabase/release/0032_run.sql` inteiro, numa consulta só.
+   É a própria `0032_run.sql` com um cabeçalho; rodar a migration direto dá o mesmo resultado. O
+   arquivo é gerado por `node scripts/build-release-sql.mjs`, então não edite à mão (um teste
+   confere que está em dia).
+2. Confira o resultado:
+   - `select proname from pg_proc where proname in ('valid_run_items','valid_run_detail');` deve
+     devolver 2 linhas.
+   - Um insert de teste recusado, dentro de uma transação que não deixa nada para trás. Troque
+     `<uuid-de-A>` pelo id de uma conta sua:
+
+     ```sql
+     begin;
+     set local role authenticated;
+     select set_config('request.jwt.claim.sub', '<uuid-de-A>', true);
+     insert into public.checkins (id, day, activity, title, visibility, photo_path, detail)
+     values ('00000000-0000-4000-8000-0000000000f1', public.my_local_today(), 'run', 'Teste', 'private',
+             '<uuid-de-A>/00000000-0000-4000-8000-0000000000f1.jpg',
+             '{"run": {"status": "unplanned", "distance_km": 0.05}}');
+     rollback;
+     ```
+
+     O insert deve falhar com `invalid_run_detail` (a distância mínima é 0,1 km). Se ele passar,
+     a `0032` não rodou inteira; o `rollback` desfaz o teste de qualquer jeito.
+3. Se o app disser que não achou a função logo depois, recarregue o cache da API:
+   `notify pgrst, 'reload schema';`.
+4. Só então faça o merge do PR da 1e-b e o deploy do cliente novo. Um app instalado que ficou
+   aberto durante o deploy ainda roda o cliente antigo, sem o registro de corrida, até ser
+   reaberto; ele não quebra, porque o SQL já aceita os dois.
+5. Faça o smoke com duas contas amigas: na conta A, com um plano de corrida, faça o check-in de um
+   treino do plano, com distância e esforço; veja o treino marcado como feito em `/plan/corrida`;
+   na conta B, abra o feed e confirme que o cartão mostra o tipo de treino e a distância, nunca o
+   esforço nem os blocos; depois que o dia fechar, veja o XP do treino detalhado na conta A.
 
 ## 2. Google OAuth
 
