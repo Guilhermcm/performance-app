@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { applyRunPlan, currentWeek, endRunPlan, moveSession, refitFuture, sessionsOn, type RunState } from './run-actions'
+import { applyRunPlan, calendarAnswers, currentWeek, endRunPlan, moveSession, refitFuture, sessionsOn, type RunState } from './run-actions'
 import { fitWeek } from './fit'
 import type { Answers, RunPlan } from './types'
 
@@ -123,6 +123,53 @@ describe('applyRunPlan', () => {
     expect(currentWeek(plan, raceDate, 1)).toBe(last)
     expect(currentWeek(plan, addDays(raceDate, 1), 1)).toBeNull()
     expect(last.phase).toBe('taper')
+  })
+
+  describe('a race date always ends the plan in the race week', () => {
+    const raceDays: [string, number][] = [['Sunday', 12 * 7 - 1], ['Monday', 12 * 7], ['Wednesday', 12 * 7 + 2]]
+    const starts: [string, string][] = [['Monday', MONDAY], ['Friday', FRIDAY]]
+    for (const ws of [0, 1] as const) {
+      for (const [startName, today] of starts) {
+        for (const [raceName, offset] of raceDays) {
+          for (const far of [0, 20]) {
+            it(`race on a ${raceName}${far ? ' far away' : ''}, applied on a ${startName}, week starting on ${ws ? 'Monday' : 'Sunday'}`, () => {
+              const raceDate = addDays(MONDAY, offset + far * 7)
+              const plan = applyRunPlan(state(ws), tenK({ weeks: undefined, raceDate }), today)
+              const last = plan.weeks[plan.weeks.length - 1]
+              expect(currentWeek(plan, raceDate, ws)).toBe(last)
+              expect(currentWeek(plan, plan.startDate, ws)).toBe(plan.weeks[0])
+              expect(plan.weeks.map(w => w.phase).slice(-2)).toEqual(['taper', 'taper'])
+              expect(plan.weeks.filter(w => w.phase === 'taper')).toHaveLength(2)
+              expect(plan.weeks.length).toBeLessThanOrEqual(18)
+              // Nothing is planned after the race week.
+              expect(currentWeek(plan, addDays(raceDate, 7), ws)).toBeNull()
+              if (!far) {
+                // Within the cap, week 1 is the one Decision 2 picks.
+                expect(currentWeek(plan, addDays(today, 7), ws)).not.toBeNull()
+                const daysLeft = 7 - ((dayOf(today) - ws + 7) % 7)
+                expect(plan.startDate).toBe(daysLeft >= 3 ? today : addDays(today, daysLeft))
+              } else {
+                expect(plan.weeks).toHaveLength(18)
+              }
+              expect(plan.raceDate).toBe(raceDate)
+              expect(plan.answers.raceDate).toBe(raceDate)
+            })
+          }
+        }
+      }
+    }
+  })
+
+  it('calendarAnswers counts the race date in calendar weeks from week 1', () => {
+    const a = tenK({ weeks: undefined, raceDate: addDays(MONDAY, 12 * 7 - 1) }) // the 12th Sunday
+    const counted = calendarAnswers(a, MONDAY, 1)
+    expect(counted.weeks).toBe(12)
+    expect('raceDate' in counted).toBe(false)
+    // A Sunday week: that Sunday opens week 13 counted from this week.
+    expect(calendarAnswers(a, MONDAY, 0).weeks).toBe(13)
+    // On a Friday in a Sunday week, week 1 is next week.
+    expect(calendarAnswers(a, FRIDAY, 0).weeks).toBe(12)
+    expect(calendarAnswers(tenK(), MONDAY, 1)).toEqual(tenK())
   })
 
   it('starts later by the weeks left over when the deadline is a number of weeks', () => {

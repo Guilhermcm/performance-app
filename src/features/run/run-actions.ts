@@ -57,14 +57,33 @@ function fitted(sessions: PlanWeek['sessions'], S: RunState, longDay: number, al
   return sessions.map(s => ({ ...s, day: placement[s.id] }))
 }
 
+// Week 1 by Decision 2: the current week when the days left from today (today included) hold all
+// of a week's sessions, the next week otherwise. Every plan week has `days` sessions.
+function firstWeek(days: number, today: string, ws: number): { start: string; left: number[] | null } {
+  const thisWeek = weekStartDate(today, ws)
+  const left = weekOrder(ws).slice((weekdayOf(today) - ws + 7) % 7)
+  return days <= left.length ? { start: thisWeek, left } : { start: addDays(thisWeek, 7), left: null }
+}
+
+/**
+ * The answers as the plan counts them. A race date becomes the number of calendar weeks from
+ * week 1 (Decision 2, on the person's week start) to the week holding the race, both included, so
+ * the plan ends in the race week. Pass the result to checkAnswers and buildPlan; other answers come
+ * back unchanged.
+ */
+export function calendarAnswers(answers: Answers, today: string, weekStart: number): Answers {
+  if (!RACES.includes(answers.goal) || !answers.raceDate) return answers
+  const { start } = firstWeek(answers.days, today, weekStart)
+  const { raceDate: _race, ...rest } = answers
+  return { ...rest, weeks: weeksBetween(start, weekStartDate(answers.raceDate, weekStart)) + 1 }
+}
+
 // The first day of week 1 when the deadline is longer than the plan (the extra base is capped at
 // 8 weeks, spec §5.3): the plan starts later so it still ends at the deadline. A race date puts the
 // race in the last week; a number of weeks pushes the start by the weeks left over.
-function delayedStart(a: Answers, today: string, natural: string, ws: number, weeks: number): string {
+function delayedStart(a: Answers, natural: string, ws: number, weeks: number): string {
   if (!RACES.includes(a.goal)) return natural
   if (a.raceDate) {
-    const deadline = Math.floor((utc(a.raceDate) - utc(today)) / DAY_MS / 7)
-    if (deadline <= weeks) return natural
     const aligned = addDays(weekStartDate(a.raceDate, ws), -7 * (weeks - 1))
     return aligned > natural ? aligned : natural
   }
@@ -85,26 +104,24 @@ export function applyRunPlan(S: RunState, answers: Answers, today: string): RunP
   const raw = ref.kind === 'race' ? vdotFrom(ref.distanceM, ref.minutes) : null
   // buildPlan says which VDOT the plan uses: null below its usable floor, then the plan is by
   // feel only, as with a continuous reference or none.
-  const result: { weeks: PlanWeek[]; vdot?: number | null } = buildPlan(answers, today, raw)
+  const result: { weeks: PlanWeek[]; vdot?: number | null } = buildPlan(calendarAnswers(answers, today, ws), today, raw)
   const built = result.weeks
   const vdot = result.vdot === undefined ? raw : result.vdot
 
-  const thisWeek = weekStartDate(today, ws)
-  const left = weekOrder(ws).slice((weekdayOf(today) - ws + 7) % 7)
-  const natural = built[0].sessions.length <= left.length ? thisWeek : addDays(thisWeek, 7)
-  const start = delayedStart(answers, today, natural, ws, built.length)
-  const startsNow = start === thisWeek
+  const first = firstWeek(answers.days, today, ws)
+  const start = delayedStart(answers, first.start, ws, built.length)
+  const left = start === first.start ? first.left : null
 
   const weeks: Week[] = built.map((w, i) => ({
     ...w,
-    sessions: fitted(w.sessions, S, answers.longDay, i === 0 && startsNow ? left : undefined),
+    sessions: fitted(w.sessions, S, answers.longDay, i === 0 && left ? left : undefined),
   }))
 
   const plan: RunPlan = {
     version: 1,
     goal: answers.goal,
     goalType: answers.goalType ?? 'finish',
-    startDate: startsNow ? today : start,
+    startDate: left ? today : start,
     answers: JSON.parse(JSON.stringify(answers)),
     vdotSource: vdot != null ? 'race' : null,
     weeks,
