@@ -10,14 +10,16 @@ import type { SessionType } from './types'
 
 export type FitWarning = 'after_leg_day' | 'hard_in_a_row' | 'shared_with_strength_hard'
 
-type Week = Record<number, string[]>
+// S.week: weekday (0 = Sunday) to the ids of the strength routines planned that day.
+type StrengthWeek = Record<number, string[]>
 type Routine = { id: string; ex?: { id: string; sets?: number }[] }
 type FitSession = { id: string; type: SessionType }
 export type FitContext = {
-  week: Week
+  week: StrengthWeek
   routines: Routine[]
   longDay: number
-  // Weekdays the sessions may use (the current week from today on). Omitted or empty: any day.
+  // Weekdays the sessions may use (the current week from today on). Omitted: any day. Never pass
+  // an empty list: there is nowhere to put the sessions, so fitWeek throws.
   allowedDays?: number[]
 }
 
@@ -31,7 +33,7 @@ const isQuality = (type: SessionType) => type === 'tempo' || type === 'intervals
 const isGentle = (type: SessionType) => type === 'easy' || type === 'runwalk'
 
 /** Days whose routines put more than half of the effective sets on quadriceps, hamstrings and glutes. */
-export function legDays(week: Week, routines: Routine[]): Set<number> {
+export function legDays(week: StrengthWeek, routines: Routine[]): Set<number> {
   const byId = new Map(routines.map(r => [r.id, r]))
   const out = new Set<number>()
   for (const day of DAYS) {
@@ -49,7 +51,7 @@ export function legDays(week: Week, routines: Routine[]): Set<number> {
   return out
 }
 
-const strengthDaysOf = (week: Week) => new Set(DAYS.filter(d => (week[d] || []).length > 0))
+const strengthDaysOf = (week: StrengthWeek) => new Set(DAYS.filter(d => (week[d] || []).length > 0))
 
 type Facts = { leg: Set<number>; strength: Set<number> }
 
@@ -67,7 +69,12 @@ function warningsOf(session: FitSession, day: number, at: Record<string, number>
   return out
 }
 
-/** The warnings a session would carry if it moved to `day`, everything else staying where it is. */
+/**
+ * The warnings the moved session alone would carry at `day`, everything else staying where it is.
+ * Moving it can also change the warnings of the other sessions (a tempo moved to the day before an
+ * intervals run gives that run `hard_in_a_row`), so after a move callers recompute every session's
+ * warnings with `weekWarnings`.
+ */
 export function moveWarnings(
   sessionId: string,
   day: number,
@@ -79,6 +86,20 @@ export function moveWarnings(
   if (!session) return []
   const facts = { leg: legDays(ctx.week, ctx.routines), strength: strengthDaysOf(ctx.week) }
   return warningsOf(session, day, { ...placement, [sessionId]: day }, sessions, facts)
+}
+
+/** The warnings of every session at the days it sits on, against the strength week as it is now. */
+export function weekWarnings(
+  sessions: (FitSession & { day: number })[],
+  strengthWeek: StrengthWeek,
+  routines: Routine[],
+): Record<string, FitWarning[]> {
+  const facts = { leg: legDays(strengthWeek, routines), strength: strengthDaysOf(strengthWeek) }
+  const at: Record<string, number> = {}
+  for (const s of sessions) at[s.id] = s.day
+  const out: Record<string, FitWarning[]> = {}
+  for (const s of sessions) out[s.id] = warningsOf(s, s.day, at, sessions, facts)
+  return out
 }
 
 // Lower is better, compared left to right: the spec's rules in order, then the tie-breaks.
@@ -126,8 +147,10 @@ export function fitWeek(
   ctx: FitContext,
 ): { placement: Record<string, number>; warnings: Record<string, FitWarning[]> } {
   const facts = { leg: legDays(ctx.week, ctx.routines), strength: strengthDaysOf(ctx.week) }
-  const allowed = [...new Set((ctx.allowedDays || []).filter(d => Number.isInteger(d) && d >= 0 && d <= 6))].sort((a, b) => a - b)
-  const candidates = allowed.length ? allowed : DAYS
+  const candidates = ctx.allowedDays === undefined
+    ? DAYS
+    : [...new Set(ctx.allowedDays.filter(d => Number.isInteger(d) && d >= 0 && d <= 6))].sort((a, b) => a - b)
+  if (!candidates.length) throw new Error('fitWeek: allowedDays has no valid weekday')
 
   let best: number[] | null = null
   let bestCost: number[] = []

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { EXIDX } from '../../lib/exercises.js'
-import { fitWeek, legDays, moveWarnings, type FitWarning } from './fit'
+import { fitWeek, legDays, moveWarnings, weekWarnings, type FitWarning } from './fit'
 
 // Custom exercises (ids outside the catalogue) fall back to their body part, so `bp` decides the
 // muscles: 'upper legs' is quadriceps/hamstring/gluteal, 'chest' and 'back' are not.
@@ -103,12 +103,24 @@ describe('fitWeek', () => {
     expect(placement.a).toBe(THU)
   })
 
-  it('does not depend on the week start: same weekdays whatever order the days arrive in', () => {
-    const mondayFirst = { [MON]: ['leg'], [WED]: ['upper'], [FRI]: ['upper'] }
-    const sundayFirst = { [FRI]: ['upper'], [WED]: ['upper'], [MON]: ['leg'] }
-    const a = fitWeek(sessions, { week: mondayFirst, routines, longDay: SUN, allowedDays: [1, 2, 3, 4, 5, 6, 0] })
-    const b = fitWeek(sessions, { week: sundayFirst, routines, longDay: SUN, allowedDays: [0, 1, 2, 3, 4, 5, 6] })
-    expect(a).toEqual(b)
+  it('depends only on weekdays (0 = Sunday), not on the order the days arrive in', () => {
+    // The same strength week and allowed days listed the way a Monday-start and a Sunday-start
+    // screen would walk them, and with the sessions' week keys inserted in different orders.
+    const monday = { [MON]: ['leg'], [WED]: ['upper'], [FRI]: ['upper'] }
+    const reversed = Object.fromEntries(Object.entries(monday).reverse())
+    const a = fitWeek(sessions, { week: monday, routines, longDay: SUN, allowedDays: [1, 2, 3, 4, 5, 6, 0] })
+    const b = fitWeek(sessions, { week: reversed, routines, longDay: SUN, allowedDays: [0, 1, 2, 3, 4, 5, 6] })
+    const c = fitWeek(sessions, { week: reversed, routines, longDay: SUN, allowedDays: [6, 5, 4, 3, 2, 1, 0, 3] })
+    expect(b).toEqual(a)
+    expect(c).toEqual(a)
+    // and it is the same as leaving allowedDays out
+    expect(fitWeek(sessions, { week: monday, routines, longDay: SUN })).toEqual(a)
+  })
+
+  it('treats only an omitted allowedDays as any day; an empty list throws', () => {
+    expect(() => fitWeek(sessions, { week, routines, longDay: SUN, allowedDays: [] })).toThrow(Error)
+    expect(() => fitWeek(sessions, { week, routines, longDay: SUN, allowedDays: [9, -1] })).toThrow(Error)
+    expect(Object.keys(fitWeek(sessions, { week, routines, longDay: SUN }).placement)).toHaveLength(3)
   })
 
   it('is deterministic', () => {
@@ -149,5 +161,26 @@ describe('moveWarnings', () => {
   it('never warns about an easy run', () => {
     expect(moveWarnings('w1-s3', TUE, placement, sessions, ctx)).toEqual([])
     expect(moveWarnings('w1-s3', WED, placement, sessions, ctx)).toEqual([])
+  })
+})
+
+describe('weekWarnings', () => {
+  const week = { [MON]: ['leg'], [WED]: ['upper'], [FRI]: ['upper'] }
+  const run = (id: string, type: 'long' | 'tempo' | 'intervals' | 'easy', day: number) => ({ id, type, day })
+
+  it('is empty for a week that follows the rules', () => {
+    expect(weekWarnings([run('a', 'long', SUN), run('b', 'intervals', THU), run('c', 'easy', SAT)], week, routines))
+      .toEqual({ a: [], b: [], c: [] })
+  })
+  it('reports the other session too when a move creates two hard days in a row', () => {
+    const before = [run('a', 'long', SUN), run('b', 'intervals', THU), run('t', 'tempo', SAT)]
+    // the tempo moves to Wednesday, the day before the intervals run on Thursday
+    const moved = before.map(s => (s.id === 't' ? { ...s, day: WED } : s))
+    const warnings = weekWarnings(moved, week, routines)
+    expect(warnings.b).toEqual(['hard_in_a_row'])
+    expect(warnings.t).toEqual(expect.arrayContaining(['hard_in_a_row', 'shared_with_strength_hard']))
+    // moveWarnings alone only knows about the moved session
+    const placement = Object.fromEntries(before.map(s => [s.id, s.day]))
+    expect(moveWarnings('t', WED, placement, before, { week, routines })).toEqual(warnings.t)
   })
 })
