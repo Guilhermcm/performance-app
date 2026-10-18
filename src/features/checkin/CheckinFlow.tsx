@@ -18,7 +18,7 @@ import { droppedMessages, useCheckins, type CheckinInput } from './useCheckins'
 import { ingestCheckin, linkWorkout } from './ingest'
 import DetailSheet from './DetailSheet'
 import { Choice, Chip, Counted, DURATION_MAX, Group, TEXT_MAX, TITLE_MAX } from './fields'
-import type { CheckinActivity, CheckinDetail, CheckinVisibility } from './types'
+import type { CheckinActivity, CheckinVisibility, StrengthDetail } from './types'
 
 export { openCheckin, openCheckinCamera, closeCheckin, useCheckinFlow } from './open-checkin'
 export type { OpenCheckinOptions, CheckinDetail } from './open-checkin'
@@ -100,7 +100,7 @@ function Panel() {
   const [note, setNote] = useState('')
   const [yesterday, setYesterday] = useState(false)
   const [visibility, setVisibility] = useState<CheckinVisibility>(() => (profile?.checkin_visibility === 'private' ? 'private' : 'friends'))
-  const [detail, setDetail] = useState<CheckinDetail | null>(opts.detail ?? null)
+  const [detail, setDetail] = useState<StrengthDetail | null>(opts.detail ?? null)
   const [detailOpen, setDetailOpen] = useState(false)
   const [busy, setBusy] = useState(false)
 

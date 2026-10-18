@@ -11,18 +11,18 @@ import { fmtNum } from '../../lib/format.js'
 import { useStore } from '../../store/useStore.js'
 import { loadUp } from '../plan/LoadUpBadge'
 import { detailOf, draftFor } from './ingest'
-import type { CheckinDetail } from './types'
+import type { StrengthDetail } from './types'
 
 type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
   routineId: string | null
   // A detail already given in this check-in, to reopen as it was.
-  initial?: CheckinDetail | null
+  initial?: StrengthDetail | null
   // The check-in is already posted, so its session is in the history (editing it).
   posted?: boolean
   // null when every exercise was turned off: the check-in goes without a detail.
-  onConfirm: (detail: CheckinDetail | null) => void
+  onConfirm: (detail: StrengthDetail | null) => void
 }
 
 type Row = { id: string; on: boolean; sets: { w: string; r: string }[] }

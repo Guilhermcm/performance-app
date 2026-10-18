@@ -2911,4 +2911,6 @@ export default {
   "Keeps you running until the race plan starts.": "레이스 플랜이 시작될 때까지 계속 달립니다.",
   // --- run: race day (phase 1e-a, final review) ---
   "Race day": "레이스 당일",
+  // --- run: run check-in in the feed (phase 1e-b) ---
+  "{0} km": "{0}km",
 }

@@ -2914,4 +2914,6 @@ export default {
   "Keeps you running until the race plan starts.": "Addig is futsz, amíg a versenyterv el nem indul.",
   // --- run: race day (phase 1e-a, final review) ---
   "Race day": "Verseny napja",
+  // --- run: run check-in in the feed (phase 1e-b) ---
+  "{0} km": "{0} km",
 }

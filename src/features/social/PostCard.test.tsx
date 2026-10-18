@@ -267,6 +267,47 @@ describe('PostCard', () => {
   })
 })
 
+describe('PostCard of a run', () => {
+  const run = (over: Parameters<typeof checkinItemOf>[1] = {}) =>
+    checkinItemOf('r1', { activity: 'run', title: 'Corrida', caption: null, duration_min: 38, ...over })
+
+  it('shows the type, the distance and the duration', async () => {
+    await setLang('pt-BR')
+    try {
+      render(<PostCard item={run({ run_type: 'intervals', distance_km: 6.2 })} onOpen={vi.fn()} />)
+      expect(screen.getByText('Intervalado · 6,2 km · 38 min')).toBeTruthy()
+    } finally { await setLang('en') }
+  })
+
+  it('shows the distance without a type, and the type without a distance', () => {
+    const { unmount } = render(<PostCard item={run({ run_type: null, distance_km: 6.2 })} onOpen={vi.fn()} />)
+    expect(screen.getByText('6.2 km · 38 min')).toBeTruthy()
+    unmount()
+    render(<PostCard item={run({ run_type: 'long', distance_km: null, duration_min: null })} onOpen={vi.fn()} />)
+    expect(screen.getByText('Long run')).toBeTruthy()
+  })
+
+  it('without a type or a distance shows what it shows today', () => {
+    const { container } = render(<PostCard item={run({ run_type: null, distance_km: null })} onOpen={vi.fn()} />)
+    const { container: before } = render(<PostCard item={run()} onOpen={vi.fn()} />)
+    expect(screen.queryAllByText(/38 min/)).toEqual([])
+    expect(container.querySelector('article')!.textContent).toBe(before.querySelector('article')!.textContent)
+  })
+
+  it('a strength post with a type or a distance by mistake shows no run line', () => {
+    render(<PostCard item={checkinItemOf('c1', { run_type: 'easy', distance_km: 5 })} onOpen={vi.fn()} />)
+    expect(screen.queryByText(/km/)).toBeNull()
+    expect(screen.queryByText('Easy run')).toBeNull()
+  })
+
+  it('shows the line on my post still going up', () => {
+    const blob = new Blob([new Uint8Array(4)], { type: 'image/jpeg' })
+    render(<PostCard item={run({ user: { id: ME, name: 'Ana', avatar_url: null }, pending: true, photo: blob, context: null, run_type: 'easy', distance_km: 5 })} onOpen={vi.fn()} />)
+    expect(screen.getByText('Sending…')).toBeTruthy()
+    expect(screen.getByText('Easy run · 5 km · 38 min')).toBeTruthy()
+  })
+})
+
 describe('PostSkeleton', () => {
   it('has the shape of a post: header, photo, title and reactions', () => {
     const { container } = render(<PostSkeleton />)

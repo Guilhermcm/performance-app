@@ -10,7 +10,7 @@ import { useCheckinFlow } from './open-checkin'
 import { usePostOverlay } from '../social/post-state'
 import { useProfile } from '../profile/useProfile'
 import { shiftDay, todayIn } from '../nutrition/days'
-import type { CheckinActivity, CheckinDetail, CheckinRow, CheckinVisibility } from './types'
+import { isRunDetail, type CheckinActivity, type CheckinDetail, type CheckinRow, type CheckinVisibility } from './types'
 import type { CheckinFeedCursor, CheckinFeedEntry, CheckinFeedItem, NoticesPage, Person, SocialNotice } from '../social/types'
 
 const CACHE = 'perf_checkins_v1'
@@ -117,15 +117,22 @@ const pick = (patch: CheckinPatch): CheckinPatch => {
   return out
 }
 
+// What the feed shows of a run's detail, as checkin_feed_item does (0032_run.sql): the planned
+// type and the distance, null off a run. Never the effort, the blocks or the plan.
+const runOf = (row: CheckinRow): Pick<CheckinFeedItem, 'run_type' | 'distance_km'> => {
+  const run = row.activity === 'run' && isRunDetail(row.detail) ? row.detail.run : null
+  return { run_type: run?.planned?.type ?? null, distance_km: run?.distance_km ?? null }
+}
+
 // The feed card of a post of mine the server has not paged yet: no context or reactions, never the
 // note. While it waits to go up it is `pending` and carries the photo from this phone.
 const ownItem = (row: CheckinRow, me: Person, pending: Blob | null): CheckinFeedItem => ({
   type: 'checkin', key: keyOf(row.id), at: row.created_at ?? stamp(), day: row.day, user: me, activity: row.activity,
-  title: row.title, caption: row.caption, duration_min: row.duration_min, visibility: row.visibility, photo_path: row.photo_path,
+  title: row.title, caption: row.caption, duration_min: row.duration_min, ...runOf(row), visibility: row.visibility, photo_path: row.photo_path,
   context: null, reactions: [], comments_count: 0, ...(pending ? { pending: true, photo: pending } : {})
 })
 const withRow = (item: CheckinFeedItem, row: CheckinRow): CheckinFeedItem =>
-  ({ ...item, title: row.title, caption: row.caption, duration_min: row.duration_min, visibility: row.visibility })
+  ({ ...item, title: row.title, caption: row.caption, duration_min: row.duration_min, ...runOf(row), visibility: row.visibility })
 
 // What the server sent, with what the outbox has not delivered yet on top.
 function overlayMine(base: CheckinRow[], ops: CheckinOp[], from: string): MyCheckin[] {

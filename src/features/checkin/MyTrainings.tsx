@@ -23,7 +23,7 @@ import { workoutOfCheckin } from './ingest'
 import { activityLabel } from './activities'
 import { useWeekTraining } from './week'
 import EditCheckinSheet from './EditCheckinSheet'
-import type { CheckinDetail, CheckinRow } from './types'
+import { entriesOf, isRunDetail, type CheckinRow, type StrengthDetail } from './types'
 
 type AppStore = { S: Record<string, any> }
 type Load = 'idle' | 'loading' | 'error'
@@ -291,10 +291,11 @@ function CheckinEntry({ row, onSaved }: { row: MyCheckin; onSaved: (row: Checkin
 // the unit it was typed in (a detail from before phase 1d has none and reads in the profile's).
 function sessionSets(S: Record<string, any>, row: CheckinRow): { id: string; text: string }[] {
   const session = workoutOfCheckin(S, row.id)
-  const unit = (session ? null : row.detail?.unit) ?? (S.unit || 'kg')
-  const entries: CheckinDetail['entries'] = session
+  const own = isRunDetail(row.detail) ? null : row.detail
+  const unit = (session ? null : own?.unit) ?? (S.unit || 'kg')
+  const entries: StrengthDetail['entries'] = session
     ? session.entries.map(e => ({ id: e.id, sets: e.sets.filter(s => s.done && Number(s.r) > 0).map(s => ({ w: Number(s.w) || 0, r: Number(s.r), done: true as const })) }))
-    : row.detail?.entries ?? []
+    : entriesOf(row.detail)
   return entries
     .filter(e => e.sets.length)
     .map(e => ({ id: e.id, text: e.sets.map(s => (s.w > 0 ? `${num(s.w)} ${unit} × ${s.r}` : `× ${s.r}`)).join(' · ') }))

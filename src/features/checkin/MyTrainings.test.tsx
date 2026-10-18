@@ -122,6 +122,16 @@ describe('My workouts', () => {
     expect(within(screen.getByRole('dialog')).getByText('60 kg × 8')).toBeTruthy()
   })
 
+  it('opens a run check-in with its run detail and no sets', () => {
+    const detail = { run: { status: 'unplanned' as const, distance_km: 6.2, rpe: 7 } }
+    setup({ mine: [row('c1', '2026-10-07', { activity: 'run', routine_id: null, routine_name: null, duration_min: 38, detail })] })
+    fireEvent.click(day(/7 October: 1 check-in$/))
+    const entry = within(screen.getByRole('dialog')).getByRole('article', { name: 'Gym c1' })
+    expect(within(entry).getByText('Running · 38 min')).toBeTruthy()
+    expect(within(entry).queryByText('Workout detailed')).toBeNull()
+    expect(within(entry).getByRole('button', { name: 'Edit check-in' })).toBeTruthy()
+  })
+
   it('opens the day it was sent to', () => {
     h.state = { day: '2026-10-09' }
     setup({ mine: [row('c3', '2026-10-09')] })

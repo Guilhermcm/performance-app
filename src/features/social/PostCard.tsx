@@ -9,6 +9,7 @@ import { t, tn } from '../../lib/i18n.js'
 import { useCheckinPhoto } from '../checkin/photo-src'
 import EditCheckinSheet from '../checkin/EditCheckinSheet'
 import { useCheckins } from '../checkin/useCheckins'
+import { runLine } from '../run/run-detail'
 import { toSocialError } from './social-api'
 import { socialErrorText } from './labels'
 import { fmtAgo } from './format'
@@ -97,6 +98,8 @@ export function PostCard({ item, onOpen, onHide }: {
   const mine = item.user.id === me
   const pending = !!item.pending
   const context = contextText(item.context)
+  // A run with its type or distance (plan decision 5): "Intervalado · 6,2 km · 38 min".
+  const run = item.activity === 'run' && (item.run_type || item.distance_km != null) ? runLine(item) : null
 
   const hide = async () => {
     setMenu(false)
@@ -136,6 +139,7 @@ export function PostCard({ item, onOpen, onHide }: {
       <Photo item={item} onDoubleTap={pending ? undefined : () => void reactTo(item, QUICK_REACTION)} />
       <div className="flex flex-col gap-2 px-3 pb-3 pt-2.5">
         <h3 id={titleId} className="text-[17px] font-semibold leading-snug tracking-tight break-words">{item.title}</h3>
+        {run && <p className="text-sm font-medium tabular-nums text-muted-foreground">{run}</p>}
         {item.caption && <p className="whitespace-pre-line text-[15px] leading-relaxed break-words">{item.caption}</p>}
         {context && <p className="text-xs font-medium text-muted-foreground">{context}</p>}
         {pending ? (
