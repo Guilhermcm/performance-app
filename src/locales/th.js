@@ -2920,4 +2920,6 @@ export default {
   "Race plan starts on {0}": "แผนแข่งเริ่ม {0}",
   "Until then, run to stay in shape": "ระหว่างนี้วิ่งเพื่อรักษาฟอร์ม",
   "Keeps you running until the race plan starts.": "คุณจะได้วิ่งต่อไปจนกว่าแผนแข่งจะเริ่ม",
+  // --- run: race day (phase 1e-a, final review) ---
+  "Race day": "วันแข่ง",
 }

@@ -2,18 +2,21 @@
 // that date, the workout's name and minutes, its blocks in one line with the paces (SessionBlocks),
 // the fit warnings against the strength week as it is now (spec §6.2, recomputed live for every
 // session of the week, Decision 3) and "Change day", which lists the days of this week from today
-// on with the warnings each move would bring. A move changes only that week.
+// on with the warnings each move would bring. A move changes only that week. On race day it shows
+// the race with its distance; in the race week, runs move only to days before the race, and race
+// day counts as a hard day for the warnings (final review I1 and M6).
 import { useState } from 'react'
-import { TriangleAlert } from 'lucide-react'
+import { Flag, TriangleAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { t } from '../../lib/i18n.js'
 import { DAYN, isoOf, startOfWeek, todayISO, weekDayOffset, weekOrder, weekStartOf } from '../../lib/format.js'
 import { useStore } from '../../store/useStore.js'
 import { moveWarnings, weekWarnings, type FitWarning } from './fit'
-import { fitWarningText, sessionName } from './labels'
+import { fitWarningText, goalName, sessionName } from './labels'
 import { weekMinutes } from './models'
-import { currentWeek, moveSession, planWeekStart, sessionsOn, strengthWeek, type RunState } from './run-actions'
+import { weekStartDate } from './dates'
+import { currentWeek, moveSession, planWeekStart, raceBounds, raceOn, sessionsOn, strengthWeek, type RunState } from './run-actions'
 import SessionBlocks from './SessionBlocks'
 import type { Session, Week } from './types'
 
@@ -34,25 +37,38 @@ export default function RunDayCard({ day, iso }: { day: number; iso: string }) {
   const plan = S.runPlan
   const week = currentWeek(plan, iso, ws)
   const sessions = sessionsOn(plan, iso, ws)
-  if (!plan || !week || !sessions.length) return null
+  const race = raceOn(plan, iso)
+  if (!plan || (!race && (!week || !sessions.length))) return null
   // The run's plan week, on the week start the plan was made with (it may differ from S.weekStart).
   const pws = planWeekStart(plan, ws)
 
   const strength = strengthWeek(S)
   const routines = S.routines || []
-  const warnings = weekWarnings(week.sessions, strength, routines)
+  // In the race week: the days before the race, and race day as a hard day.
+  const bounds = plan.raceDate && raceOn(plan, plan.raceDate) ? raceBounds(plan.raceDate, weekStartDate(iso, pws)) : null
+  const warnings = week ? weekWarnings(week.sessions, strength, routines, bounds?.raceDay) : {}
   const today = todayISO()
-  // Days of the run's plan week still to come, today included, in the plan week's order.
-  const open = weekOrder(pws).filter(d => weekDayIso(iso, pws, d) >= today)
+  // Days of the run's plan week still to come, today included, in the plan week's order, and
+  // before the race.
+  const open = weekOrder(pws).filter(d => weekDayIso(iso, pws, d) >= today && (!bounds || bounds.days.includes(d)))
   const targets = (s: Session) => open.filter(d => d !== s.day)
 
   const move = (s: Session, to: number) => {
-    update(draft => { moveSession(draft, week.index, s.id, to, iso) })
+    if (week) update(draft => { moveSession(draft, week.index, s.id, to, iso) })
     setMoving(null)
   }
 
   return (
     <div className="mt-2 flex flex-col gap-2 font-sans">
+      {race && (
+        <article aria-labelledby={`race-${iso}`} className="flex items-center gap-3 rounded-xl border-2 border-primary bg-background/40 px-3 py-2.5">
+          <Flag aria-hidden className="size-5 shrink-0 text-primary" />
+          <div className="flex min-w-0 flex-col">
+            <h3 id={`race-${iso}`} className="text-[15px] font-semibold">{t('Race day')}</h3>
+            <span className="text-sm text-muted-foreground">{goalName(plan.goal)}</span>
+          </div>
+        </article>
+      )}
       {sessions.map(s => (
         <article key={s.id} aria-labelledby={`run-${iso}-${s.id}`} className="rounded-xl border border-border bg-background/40 px-3 py-2.5">
           <div className="flex items-baseline justify-between gap-3">
@@ -70,8 +86,8 @@ export default function RunDayCard({ day, iso }: { day: number; iso: string }) {
 
       <Drawer open={!!moving} onOpenChange={o => { if (!o) setMoving(null) }}>
         <DrawerContent>
-          {moving && <MovePicker session={moving} days={targets(moving)} iso={iso} ws={pws}
-            warningsAt={d => moveWarnings(moving.id, d, placementOf(week), week.sessions, { week: strength, routines })}
+          {moving && week && <MovePicker session={moving} days={targets(moving)} iso={iso} ws={pws}
+            warningsAt={d => moveWarnings(moving.id, d, placementOf(week), week.sessions, { week: strength, routines, raceDay: bounds?.raceDay })}
             onPick={d => move(moving, d)} onCancel={() => setMoving(null)} />}
         </DrawerContent>
       </Drawer>

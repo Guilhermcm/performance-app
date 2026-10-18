@@ -2996,4 +2996,6 @@ export default {
   "Race plan starts on {0}": "План до забігу починається {0}",
   "Until then, run to stay in shape": "До того бігати, щоб тримати форму",
   "Keeps you running until the race plan starts.": "Ви продовжуєте бігати, доки не почнеться план до забігу.",
+  // --- run: race day (phase 1e-a, final review) ---
+  "Race day": "День забігу",
 }

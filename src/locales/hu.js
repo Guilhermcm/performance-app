@@ -2912,4 +2912,6 @@ export default {
   "Race plan starts on {0}": "A versenyterv kezdete: {0}",
   "Until then, run to stay in shape": "Addig fuss a forma megtartásáért",
   "Keeps you running until the race plan starts.": "Addig is futsz, amíg a versenyterv el nem indul.",
+  // --- run: race day (phase 1e-a, final review) ---
+  "Race day": "Verseny napja",
 }

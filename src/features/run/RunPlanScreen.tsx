@@ -1,11 +1,12 @@
 // /plan/corrida (spec §6.4): the goal and the deadline, the phases, the weeks with this one marked
-// (its runs open, with their blocks), the paces by zone with the date of the reference, the race
+// (its runs open, with their blocks, in the order of the plan's own week start) and the race after
+// them, with its distance and date, the paces by zone with the date of the reference, the race
 // prediction from today's pace, and "Refit next weeks", "Redo questionnaire" and "End plan" (with a
 // confirmation; the strength week and the check-ins stay). A plan this build cannot read (another
 // version) offers only to redo the questionnaire; a plan waiting for its race says when it starts.
 import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Flag } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
@@ -17,7 +18,7 @@ import { formatClock } from './clock'
 import DaysGoalOffer from './DaysGoalOffer'
 import { dayText, goalName, phaseName, sessionName, weeksText, zoneFeel, zoneName } from './labels'
 import { isRace, weekMinutes } from './models'
-import { currentWeek, endRunPlan, isReadable, raceWeeksStart, refitFuture, type RunState } from './run-actions'
+import { currentWeek, endRunPlan, isReadable, planWeekStart, raceOn, raceWeeksStart, refitFuture, type RunState } from './run-actions'
 import RunQuestionnaire from './RunQuestionnaire'
 import SessionBlocks, { zonesOf } from './SessionBlocks'
 import { formatPaceRange, predictMinutes, zonePaces } from './vdot'
@@ -167,7 +168,9 @@ function Tags({ plan, today, ws }: { plan: RunPlan; today: string; ws: 0 | 1 }) 
 
 function WeekList({ plan, today, ws }: { plan: RunPlan; today: string; ws: 0 | 1 }) {
   const current = currentWeek(plan, today, ws)
-  const order = weekOrder(ws)
+  // The plan's own week order: it may have been made with another week start than S.weekStart.
+  const order = weekOrder(planWeekStart(plan, ws))
+  const race = plan.raceDate && raceOn(plan, plan.raceDate) ? plan.raceDate : null
   return (
     <Part id="weeks" title={t('Weeks')}>
       <ol className="flex list-none flex-col gap-2">
@@ -198,6 +201,13 @@ function WeekList({ plan, today, ws }: { plan: RunPlan; today: string; ws: 0 | 1
             </li>
           )
         })}
+        {race && (
+          <li data-race="true" className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3">
+            <Flag aria-hidden className="size-5 shrink-0 text-primary" />
+            <span className="text-[15px] font-semibold text-foreground">{t('Race day')} · {goalName(plan.goal)}</span>
+            <span className="ms-auto text-sm text-muted-foreground tabular-nums">{dayText(race, today)}</span>
+          </li>
+        )}
       </ol>
     </Part>
   )

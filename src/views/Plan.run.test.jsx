@@ -113,6 +113,23 @@ describe('Plan: run cards in the week schedule', () => {
     })
   }
 
+  it('marks race day in its row, on a free day or under the routines (final review I1)', () => {
+    // A Monday week: Monday 12 to Sunday 18 October. The race is on Friday the 16th.
+    setS({ runPlan: plan({ goal: '10k', raceDate: '2026-10-16' }) })
+    render(<Plan />)
+    const fri = rowOf('Friday')
+    expect(within(fri).getByRole('heading', { name: 'Race day' })).toBeTruthy()
+    expect(within(fri).getByText('10 km')).toBeTruthy()
+    expect(within(fri).queryByText('Rest')).toBeNull()
+    expect(within(rowOf('Thursday')).queryByRole('heading', { name: 'Race day' })).toBeNull()
+    cleanup()
+    setS({ runPlan: plan({ goal: '10k', raceDate: '2026-10-14' }) })
+    render(<Plan />)
+    const wed = rowOf('Wednesday')
+    expect(within(wed).getByText('Upper')).toBeTruthy()
+    expect(within(wed).getByRole('heading', { name: 'Race day' })).toBeTruthy()
+  })
+
   it('during the maintain weeks before a race plan, the entry says when the race plan starts (R2 I6-1)', () => {
     const p = plan()
     setS({ runPlan: { ...p, goal: '10k', weeks: p.weeks.map(w => ({ ...w, phase: 'maintain' })).concat([{ index: 3, phase: 'base', recovery: false, sessions: [] }]) } })

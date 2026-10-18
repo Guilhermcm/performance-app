@@ -2909,4 +2909,6 @@ export default {
   "Race plan starts on {0}": "比赛计划从 {0} 开始",
   "Until then, run to stay in shape": "在此之前，跑步保持状态",
   "Keeps you running until the race plan starts.": "在比赛计划开始前继续跑步。",
+  // --- run: race day (phase 1e-a, final review) ---
+  "Race day": "比赛日",
 }

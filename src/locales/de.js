@@ -2929,4 +2929,6 @@ export default {
   "Race plan starts on {0}": "Der Wettkampfplan beginnt am {0}",
   "Until then, run to stay in shape": "Bis dahin laufen, um in Form zu bleiben",
   "Keeps you running until the race plan starts.": "Du läufst weiter, bis der Wettkampfplan beginnt.",
+  // --- run: race day (phase 1e-a, final review) ---
+  "Race day": "Wettkampftag",
 }

@@ -19,7 +19,7 @@ import { ProgramBanner } from '../features/plan/ProgramBanner'
 import { AnalysisCard } from '../features/plan/AnalysisCard'
 import RunPlanEntry from '../features/run/RunPlanEntry'
 import RunDayCard, { weekDayIso } from '../features/run/RunDayCard'
-import { sessionsOn } from '../features/run/run-actions'
+import { raceOn, sessionsOn } from '../features/run/run-actions'
 
 export default function Plan() {
   const nav = useNavigate()
@@ -142,9 +142,10 @@ export default function Plan() {
       <div className="list" style={{ display: 'flex', flexDirection: 'column' }}>
         {weekOrder(weekStartOf(S)).map(d => {
           const dayRoutines = [].concat(S.week[d] || []).map(id => S.routines.find(x => x.id === id)).filter(Boolean)
-          // This week's runs of the running plan on this day (phase 1e-a), under the routines.
+          // This week's runs of the running plan on this day (phase 1e-a), under the routines, or
+          // the race on race day.
           const iso = weekDayIso(today, weekStartOf(S), d)
-          const runs = sessionsOn(S.runPlan, iso, weekStartOf(S)).length > 0
+          const runs = sessionsOn(S.runPlan, iso, weekStartOf(S)).length > 0 || raceOn(S.runPlan, iso)
           // An empty day stays one tappable row → pick its first routine (today's behaviour).
           if (!dayRoutines.length && !runs) return <div key={d} className="item" {...tappable(() => dayAssignSheet(d))}>
             <div className="grow"><div className="tt">{t(DAYN[d])}</div></div>

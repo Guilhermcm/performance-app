@@ -184,3 +184,31 @@ describe('weekWarnings', () => {
     expect(moveWarnings('t', WED, placement, before, { week, routines })).toEqual(warnings.t)
   })
 })
+
+describe('race day (final review I1 and M6)', () => {
+  const quality = [{ id: 'w9-s1', type: 'long' as const }, { id: 'w9-s2', type: 'tempo' as const }]
+  it('counts race day as a hard day: no quality run the day before it', () => {
+    // Race on Sunday, Monday to Saturday left. Friday is free and far from everything else.
+    for (const longDay of [SAT, SUN, MON]) {
+      const { placement, warnings } = fitWeek(quality, { week: {}, routines, longDay, allowedDays: [MON, TUE, WED, THU, FRI, SAT], raceDay: SUN })
+      expect(placement['w9-s2']).not.toBe(SAT)
+      expect(warnings['w9-s2']).toEqual([])
+    }
+  })
+  it('keeps the quality run off the day before the race even when the only other day follows leg day', () => {
+    // Race on Wednesday: Monday and Tuesday left, legs on Sunday. The long run takes the day before
+    // the race, though Monday is nearer its Sunday.
+    const { placement, warnings } = fitWeek(quality, { week: { [SUN]: ['leg'] }, routines, longDay: SUN, allowedDays: [MON, TUE], raceDay: WED })
+    expect(placement['w9-s2']).toBe(MON)
+    expect(warnings['w9-s2']).toEqual(['after_leg_day'])
+  })
+  it('warns live about a quality run the day before the race', () => {
+    const placed = [{ id: 'w9-s1', type: 'long' as const, day: MON }, { id: 'w9-s2', type: 'tempo' as const, day: SAT }]
+    expect(weekWarnings(placed, {}, routines, SUN)['w9-s2']).toEqual(['hard_in_a_row'])
+    expect(weekWarnings(placed, {}, routines)['w9-s2']).toEqual([])
+    const at = { 'w9-s1': MON, 'w9-s2': WED }
+    expect(moveWarnings('w9-s2', SAT, at, quality, { week: {}, routines, raceDay: SUN })).toEqual(['hard_in_a_row'])
+    expect(moveWarnings('w9-s2', FRI, at, quality, { week: {}, routines, raceDay: SUN })).toEqual([])
+    expect(moveWarnings('w9-s1', SAT, at, quality, { week: {}, routines, raceDay: SUN })).toEqual([])
+  })
+})

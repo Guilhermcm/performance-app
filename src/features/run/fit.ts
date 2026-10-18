@@ -5,6 +5,10 @@
 // weekdays, never on positions in the displayed week, so it gives the same answer whether the
 // person's week starts on Sunday or Monday. "The next day" wraps (Saturday is followed by Sunday),
 // which is the physical truth and keeps both week starts equivalent.
+//
+// A race week passes `raceDay`, the race's weekday when the day before the race is in the week:
+// race day then counts as a hard day, so no Ritmo or Intervalado goes on the day before it
+// (final review I1 and M6). The caller keeps the sessions to the days before the race.
 import { loadOfRoutine } from '../../lib/muscles.js'
 import type { SessionType } from './types'
 
@@ -21,6 +25,8 @@ export type FitContext = {
   // Weekdays the sessions may use (the current week from today on). Omitted: any day. Never pass
   // an empty list: there is nowhere to put the sessions, so fitWeek throws.
   allowedDays?: number[]
+  // The race's weekday in a race week whose day before the race is one of its days. Omitted: no race.
+  raceDay?: number
 }
 
 const DAYS = [0, 1, 2, 3, 4, 5, 6]
@@ -53,7 +59,12 @@ export function legDays(week: StrengthWeek, routines: Routine[]): Set<number> {
 
 const strengthDaysOf = (week: StrengthWeek) => new Set(DAYS.filter(d => (week[d] || []).length > 0))
 
-type Facts = { leg: Set<number>; strength: Set<number> }
+type Facts = { leg: Set<number>; strength: Set<number>; race?: number }
+const factsOf = (week: StrengthWeek, routines: Routine[], raceDay?: number): Facts =>
+  ({ leg: legDays(week, routines), strength: strengthDaysOf(week), race: raceDay })
+// A quality run the day before the race: race day is a hard day (rule 3).
+const beforeRace = (session: FitSession, day: number, facts: Facts) =>
+  facts.race !== undefined && isQuality(session.type) && next(day) === facts.race
 
 // The rules a session at `day` breaks, given where every session sits (`at`: id to day).
 function warningsOf(session: FitSession, day: number, at: Record<string, number>, sessions: FitSession[], facts: Facts): FitWarning[] {
@@ -62,7 +73,7 @@ function warningsOf(session: FitSession, day: number, at: Record<string, number>
   if (isQuality(session.type)) {
     if (facts.leg.has(prev(day))) out.push('after_leg_day')
     // The day after leg is already reported as after_leg_day; this covers the other neighbours.
-    const hardNext = facts.leg.has(next(day)) || hardRunDays.has(next(day))
+    const hardNext = facts.leg.has(next(day)) || hardRunDays.has(next(day)) || beforeRace(session, day, facts)
     if (hardRunDays.has(prev(day)) || hardNext) out.push('hard_in_a_row')
   }
   if (!isGentle(session.type) && facts.strength.has(day)) out.push('shared_with_strength_hard')
@@ -80,21 +91,25 @@ export function moveWarnings(
   day: number,
   placement: Record<string, number>,
   sessions: FitSession[],
-  ctx: Pick<FitContext, 'week' | 'routines'>,
+  ctx: Pick<FitContext, 'week' | 'routines' | 'raceDay'>,
 ): FitWarning[] {
   const session = sessions.find(s => s.id === sessionId)
   if (!session) return []
-  const facts = { leg: legDays(ctx.week, ctx.routines), strength: strengthDaysOf(ctx.week) }
+  const facts = factsOf(ctx.week, ctx.routines, ctx.raceDay)
   return warningsOf(session, day, { ...placement, [sessionId]: day }, sessions, facts)
 }
 
-/** The warnings of every session at the days it sits on, against the strength week as it is now. */
+/**
+ * The warnings of every session at the days it sits on, against the strength week as it is now.
+ * `raceDay` as in FitContext, for a race week.
+ */
 export function weekWarnings(
   sessions: (FitSession & { day: number })[],
   strengthWeek: StrengthWeek,
   routines: Routine[],
+  raceDay?: number,
 ): Record<string, FitWarning[]> {
-  const facts = { leg: legDays(strengthWeek, routines), strength: strengthDaysOf(strengthWeek) }
+  const facts = factsOf(strengthWeek, routines, raceDay)
   const at: Record<string, number> = {}
   for (const s of sessions) at[s.id] = s.day
   const out: Record<string, FitWarning[]> = {}
@@ -111,8 +126,10 @@ function costOf(days: number[], sessions: FitSession[], ctx: FitContext, facts: 
   let inARow = 0
   let sharedHard = 0
   let gentleOnStrength = 0
+  let eve = 0
   sessions.forEach((s, i) => {
     if (s.type === 'long') longGap += gap(days[i], ctx.longDay)
+    if (beforeRace(s, days[i], facts)) eve++
     const w = warningsOf(s, days[i], at, sessions, facts)
     if (w.includes('after_leg_day')) afterLeg++
     if (w.includes('hard_in_a_row')) inARow++
@@ -120,13 +137,19 @@ function costOf(days: number[], sessions: FitSession[], ctx: FitContext, facts: 
     if (isGentle(s.type) && facts.strength.has(days[i])) gentleOnStrength++
   })
   const stacked = sessions.length - new Set(days).size
-  // Tie-break: far from the nearest hard day (leg days and the other quality runs).
+  // Tie-break: far from the nearest hard day (leg days, the other quality runs and the race, which
+  // only lies ahead: the days of a race week come before it).
   let farness = 0
   sessions.forEach((s, i) => {
     const hard = [...facts.leg, ...sessions.flatMap((o, j) => (j !== i && isQuality(o.type) ? [days[j]] : []))]
-    farness += hard.length ? Math.min(...hard.map(h => gap(days[i], h))) : 7
+    const gaps = hard.map(h => gap(days[i], h))
+    if (facts.race !== undefined) gaps.push((facts.race - days[i] + 7) % 7 || 7)
+    farness += gaps.length ? Math.min(...gaps) : 7
   })
-  return [longGap, stacked, afterLeg, inARow, sharedHard, gentleOnStrength, -farness, ...days]
+  // A quality run the day before the race comes first, then one session a day, before even the
+  // long run's day: the race is the week's goal, and the race week keeps no more sessions than its
+  // days (run-actions.ts). Elsewhere a free day is always left, so the order changes nothing there.
+  return [eve, stacked, longGap, afterLeg, inARow, sharedHard, gentleOnStrength, -farness, ...days]
 }
 
 const before = (a: number[], b: number[]) => {
@@ -136,17 +159,18 @@ const before = (a: number[], b: number[]) => {
 
 /**
  * Places the week's sessions on weekdays. Tries every placement (at most four sessions on seven
- * days) and keeps the best by spec §6.2: long run on the preferred day (the nearest allowed one
- * when it is gone), then no two sessions on one day, no quality run after leg, no two hard days in
- * a row, no hard run on a strength day, easy runs on free days; ties go to the day farthest from the
- * nearest hard day, then to the lowest weekday. Nothing is ever dropped: a rule that cannot hold is
+ * days) and keeps the best by spec §6.2: in a race week, no quality run the day before the race
+ * first; then no two sessions on one day, the long run on the preferred day (the nearest allowed
+ * one when it is gone), no quality run after leg, no two hard days in a row (race day counts as a
+ * hard day), no hard run on a strength day, easy runs on free days; ties go to the day farthest
+ * from the nearest hard day, then to the lowest weekday. Nothing is ever dropped: a rule that cannot hold is
  * broken as little as possible and reported in `warnings`.
  */
 export function fitWeek(
   sessions: FitSession[],
   ctx: FitContext,
 ): { placement: Record<string, number>; warnings: Record<string, FitWarning[]> } {
-  const facts = { leg: legDays(ctx.week, ctx.routines), strength: strengthDaysOf(ctx.week) }
+  const facts = factsOf(ctx.week, ctx.routines, ctx.raceDay)
   const candidates = ctx.allowedDays === undefined
     ? DAYS
     : [...new Set(ctx.allowedDays.filter(d => Number.isInteger(d) && d >= 0 && d <= 6))].sort((a, b) => a - b)

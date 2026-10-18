@@ -2962,4 +2962,6 @@ export default {
   "Race plan starts on {0}": "تبدأ خطة السباق في {0}",
   "Until then, run to stay in shape": "حتى ذلك الحين، اجرِ للحفاظ على لياقتك",
   "Keeps you running until the race plan starts.": "تواصل الجري حتى تبدأ خطة السباق.",
+  // --- run: race day (phase 1e-a, final review) ---
+  "Race day": "يوم السباق",
 }

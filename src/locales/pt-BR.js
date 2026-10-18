@@ -2300,6 +2300,8 @@ export const PT_BR_OVERRIDES = {
   "Race plan starts on {0}": "O plano da prova começa em {0}",
   "Until then, run to stay in shape": "Até lá, correr para manter a forma",
   "Keeps you running until the race plan starts.": "Você continua correndo até o plano da prova começar.",
+  // --- run: race day (phase 1e-a, final review) ---
+  "Race day": "Dia da prova",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

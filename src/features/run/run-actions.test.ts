@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { applyRunPlan, calendarAnswers, currentWeek, endRunPlan, moveSession, raceStartOf, raceWeeksStart, refitFuture, sessionsOn, type RunState } from './run-actions'
+import { applyRunPlan, calendarAnswers, currentWeek, endRunPlan, moveSession, raceBounds, raceOn, raceStartOf, raceWeeksStart, refitFuture, sessionsOn, weekDate, type RunState } from './run-actions'
 import { fitWeek } from './fit'
 import type { Answers, RunPlan } from './types'
 
@@ -125,35 +125,60 @@ describe('applyRunPlan', () => {
     expect(last.phase).toBe('taper')
   })
 
-  describe('a race date always ends the plan in the race week', () => {
-    const raceDays: [string, number][] = [['Sunday', 12 * 7 - 1], ['Monday', 12 * 7], ['Wednesday', 12 * 7 + 2]]
+  describe('a race date ends the plan at the race (final review I1 and M6)', () => {
+    // Every race weekday, both week starts, applied on a Monday and on a Friday, near and far (with
+    // the bridge), for 2, 3 and 4 days: nothing on or after race day, no quality run the day before,
+    // the quality run always kept, and the race marked on its date.
+    const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     const starts: [string, string][] = [['Monday', MONDAY], ['Friday', FRIDAY]]
+    const kinds: [string, Partial<Answers>][] = [['10k, 3 days', {}], ['10k, 4 days', { days: 4 }], ['5k, 2 days', { goal: '5k', days: 2 }]]
+    const isQuality = (type: string) => type === 'tempo' || type === 'intervals'
     for (const ws of [0, 1] as const) {
       for (const [startName, today] of starts) {
-        for (const [raceName, offset] of raceDays) {
-          for (const far of [0, 20]) {
-            it(`race on a ${raceName}${far ? ' far away' : ''}, applied on a ${startName}, week starting on ${ws ? 'Monday' : 'Sunday'}`, () => {
-              const raceDate = addDays(MONDAY, offset + far * 7)
-              const plan = applyRunPlan(state(ws), tenK({ weeks: undefined, raceDate }), today)
-              const last = plan.weeks[plan.weeks.length - 1]
-              expect(currentWeek(plan, raceDate, ws)).toBe(last)
-              expect(currentWeek(plan, plan.startDate, ws)).toBe(plan.weeks[0])
-              expect(plan.weeks.map(w => w.phase).slice(-2)).toEqual(['taper', 'taper'])
-              expect(plan.weeks.filter(w => w.phase === 'taper')).toHaveLength(2)
-              expect(plan.weeks.length).toBeLessThanOrEqual(18)
-              // Nothing is planned after the race week.
-              expect(currentWeek(plan, addDays(raceDate, 7), ws)).toBeNull()
-              if (!far) {
-                // Within the cap, week 1 is the one Decision 2 picks.
-                expect(currentWeek(plan, addDays(today, 7), ws)).not.toBeNull()
+        for (let k = 0; k < 7; k++) {
+          // 12 weeks after this Monday, then k days on: every weekday once.
+          const near = addDays(MONDAY, 12 * 7 + k)
+          const raceName = WEEKDAYS[dayOf(near)]
+          for (const [kindName, kind] of kinds) {
+            for (const far of [0, 20]) {
+              it(`${kindName}, race on a ${raceName}${far ? ' far away, with the bridge' : ''}, applied on a ${startName}, week starting on ${ws ? 'Monday' : 'Sunday'}`, () => {
+                const raceDate = addDays(near, far * 7)
+                const answers = tenK({ weeks: undefined, raceDate, bridge: far > 0, ...kind })
+                const plan = applyRunPlan(state(ws), answers, today)
+                const placed = plan.weeks.flatMap((w, i) => w.sessions.map(s => ({ s, w, iso: addDays(weekDate(plan, i, ws), (s.day - ws + 7) % 7) })))
+                // Nothing on or after race day, nothing before the start.
+                for (const { iso } of placed) {
+                  expect(iso < raceDate).toBe(true)
+                  expect(iso >= plan.startDate).toBe(true)
+                }
+                // Race day is a hard day: no Ritmo or Intervalado the day before.
+                const eve = addDays(raceDate, -1)
+                expect(placed.filter(p => p.iso === eve && isQuality(p.s.type))).toEqual([])
+                // The plan ends in the week holding the last day a quality run can take (two days
+                // before the race), with its two taper weeks.
+                const last = plan.weeks.at(-1)!
+                expect(currentWeek(plan, addDays(raceDate, -2), ws)).toBe(last)
+                expect(plan.weeks.filter(w => w.phase === 'taper').map(w => w.index)).toEqual([last.index - 1, last.index].slice(answers.goal === '5k' ? 1 : 0))
+                // The quality run stays; a race week too short drops the Longão first, then easy runs.
+                const days = answers.days
+                expect(last.sessions.filter(s => isQuality(s.type))).toHaveLength(1)
+                const room = new Set(Array.from({ length: 7 }, (_, j) => addDays(weekDate(plan, plan.weeks.length - 1, ws), j)).filter(iso => iso < raceDate)).size
+                expect(last.sessions).toHaveLength(Math.min(days, room))
+                if (room < days) expect(last.sessions.some(s => s.type === 'long')).toBe(false)
+                expect(new Set(last.sessions.map(s => s.day)).size).toBe(last.sessions.length)
+                // The race is marked on its date, which holds no run.
+                expect(raceOn(plan, raceDate)).toBe(true)
+                expect(raceOn(plan, eve)).toBe(false)
+                expect(sessionsOn(plan, raceDate, ws)).toEqual([])
+                expect(currentWeek(plan, addDays(raceDate, 7), ws)).toBeNull()
+                // Week 1 is the one Decision 2 picks, the bridge's first week when the race is far.
                 const daysLeft = 7 - ((dayOf(today) - ws + 7) % 7)
-                expect(plan.startDate).toBe(daysLeft >= 3 ? today : addDays(today, daysLeft))
-              } else {
-                expect(plan.weeks).toHaveLength(18)
-              }
-              expect(plan.raceDate).toBe(raceDate)
-              expect(plan.answers.raceDate).toBe(raceDate)
-            })
+                expect(plan.startDate).toBe(daysLeft >= days ? today : addDays(today, daysLeft))
+                expect(plan.weeks[0].phase === 'maintain').toBe(far > 0)
+                expect(plan.raceDate).toBe(raceDate)
+                expect(plan.answers.raceDate).toBe(raceDate)
+              })
+            }
           }
         }
       }
@@ -165,10 +190,14 @@ describe('applyRunPlan', () => {
     const counted = calendarAnswers(a, MONDAY, 1)
     expect(counted.weeks).toBe(12)
     expect('raceDate' in counted).toBe(false)
-    // A Sunday week: that Sunday opens week 13 counted from this week.
-    expect(calendarAnswers(a, MONDAY, 0).weeks).toBe(13)
+    // A Sunday week: that Sunday opens week 13 counted from this week, so the plan ends in week 12,
+    // the week holding the Friday two days before the race (final review I1).
+    expect(calendarAnswers(a, MONDAY, 0).weeks).toBe(12)
+    // A Tuesday race in a Monday week: the plan ends the week before, on the Sunday two days before.
+    expect(calendarAnswers({ ...a, raceDate: addDays(MONDAY, 12 * 7 + 1) }, MONDAY, 1).weeks).toBe(12)
+    expect(calendarAnswers({ ...a, raceDate: addDays(MONDAY, 12 * 7 + 2) }, MONDAY, 1).weeks).toBe(13)
     // On a Friday in a Sunday week, week 1 is next week.
-    expect(calendarAnswers(a, FRIDAY, 0).weeks).toBe(12)
+    expect(calendarAnswers(a, FRIDAY, 0).weeks).toBe(11)
     expect(calendarAnswers(tenK(), MONDAY, 1)).toEqual(tenK())
   })
 
@@ -347,7 +376,9 @@ describe('a race plan that starts later (spec §5.3, R2 I6-1)', () => {
     // A Sunday week: Friday and Saturday are left, too few for 3 runs, so week 1 is next week.
     expect(plan.startDate).toBe(addDays(FRIDAY, 2))
     expect(plan.weeks[0].phase).toBe('maintain')
-    expect(currentWeek(plan, raceDate, 0)).toBe(plan.weeks.at(-1))
+    // A Sunday race in a Sunday week opens a week of its own: the plan ends the Saturday before.
+    expect(currentWeek(plan, addDays(raceDate, -1), 0)).toBe(plan.weeks.at(-1))
+    expect(currentWeek(plan, raceDate, 0)).toBeNull()
   })
 
   it('without the bridge, waits as before', () => {
@@ -373,10 +404,12 @@ describe('the plan keeps its week start (R2 M4-2)', () => {
     const S = state(1)
     const plan = applyRunPlan(S, tenK({ weeks: undefined, raceDate }), MONDAY)
     const last = plan.weeks.at(-1)!
-    const raceRuns = sessionsOn(plan, raceDate, 1)
+    // Race day holds the race, never a run (final review I1).
+    expect(sessionsOn(plan, raceDate, 1)).toEqual([])
     S.weekStart = 0
     expect(currentWeek(plan, raceDate, 0)).toBe(last)
-    expect(sessionsOn(plan, raceDate, 0)).toEqual(raceRuns)
+    expect(sessionsOn(plan, raceDate, 0)).toEqual([])
+    expect(raceOn(plan, raceDate)).toBe(true)
     // Every session still falls on the same date.
     for (let i = 0; i < 12 * 7; i++) {
       const iso = addDays(MONDAY, i)
@@ -415,5 +448,101 @@ describe('a maintain plan begun mid-week (R2 M4-4)', () => {
   it('a maintain plan begun on Monday has no opening days', () => {
     const plan = applyRunPlan(state(1), { goal: 'maintain', reference: { kind: 'continuous', minutes: 30 }, days: 3, longDay: SUN }, MONDAY)
     expect(plan.openingDays).toBeUndefined()
+  })
+})
+
+describe('raceBounds and raceOn (final review I1)', () => {
+  it('gives the days before the race in the race week, and race day when the day before it is in the week', () => {
+    const sunday = addDays(MONDAY, 6)
+    expect(raceBounds(sunday, MONDAY)).toEqual({ days: [MON, TUE, WED, THU, FRI, SAT], raceDay: SUN })
+    expect(raceBounds(addDays(MONDAY, 2), MONDAY)).toEqual({ days: [MON, TUE], raceDay: WED })
+    // A race on the next Monday: the Sunday before it is the eve, in this week.
+    expect(raceBounds(addDays(MONDAY, 7), MONDAY)).toEqual({ days: [MON, TUE, WED, THU, FRI, SAT, SUN], raceDay: MON })
+    // Two days or more after the week: no bounds.
+    expect(raceBounds(addDays(MONDAY, 8), MONDAY)).toBeNull()
+    // A week from race day on has no day left, and the day before the race is not in it.
+    expect(raceBounds(MONDAY, MONDAY)).toEqual({ days: [] })
+    expect(raceBounds(addDays(MONDAY, -3), MONDAY)).toEqual({ days: [] })
+    expect(raceBounds(undefined, MONDAY)).toBeNull()
+  })
+
+  it("marks only a race plan's race date", () => {
+    const raceDate = addDays(MONDAY, 12 * 7 - 1)
+    const plan = applyRunPlan(state(1), tenK({ weeks: undefined, raceDate }), MONDAY)
+    expect(raceOn(plan, raceDate)).toBe(true)
+    expect(raceOn(plan, addDays(raceDate, 1))).toBe(false)
+    expect(raceOn({ ...plan, goal: 'start' }, raceDate)).toBe(false)
+    expect(raceOn({ ...plan, version: 2 } as unknown as RunPlan, raceDate)).toBe(false)
+    expect(raceOn(null, raceDate)).toBe(false)
+  })
+})
+
+describe('refitFuture keeps the race week before the race (final review I1)', () => {
+  it('refits the race week to the days before the race, never on race day', () => {
+    const raceDate = addDays(MONDAY, 12 * 7 + 2) // a Wednesday
+    const S = state(1)
+    applyRunPlan(S, tenK({ weeks: undefined, raceDate }), MONDAY)
+    S.week = { [SUN]: ['leg'] }
+    refitFuture(S, addDays(MONDAY, 3 * 7))
+    const plan = S.runPlan!
+    const last = plan.weeks.at(-1)!
+    expect(last.sessions.map(s => s.type).sort()).toEqual(['easy', 'tempo'])
+    expect(last.sessions.find(s => s.type === 'tempo')!.day).toBe(MON)
+    expect(last.sessions.find(s => s.type === 'easy')!.day).toBe(TUE)
+    for (let i = 0; i < 7; i++) expect(sessionsOn(plan, addDays(raceDate, i), 1)).toEqual([])
+  })
+})
+
+describe('refitFuture on a maintain plan in its first cycle (final review M3)', () => {
+  it('refits the template weeks the next cycle repeats, all but the current one', () => {
+    const S = state(1)
+    applyRunPlan(S, { goal: 'maintain', reference: { kind: 'continuous', minutes: 30 }, days: 3, longDay: SUN }, MONDAY)
+    const before = clone(S.runPlan!)
+    // In cycle week 3 the leg day moves to Thursday.
+    S.week = { [THU]: ['leg'], [WED]: ['upper'] }
+    refitFuture(S, addDays(MONDAY, 2 * 7 + 1))
+    const after = S.runPlan!
+    expect(after.weeks[2]).toEqual(before.weeks[2])
+    after.weeks.forEach((w, i) => {
+      if (i === 2) return
+      const { placement } = fitWeek(w.sessions, { week: S.week as Record<number, string[]>, routines: S.routines, longDay: SUN })
+      for (const s of w.sessions) expect(s.day).toBe(placement[s.id])
+    })
+    // The first calendar week of week 1 comes round again in week 9 with the new fit.
+    const again = currentWeek(after, addDays(MONDAY, 8 * 7), 1)!
+    expect(again).toBe(after.weeks[0])
+    for (const s of again.sessions) if (s.type === 'tempo') expect(s.day).not.toBe(FRI)
+  })
+})
+
+describe('plan size (spec §13, final review M5)', () => {
+  it('never exceeds 64 weeks, bridge included, at the longest deadlines', () => {
+    const bad: string[] = []
+    let biggest = 0
+    for (const goal of ['5k', '10k', 'half'] as const) {
+      for (const days of [2, 3, 4] as const) {
+        if (goal !== '5k' && days === 2) continue
+        for (const ws of [0, 1] as const) {
+          for (const today of [MONDAY, FRIDAY]) {
+            const deadlines: Partial<Answers>[] = [{ raceDate: addDays(today, 364) }, { weeks: 52 }]
+            for (const deadline of deadlines) {
+              for (const bridge of [true, false]) {
+                const answers: Answers = { goal, goalType: 'finish', reference: { kind: 'race', distanceM: 5000, minutes: 25, date: '2026-10-01' }, days, longDay: SUN, bridge, ...deadline }
+                const plan = applyRunPlan(state(ws), answers, today)
+                biggest = Math.max(biggest, JSON.stringify(plan).length)
+                if (plan.weeks.length > 64) bad.push(`${goal} ${days}d ws${ws} ${today} ${JSON.stringify(deadline)}: ${plan.weeks.length}`)
+              }
+            }
+          }
+        }
+      }
+    }
+    for (const goal of ['start', 'maintain'] as const) {
+      const plan = applyRunPlan(state(1), { goal, reference: { kind: 'continuous', minutes: 30 }, days: 3, longDay: SUN, weeks: 52 }, MONDAY)
+      if (plan.weeks.length > 64) bad.push(`${goal}: ${plan.weeks.length}`)
+    }
+    expect(bad).toEqual([])
+    // Weeks hold only types, blocks and days: a full year stays small in app_state.
+    expect(biggest).toBeLessThan(40_000)
   })
 })

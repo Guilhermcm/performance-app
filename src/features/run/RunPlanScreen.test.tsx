@@ -187,6 +187,28 @@ describe('RunPlanScreen', () => {
     expect(save).toHaveBeenCalledWith({ days_per_week: 4 })
   })
 
+  it('sorts the runs by the week start the plan was made with (final review M2)', () => {
+    // Made with Monday weeks; the person now starts weeks on Sunday. Sunday stays the last day.
+    setS({ weekStart: 0, runPlan: plan({ weekStart: 1 }) })
+    render(<RunPlanScreen />)
+    const items = within(region('Weeks')).getAllByRole('listitem').filter(li => li.dataset.week)
+    expect(within(items[1]).getByText('Tempo run, Easy run, Long run')).toBeTruthy()
+    const current = items.find(li => li.getAttribute('aria-current') === 'true')!
+    expect(within(current).getAllByText(/ · /).map(e => e.textContent)).toEqual(['Wednesday · Tempo run', 'Friday · Easy run', 'Sunday · Long run'])
+  })
+
+  it('marks the race after the last week, with its distance and date (final review I1)', () => {
+    render(<RunPlanScreen />)
+    const race = within(region('Weeks')).getAllByRole('listitem').filter(li => li.dataset.race)
+    expect(race).toHaveLength(1)
+    expect(within(race[0]).getByText('Race day · 10 km')).toBeTruthy()
+    expect(within(race[0]).getByText(fmtDate('2026-12-06'))).toBeTruthy()
+    cleanup()
+    setS({ runPlan: { ...plan({ goal: 'maintain', raceDate: undefined }) } })
+    render(<RunPlanScreen />)
+    expect(within(region('Weeks')).getAllByRole('listitem').filter(li => li.dataset.race)).toHaveLength(0)
+  })
+
   it('with maintain weeks before the race plan, names them and says when the race plan starts (R2 I6-1)', () => {
     const bridged = plan({ weeks: weeks().map((w, i) => (i < 2 ? { ...w, phase: 'maintain' as Phase, recovery: false } : w)) })
     setS({ runPlan: bridged })

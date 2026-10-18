@@ -2909,4 +2909,6 @@ export default {
   "Race plan starts on {0}": "रेस प्लान {0} से शुरू होगा",
   "Until then, run to stay in shape": "तब तक फ़िट रहने के लिए दौड़ें",
   "Keeps you running until the race plan starts.": "रेस प्लान शुरू होने तक आप दौड़ते रहेंगे।",
+  // --- run: race day (phase 1e-a, final review) ---
+  "Race day": "रेस का दिन",
 }

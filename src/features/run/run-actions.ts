@@ -7,10 +7,17 @@
 // week is a calendar week that begins on the person's week start when the plan was made
 // (RunPlan.weekStart, 0 or 1; S.weekStart for plans saved before it); week 1 is the week holding
 // `startDate`. A race plan that starts later may open with maintain weeks (buildBridge).
+//
+// The race (final review I1 and M6): the plan's last week is the one holding the day two days
+// before the race, the last day a quality run can take, so a race on the first or second day of
+// the person's week ends the plan the week before. In that week sessions go only on days before
+// the race, race day counts as a hard day for the fit (no Ritmo or Intervalado the day before), and
+// a session that finds no day is dropped: the Longão first, then the extra easy runs, never the
+// quality run. Race day itself shows the race (raceOn), never a run.
 import { weekOrder, weekStartOf } from '../../lib/format.js'
 import { addDays, weekdayOf, weekStartDate, weeksBetween } from './dates'
 import { fitWeek } from './fit'
-import { buildBridge, buildPlan, isRace, type PlanWeek } from './models'
+import { buildBridge, buildPlan, isRace, type PlanSession, type PlanWeek } from './models'
 import type { Answers, RunPlan, Session, Week } from './types'
 import { vdotFrom } from './vdot'
 
@@ -45,13 +52,73 @@ export const isReadable = (plan: RunPlan | null | undefined): plan is RunPlan =>
 export const planWeekStart = (plan: RunPlan, fallback: number): 0 | 1 =>
   plan.weekStart === 0 || plan.weekStart === 1 ? plan.weekStart : fallback === 0 ? 0 : 1
 
-function fitted(sessions: PlanWeek['sessions'], S: RunState, longDay: number, allowedDays?: number[]): Session[] {
-  const { placement } = fitWeek(sessions, { week: strengthWeek(S), routines: S.routines || [], longDay, allowedDays })
-  return sessions.map(s => ({ ...s, day: placement[s.id] }))
+type Fit = (sessions: PlanSession[], allowedDays?: number[], raceDay?: number) => Session[]
+
+// Fits weeks against the strength week of now. Many weeks share the same session types (the
+// bridge repeats an 8-week cycle), so one apply or refit fits each distinct week once (final
+// review M4): the placement depends only on the types in order, the allowed days and the race day.
+function fitter(S: RunState, longDay: number): Fit {
+  const ctx = { week: strengthWeek(S), routines: S.routines || [], longDay }
+  const memo = new Map<string, number[]>()
+  return (sessions, allowedDays, raceDay) => {
+    const key = JSON.stringify([sessions.map(s => s.type), allowedDays ?? null, raceDay ?? null])
+    let days = memo.get(key)
+    if (!days) {
+      const { placement } = fitWeek(sessions, { ...ctx, allowedDays, raceDay })
+      days = sessions.map(s => placement[s.id])
+      memo.set(key, days)
+    }
+    const at = days
+    return sessions.map((s, i) => ({ ...s, day: at[i] }))
+  }
 }
 
+/**
+ * How the race shapes the plan week that begins on `weekFirst` (final review I1 and M6): `days`,
+ * the weekdays of the week before race day (none for a week from race day on), and `raceDay`, the
+ * race's weekday when the day before the race is in the week (race day then counts as a hard day
+ * for the fit). Null without a race, or for a week that ends two days or more before it.
+ */
+export function raceBounds(raceDate: string | undefined, weekFirst: string): { days: number[]; raceDay?: number } | null {
+  if (!raceDate) return null
+  const eve = addDays(raceDate, -1)
+  if (eve > addDays(weekFirst, 6)) return null
+  const days = Array.from({ length: 7 }, (_, k) => addDays(weekFirst, k)).filter(iso => iso < raceDate).map(weekdayOf)
+  return eve >= weekFirst ? { days, raceDay: weekdayOf(raceDate) } : { days }
+}
+
+/** Whether `iso` is the race day of a race plan this build reads: the day card shows the race. */
+export const raceOn = (plan: RunPlan | null | undefined, iso: string): boolean =>
+  isReadable(plan) && isRace(plan.goal) && plan.raceDate === iso
+
+// A week that has fewer days than sessions before the race drops the Longão first, then the extra
+// easy runs; the quality run always stays. It always finds a day off the race's eve: when the eve
+// is in the week, so is the day before it (raceWeekOf).
+function trimmed<T extends { type: string }>(sessions: T[], room: number): T[] {
+  const out = [...sessions]
+  for (const type of ['long', 'easy']) {
+    for (let k = out.length - 1; k >= 0 && out.length > room; k--) if (out[k].type === type) out.splice(k, 1)
+  }
+  return out
+}
+
+// Fits one plan week that begins on `weekFirst`: within `allowed` (week 1's days from today on)
+// and, in the race week, before the race.
+function fitPlanWeek(fit: Fit, sessions: PlanSession[], weekFirst: string, raceDate: string | undefined, allowed?: number[]): Session[] {
+  const race = raceBounds(raceDate, weekFirst)
+  if (!race) return fit(sessions, allowed)
+  const days = allowed ? race.days.filter(d => allowed.includes(d)) : race.days
+  if (!days.length) return []
+  return fit(trimmed(sessions, days.length), days, race.raceDay)
+}
+
+// The day two days before the race: the last day a quality run can take, so the plan's last week
+// is the week holding it (a race on the first or second day of the week ends the plan the week before).
+const raceWeekOf = (raceDate: string, ws: number) => weekStartDate(addDays(raceDate, -2), ws)
+
 // Week 1 by Decision 2: the current week when the days left from today (today included) hold all
-// of a week's sessions, the next week otherwise. Every plan week has `days` sessions.
+// of a week's sessions, the next week otherwise. Every plan week has `days` sessions (the race
+// week, never week 1, may have fewer).
 function firstWeek(days: number, today: string, ws: number): { start: string; left: number[] | null } {
   const thisWeek = weekStartDate(today, ws)
   const left = weekOrder(ws).slice((weekdayOf(today) - ws + 7) % 7)
@@ -60,24 +127,24 @@ function firstWeek(days: number, today: string, ws: number): { start: string; le
 
 /**
  * The answers as the plan counts them. A race date becomes the number of calendar weeks from
- * week 1 (Decision 2, on the person's week start) to the week holding the race, both included, so
- * the plan ends in the race week. Pass the result to checkAnswers and buildPlan; other answers come
- * back unchanged.
+ * week 1 (Decision 2, on the person's week start) to the week holding the day two days before the
+ * race, both included, so the plan ends at the race. Pass the result to checkAnswers and buildPlan;
+ * other answers come back unchanged.
  */
 export function calendarAnswers(answers: Answers, today: string, weekStart: number): Answers {
   if (!isRace(answers.goal) || !answers.raceDate) return answers
   const { start } = firstWeek(answers.days, today, weekStart)
   const { raceDate: _race, ...rest } = answers
-  return { ...rest, weeks: weeksBetween(start, weekStartDate(answers.raceDate, weekStart)) + 1 }
+  return { ...rest, weeks: weeksBetween(start, raceWeekOf(answers.raceDate, weekStart)) + 1 }
 }
 
 // The first day of the race plan when the deadline is longer than the plan (the extra base is
-// capped at 8 weeks, spec §5.3): it starts later so it still ends at the deadline. A race date puts
-// the race in the last week; a number of weeks pushes the start by the weeks left over.
+// capped at 8 weeks, spec §5.3): it starts later so it still ends at the deadline. A race date ends
+// the plan at the race (raceWeekOf); a number of weeks pushes the start by the weeks left over.
 function delayedStart(a: Answers, natural: string, ws: number, weeks: number): string {
   if (!isRace(a.goal)) return natural
   if (a.raceDate) {
-    const aligned = addDays(weekStartDate(a.raceDate, ws), -7 * (weeks - 1))
+    const aligned = addDays(raceWeekOf(a.raceDate, ws), -7 * (weeks - 1))
     return aligned > natural ? aligned : natural
   }
   if (a.weeks && a.weeks > weeks) return addDays(natural, 7 * (a.weeks - weeks))
@@ -108,8 +175,9 @@ const shifted = (weeks: PlanWeek[], offset: number): PlanWeek[] => weeks.map(w =
  * and then those sessions only use today or later (Decision 2); otherwise it is the next week.
  * `startDate` is today in the first case and the first day of week 1 otherwise. A race plan that
  * starts later (a deadline longer than the plan) waits until then, or with `answers.bridge` opens
- * with maintain weeks from week 1 (spec §5.3). A race reference gives the plan its VDOT.
- * `S.week` and `S.routines` are left as they are.
+ * with maintain weeks from week 1 (spec §5.3). The race week holds only days before the race (see
+ * the top of this file). A race reference gives the plan its VDOT. `S.week` and `S.routines` are
+ * left as they are.
  */
 export function applyRunPlan(S: RunState, answers: Answers, today: string): RunPlan {
   const ws = weekStartOf(S)
@@ -126,10 +194,12 @@ export function applyRunPlan(S: RunState, answers: Answers, today: string): RunP
   const built = bridged ? [...buildBridge(answers, wait, vdot), ...shifted(race, wait)] : race
   const start = bridged ? first.start : raceStart
   const left = start === first.start ? first.left : null
+  const fit = fitter(S, answers.longDay)
+  const raceDate = isRace(answers.goal) ? answers.raceDate : undefined
 
   const weeks: Week[] = built.map((w, i) => ({
     ...w,
-    sessions: fitted(w.sessions, S, answers.longDay, i === 0 && left ? left : undefined),
+    sessions: fitPlanWeek(fit, w.sessions, addDays(start, 7 * i), raceDate, i === 0 && left ? left : undefined),
   }))
 
   const plan: RunPlan = {
@@ -147,7 +217,7 @@ export function applyRunPlan(S: RunState, answers: Answers, today: string): RunP
   // calendar week alone keeps its today-onward days (Decision 2).
   if (answers.goal === 'maintain' && left && left.length < 7) {
     plan.openingDays = Object.fromEntries(weeks[0].sessions.map(s => [s.id, s.day]))
-    weeks[0] = { ...weeks[0], sessions: fitted(built[0].sessions, S, answers.longDay) }
+    weeks[0] = { ...weeks[0], sessions: fit(built[0].sessions) }
   }
   if (answers.goalType === 'time' && answers.targetMinutes != null) plan.targetTime = answers.targetMinutes
   if (answers.raceDate) plan.raceDate = answers.raceDate
@@ -177,18 +247,21 @@ export function moveSession(S: RunState, weekIndex: number, sessionId: string, d
 
 /**
  * Refits the weeks after the current one with the strength week of now (Decision 3). The current
- * and past weeks keep their days, moved sessions included. A maintain plan past its first cycle
- * comes round again, so every week but the current one is refitted.
+ * and past weeks keep their days, moved sessions included. A maintain plan comes round again, so
+ * every week but the current one is refitted, in the first cycle too (final review M3). The race
+ * week stays before the race.
  */
 export function refitFuture(S: RunState, today: string): void {
   const plan = S.runPlan
   if (!isReadable(plan)) return
-  const offset = offsetOf(plan, today, planWeekStart(plan, weekStartOf(S)))
+  const ws = planWeekStart(plan, weekStartOf(S))
+  const offset = offsetOf(plan, today, ws)
   const n = plan.weeks.length
-  const cycled = plan.goal === 'maintain' && offset >= n
+  const fit = fitter(S, plan.answers?.longDay ?? 0)
+  const raceDate = isRace(plan.goal) ? plan.raceDate : undefined
   plan.weeks.forEach((w, i) => {
-    if (cycled ? i === offset % n : i <= offset) return
-    w.sessions = fitted(w.sessions, S, plan.answers?.longDay ?? 0)
+    if (plan.goal === 'maintain' ? offset >= 0 && i === offset % n : i <= offset) return
+    w.sessions = fitPlanWeek(fit, w.sessions, weekDate(plan, i, ws), raceDate)
   })
 }
 

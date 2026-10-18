@@ -141,3 +141,43 @@ describe('RunDayCard', () => {
   })
 })
 
+
+describe('RunDayCard on race week (final review I1 and M6)', () => {
+  // The race is on Sunday the 18th, the last day of this Monday week.
+  const raceWeek = (sessions: Session[], over: Partial<RunPlan> = {}) =>
+    setS({ runPlan: planWith(sessions, { raceDate: '2026-10-18', answers: { ...planWith([]).answers, weeks: undefined, raceDate: '2026-10-18' }, ...over }) })
+
+  it('marks race day with the distance, and no run', () => {
+    raceWeek([long(MON), intervals(WED), tempo(FRI)])
+    card(SUN)
+    expect(screen.getByRole('heading', { name: 'Race day' })).toBeTruthy()
+    expect(screen.getByText('10 km')).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: 'Long run' })).toBeNull()
+  })
+
+  it('marks race day of a half marathon too, but nothing for a plan without a race', () => {
+    raceWeek([long(MON), intervals(WED), tempo(FRI)], { goal: 'half' })
+    card(SUN)
+    expect(screen.getByText('Half marathon')).toBeTruthy()
+    cleanup()
+    raceWeek([long(MON), intervals(WED), tempo(FRI)], { goal: 'start' })
+    const { container } = card(SUN)
+    expect(container.textContent).toBe('')
+  })
+
+  it('counts race day as a hard day: a quality run the day before it is warned about', () => {
+    raceWeek([long(MON), intervals(WED), tempo(6)])
+    card(6)
+    expect(screen.getByText('Two hard days in a row')).toBeTruthy()
+  })
+
+  it('offers only days before the race, with the warning for the day before', () => {
+    raceWeek([long(MON), intervals(WED), tempo(FRI)])
+    card(FRI)
+    fireEvent.click(screen.getByRole('button', { name: 'Change day: Tempo run' }))
+    const options = within(screen.getByRole('dialog')).getAllByRole('button').filter(b => b.dataset.day != null)
+    // Today is Wednesday: Wednesday, Thursday and Saturday; not Friday (it is on it), not Sunday (the race).
+    expect(options.map(b => b.dataset.day)).toEqual([String(WED), String(THU), '6'])
+    expect(within(options[2]).getByText('Two hard days in a row')).toBeTruthy()
+  })
+})

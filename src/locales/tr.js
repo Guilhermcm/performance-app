@@ -2909,4 +2909,6 @@ export default {
   "Race plan starts on {0}": "Yarış planı {0} tarihinde başlar",
   "Until then, run to stay in shape": "O zamana kadar formunu korumak için koş",
   "Keeps you running until the race plan starts.": "Yarış planı başlayana kadar koşmaya devam edersin.",
+  // --- run: race day (phase 1e-a, final review) ---
+  "Race day": "Yarış günü",
 }
