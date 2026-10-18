@@ -86,8 +86,32 @@ describe('buildPlan: shape', () => {
     expect(half.map(w => main(w, 'tempo') ?? main(w, 'intervals'))).toEqual([moderate(2, 8), hard(5, 2), moderate(3, 10)])
   })
 
+  it('gives a recovery week the bottom rung of its workout ladder (repetitions may still shorten)', () => {
+    // Bottom rung per family and phase: [minutes per block, repetitions].
+    const bottom = (goal: RunGoal, phase: string): [number, number] =>
+      goal === 'maintain' ? [10, 2] : phase === 'specific' && goal === '10k' ? [12, 2] : phase === 'specific' && goal === 'half' ? [15, 2] : [8, 2]
+    let seen = 0
+    for (const c of CASES.filter(c => c.goal !== 'start')) {
+      for (const reference of [RACE, { kind: 'continuous', minutes: 25 } as Reference, { kind: 'none' } as Reference]) {
+        for (const w of plan({ ...c, reference }).filter(w => w.recovery)) {
+          const q = w.sessions.find(s => s.type === 'tempo' || s.type === 'intervals')
+          if (!q) continue
+          seen++
+          expect(q.type, name(c)).toBe('tempo')
+          const main = q.blocks[1]
+          const [min, reps] = bottom(c.goal, w.phase)
+          const block = 'repeat' in main ? main.blocks[0] : main
+          expect(block, `${name(c)} week ${w.index}`).toEqual({ zone: 'moderate', min })
+          expect('repeat' in main ? main.repeat : 1, `${name(c)} week ${w.index}`).toBeLessThanOrEqual(reps)
+        }
+      }
+    }
+    expect(seen).toBeGreaterThan(50)
+  })
+
   it('builds the Decision 5 workouts: warm up, quality blocks, cool down', () => {
-    const tenK = plan({ goal: '10k', days: 4, weeks: 10 })
+    // 12 weeks: both specific weeks are regular (in 10 weeks the last one is a recovery week, bottom rung).
+    const tenK = plan({ goal: '10k', days: 4, weeks: 12 })
     const spec = tenK.filter(w => w.phase === 'specific').map(w => w.sessions.find(s => s.type === 'tempo')!.blocks)
     expect(spec[0][0]).toEqual({ zone: 'easy', min: 10 })
     expect(spec[0][1]).toEqual({ repeat: 2, blocks: [{ zone: 'moderate', min: 12 }, { zone: 'easy', min: 2 }] })
@@ -159,7 +183,7 @@ function volumeViolations(goal: RunGoal, days: 2 | 3 | 4): Violation[] {
 // References whose first easy run is the 20 min floor (Decision 4's clamp, `none`, VDOT < 15).
 const LOW_START = (r: Reference) => (r.kind === 'continuous' && r.minutes <= 25) || r.kind === 'none' || (r.kind === 'race' && vdotFrom(r.distanceM, r.minutes) < MIN_VDOT)
 
-// Weeks that cannot meet §5.3 with a 20 min first easy run, because of the floors: quality warm up
+// Weeks that cannot meet §5.3 with a 20 min first easy run (short deadlines), because of the floors: quality warm up
 // and cool down 5 min, Intervalado at least 2 repetitions, the continuous Ritmo blocks (20 min in
 // 10k, 30 min in half) cannot be split, Leve at least 10 min, and the Longão at least as long as the
 // quality session. Each one is over its target even with every session at its floor. Reported to the
@@ -169,13 +193,11 @@ const FLOOR_LIMITED = [
   // against 60% of a 49 to 78 min peak.
   '5k 2d 5w week 5 taper', '5k 2d 6w week 6 taper', '5k 2d 7w week 7 taper', '5k 2d 8w week 8 taper', '5k 2d 9w week 9 taper',
   '5k 3d 5w week 5 taper', '5k 3d 6w week 6 taper', '5k 3d 7w week 7 taper',
-  // 10k finish plans: Ritmo 20 continuous (30 with warm up and cool down) + Longão 30 + Leve 10 = 70
-  // against 75% of 73 in recovery week 4; Ritmo 12 (22) + 22 + 10 = 54 against 60% of a 73 or 81 peak.
-  '10k 3d 6w week 4 recovery', '10k 3d 6w week 6 taper', '10k 3d 7w week 7 taper',
-  // half: Ritmo 15 (25) + 25 + 10 = 60 against 75% of 73 and 60% of 90; Ritmo 30 continuous (40) +
-  // 40 + 10 = 90 over 110% of 80, and 90 or 100 against 75% of 93, 102 and 123.
-  'half 3d 8w week 4 recovery', 'half 3d 8w week 6 110%', 'half 3d 8w week 8 taper',
-  'half 3d 10w week 8 recovery', 'half 3d 14w week 12 recovery', 'half 4d 10w week 8 recovery'
+  // 10k finish plans, race week: Ritmo 12 (22) + Longão 22 + Leve 10 = 54 against 60% of a 73 or 81 peak.
+  '10k 3d 6w week 6 taper', '10k 3d 7w week 7 taper',
+  // half 3 days, 8 weeks: Ritmo 15 (25) + 25 + 10 = 60 against 75% of 73 (recovery) and 60% of 90
+  // (race week); Ritmo 30 continuous (40) + 40 + 10 = 90 over 110% of 80.
+  'half 3d 8w week 4 recovery', 'half 3d 8w week 6 110%', 'half 3d 8w week 8 taper'
 ]
 
 describe('buildPlan: volume (spec §5.3, exhaustive)', () => {

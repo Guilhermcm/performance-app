@@ -191,7 +191,8 @@ type Slot = { phase: Phase; recovery: boolean; kind: 'tempo' | 'intervals' | 'li
 
 // Which quality workout each week gets, and where it sits on its ladder. Each workout type climbs
 // its own ladder by its own occurrences within the phase, so the first Intervalado of the build is
-// the bottom rung (5 × 2).
+// the bottom rung (5 × 2). A recovery week takes the bottom rung of its type (Intervalado becomes the
+// light Ritmo) and is not a rung of the climb.
 function slots(a: Answers, phases: Phase[]): Slot[] {
   const out: Slot[] = phases.map((phase, i) => {
     const index = i + 1
@@ -205,7 +206,7 @@ function slots(a: Answers, phases: Phase[]): Slot[] {
   })
   for (const phase of ['build', 'specific'] as const) {
     for (const kind of ['tempo', 'intervals'] as const) {
-      const at = out.filter(s => s.phase === phase && s.kind === kind)
+      const at = out.filter(s => s.phase === phase && s.kind === kind && !s.recovery)
       at.forEach((s, j) => { s.p = at.length > 1 ? j / (at.length - 1) : 0 })
     }
   }
