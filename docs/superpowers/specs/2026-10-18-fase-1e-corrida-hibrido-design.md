@@ -3,8 +3,8 @@
 - **Data:** 2026-10-18
 - **Status:** design aprovado por seções e spec aprovada em 2026-10-18; plano da 1e-a em
   [2026-10-18-fase-1e-a-corrida-plano.md](../plans/2026-10-18-fase-1e-a-corrida-plano.md).
-  1e-a concluída no código em 2026-10-18 (sem SQL; falta a revisão final e o merge). A 1e-b ainda
-  não tem plano.
+  1e-a no `main` desde 2026-10-18 (PR #12). Plano da 1e-b em
+  [2026-10-18-fase-1e-b-corrida-registro.md](../plans/2026-10-18-fase-1e-b-corrida-registro.md).
 - **Subetapas:** **1e-a** (questionário, modelos, ritmos, semana híbrida e cartão do dia; só cliente) e
   **1e-b** (check-in de corrida, bônus de detalhado, feed, acompanhamento e sugestões; com uma
   migration). Cada uma com plano e PR próprios. A 1e-b começa depois do merge da 1e-a.
