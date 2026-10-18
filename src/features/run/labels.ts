@@ -1,7 +1,8 @@
 // Names and texts of the running plan (spec §3, §4.2 and §5.2). Each string is a literal t() call
 // so check-source-strings finds it; the pt-BR wording follows the spec's tables.
 import { t } from '../../lib/i18n.js'
-import type { Item, RunGoal, SessionType, Zone } from './types'
+import type { FitWarning } from './fit'
+import type { Item, Phase, RunGoal, SessionType, Zone } from './types'
 
 export function zoneName(z: Zone): string {
   switch (z) {
@@ -55,4 +56,44 @@ function blockText(zone: Zone, min: number): string {
 export function itemText(item: Item): string {
   if ('repeat' in item) return `${item.repeat} × ${item.blocks.map(b => blockText(b.zone, b.min)).join(', ')}`
   return blockText(item.zone, item.min)
+}
+
+export function phaseName(p: Phase): string {
+  switch (p) {
+    case 'base': return t('Base')
+    case 'build': return t('Build')
+    case 'specific': return t('Specific')
+    default: return t('Taper')
+  }
+}
+
+// A block in the short form of the day card: minutes and zone, without the unit.
+function blockShort(zone: Zone, min: number): string {
+  switch (zone) {
+    case 'easy': return t('{0} easy', min)
+    case 'moderate': return t('{0} moderate', min)
+    case 'hard': return t('{0} hard', min)
+    default: return t('{0} walk', min)
+  }
+}
+
+/**
+ * A workout in one line (spec §6.4): "10 easy + 4 × 4 hard + 10 easy". A repeat of several blocks
+ * keeps them in parentheses: "8 × (1 easy, 2 walk)".
+ */
+export function blocksInline(items: Item[]): string {
+  return items.map(it => {
+    if (!('repeat' in it)) return blockShort(it.zone, it.min)
+    const inner = it.blocks.map(b => blockShort(b.zone, b.min)).join(', ')
+    return it.blocks.length > 1 ? `${it.repeat} × (${inner})` : `${it.repeat} × ${inner}`
+  }).join(' + ')
+}
+
+/** The fit rule a session breaks where it sits (spec §6.2, rules 2 to 4), in words. */
+export function fitWarningText(w: FitWarning, type: SessionType): string {
+  switch (w) {
+    case 'after_leg_day': return t('{0} the day after leg day', sessionName(type))
+    case 'hard_in_a_row': return t('Two hard days in a row')
+    default: return t('{0} on a strength day', sessionName(type))
+  }
 }

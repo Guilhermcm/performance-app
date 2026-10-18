@@ -48,7 +48,8 @@ export function strengthWeek(S: Pick<RunState, 'week'>): Record<number, string[]
   return out
 }
 
-const isReadable = (plan: RunPlan | null | undefined): plan is RunPlan =>
+/** Whether this build reads the plan: version 1 with weeks and a start date (spec §6.1, Decision 9). */
+export const isReadable = (plan: RunPlan | null | undefined): plan is RunPlan =>
   !!plan && plan.version === 1 && Array.isArray(plan.weeks) && plan.weeks.length > 0 &&
   typeof plan.startDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(plan.startDate)
 

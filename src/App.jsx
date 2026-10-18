@@ -40,6 +40,7 @@ import MyTrainings from './features/checkin/MyTrainings.tsx'
 import ProgramsScreen from './features/plan/ProgramsScreen.tsx'
 import ProgramDetail from './features/plan/ProgramDetail.tsx'
 import AnalysisScreen from './features/plan/AnalysisScreen.tsx'
+import RunPlanScreen from './features/run/RunPlanScreen.tsx'
 import NutritionScreen from './features/nutrition/NutritionScreen.tsx'
 import NutritionHistoryScreen from './features/nutrition/HistoryScreen.tsx'
 import SleepScreen from './features/sleep/SleepScreen.tsx'
@@ -250,6 +251,7 @@ function Shell() {
                 <Route path="/plan/programas" element={<ProgramsScreen />} />
                 <Route path="/plan/programas/:id" element={<ProgramDetail />} />
                 <Route path="/plan/analise" element={<AnalysisScreen />} />
+                <Route path="/plan/corrida" element={<RunPlanScreen />} />
                 <Route path="/workout" element={<Workout />} />
                 <Route path="/stats" element={<Stats />} />
                 <Route path="/history" element={<History />} />

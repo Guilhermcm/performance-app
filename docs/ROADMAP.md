@@ -32,7 +32,7 @@ combinada a partir de outubro de 2026: **1c → 1d → 3 → 4 → 5 → 6** (a 
 | 1b | Social | M | 1a | concluída |
 | 1c | Check-in com foto e social | M | 1b | concluída, em produção desde 2026-10-11 ([spec](superpowers/specs/2026-10-06-checkin-social-design.md), [plano](superpowers/plans/2026-10-06-fase-1c-checkin.md)) |
 | 1d | Plano com evidência | M | 1c | em produção desde 2026-10-12 (PR #6), sem SQL; falta a conferência das fontes em `docs/fontes-1d.md` ([spec](superpowers/specs/2026-10-12-fase-1d-plano-evidencia-design.md), [plano](superpowers/plans/2026-10-12-fase-1d-plano-evidencia.md)) |
-| 1e | Corrida e treino híbrido | M | 1d | spec aprovada, plano da 1e-a escrito ([plano](superpowers/plans/2026-10-18-fase-1e-a-corrida-plano.md)); em duas subetapas: 1e-a (questionário, modelos, ritmos e semana híbrida, só cliente) e 1e-b (check-in de corrida, XP, feed, acompanhamento e sugestões) ([spec](superpowers/specs/2026-10-18-fase-1e-corrida-hibrido-design.md)) |
+| 1e | Corrida e treino híbrido | M | 1d | 1e-a concluída no código (sem SQL; falta revisão e merge), 1e-b a planejar ([plano da 1e-a](superpowers/plans/2026-10-18-fase-1e-a-corrida-plano.md)); em duas subetapas: 1e-a (questionário, modelos, ritmos e semana híbrida, só cliente) e 1e-b (check-in de corrida, XP, feed, acompanhamento e sugestões) ([spec](superpowers/specs/2026-10-18-fase-1e-corrida-hibrido-design.md)) |
 | 2 | Nutrição | G | 1a | concluída (2a e 2b) |
 | 3 | Sono | P | 1a | em produção desde 2026-10-12 (SQL 0021-0025 e PR #6) ([spec](superpowers/specs/2026-10-06-fase-3-sono-design.md), [plano](superpowers/plans/2026-10-12-fase-3-sono.md)) |
 | 4 | Hábitos + trackers | M | 1a | em duas subetapas ([spec](superpowers/specs/2026-10-15-fase-4-habitos-trackers-design.md)). 4a Hábitos: em produção desde 2026-10-16 ([plano](superpowers/plans/2026-10-15-fase-4a-habitos.md)). 4b Trackers: em produção desde 2026-10-16 ([plano](superpowers/plans/2026-10-16-fase-4b-trackers.md)) |
@@ -186,6 +186,24 @@ Não há migration nem SQL novo nesta fase.
   `src/features/plan/references.ts`).
 - Consolidar o progresso do exercício: `ExerciseProgress.tsx` repete a folha `ExerciseHistory`
   (`sheets.jsx`). `openExerciseProgress` pode abrir `exerciseHistorySheet(exId)` e o arquivo sai.
+
+---
+
+## Fase 1e: Corrida e treino híbrido
+
+**Spec:** [2026-10-18-fase-1e-corrida-hibrido-design.md](superpowers/specs/2026-10-18-fase-1e-corrida-hibrido-design.md).
+
+**1e-a (só cliente):** questionário, modelos por meta e prazo, ritmos por VDOT, encaixe das corridas
+em volta da musculação, cartão do treino em cada dia da semana em `/plan` e a tela `/plan/corrida`
+(fases, semanas, ritmos por zona, previsão de prova, reencaixar, refazer e encerrar).
+
+**1e-b:** check-in de corrida, XP, feed, acompanhamento e sugestões, com uma migration.
+
+**Status:** 1e-a concluída no código em 2026-10-18 ([plano](superpowers/plans/2026-10-18-fase-1e-a-corrida-plano.md)),
+sem SQL; falta a revisão final e o merge. A 1e-b começa depois do merge.
+
+**Pendências**
+- Revisar as traduções dos 14 pacotes que não são pt-BR nem en para os textos novos da 1e-a.
 
 ---
 

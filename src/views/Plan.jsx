@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
-import { DAYN, weekOrder, weekStartOf, uid, exCount, routineCount } from '../lib/format.js'
+import { DAYN, weekOrder, weekStartOf, uid, exCount, routineCount, todayISO } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
 import { dayAssignSheet, dayAddRoutineSheet, planToolsSheet, confirmSheet, startFlow } from '../sheets.jsx'
 import Icon from '../components/Icon.jsx'
@@ -17,6 +17,9 @@ import { useCheckins } from '../features/checkin/useCheckins'
 import { useWeekTraining } from '../features/checkin/week'
 import { ProgramBanner } from '../features/plan/ProgramBanner'
 import { AnalysisCard } from '../features/plan/AnalysisCard'
+import RunPlanEntry from '../features/run/RunPlanEntry'
+import RunDayCard, { weekDayIso } from '../features/run/RunDayCard'
+import { sessionsOn } from '../features/run/run-actions'
 
 export default function Plan() {
   const nav = useNavigate()
@@ -28,6 +31,7 @@ export default function Plan() {
   // Check-ins need a signed-in account (the store is bound once its profile is in, App.jsx).
   const canCheckIn = !!useCheckins(s => s.userId)
   const week = useWeekTraining()
+  const today = todayISO()
 
   /* The Coach's only entry point in the app. Its screens have existed since the UI landed and
      nothing linked to them, so the feature was reachable only by typing the URL — enabled,
@@ -111,6 +115,9 @@ export default function Plan() {
       </div>
     </div>
 
+    {/* The running plan (phase 1e-a, spec 6.4): build one, or open it at /plan/corrida. */}
+    <RunPlanEntry />
+
     {/* The plan analysis (phase 1d, spec 5.8): the week in one line, or a program to start with. */}
     <AnalysisCard />
 
@@ -135,11 +142,24 @@ export default function Plan() {
       <div className="list" style={{ display: 'flex', flexDirection: 'column' }}>
         {weekOrder(weekStartOf(S)).map(d => {
           const dayRoutines = [].concat(S.week[d] || []).map(id => S.routines.find(x => x.id === id)).filter(Boolean)
+          // This week's runs of the running plan on this day (phase 1e-a), under the routines.
+          const iso = weekDayIso(today, weekStartOf(S), d)
+          const runs = sessionsOn(S.runPlan, iso, weekStartOf(S)).length > 0
           // An empty day stays one tappable row → pick its first routine (today's behaviour).
-          if (!dayRoutines.length) return <div key={d} className="item" {...tappable(() => dayAssignSheet(d))}>
+          if (!dayRoutines.length && !runs) return <div key={d} className="item" {...tappable(() => dayAssignSheet(d))}>
             <div className="grow"><div className="tt">{t(DAYN[d])}</div></div>
             <span className="tag">{t('Rest')}</span>
             <Icon name="chevronRight" className="chev" /></div>
+          // A day with runs and no routine: the run card, and the ＋ picks its first routine.
+          if (!dayRoutines.length) return <div key={d} className="item" style={{ display: 'block', padding: '10px 14px' }}>
+            <div className="row between">
+              <div className="tt">{t(DAYN[d])}</div>
+              <button className="iconbtn sm" aria-label={t('Add routine')} title={t('Add routine')}
+                style={{ width: 30, height: 30, margin: '-5px 3px', fontSize: 15 }}
+                onClick={() => dayAssignSheet(d)}><Icon name="plus" /></button>
+            </div>
+            <RunDayCard day={d} iso={iso} />
+          </div>
           // A populated day: always-visible routine sub-rows + inline ✕. Adding a second routine
           // is a small ＋ in the day's header, centred over the ✕ column (#276): a full-width
           // "＋ Add routine" under every planned day made the week read as a list of buttons,
@@ -159,6 +179,7 @@ export default function Plan() {
               <div className="grow" style={{ minWidth: 0 }}><div className="tt" style={{ fontSize: 14 }}>{r.name}</div><div className="ss">{exCount(r.ex.length)}</div></div>
               <button className="iconbtn sm" aria-label={t('Remove')} onClick={() => removeFromDay(d, r.id)}><Icon name="xmark" /></button>
             </div>)}
+            {runs && <RunDayCard day={d} iso={iso} />}
           </div>
         })}
       </div>

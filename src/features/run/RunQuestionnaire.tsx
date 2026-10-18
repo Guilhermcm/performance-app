@@ -21,7 +21,8 @@ import { goalName, sessionName } from './labels'
 import { formatPace, predictMinutes, vdotFrom } from './vdot'
 import type { Answers, GoalType, Reference, RunGoal } from './types'
 
-type Props = { open: boolean; onOpenChange: (open: boolean) => void; initial?: Answers }
+// `onCreated` runs after a plan is applied (the hosts then offer to update the weekly days goal).
+type Props = { open: boolean; onOpenChange: (open: boolean) => void; initial?: Answers; onCreated?: () => void }
 
 const GOALS: RunGoal[] = ['start', '5k', '10k', 'half', 'maintain']
 type RaceGoal = '5k' | '10k' | 'half'
@@ -218,20 +219,20 @@ const INPUT = 'h-12 rounded-xl bg-card px-4 text-base md:text-base dark:bg-card'
 const NOTE = 'rounded-2xl bg-secondary/70 p-3 text-sm leading-snug'
 const EASE_OUT = [0.22, 1, 0.36, 1] as const
 
-export default function RunQuestionnaire({ open, onOpenChange, initial }: Props) {
+export default function RunQuestionnaire({ open, onOpenChange, initial, onCreated }: Props) {
   // A fresh form each time the drawer opens; the closing animation keeps the last one.
   const [session, setSession] = useState(0)
   useEffect(() => { if (open) setSession(n => n + 1) }, [open])
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[92dvh]">
-        <Body key={session} initial={initial} onDone={() => onOpenChange(false)} />
+        <Body key={session} initial={initial} onDone={() => onOpenChange(false)} onCreated={onCreated} />
       </DrawerContent>
     </Drawer>
   )
 }
 
-function Body({ initial, onDone }: { initial?: Answers; onDone: () => void }) {
+function Body({ initial, onDone, onCreated }: { initial?: Answers; onDone: () => void; onCreated?: () => void }) {
   const reduce = useReducedMotion()
   const ws = useStore((s: { S: RunState }) => weekStartOf(s.S))
   const [today] = useState(todayISO)
@@ -296,6 +297,7 @@ function Body({ initial, onDone }: { initial?: Answers; onDone: () => void }) {
     if (initial && !confirming) { setConfirming(true); return }
     useStore.getState().update((S: RunState) => { applyRunPlan(S, answers, today) })
     onDone()
+    onCreated?.()
   }
 
   const submit = (e: FormEvent) => {

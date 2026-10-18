@@ -3,6 +3,8 @@
 - **Data:** 2026-10-18
 - **Status:** design aprovado por seções e spec aprovada em 2026-10-18; plano da 1e-a em
   [2026-10-18-fase-1e-a-corrida-plano.md](../plans/2026-10-18-fase-1e-a-corrida-plano.md).
+  1e-a concluída no código em 2026-10-18 (sem SQL; falta a revisão final e o merge). A 1e-b ainda
+  não tem plano.
 - **Subetapas:** **1e-a** (questionário, modelos, ritmos, semana híbrida e cartão do dia; só cliente) e
   **1e-b** (check-in de corrida, bônus de detalhado, feed, acompanhamento e sugestões; com uma
   migration). Cada uma com plano e PR próprios. A 1e-b começa depois do merge da 1e-a.
@@ -156,6 +158,11 @@ soma dos minutos.
 - **Meta de tempo:** aceita quando o VDOT necessário para o tempo-alvo (§4.3, inverso) é menor ou igual
   a `VDOT atual + semanas / 4`, com teto de `+6`. Fora disso, o app mostra o tempo possível no prazo e
   oferece usá-lo.
+- **Notas da implementação (1e-a):** `start` segue a sua tabela fixa de corre e caminha e fica fora
+  da regra dos 110%. Nas semanas de recuperação, cada tipo de treino usa o seu degrau mais leve. A
+  fase específica sempre chega ao treino mais forte dela. Semanas muito pequenas, de planos que
+  começam com 20 minutos de Leve, podem ficar abaixo das proporções de polimento e de recuperação,
+  porque os treinos já estão no tamanho mínimo.
 - **Ritmos do plano:** os treinos guardam zonas, não ritmos; a faixa de ritmo é calculada na hora com o
   VDOT atual do plano, então atualizar a referência muda os ritmos de todos os treinos seguintes.
 
@@ -172,8 +179,10 @@ soma dos minutos.
   dismissed: { [suggestionKey]: string } }
 ```
 
-`S.week` (rotinas de musculação por dia) não muda. `day` é o dia da semana (0 = segunda) em que a
-corrida foi encaixada naquela semana.
+`S.week` (rotinas de musculação por dia) não muda. `day` é o dia da semana em que a corrida foi
+encaixada naquela semana. O dia da semana segue `getDay()`, 0 = domingo a 6 = sábado, a mesma
+convenção de `S.week` (Decisão 1 do plano da 1e-a; a versão aprovada desta spec dizia 0 = segunda).
+As semanas do plano começam no primeiro dia da semana da pessoa (`S.weekStart`).
 
 ### 6.2 Encaixe
 
