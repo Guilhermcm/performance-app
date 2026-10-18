@@ -366,13 +366,17 @@ export function buildPlan(a: Answers, today: string, vdot: number | null): { wee
  * `count` weeks of the maintain cycle (Decision 8) with the race answers' days and reference,
  * repeating the 8-week cycle, phase `maintain`. They start from the race plan's own first easy and
  * long minutes, so the race plan's first week (base: the same easy and long runs) is never more
- * than the bridge's regular weeks. Indexes and ids run from 1; the caller renumbers the race weeks.
+ * than the bridge's regular weeks. The cycle is entered where its recovery weeks (4 and 8) put one
+ * in the bridge's last week: the race plan counts its own recovery weeks from its week 1 (week 4
+ * first), so no more than 3 regular weeks ever run in a row across the junction (final review M1).
+ * Indexes and ids run from 1; the caller renumbers the race weeks.
  */
 export function buildBridge(a: Answers, count: number, vdot: number | null): PlanWeek[] {
   if (!isRace(a.goal) || count < 1) return []
   const cycle = buildRace({ ...a, goal: 'maintain', goalType: undefined, targetMinutes: undefined }, FAMILIES.maintain.minWeeks, usableVdot(vdot), VOLUME[a.goal])
+  const entry = (4 - (count % 4)) % 4
   return Array.from({ length: count }, (_, i) => {
-    const w = cycle[i % cycle.length]
+    const w = cycle[(i + entry) % cycle.length]
     const index = i + 1
     return { index, phase: 'maintain' as Phase, recovery: w.recovery, sessions: w.sessions.map((x, k) => ({ ...x, id: `w${index}-s${k + 1}`, blocks: copy(x.blocks) })) }
   })
