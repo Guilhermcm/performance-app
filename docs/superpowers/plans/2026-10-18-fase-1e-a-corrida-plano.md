@@ -115,7 +115,7 @@ src/features/run/
 - [ ] **Step 1: Testes que falham** (`vdot.test.ts`):
   - `vdotFrom(5000, 20) ≈ 49.8`, `vdotFrom(5000, 25) ≈ 38.3`, `vdotFrom(5000, 30) ≈ 30.8` (± 0,2);
   - `predictMinutes(50, 5000)` em 19:57 ± 3 s; `predictMinutes(40, 10000)` em 50:03 ± 10 s; `predictMinutes(60, 5000)` em 17:03 ± 3 s;
-  - `zonePaces(50).easy` com `slow` entre 5:25 e 5:40 e `fast` entre 4:55 e 5:10; `zonePaces(50).hard.fast` entre 3:55 e 4:05; valores múltiplos de 5 s;
+  - `zonePaces(50).easy` com `slow` entre 5:45 e 5:55 e `fast` entre 4:50 e 5:00; `zonePaces(50).hard.fast` entre 3:45 e 3:55 (valores do modelo de frações da spec §4.2); valores múltiplos de 5 s;
   - limites (Review Focus 2): `vdotFrom(1000, 3)`, `vdotFrom(42195, 360)` e `vdotFrom(5000, 15)` dão números finitos e positivos; `zonePaces` de cada um sem `NaN` e com `fast < slow`;
   - `formatPace(340) === '5:40'`; `formatPaceRange({ fast: 340, slow: 355 })` em pt-BR `'5:40 a 5:55 /km'`.
 - [ ] **Step 2:** `npx vitest run src/features/run/vdot.test.ts` → FAIL.
