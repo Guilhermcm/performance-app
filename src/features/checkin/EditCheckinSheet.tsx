@@ -14,7 +14,7 @@ import { dropCheckinWorkout, ingestCheckin, workoutOfCheckin } from './ingest'
 import { activityLabel } from './activities'
 import { Choice, Counted, Group, TEXT_MAX, TITLE_MAX } from './fields'
 import DetailSheet from './DetailSheet'
-import type { CheckinDetail, CheckinRow, CheckinVisibility } from './types'
+import { isRunDetail, type CheckinRow, type CheckinVisibility, type StrengthDetail } from './types'
 
 type Props = {
   open: boolean
@@ -88,7 +88,8 @@ function Form({ base, onDone }: { base: CheckinRow; onDone: (row: CheckinRow) =>
   const [caption, setCaption] = useState(base.caption ?? '')
   const [note, setNote] = useState(base.note ?? '')
   const [visibility, setVisibility] = useState<CheckinVisibility>(base.visibility)
-  const [detail, setDetail] = useState<CheckinDetail | null>(base.detail)
+  // Only strength training is detailed here; a run detail stays as it is.
+  const [detail, setDetail] = useState<StrengthDetail | null>(() => (isRunDetail(base.detail) ? null : base.detail))
   const [detailOpen, setDetailOpen] = useState(false)
   const [busy, setBusy] = useState(false)
 
@@ -114,9 +115,9 @@ function Form({ base, onDone }: { base: CheckinRow; onDone: (row: CheckinRow) =>
       await useCheckins.getState().edit(base.id, patch, base)
       // The history session follows the detail (plan decision 7): replaced, or gone with it.
       if ('detail' in patch) {
-        if (patch.detail) {
+        if (detail) {
           ingestCheckin({ id: base.id, day: base.day, routineId: base.routine_id, name: base.routine_name ?? patch.title ?? base.title,
-            durationMin: base.duration_min, detail: patch.detail })
+            durationMin: base.duration_min, detail })
         } else dropCheckinWorkout(base.id)
       }
       toast.success(t('Check-in saved.'))

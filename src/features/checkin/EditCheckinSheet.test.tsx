@@ -138,6 +138,20 @@ describe('editing a posted check-in', () => {
     expect(screen.queryByRole('button', { name: 'Detail workout' })).toBeNull()
   })
 
+  it('edits a run check-in and leaves its run detail as it is', async () => {
+    const detail = { run: { status: 'unplanned' as const, distance_km: 6.2, rpe: 7 } }
+    const row = rowOf({ activity: 'run', routine_id: null, routine_name: null, title: 'Corrida', detail })
+    setup(row)
+    expect(within(screen.getByRole('group', { name: 'Day, activity and photo' })).getByText('Running')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Detail workout' })).toBeNull()
+    expect(screen.queryByText('Workout detailed')).toBeNull()
+    fireEvent.change(field('Title'), { target: { value: 'Corrida leve' } })
+    await act(async () => { fireEvent.click(save()) })
+    expect(edit).toHaveBeenCalledWith('c1', { title: 'Corrida leve' }, row)
+    expect(onSaved).toHaveBeenCalledWith({ ...row, title: 'Corrida leve' })
+    expect((useStore.getState() as { S: { workouts: unknown[] } }).S.workouts).toEqual([])
+  })
+
   it('reads the check-in from the server when this phone does not have it', async () => {
     const row = rowOf({ day: '2026-08-01' })
     api.fetchMyCheckins.mockResolvedValue([rowOf({ id: 'other', day: '2026-08-01' }), row])

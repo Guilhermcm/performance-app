@@ -2922,4 +2922,6 @@ export default {
   "Keeps you running until the race plan starts.": "คุณจะได้วิ่งต่อไปจนกว่าแผนแข่งจะเริ่ม",
   // --- run: race day (phase 1e-a, final review) ---
   "Race day": "วันแข่ง",
+  // --- run: run check-in in the feed (phase 1e-b) ---
+  "{0} km": "{0} กม.",
 }

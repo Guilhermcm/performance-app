@@ -269,6 +269,43 @@ describe('edit and remove', () => {
     expect(api.upsertCheckin.mock.calls[0][0].title).toBe('Depois')
   })
 
+  it('a run post shows its type and distance in the feed from the run detail on this phone, before and after it goes up', async () => {
+    await bound()
+    offline()
+    const planned = { week: 3, session: 'w3-s2', type: 'intervals' as const, blocks: [{ zone: 'easy' as const, min: 30 }] }
+    const id = await S().post(inputOf({
+      activity: 'run', routineId: null, routineName: null, title: 'Corrida', durationMin: 38,
+      detail: { run: { status: 'as_planned', planned, distance_km: 6.2, rpe: 8 } }
+    }))
+    const pending = S().feed[0] as CheckinFeedItem
+    expect(pending).toMatchObject({ key: `checkin:${id}`, pending: true, run_type: 'intervals', distance_km: 6.2 })
+    // Never the effort, the blocks or the plan, as on the server's item.
+    expect(pending).not.toHaveProperty('rpe')
+    expect(pending).not.toHaveProperty('detail')
+    await S().edit(id, { detail: { run: { status: 'unplanned', distance_km: 5 } } })
+    expect(S().feed[0]).toMatchObject({ key: `checkin:${id}`, run_type: null, distance_km: 5 })
+    online()
+    await S().flush(); await settle()
+    expect(S().feed[0]).toMatchObject({ key: `checkin:${id}`, run_type: null, distance_km: 5 })
+  })
+
+  it('a post of another activity has no run type or distance', async () => {
+    await bound()
+    offline()
+    await S().post(inputOf())
+    expect(S().feed[0]).toMatchObject({ run_type: null, distance_km: null })
+  })
+
+  it('an edit of a run post already in the feed moves its line along', async () => {
+    server.set('s1', serverRow('s1', { detail: { run: { status: 'unplanned', distance_km: 5 } } }))
+    api.fetchFeed.mockResolvedValue({ items: [feedItemOf('s1', { user: { id: ME, name: 'Gui', avatar_url: null }, run_type: null, distance_km: 5 })], next: null })
+    await bound()
+    await S().loadFeed()
+    offline()
+    await S().edit('s1', { detail: { run: { status: 'unplanned', distance_km: 7.5 } } })
+    expect(S().feed[0]).toMatchObject({ key: 'checkin:s1', pending: true, distance_km: 7.5, context: { week_count: 2, streak: 3 } })
+  })
+
   it('removing a check-in takes its history session at once', async () => {
     server.set('s1', serverRow('s1'))
     await bound()

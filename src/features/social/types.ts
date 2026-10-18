@@ -1,5 +1,6 @@
 import type { CheckinActivity, CheckinDetail, CheckinVisibility } from '../checkin/types'
 import type { Progress, WeekProgress } from '../gamification/types'
+import type { SessionType } from '../run/types'
 
 export type Person = { id: string; name: string; avatar_url: string | null }
 
@@ -83,6 +84,10 @@ export type CheckinFeedItem = {
   title: string
   caption: string | null
   duration_min: number | null
+  // A run check-in's planned workout type and distance (0032_run.sql), null on any other activity.
+  // Never the effort, the blocks or the plan.
+  run_type?: SessionType | null
+  distance_km?: number | null
   visibility: CheckinVisibility
   photo_path: string
   // "3rd workout of the week", "6 week streak". Null on a post of mine still waiting to go up.
@@ -109,7 +114,8 @@ export type ChallengeFeedPage = { items: ChallengeFeedEntry[]; next: CheckinFeed
 
 export type CheckinComment = { id: number; user: Person; body: string; created_at: string; can_delete: boolean }
 
-// get_checkin: one post with who reacted and its comments. note and detail only on my own posts.
+// get_checkin: one post with who reacted and its comments. note and detail only on my own posts;
+// run_type and distance_km as in the feed (0032_run.sql).
 export type CheckinView = {
   id: string
   user: Person
@@ -119,6 +125,8 @@ export type CheckinView = {
   title: string
   caption: string | null
   duration_min: number | null
+  run_type?: SessionType | null
+  distance_km?: number | null
   visibility: CheckinVisibility
   photo_path: string
   created_at: string
