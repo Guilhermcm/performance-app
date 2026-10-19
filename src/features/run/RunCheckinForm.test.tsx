@@ -131,6 +131,48 @@ describe('RunCheckinForm without a planned workout', () => {
     expect(last()).toBeNull()
   })
 
+  it('waits for the decimals after a separator while the field is in use, and stays unsendable (R2 T4-M3)', () => {
+    render(<Harness planned={null} />)
+    const field = distance()
+    fireEvent.focus(field)
+    for (const text of ['6,', '6.', '12,']) {
+      fireEvent.change(field, { target: { value: text } })
+      expect(screen.queryByText(DIST_NOTE), text).toBeNull()
+      expect(field.hasAttribute('aria-invalid'), text).toBe(false)
+      // Not a distance yet: what goes out still fails the check.
+      expect(checkRunDetail(last(), 'run'), text).toBe(false)
+    }
+    // Other wrong text says why at once.
+    fireEvent.change(field, { target: { value: '6,255' } })
+    expect(screen.getByText(DIST_NOTE)).toBeTruthy()
+    // Left with the separator, it says why.
+    fireEvent.change(field, { target: { value: '6,' } })
+    expect(screen.queryByText(DIST_NOTE)).toBeNull()
+    fireEvent.blur(field)
+    expect(screen.getByText(DIST_NOTE)).toBeTruthy()
+    expect(field.getAttribute('aria-invalid')).toBe('true')
+    fireEvent.focus(field)
+    fireEvent.change(field, { target: { value: '6,2' } })
+    expect(screen.queryByText(DIST_NOTE)).toBeNull()
+    expect(last()).toEqual({ status: 'unplanned', distance_km: 6.2 })
+  })
+
+  it('drops a distance it cannot show when it opens again (R2 T4-M1)', () => {
+    // A wrong distance goes out as NaN; the form that held its text is gone.
+    render(<Harness planned={null} value={{ status: 'unplanned', distance_km: NaN, rpe: 6 }} />)
+    expect(distance().value).toBe('')
+    expect(last()).toEqual({ status: 'unplanned', rpe: 6 })
+    expect(checkRunDetail(last(), 'run')).toBe(true)
+    cleanup(); seen.mockReset()
+    render(<Harness planned={null} value={{ status: 'unplanned', distance_km: NaN }} />)
+    expect(last()).toBeNull()
+    cleanup(); seen.mockReset()
+    // A distance it can show is left alone.
+    render(<Harness planned={null} value={{ status: 'unplanned', distance_km: 5 }} />)
+    expect(distance().value).toBe('5')
+    expect(seen).not.toHaveBeenCalled()
+  })
+
   it('has the effort from 1 to 10 in a radio group named "Effort"', () => {
     render(<Harness planned={null} />)
     const group = screen.getByRole('radiogroup', { name: 'Effort' })
