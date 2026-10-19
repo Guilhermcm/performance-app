@@ -98,7 +98,8 @@ export function PostCard({ item, onOpen, onHide }: {
   const mine = item.user.id === me
   const pending = !!item.pending
   const context = contextText(item.context)
-  // A run with its type or distance (plan decision 5): "Intervalado · 6,2 km · 38 min".
+  // A run with its type or distance (plan decision 5): "Intervalado · 6,2 km · 38 min", without the
+  // duration when the title already ends with it, as the suggested "Corrida · 38 min" does.
   const run = item.activity === 'run' && (item.run_type || item.distance_km != null) ? runLine(item) : null
 
   const hide = async () => {

@@ -279,6 +279,16 @@ describe('PostCard of a run', () => {
     } finally { await setLang('en') }
   })
 
+  it('shows the duration once when the title already has it (final review M3)', async () => {
+    await setLang('pt-BR')
+    try {
+      render(<PostCard item={run({ title: 'Corrida · 38 min', run_type: 'intervals', distance_km: 6.2 })} onOpen={vi.fn()} />)
+      expect(screen.getByRole('heading', { name: 'Corrida · 38 min' })).toBeTruthy()
+      expect(screen.getByText('Intervalado · 6,2 km')).toBeTruthy()
+      expect(screen.getAllByText(/38 min/)).toHaveLength(1)
+    } finally { await setLang('en') }
+  })
+
   it('shows the distance without a type, and the type without a distance', () => {
     const { unmount } = render(<PostCard item={run({ run_type: null, distance_km: 6.2 })} onOpen={vi.fn()} />)
     expect(screen.getByText('6.2 km · 38 min')).toBeTruthy()

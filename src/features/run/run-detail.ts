@@ -113,14 +113,23 @@ export function parseKm(text: string): number | null {
 /** A distance with the decimal mark of the language: "6,2" in pt-BR. */
 export const formatKm = (km: number): string => km.toLocaleString(dateLocale(), { maximumFractionDigits: 2 })
 
+// Whether `title` already ends with the duration text, like the title the check-in suggests
+// ("Corrida · 38 min"), and not with a longer number ("138 min").
+function endsWithDuration(title: string | null | undefined, duration: string): boolean {
+  if (!title?.endsWith(duration)) return false
+  return !/\d/.test(title.charAt(title.length - duration.length - 1))
+}
+
 /**
  * The line of a run check-in in the feed (plan decision 5): "Intervalado · 6,2 km · 38 min", the
- * type, the distance and the duration, each when there is one.
+ * type, the distance and the duration, each when there is one. The duration stays out when the
+ * post's `title` already ends with it (1e-b final review M3).
  */
-export function runLine(p: { run_type?: SessionType | null; distance_km?: number | null; duration_min: number | null }): string {
+export function runLine(p: { run_type?: SessionType | null; distance_km?: number | null; duration_min: number | null; title?: string | null }): string {
+  const duration = p.duration_min ? t('{0} min', p.duration_min) : null
   return [
     p.run_type ? sessionName(p.run_type) : null,
     p.distance_km != null ? t('{0} km', formatKm(p.distance_km)) : null,
-    p.duration_min ? t('{0} min', p.duration_min) : null
+    duration && !endsWithDuration(p.title, duration) ? duration : null
   ].filter(Boolean).join(' · ')
 }

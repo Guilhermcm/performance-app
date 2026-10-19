@@ -69,6 +69,12 @@ describe('formatKm and runLine', () => {
   it('in English', () => {
     expect(runLine({ run_type: 'intervals', distance_km: 6.2, duration_min: 38 })).toBe('Interval run · 6.2 km · 38 min')
   })
+
+  it('leaves the duration out when the title already ends with it (final review M3)', () => {
+    expect(runLine({ run_type: 'intervals', distance_km: 6.2, duration_min: 38, title: 'Running · 38 min' })).toBe('Interval run · 6.2 km')
+    expect(runLine({ run_type: 'intervals', distance_km: 6.2, duration_min: 38, title: 'Track day' })).toBe('Interval run · 6.2 km · 38 min')
+    expect(runLine({ distance_km: 20, duration_min: 38, title: 'Running · 138 min' })).toBe('20 km · 38 min')
+  })
 })
 
 // A plan whose week 1 starts on Monday 12/10/2026: an easy run on Tuesday and an interval run on
