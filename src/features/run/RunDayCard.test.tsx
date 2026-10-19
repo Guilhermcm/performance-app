@@ -44,6 +44,9 @@ function planWith(sessions: Session[], over: Partial<RunPlan> = {}): RunPlan {
 }
 
 const card = (day: number) => render(<RunDayCard day={day} iso={weekDayIso('2026-10-14', 1, day)} />)
+// A run is a row like a routine's; its details open in a drawer from the row.
+const row = (name: string) => screen.getByRole('button', { name: new RegExp('^' + name) })
+const openRun = (name: string) => fireEvent.click(row(name))
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
@@ -62,20 +65,32 @@ describe('weekDayIso', () => {
 })
 
 describe('RunDayCard', () => {
-  it('shows the workout name, its blocks in one line and the pace ranges of its zones', () => {
+  it('shows a run as a routine-style row: icon, name, minutes and blocks in one line', () => {
     card(WED)
-    expect(screen.getByRole('heading', { name: 'Interval run' })).toBeTruthy()
-    expect(screen.getByText('10 easy + 4 × 4 hard + 10 easy')).toBeTruthy()
+    const r = row('Interval run')
+    expect(r.dataset.slot).toBe('run-row')
+    expect(r.textContent).toContain('36 min · 10 easy + 4 × 4 hard + 10 easy')
+    expect(r.querySelector('.lrow-i svg')).toBeTruthy()
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('opens the workout name, its blocks in one line and the pace ranges of its zones from the row', () => {
+    card(WED)
+    openRun('Interval run')
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByRole('heading', { name: 'Interval run' })).toBeTruthy()
+    expect(within(dialog).getByText('10 easy + 4 × 4 hard + 10 easy')).toBeTruthy()
     const paces = zonePaces(38.3)
     expect(screen.getByText(formatPaceRange(paces.easy))).toBeTruthy()
     expect(screen.getByText(formatPaceRange(paces.hard))).toBeTruthy()
     expect(screen.queryByText(formatPaceRange(paces.moderate))).toBeNull()
-    expect(screen.getByText('36 min')).toBeTruthy()
+    expect(within(dialog).getByText('36 min')).toBeTruthy()
   })
 
   it('without a VDOT shows only how each zone feels', () => {
     setS({ runPlan: planWith([long(SUN), intervals(WED), tempo(FRI)], { vdot: undefined, vdotSource: null, vdotDate: undefined }) })
     card(WED)
+    openRun('Interval run')
     expect(screen.getByText('you can hold a conversation')).toBeTruthy()
     expect(screen.getByText('only a few words')).toBeTruthy()
     expect(document.body.textContent).not.toContain('/km')
@@ -104,6 +119,7 @@ describe('RunDayCard', () => {
 
   it('moves a run to another day of this week from today on, with the warning before the move', () => {
     card(WED)
+    openRun('Interval run')
     fireEvent.click(screen.getByRole('button', { name: 'Change day: Interval run' }))
     const dialog = screen.getByRole('dialog')
     const options = within(dialog).getAllByRole('button').filter(b => b.dataset.day != null)
@@ -127,6 +143,7 @@ describe('RunDayCard', () => {
   it('has no "Change day" when no other day is left this week', () => {
     vi.setSystemTime(new Date('2026-10-18T15:00:00'))
     render(<RunDayCard day={SUN} iso="2026-10-18" />)
+    openRun('Long run')
     expect(screen.getByRole('heading', { name: 'Long run' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: /Change day/ })).toBeNull()
   })
@@ -135,6 +152,7 @@ describe('RunDayCard', () => {
     useCheckinFlow.setState({ open: false, opts: {} })
     useCheckins.setState({ userId: 'u1' })
     card(WED)
+    openRun('Interval run')
     fireEvent.click(screen.getByRole('button', { name: 'Log run' }))
     expect(useCheckinFlow.getState()).toMatchObject({ open: true, opts: { activity: 'run' } })
     useCheckinFlow.setState({ open: false, opts: {} })
@@ -144,6 +162,7 @@ describe('RunDayCard', () => {
     useCheckinFlow.setState({ open: false, opts: {} })
     useCheckins.setState({ userId: null })
     card(WED)
+    openRun('Interval run')
     expect(screen.getByRole('heading', { name: 'Interval run' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Log run' })).toBeNull()
     expect(useCheckinFlow.getState().open).toBe(false)
@@ -154,12 +173,14 @@ describe('RunDayCard', () => {
     useCheckins.setState({ userId: 'u1' })
     try {
       card(WED)
+      openRun('Intervalado')
       expect(screen.getByRole('button', { name: 'Registrar corrida' })).toBeTruthy()
     } finally { await setLang('en') }
   })
 
   it('has no "Log run" on another day', () => {
     card(FRI)
+    openRun('Tempo run')
     expect(screen.getByRole('heading', { name: 'Tempo run' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Log run' })).toBeNull()
   })
@@ -168,10 +189,11 @@ describe('RunDayCard', () => {
     // Made with Monday weeks: Sunday the 18th is week 1's long run. The person now starts weeks on Sunday.
     setS({ weekStart: 0, runPlan: { ...planWith([long(SUN), intervals(WED), tempo(FRI)]), weekStart: 1 } })
     render(<RunDayCard day={SUN} iso="2026-10-18" />)
-    expect(screen.getByRole('heading', { name: 'Long run' })).toBeTruthy()
+    expect(row('Long run')).toBeTruthy()
     cleanup()
     // Change day offers the rest of the plan's week (to Sunday the 18th), not the Sunday week.
     render(<RunDayCard day={WED} iso="2026-10-14" />)
+    openRun('Interval run')
     fireEvent.click(screen.getByRole('button', { name: 'Change day: Interval run' }))
     const options = within(screen.getByRole('dialog')).getAllByRole('button').filter(b => b.dataset.day != null)
     expect(options.map(b => b.dataset.day)).toEqual([String(THU), String(FRI), '6', String(SUN)])
@@ -218,9 +240,9 @@ describe('RunDayCard on race week (final review I1 and M6)', () => {
   it('marks race day with the distance, and no run', () => {
     raceWeek([long(MON), intervals(WED), tempo(FRI)])
     card(SUN)
-    expect(screen.getByRole('heading', { name: 'Race day' })).toBeTruthy()
+    expect(screen.getByText('Race day')).toBeTruthy()
     expect(screen.getByText('10 km')).toBeTruthy()
-    expect(screen.queryByRole('heading', { name: 'Long run' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Long run/ })).toBeNull()
   })
 
   it('marks race day of a half marathon too, but nothing for a plan without a race', () => {
@@ -242,6 +264,7 @@ describe('RunDayCard on race week (final review I1 and M6)', () => {
   it('offers only days before the race, with the warning for the day before', () => {
     raceWeek([long(MON), intervals(WED), tempo(FRI)])
     card(FRI)
+    openRun('Tempo run')
     fireEvent.click(screen.getByRole('button', { name: 'Change day: Tempo run' }))
     const options = within(screen.getByRole('dialog')).getAllByRole('button').filter(b => b.dataset.day != null)
     // Today is Wednesday: Wednesday, Thursday and Saturday; not Friday (it is on it), not Sunday (the race).

@@ -11,7 +11,7 @@
 // (spec §8.1, progress.ts doneSessions) shows "Run done" with a check, from the screen's `logs`
 // (useRunLogs, read once by the Plan and passed down).
 import { useState } from 'react'
-import { CircleCheck, Flag, TriangleAlert } from 'lucide-react'
+import { ChevronRight, CircleCheck, Flag, Footprints, TriangleAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { t } from '../../lib/i18n.js'
@@ -20,7 +20,7 @@ import { useStore } from '../../store/useStore.js'
 import { openCheckin } from '../checkin/open-checkin'
 import { useCheckins } from '../checkin/useCheckins'
 import { moveWarnings, weekWarnings, type FitWarning } from './fit'
-import { fitWarningText, goalName, sessionName } from './labels'
+import { blocksInline, fitWarningText, goalName, sessionName } from './labels'
 import { weekMinutes } from './models'
 import { weekStartDate } from './dates'
 import { doneSessions, weekOffsetOf } from './progress'
@@ -41,6 +41,7 @@ export function weekDayIso(today: string, ws: number, day: number): string {
 export default function RunDayCard({ day, iso, logs = [] }: { day: number; iso: string; logs?: RunLog[] }) {
   const S = useStore((s: AppStore) => s.S)
   const update = useStore((s: AppStore) => s.update)
+  const [openId, setOpenId] = useState<string | null>(null)
   const [moving, setMoving] = useState<Session | null>(null)
   // Check-ins need a signed-in account (the store is bound once its profile is in, App.jsx).
   const canCheckIn = !!useCheckins(s => s.userId)
@@ -68,51 +69,105 @@ export default function RunDayCard({ day, iso, logs = [] }: { day: number; iso: 
   const move = (s: Session, to: number) => {
     if (week) update(draft => { moveSession(draft, week.index, s.id, to, iso) })
     setMoving(null)
+    setOpenId(null)
   }
+  const opened = sessions.find(s => s.id === openId) ?? null
+  const close = () => { setOpenId(null); setMoving(null) }
 
+  // Each run is one row, like a routine's under its day (icon, name, a line under it); the blocks,
+  // the paces, the warnings, "Change day" and "Log run" open in a drawer from the row.
   return (
-    <div className="mt-2 flex flex-col gap-2 font-sans">
+    <div className="flex flex-col font-sans">
       {race && (
-        <article aria-labelledby={`race-${iso}`} className="flex items-center gap-3 rounded-xl border-2 border-primary bg-background/40 px-3 py-2.5">
-          <Flag aria-hidden className="size-5 shrink-0 text-primary" />
-          <div className="flex min-w-0 flex-col">
-            <h3 id={`race-${iso}`} className="text-[15px] font-semibold">{t('Race day')}</h3>
-            <span className="text-sm text-muted-foreground">{goalName(plan.goal)}</span>
+        <div className="row" style={{ gap: 8, padding: '4px 0 4px 8px', minHeight: 44 }}>
+          <span className="lrow-i" style={{ width: 26, height: 26, fontSize: 14 }}><Flag aria-hidden className="size-4" /></span>
+          <div className="grow" style={{ minWidth: 0 }}>
+            <div className="tt" style={{ fontSize: 14 }}>{t('Race day')}</div>
+            <div className="ss">{goalName(plan.goal)}</div>
           </div>
-        </article>
+        </div>
       )}
-      {sessions.map(s => (
-        <article key={s.id} aria-labelledby={`run-${iso}-${s.id}`} className="rounded-xl border border-border bg-background/40 px-3 py-2.5">
-          <div className="flex items-baseline justify-between gap-3">
-            <h3 id={`run-${iso}-${s.id}`} className="text-[15px] font-semibold">{sessionName(s.type)}</h3>
-            <span className="shrink-0 font-mono text-sm text-muted-foreground tabular-nums">{t('{0} min', weekMinutes({ sessions: [s] }))}</span>
-          </div>
-          {done.has(s.id) && (
-            <span data-slot="run-done" className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-foreground">
-              <CircleCheck aria-hidden className="size-4 shrink-0 text-primary" />{t('Run done')}
+      {sessions.map(s => {
+        const list = warnings[s.id] ?? []
+        return (
+          <button key={s.id} type="button" data-slot="run-row" onClick={() => setOpenId(s.id)}
+            className="row w-full text-start" style={{ gap: 8, padding: '4px 0 4px 8px', minHeight: 44 }}>
+            <span className="lrow-i" style={{ width: 26, height: 26, fontSize: 14 }}><Footprints aria-hidden className="size-4" /></span>
+            <span className="grow" style={{ minWidth: 0 }}>
+              <span className="tt block" style={{ fontSize: 14 }}>{sessionName(s.type)}</span>
+              <span className="ss block truncate">
+                <span className="tabular-nums">{t('{0} min', weekMinutes({ sessions: [s] }))}</span>
+                <span aria-hidden>{' · '}{blocksInline(s.blocks)}</span>
+              </span>
             </span>
-          )}
-          <div className="mt-1"><SessionBlocks session={s} vdot={plan.vdot} /></div>
-          <Warnings list={warnings[s.id]} type={s.type} />
-          {targets(s).length > 0 && (
-            <Button variant="outline" size="sm" className="mt-2 h-11 w-full rounded-lg"
-              aria-label={`${t('Change day')}: ${sessionName(s.type)}`} onClick={() => setMoving(s)}>{t('Change day')}</Button>
-          )}
-        </article>
-      ))}
+            {done.has(s.id) && (
+              <span data-slot="run-done" className="inline-flex shrink-0 items-center">
+                <CircleCheck aria-hidden className="size-4 text-primary" /><span className="sr-only">{t('Run done')}</span>
+              </span>
+            )}
+            {list.length > 0 && (
+              <span className="inline-flex shrink-0 items-center">
+                <TriangleAlert aria-hidden className="size-4 text-[var(--orange,currentColor)]" />
+                <span className="sr-only">{list.map(w => fitWarningText(w, s.type)).join('. ')}</span>
+              </span>
+            )}
+            <ChevronRight aria-hidden className="chev size-[15px]" strokeWidth={2.4} />
+          </button>
+        )
+      })}
 
-      {iso === today && canCheckIn && (
-        <Button size="sm" className="h-11 w-full rounded-lg" onClick={() => openCheckin({ activity: 'run' })}>{t('Log run')}</Button>
-      )}
-
-      <Drawer open={!!moving} onOpenChange={o => { if (!o) setMoving(null) }}>
+      <Drawer open={!!opened} onOpenChange={o => { if (!o) close() }}>
         <DrawerContent>
-          {moving && week && <MovePicker session={moving} days={targets(moving)} iso={iso} ws={pws}
-            warningsAt={d => moveWarnings(moving.id, d, placementOf(week), week.sessions, { week: strength, routines, raceDay: bounds?.raceDay })}
-            onPick={d => move(moving, d)} onCancel={() => setMoving(null)} />}
+          {opened && week && (moving
+            ? <MovePicker session={moving} days={targets(moving)} iso={iso} ws={pws}
+                warningsAt={d => moveWarnings(moving.id, d, placementOf(week), week.sessions, { week: strength, routines, raceDay: bounds?.raceDay })}
+                onPick={d => move(moving, d)} onCancel={() => setMoving(null)} />
+            : <Details session={opened} vdot={plan.vdot} done={done.has(opened.id)} warnings={warnings[opened.id]}
+                canMove={targets(opened).length > 0} canLog={iso === today && canCheckIn}
+                onMove={() => setMoving(opened)} onLog={() => { close(); openCheckin({ activity: 'run' }) }} onClose={close} />)}
         </DrawerContent>
       </Drawer>
     </div>
+  )
+}
+
+type DetailsProps = {
+  session: Session
+  vdot?: number | null
+  done: boolean
+  warnings?: FitWarning[]
+  canMove: boolean
+  canLog: boolean
+  onMove: () => void
+  onLog: () => void
+  onClose: () => void
+}
+
+function Details({ session: s, vdot, done, warnings, canMove, canLog, onMove, onLog, onClose }: DetailsProps) {
+  return (
+    <>
+      <DrawerHeader>
+        <DrawerTitle>{sessionName(s.type)}</DrawerTitle>
+        <DrawerDescription className="font-mono tabular-nums">{t('{0} min', weekMinutes({ sessions: [s] }))}</DrawerDescription>
+      </DrawerHeader>
+      <div className="flex flex-col gap-3 px-4 font-sans">
+        {done && (
+          <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground">
+            <CircleCheck aria-hidden className="size-4 shrink-0 text-primary" />{t('Run done')}
+          </span>
+        )}
+        <SessionBlocks session={s} vdot={vdot} />
+        <Warnings list={warnings} type={s.type} />
+      </div>
+      <DrawerFooter className="pb-[max(1rem,env(safe-area-inset-bottom))]">
+        {canLog && <Button size="lg" className="h-12 rounded-xl text-base" onClick={onLog}>{t('Log run')}</Button>}
+        {canMove && (
+          <Button size="lg" variant="outline" className="h-12 rounded-xl text-base"
+            aria-label={`${t('Change day')}: ${sessionName(s.type)}`} onClick={onMove}>{t('Change day')}</Button>
+        )}
+        <Button size="lg" variant="ghost" className="h-12 rounded-xl text-base" onClick={onClose}>{t('Close')}</Button>
+      </DrawerFooter>
+    </>
   )
 }
 
