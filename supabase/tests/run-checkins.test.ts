@@ -103,6 +103,12 @@ describe('check-ins without detail.run', () => {
       .rejects.toThrow(/invalid_run_detail/)
   })
 
+  it('leave a detail that is not an object as before, even when it holds "run"', async () => {
+    await addCheckin(db, A, { activity: 'run', detail: ['run'] })
+    await addCheckin(db, A, { detail: 'run' })
+    expect((await sql(db, 'select count(*)::int as n from public.checkins where user_id = $1', [A]))[0].n).toBe(2)
+  })
+
   it('pass as the database owner, as the other rules do', async () => {
     await post(A, '2026-10-01', 'strength', { run: { status: 'done' } })
     expect((await sql(db, 'select count(*)::int as n from public.checkins where user_id = $1', [A]))[0].n).toBe(1)
@@ -151,10 +157,13 @@ describe('a run as a detailed training day', () => {
       .toEqual(Array(3).fill({ reason: 'training_detailed', amount: 30, week_start: '2026-10-05', pillar: 'strength' }))
   })
 
+  // Strength details only two days; the third detailed day comes from a run alone, so without the
+  // run rule the week would pay 930.
   it('keeps the Treino week at 960 with a full week of workouts, PRs, weigh-ins and runs', async () => {
-    for (const d of ['2026-10-05', '2026-10-06', '2026-10-07', '2026-10-08', '2026-10-09', '2026-10-10', '2026-10-11']) {
-      await post(A, d, 'strength', DETAIL)
-      await post(A, d, 'run', { run: RUN })
+    const days = ['2026-10-05', '2026-10-06', '2026-10-07', '2026-10-08', '2026-10-09', '2026-10-10', '2026-10-11']
+    for (const [i, d] of days.entries()) {
+      if (i < 2) await post(A, d, 'strength', DETAIL)
+      else await post(A, d, 'run', { run: RUN })
       await event(db, A, 'pr', d, 's' + d + ':bench', { ex: 'bench' })
       await event(db, A, 'weight_logged', d, d, { w: 80 })
     }
