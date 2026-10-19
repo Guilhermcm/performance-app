@@ -22,8 +22,8 @@ describe('privacy policy page', () => {
 
   it('has the English version and the update date', () => {
     expect(html).toContain('id="en"')
-    expect(visible).toContain('Última atualização: 18 de outubro de 2026')
-    expect(visible).toContain('Last updated: October 18, 2026')
+    expect(visible).toContain('Última atualização: 19 de outubro de 2026')
+    expect(visible).toContain('Last updated: October 19, 2026')
   })
 
   it('covers the sleep pillar: what is kept, that it is optional and who sees it, in both languages', () => {
@@ -141,6 +141,15 @@ describe('privacy policy page', () => {
     expect(en).toContain('Only you see the plan, the goal, the deadline, the paces, the effort and the blocks')
     expect(en).toContain('your friends see only the workout type and the distance')
     expect(en).toContain('running check-ins that have not reached the server yet')
+  })
+
+  it('says the device keeps a copy of the recent check-ins, 14 days with the run data (1e-b final review M4)', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('da área social e dos seus check-ins dos últimos 14 dias')
+    expect(pt).toContain('uma cópia do plano e dos seus check-ins recentes (os dos últimos 14 dias, com os dados de corrida)')
+    expect(en).toContain('social data and of your check-ins from the last 14 days')
+    expect(en).toContain('a copy of the plan and of your recent check-ins (those from the last 14 days, with their running data)')
   })
 
   it('lists the running plan, effort and blocks among what nobody sees, and the run type and distance among what friends see', () => {
