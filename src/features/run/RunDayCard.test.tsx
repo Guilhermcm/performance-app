@@ -12,6 +12,7 @@ import RunDayCard, { weekDayIso } from './RunDayCard'
 import { useCheckinFlow } from '../checkin/open-checkin'
 import { setLang } from '../../lib/i18n.js'
 import { formatPaceRange, zonePaces } from './vdot'
+import type { RunLog } from './run-log'
 import type { RunPlan, Session } from './types'
 
 type AnyState = Record<string, any>
@@ -165,6 +166,37 @@ describe('RunDayCard', () => {
   })
 })
 
+
+describe('RunDayCard: workouts done (spec §8.1)', () => {
+  const log = (id: string, day: string, run: RunLog['run'] = null): RunLog => ({ id, day, duration_min: 30, run })
+  const cardWith = (day: number, logs: RunLog[]) => render(<RunDayCard day={day} iso={weekDayIso('2026-10-14', 1, day)} logs={logs} />)
+  afterEach(async () => { await setLang('en') })
+
+  it('marks a workout done with an icon and the word, by its link or by its day', () => {
+    // An unlinked run on Monday counts for nothing; one on Wednesday counts for the intervals.
+    cardWith(WED, [log('a', '2026-10-12'), log('b', '2026-10-14')])
+    const done = screen.getByText('Run done')
+    expect(done.closest('[data-slot="run-done"]')!.querySelector('svg')).toBeTruthy()
+    cleanup()
+    // The tempo of Friday, run on Tuesday and linked to it.
+    cardWith(FRI, [log('c', '2026-10-13', { planned: { week: 1, session: 'w1-s3', type: 'tempo', blocks: [easy(30)] }, status: 'as_planned' })])
+    expect(screen.getByText('Run done')).toBeTruthy()
+  })
+
+  it('shows nothing for a workout not done yet, or without the logs', () => {
+    cardWith(WED, [log('a', '2026-10-12')])
+    expect(screen.queryByText('Run done')).toBeNull()
+    cleanup()
+    card(WED)
+    expect(screen.queryByText('Run done')).toBeNull()
+  })
+
+  it('says "Feito" in pt-BR', async () => {
+    await setLang('pt-BR')
+    cardWith(WED, [log('b', '2026-10-14')])
+    expect(screen.getByText('Feito')).toBeTruthy()
+  })
+})
 
 describe('RunDayCard on race week (final review I1 and M6)', () => {
   // The race is on Sunday the 18th, the last day of this Monday week.

@@ -4,7 +4,7 @@
 // on the right day whether the week starts on Sunday or Monday (review focus 1). After a new plan,
 // the app offers to update the weekly days goal and saves it only on a tap (spec §6.3).
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 const h = vi.hoisted(() => ({ nav: vi.fn() }))
 vi.mock('react-router-dom', () => ({ useNavigate: () => h.nav }))
@@ -12,6 +12,8 @@ vi.mock('../sheets.jsx', () => ({
   dayAssignSheet: vi.fn(), dayAddRoutineSheet: vi.fn(), planToolsSheet: vi.fn(), confirmSheet: vi.fn(), startFlow: vi.fn(), exitWorkoutEdit: vi.fn(),
 }))
 vi.mock('@/components/ui/drawer', () => import('../features/social/test-drawer'))
+const api = vi.hoisted(() => ({ fetchMyRunCheckins: vi.fn(async () => []) }))
+vi.mock('../features/checkin/checkin-api', async orig => ({ ...(await orig()), ...api }))
 // The questionnaire has its own tests; here it stands in as a dialog that applies fixed answers.
 vi.mock('../features/run/RunQuestionnaire', async () => {
   const { useStore } = await import('../store/useStore.js')
@@ -35,6 +37,8 @@ import Plan from './Plan.jsx'
 import { useStore } from '../store/useStore.js'
 import { useProfile } from '../features/profile/useProfile'
 import { fmtDate } from '../lib/format.js'
+import { useCheckins } from '../features/checkin/useCheckins'
+import { useRunLogStore } from '../features/run/run-log'
 
 const setS = patch => useStore.setState(s => ({ S: { ...s.S, ...patch }, user: null }))
 const UPPER = { id: 'upper', name: 'Upper', emoji: null, ex: [{ id: 'x-bench', sets: 6, bp: 'chest' }] }
@@ -69,7 +73,10 @@ beforeEach(() => {
   setS({ unit: 'kg', workouts: [], routines: [UPPER], week: { 3: ['upper'] }, weekStart: 1, active: null, runPlan: plan() })
   useProfile.setState({ profile: { id: 'u1', days_per_week: 3 }, save })
 })
-afterEach(() => { cleanup(); vi.useRealTimers(); useProfile.setState({ profile: null }) })
+afterEach(() => {
+  cleanup(); vi.useRealTimers(); useProfile.setState({ profile: null })
+  useCheckins.setState({ userId: null, mine: [] }); useRunLogStore.getState().reset(); api.fetchMyRunCheckins.mockClear()
+})
 
 const schedule = () => screen.getByRole('heading', { name: 'Week schedule' }).nextElementSibling
 const rows = () => [...schedule().children]
@@ -175,5 +182,40 @@ describe('Plan: weekly goal after a new plan', () => {
     fireEvent.click(screen.getByRole('button', { name: /Build a running plan/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Stub create' }))
     expect(screen.queryByText(/Training days in your week/)).toBeNull()
+  })
+})
+
+describe('Plan: suggestion and workouts done (phase 1e-b)', () => {
+  const ME = '00000000-0000-4000-8000-00000000000a'
+  // A run check-in made on this phone on Wednesday 14th, not linked: it counts for the intervals.
+  const mine = (id, day) => ({
+    id, user_id: ME, day, activity: 'run', routine_id: null, routine_name: null, title: 'Corrida', caption: null, note: null,
+    duration_min: 40, visibility: 'friends', photo_path: `${ME}/${id}.jpg`, created_at: day + 'T10:00:00.000Z', pending: true,
+    detail: { run: { status: 'unplanned', distance_km: 7 } },
+  })
+
+  it('marks the day card of a workout done with "Run done", reading the runs once', async () => {
+    useCheckins.setState({ userId: ME, mine: [mine('c1', '2026-10-14')] })
+    render(<Plan />)
+    expect(within(rowOf('Wednesday')).getByText('Run done')).toBeTruthy()
+    expect(within(rowOf('Sunday')).queryByText('Run done')).toBeNull()
+    await waitFor(() => expect(api.fetchMyRunCheckins).toHaveBeenCalled())
+    expect(api.fetchMyRunCheckins).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows the suggestion at the top of the Plan', () => {
+    // A 10 km plan from 5 October without a run in week 1: this week (the 2nd) repeats it.
+    setS({ runPlan: plan({ goal: '10k', startDate: '2026-10-05', answers: { goal: '10k', weeks: 2, reference: { kind: 'none' }, days: 2, longDay: 0 } }) })
+    render(<Plan />)
+    const card = screen.getByRole('region', { name: 'Repeat the week' })
+    expect(within(card).getByText('Last week you did 0 of 1 workout.')).toBeTruthy()
+    const entry = screen.getByTestId('run-plan-entry')
+    expect(card.compareDocumentPosition(entry) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(card.compareDocumentPosition(screen.getByTestId('programs-entry')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('shows no suggestion for a maintain plan', () => {
+    render(<Plan />)
+    expect(screen.queryByRole('region', { name: /Repeat the week|Step back a week|Update your paces/ })).toBeNull()
   })
 })

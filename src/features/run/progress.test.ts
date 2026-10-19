@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { doneSessions, milestones, volumeSeries, weekSummary } from './progress'
+import { doneSessions, milestones, volumeSeries, weekOffsetOf, weekSummary } from './progress'
 import type { RunLog } from './run-log'
 import type { RunDetail } from './run-detail'
 import type { RunPlan, Session, SessionType, Week } from './types'
@@ -187,5 +187,24 @@ describe('a plan on a Sunday week start', () => {
     const p = { ...plan, weeks: [{ ...weekOf(1), sessions: [session(1, 1, 'easy', SAT, 30)] }] }
     expect(doneSessions(p, 0, [log(sat)], 1)).toEqual(new Set(['w1-s1']))
     expect(doneSessions(p, 0, [log('2026-10-25')], 1).size).toBe(0)
+  })
+})
+
+describe('weekOffsetOf', () => {
+  it('counts calendar weeks from the plan start on its week start, -1 before it', () => {
+    const p = planOf()
+    expect(weekOffsetOf(p, W1, 0)).toBe(0)
+    expect(weekOffsetOf(p, day(W1, 6), 0)).toBe(0)
+    expect(weekOffsetOf(p, W2, 0)).toBe(1)
+    expect(weekOffsetOf(p, day(W3, 9), 0)).toBe(3)
+    expect(weekOffsetOf(p, day(W1, -1), 0)).toBe(-1)
+    // The plan's own week start wins over the fallback.
+    expect(weekOffsetOf(planOf({ weekStart: 0 }), W2, 1)).toBe(1)
+    expect(weekOffsetOf(planOf({ weekStart: 0 }), day(W2, -1), 1)).toBe(1)
+  })
+
+  it('is -1 without a plan or for one this build does not read', () => {
+    expect(weekOffsetOf(null, W2, 1)).toBe(-1)
+    expect(weekOffsetOf({ ...planOf(), version: 2 } as unknown as RunPlan, W2, 1)).toBe(-1)
   })
 })

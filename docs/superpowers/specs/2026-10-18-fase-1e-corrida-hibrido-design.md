@@ -4,7 +4,8 @@
 - **Status:** design aprovado por seções e spec aprovada em 2026-10-18; plano da 1e-a em
   [2026-10-18-fase-1e-a-corrida-plano.md](../plans/2026-10-18-fase-1e-a-corrida-plano.md).
   1e-a no `main` desde 2026-10-18 (PR #12). Plano da 1e-b em
-  [2026-10-18-fase-1e-b-corrida-registro.md](../plans/2026-10-18-fase-1e-b-corrida-registro.md).
+  [2026-10-18-fase-1e-b-corrida-registro.md](../plans/2026-10-18-fase-1e-b-corrida-registro.md);
+  1e-b concluída no código em 2026-10-19. Falta rodar a migration 0032 em produção e fazer o merge.
 - **Subetapas:** **1e-a** (questionário, modelos, ritmos, semana híbrida e cartão do dia; só cliente) e
   **1e-b** (check-in de corrida, bônus de detalhado, feed, acompanhamento e sugestões; com uma
   migration). Cada uma com plano e PR próprios. A 1e-b começa depois do merge da 1e-a.
@@ -249,6 +250,12 @@ run: { planned?: { week, session, type, blocks },   -- cópia do treino no momen
 
 O ritmo médio é calculado no app (`duration_min / distance_km`).
 
+**Nota da 1e-b (Decisão 1 do plano):** `blocks` e `planned.blocks` usam o mesmo formato de treino da
+§5.2, não uma lista simples de `{ zone, min }`: até 12 itens, e cada item é um bloco `{ zone, min }` ou
+uma repetição `{ repeat: 2..20, blocks: [...] }` com até 4 blocos. Com a lista simples, um Intervalado
+de 6 repetições de 3 blocos aberto passaria de 12 itens. "Ajustar" muda zona, minutos e número de
+repetições, mas não acrescenta nem tira itens.
+
 ### 7.2 Banco (migration da 1e-b)
 
 - `checkins_guard` valida `detail.run`: tipos, `distance_km` de 0,1 a 100 com no máximo duas casas,
@@ -263,6 +270,12 @@ O ritmo médio é calculado no app (`duration_min / distance_km`).
 - Funções redefinidas partem do corpo mais recente (`0020_checkin_feed.sql` para `checkins_guard` e
   `get_checkin_feed`; `0019_training_days.sql` ou o mais recente para `close_training_days`), com linha
   em `function-bodies.test.ts` e teste de paridade de Treino.
+
+**Nota da 1e-b (Decisão 5 do plano):** os campos do feed não saem de `get_checkin_feed` direto. Quem
+monta o item do feed é `checkin_feed_item`, usada pelo feed e pelo feed de desafio, e é ela que ganha
+`run_type` e `distance_km` (nulos fora de corrida). `get_checkin` ganha as mesmas duas chaves; `note` e
+o `detail` inteiro continuam só para a dona. As duas partem do corpo mais recente
+(`checkin_feed_item` de `0020_checkin_feed.sql`, `get_checkin` de `0018_checkin_social.sql`).
 
 ### 7.3 Feed
 

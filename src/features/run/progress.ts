@@ -82,6 +82,13 @@ function offsetOn(plan: RunPlan, today: string, ws: 0 | 1): number {
 }
 
 /**
+ * The weekOffset of the calendar week holding `iso`, on the plan's week start: -1 before the plan's
+ * first week or for a plan this build does not read. It keeps counting past the last week.
+ */
+export const weekOffsetOf = (plan: RunPlan | null, iso: string, weekStart: 0 | 1): number =>
+  isReadable(plan) ? offsetOn(plan, iso, weekStart) : -1
+
+/**
  * The planned minutes and the minutes run per calendar week, from the plan's first week to the
  * current one (to the last week once a plan that is not `maintain` is over). `index` is the
  * calendar week's number from 1 (weekOffset + 1): the week's index outside a maintain plan.
