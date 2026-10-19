@@ -6,8 +6,11 @@
 // on an edit. `value` is what goes out as `detail.run`, null when there is nothing to send
 // (decision 3: no link, no distance, no effort). A distance typed wrong goes out as NaN, and a block
 // out of range as typed, so checkRunDetail refuses what the person sees as wrong and the caller
-// waits for it; the reason is shown here, under the field.
-import { useId, useState } from 'react'
+// waits for it; the reason is shown here, under the field. A separator with nothing after it ("6,"
+// on the way to "6,2") is still being typed: no note while the field is in use, but nothing goes
+// out as a distance either. A form that opens on a distance it has no text for (one typed wrong,
+// before the form was closed by another activity) drops it, so nothing unseen holds the post.
+import { useEffect, useId, useState } from 'react'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
@@ -60,10 +63,18 @@ export default function RunCheckinForm({ planned, value, onChange, onPlannedMinu
   const id = useId()
   // The text as typed: "6," on the way to "6,2" is not a number yet.
   const [km, setKm] = useState(() => (value?.distance_km != null && Number.isFinite(value.distance_km) ? formatKm(value.distance_km) : ''))
+  const [typing, setTyping] = useState(false)
   const link: Link | null = planned && value && value.status !== 'unplanned' ? value.status : null
   const parts: Parts = { link, blocks: value?.blocks, distance: value?.distance_km, rpe: value?.rpe }
   const emit = (next: Partial<Parts>) => onChange(detailOf(planned, { ...parts, ...next }))
   const kmOk = !km.trim() || parseKm(km) !== null
+  const pending = typing && /^\d{1,3}[.,]$/.test(km.trim())
+  const kmNote = !kmOk && !pending
+
+  useEffect(() => {
+    if (value?.distance_km !== undefined && !Number.isFinite(value.distance_km)) emit({ distance: undefined })
+    // Only what the form opened with; the text it types is checked as it goes.
+  }, [])
 
   const pickLink = (v: string) => {
     if (v === 'as_planned') {
@@ -109,9 +120,10 @@ export default function RunCheckinForm({ planned, value, onChange, onPlannedMinu
       <div className="flex flex-col gap-1.5">
         <label htmlFor={id + '-km'} className="text-sm font-semibold">{t('Distance (km)')}</label>
         <Input id={id + '-km'} value={km} inputMode="decimal" autoComplete="off"
-          aria-invalid={kmOk ? undefined : true} aria-describedby={kmOk ? undefined : id + '-km-note'}
+          aria-invalid={kmNote ? true : undefined} aria-describedby={kmNote ? id + '-km-note' : undefined}
+          onFocus={() => setTyping(true)} onBlur={() => setTyping(false)}
           onChange={e => typeKm(e.target.value)} className="h-12 w-32 font-mono text-[15px] tabular-nums" />
-        {!kmOk && <p id={id + '-km-note'} className="text-xs text-destructive">{t('Distance goes from 0.1 to 100 km, with two decimals at most.')}</p>}
+        {kmNote && <p id={id + '-km-note'} className="text-xs text-destructive">{t('Distance goes from 0.1 to 100 km, with two decimals at most.')}</p>}
       </div>
 
       <div className="flex flex-col gap-1.5">

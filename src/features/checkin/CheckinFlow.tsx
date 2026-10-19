@@ -18,7 +18,7 @@ import { droppedMessages, useCheckins, type CheckinInput } from './useCheckins'
 import { ingestCheckin, linkWorkout } from './ingest'
 import DetailSheet from './DetailSheet'
 import RunCheckinForm, { relinkRun } from '../run/RunCheckinForm'
-import { checkRunDetail, plannedOn, type RunDetail } from '../run/run-detail'
+import { checkRunDetail, plannedMinutes, plannedOn, type RunDetail } from '../run/run-detail'
 import type { RunPlan } from '../run/types'
 import { Choice, Chip, Counted, DURATION_MAX, Group, TEXT_MAX, TITLE_MAX } from './fields'
 import type { CheckinActivity, CheckinVisibility, StrengthDetail } from './types'
@@ -107,6 +107,8 @@ function Panel() {
   const [detailOpen, setDetailOpen] = useState(false)
   // The run part (phase 1e-b): what goes out as detail.run, null for nothing (plan decision 3).
   const [run, setRun] = useState<RunDetail | null>(null)
+  // The duration last filled in from the planned workout; one the person typed is never replaced.
+  const [autoDuration, setAutoDuration] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
@@ -143,9 +145,19 @@ function Panel() {
   }
   const dropPhoto = () => setCheckinPhoto(null)
   // "Was it yesterday?" moves a linked run to that day's workout (Review Focus 3).
+  // A duration filled in from the old workout follows the new one, or goes without one (R2 T4-M2).
   const changeDay = (y: boolean) => {
     setYesterday(y)
-    setRun(r => relinkRun(r, plannedOn(plan, y ? shiftDay(today, -1) : today, ws)))
+    const next = relinkRun(run, plannedOn(plan, y ? shiftDay(today, -1) : today, ws))
+    setRun(next)
+    if (autoDuration !== null && duration === autoDuration) fillDuration(next?.planned ? plannedMinutes(next.planned.blocks) : null)
+  }
+  // "Done as planned" fills an empty duration, or one it filled itself, with the workout's minutes.
+  const fillDuration = (min: number | null) => {
+    const text = min === null ? '' : String(Math.min(min, DURATION_MAX))
+    if (duration && duration !== autoDuration) return
+    setDuration(text)
+    setAutoDuration(text || null)
   }
   // The select is locked for a live workout, whose detail is its own; so this only runs without one.
   const changeRoutine = (id: string) => {
@@ -242,7 +254,7 @@ function Panel() {
 
             {isRun && (
               <RunCheckinForm planned={planned} value={run} onChange={setRun}
-                onPlannedMinutes={min => setDuration(d => d || String(Math.min(min, DURATION_MAX)))} />
+                onPlannedMinutes={fillDuration} />
             )}
 
             {detailable && (
