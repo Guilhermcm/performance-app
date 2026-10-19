@@ -1626,6 +1626,114 @@
       "valid": false
     },
     {
+      "name": "an empty block",
+      "activity": "run",
+      "run": {
+        "status": "adjusted",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        },
+        "blocks": [
+          {}
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "an empty block inside a repeat",
+      "activity": "run",
+      "run": {
+        "status": "adjusted",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        },
+        "blocks": [
+          {
+            "repeat": 3,
+            "blocks": [
+              {}
+            ]
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "an empty block in planned.blocks",
+      "activity": "run",
+      "run": {
+        "status": "as_planned",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "easy",
+          "blocks": [
+            {}
+          ]
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "planned empty",
+      "activity": "run",
+      "run": {
+        "status": "as_planned",
+        "planned": {}
+      },
+      "valid": false
+    },
+    {
       "name": "run as text",
       "activity": "run",
       "run": "fast",

@@ -18,7 +18,8 @@
 -- detail.run --------------------------------------------------------------------------------------
 -- A workout is 1 to 12 items; an item is a block { zone, min } (min a whole 1 to 300) or a repeat
 -- { repeat: 2..20, blocks } of 1 to 4 blocks. Unknown keys refuse. Each type is checked before its
--- value is cast, one statement at a time, so a string never reaches a numeric cast.
+-- value is cast, one statement at a time, so a string never reaches a numeric cast. The key lists
+-- compare with is distinct from: an empty object has no keys, and array_agg of none is null.
 
 create function public.valid_run_items(p_items jsonb) returns boolean
 language plpgsql immutable set search_path = public as $$
@@ -33,7 +34,8 @@ begin
   for v_item in select value from jsonb_array_elements(p_items) loop
     if jsonb_typeof(v_item) <> 'object' then return false; end if;
     if v_item ? 'repeat' then
-      if (select array_agg(k order by k) from jsonb_object_keys(v_item) k) <> array['blocks', 'repeat'] then
+      if (select array_agg(k order by k) from jsonb_object_keys(v_item) k)
+         is distinct from array['blocks', 'repeat'] then
         return false;
       end if;
       if jsonb_typeof(v_item -> 'repeat') <> 'number' then return false; end if;
@@ -47,7 +49,8 @@ begin
     end if;
     for v_block in select value from jsonb_array_elements(v_blocks) loop
       if jsonb_typeof(v_block) <> 'object' then return false; end if;
-      if (select array_agg(k order by k) from jsonb_object_keys(v_block) k) <> array['min', 'zone'] then
+      if (select array_agg(k order by k) from jsonb_object_keys(v_block) k)
+         is distinct from array['min', 'zone'] then
         return false;
       end if;
       if jsonb_typeof(v_block -> 'zone') <> 'string' then return false; end if;
@@ -108,7 +111,7 @@ begin
     v_planned := p_run -> 'planned';
     if jsonb_typeof(v_planned) <> 'object' then return false; end if;
     if (select array_agg(k order by k) from jsonb_object_keys(v_planned) k)
-       <> array['blocks', 'session', 'type', 'week'] then
+       is distinct from array['blocks', 'session', 'type', 'week'] then
       return false;
     end if;
     if jsonb_typeof(v_planned -> 'week') <> 'number' then return false; end if;
@@ -147,8 +150,10 @@ begin
     return new;
   end if;
 
-  -- The run part of the detail, on a run check-in only (spec 7.2).
-  if new.detail ? 'run' and not public.valid_run_detail(new.detail -> 'run', new.activity) then
+  -- The run part of the detail, on a run check-in only (spec 7.2). A detail that is not an object
+  -- has no run part, even an array or a string that holds "run".
+  if jsonb_typeof(new.detail) = 'object' and new.detail ? 'run'
+     and not public.valid_run_detail(new.detail -> 'run', new.activity) then
     raise exception 'invalid_run_detail' using errcode = 'P0001';
   end if;
 
