@@ -2966,4 +2966,10 @@ export default {
   "Last week you ran {0} of {1} planned minutes": "지난주에 계획한 {1}분 중 {0}분을 달렸어요",
   "That time doesn’t fit this race. Type hours as h:mm:ss, like 1:52:30.": "이 레이스에 맞지 않는 기록이에요. 시간은 h:mm:ss 형식으로 입력하세요(예: 1:52:30).",
   "For example, 52:30 or 1:52:30.": "예: 52:30 또는 1:52:30",
+  // --- run: final review fixes (phase 1e-b) ---
+  "Race time saved": "대회 기록 저장됨",
+  "Your paces stay as they were.": "페이스는 그대로 유지돼요.",
+  "Paces kept: the plan goes by feel.": "페이스 유지: 계획은 느낌대로 진행돼요.",
+  "Couldn’t load your run history. Only the runs saved on this phone are shown.": "달리기 기록을 불러오지 못했어요. 이 휴대폰에 저장된 달리기만 표시돼요.",
+  "The bars show your minutes each week against the plan.": "막대는 매주 달린 시간(분)을 계획과 비교해 보여줘요.",
 }

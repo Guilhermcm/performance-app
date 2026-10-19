@@ -29,7 +29,7 @@ import { fmtDate } from '../../lib/format.js'
 import { recordRaceResult, repeatPreviousWeek, updateVdot } from './run-adjust'
 import RunSuggestionCard from './RunSuggestionCard'
 import { formatPaceRange, vdotFrom, zonePaces } from './vdot'
-import type { RunLog } from './run-log'
+import type { RunLog, RunLogStatus } from './run-log'
 import type { Phase, RunPlan, Session } from './types'
 
 type AnyState = Record<string, any>
@@ -56,9 +56,9 @@ const ONE_DONE: RunLog[] = [{ id: 'l1', day: '2026-10-11', duration_min: 45, run
 // A hard 5 km in 22 minutes on Tuesday 6th, a day without a workout.
 const FAST: RunLog = { id: 'f1', day: '2026-10-06', duration_min: 22, run: { status: 'unplanned', distance_km: 5, rpe: 9 } }
 
-function Host({ logs }: { logs: RunLog[] }) {
+function Host({ logs, status = 'ready' }: { logs: RunLog[]; status?: RunLogStatus }) {
   const p = useStore((s: AnyState) => s.S.runPlan) as RunPlan | null
-  return <RunSuggestionCard plan={p} logs={logs} />
+  return <RunSuggestionCard plan={p} logs={logs} status={status} />
 }
 
 beforeEach(() => {
@@ -203,6 +203,42 @@ describe('RunSuggestionCard', () => {
       expect(screen.getByRole('region', { name: 'Your new paces' })).toBeTruthy()
     })
 
+    it('keeps "55:00" on a 5 km with the paces as they were, and says so (final review I3)', () => {
+      setS({ runPlan: plan(['base', 'build', 'build', 'taper'], { goal: '5k', startDate: '2026-09-14', raceDate: '2026-10-11' }) })
+      expect(vdotFrom(5000, 55)).toBeLessThan(15)
+      render(<Host logs={[]} />)
+      type('55:00')
+      expect(recordRaceResult).toHaveBeenCalledWith(expect.anything(), 55)
+      expect(S().runPlan.raceResult).toEqual({ minutes: 55 })
+      expect(S().runPlan).toMatchObject({ vdot: 38.3, vdotSource: 'race', vdotDate: '2026-09-20' })
+      const done = screen.getByRole('region', { name: 'Race time saved' })
+      expect(done.textContent).toContain('Your paces stay as they were.')
+      expect(screen.queryByRole('region', { name: 'Your new paces' })).toBeNull()
+      expect(screen.queryByText(formatPaceRange(zonePaces(38.3).easy))).toBeNull()
+      expect(screen.queryByRole('alert')).toBeNull()
+      fireEvent.click(screen.getByRole('button', { name: 'Choose your next goal' }))
+      expect(screen.getByRole('dialog', { name: 'Questionnaire' })).toBeTruthy()
+    })
+
+    it('on a plan by feel, a slow race keeps it by feel (final review I3)', async () => {
+      const byFeel = plan(['base', 'build', 'build', 'taper'], { goal: '5k', startDate: '2026-09-14', raceDate: '2026-10-11', vdotSource: null })
+      delete byFeel.vdot
+      delete byFeel.vdotDate
+      setS({ runPlan: byFeel })
+      render(<Host logs={[]} />)
+      type('55:00')
+      expect(S().runPlan.raceResult).toEqual({ minutes: 55 })
+      expect(S().runPlan.vdot).toBeUndefined()
+      expect(screen.getByRole('region', { name: 'Race time saved' }).textContent).toContain('Paces kept: the plan goes by feel.')
+      cleanup()
+      await setLang('pt-BR')
+      setS({ runPlan: byFeel })
+      render(<Host logs={[]} />)
+      fireEvent.change(screen.getByLabelText('Tempo da prova'), { target: { value: '55:00' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Salvar' }))
+      expect(screen.getByRole('region', { name: 'Tempo da prova salvo' }).textContent).toContain('Ritmos mantidos: o plano segue pela sensação.')
+    })
+
     it('the field shows an example and opens a text keyboard with ":" (R3 M5)', () => {
       race()
       render(<Host logs={[]} />)
@@ -220,6 +256,23 @@ describe('RunSuggestionCard', () => {
       expect(S().runPlan.dismissed).toEqual({ 'race:2026-10-11': TODAY })
       expect(card()).toBeNull()
     })
+  })
+
+  it('waits for the run history: no weak week, effort or faster card until it is read (final review I1, I2)', () => {
+    // Without an account (idle), while it loads, or after a failed read, last week looks empty.
+    for (const status of ['idle', 'loading', 'offline'] as const) {
+      const { unmount } = render(<Host logs={[FAST]} status={status} />)
+      expect(card()).toBeNull()
+      unmount()
+    }
+    render(<Host logs={ONE_DONE} status="ready" />)
+    expect(screen.getByRole('region', { name: 'Repeat the week' })).toBeTruthy()
+  })
+
+  it('asks for the race time even before the history is read', () => {
+    setS({ runPlan: plan(['base', 'build', 'build', 'taper'], { startDate: '2026-09-14', raceDate: '2026-10-11' }) })
+    render(<Host logs={[]} status="idle" />)
+    expect(screen.getByRole('region', { name: 'How did the race go?' })).toBeTruthy()
   })
 
   it('shows nothing for a new plan, a maintain plan or no plan (review focus 5)', () => {

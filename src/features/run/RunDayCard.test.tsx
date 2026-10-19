@@ -10,6 +10,7 @@ vi.mock('@/components/ui/drawer', () => import('../social/test-drawer'))
 import { useStore } from '../../store/useStore.js'
 import RunDayCard, { weekDayIso } from './RunDayCard'
 import { useCheckinFlow } from '../checkin/open-checkin'
+import { useCheckins } from '../checkin/useCheckins'
 import { setLang } from '../../lib/i18n.js'
 import { formatPaceRange, zonePaces } from './vdot'
 import type { RunLog } from './run-log'
@@ -49,7 +50,7 @@ beforeEach(() => {
   vi.setSystemTime(new Date('2026-10-14T15:00:00'))
   setS({ week: {}, routines: [LEGS], weekStart: 1, runPlan: planWith([long(SUN), intervals(WED), tempo(FRI)]) })
 })
-afterEach(() => { cleanup(); vi.useRealTimers() })
+afterEach(() => { cleanup(); vi.useRealTimers(); useCheckins.setState({ userId: null }) })
 
 describe('weekDayIso', () => {
   it('gives the date of a weekday in the week of today, for both week starts', () => {
@@ -132,14 +133,25 @@ describe('RunDayCard', () => {
 
   it('on today\'s card offers "Log run", which opens the check-in on running', () => {
     useCheckinFlow.setState({ open: false, opts: {} })
+    useCheckins.setState({ userId: 'u1' })
     card(WED)
     fireEvent.click(screen.getByRole('button', { name: 'Log run' }))
     expect(useCheckinFlow.getState()).toMatchObject({ open: true, opts: { activity: 'run' } })
     useCheckinFlow.setState({ open: false, opts: {} })
   })
 
+  it('has no "Log run" for a guest, so nothing is left waiting to open (final review I1)', () => {
+    useCheckinFlow.setState({ open: false, opts: {} })
+    useCheckins.setState({ userId: null })
+    card(WED)
+    expect(screen.getByRole('heading', { name: 'Interval run' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Log run' })).toBeNull()
+    expect(useCheckinFlow.getState().open).toBe(false)
+  })
+
   it('says "Log run" in the language of the app', async () => {
     await setLang('pt-BR')
+    useCheckins.setState({ userId: 'u1' })
     try {
       card(WED)
       expect(screen.getByRole('button', { name: 'Registrar corrida' })).toBeTruthy()

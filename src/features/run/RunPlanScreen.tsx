@@ -67,7 +67,7 @@ export default function RunPlanScreen() {
   const plan = S.runPlan
   const readable = isReadable(plan)
   const forecast = readable ? predictions(plan) : []
-  const { logs } = useRunLogs(plan ?? null)
+  const { logs, status } = useRunLogs(plan ?? null)
 
   const end = () => {
     update(draft => { endRunPlan(draft) })
@@ -104,9 +104,9 @@ export default function RunPlanScreen() {
       </>}
 
       {readable && <>
-        <RunSuggestionCard plan={plan} logs={logs} />
+        <RunSuggestionCard plan={plan} logs={logs} status={status} />
 
-        <RunTracking plan={plan} logs={logs} />
+        <RunTracking plan={plan} logs={logs} status={status} />
 
         <Part id="phases" title={t('Phases')}>
           <ol className="flex list-none flex-wrap gap-2">

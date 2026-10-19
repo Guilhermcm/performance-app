@@ -56,7 +56,7 @@ afterEach(async () => { cleanup(); vi.useRealTimers(); await setLang('en') })
 
 describe('RunTracking', () => {
   it('shows this week done against planned, its minutes and km, the chart and the milestones', async () => {
-    render(<RunTracking plan={plan()} logs={LOGS} />)
+    render(<RunTracking plan={plan()} logs={LOGS} status="ready" />)
     const box = screen.getByRole('region', { name: 'Tracking' })
     expect(within(box).getByText('2 of 3 workouts')).toBeTruthy()
     expect(within(box).getByText('80 min · 14.5 km')).toBeTruthy()
@@ -67,7 +67,7 @@ describe('RunTracking', () => {
   })
 
   it('without runs keeps the zeros and says so in text, with no milestone (review focus 5)', async () => {
-    render(<RunTracking plan={plan()} logs={[]} />)
+    render(<RunTracking plan={plan()} logs={[]} status="ready" />)
     expect(screen.getByText('0 of 3 workouts')).toBeTruthy()
     expect(screen.getByText('0 min · 0 km')).toBeTruthy()
     expect(screen.getByText('No milestones yet. Log your runs with distance and time to see them here.')).toBeTruthy()
@@ -76,7 +76,7 @@ describe('RunTracking', () => {
   })
 
   it('before the plan starts shows no week and an empty chart with its text', async () => {
-    render(<RunTracking plan={plan({ startDate: '2026-11-02' })} logs={[]} />)
+    render(<RunTracking plan={plan({ startDate: '2026-11-02' })} logs={[]} status="ready" />)
     expect(screen.queryByText(/of 3 workouts/)).toBeNull()
     expect(await screen.findByText(/You haven’t logged a run in this plan yet/)).toBeTruthy()
   })
@@ -84,13 +84,13 @@ describe('RunTracking', () => {
   it('the chart text leaves this week, still going on, out of the sums (R3 M2)', async () => {
     // From Monday 5 October: week 1 is over, this is week 2. A 40 min run in week 1.
     const logs: RunLog[] = [...LOGS, { id: 'w1', day: '2026-10-07', duration_min: 40, run: null }]
-    render(<RunTracking plan={plan({ startDate: '2026-10-05' })} logs={logs} />)
+    render(<RunTracking plan={plan({ startDate: '2026-10-05' })} logs={logs} status="ready" />)
     expect(await screen.findByText('Last week you ran 40 of 110 planned minutes')).toBeTruthy()
   })
 
   it('in pt-BR', async () => {
     await setLang('pt-BR')
-    render(<RunTracking plan={plan()} logs={LOGS} />)
+    render(<RunTracking plan={plan()} logs={LOGS} status="ready" />)
     expect(screen.getByText('2 de 3 treinos')).toBeTruthy()
     expect(screen.getByText('80 min · 14,5 km')).toBeTruthy()
     expect(screen.getByText('Longão mais longo')).toBeTruthy()
@@ -99,9 +99,33 @@ describe('RunTracking', () => {
     await screen.findByText('Nesta semana você correu 80 de 110 minutos planejados')
   })
 
+  it('after a failed read says the runs are only the phone\'s, and never that none was logged (final review I2)', async () => {
+    render(<RunTracking plan={plan()} logs={[]} status="offline" />)
+    expect(screen.getByRole('status').textContent).toBe('Couldn’t load your run history. Only the runs saved on this phone are shown.')
+    expect(await screen.findByText('The bars show your minutes each week against the plan.')).toBeTruthy()
+    expect(screen.queryByText(/You haven’t logged a run/)).toBeNull()
+    expect(screen.queryByText(/No milestones yet/)).toBeNull()
+  })
+
+  it('while the history loads claims no empty history and shows no notice', async () => {
+    render(<RunTracking plan={plan()} logs={[]} status="loading" />)
+    expect(await screen.findByText('The bars show your minutes each week against the plan.')).toBeTruthy()
+    expect(screen.queryByText(/You haven’t logged a run/)).toBeNull()
+    expect(screen.queryByText(/No milestones yet/)).toBeNull()
+    expect(screen.queryByRole('status')).toBeNull()
+  })
+
+  it('the failed-read notice in pt-BR', async () => {
+    await setLang('pt-BR')
+    render(<RunTracking plan={plan()} logs={LOGS} status="offline" />)
+    expect(screen.getByRole('status').textContent).toBe('Não deu para carregar seu histórico de corridas. Aqui aparecem só as que estão salvas neste celular.')
+    // The phone's runs still count.
+    expect(screen.getByText('2 de 3 treinos')).toBeTruthy()
+  })
+
   it('a single planned workout reads in the singular', () => {
     const one = plan({ weeks: [{ index: 1, phase: 'base', recovery: false, sessions: sessionsOf(1).slice(0, 1) }] })
-    render(<RunTracking plan={one} logs={[]} />)
+    render(<RunTracking plan={one} logs={[]} status="ready" />)
     expect(screen.getByText('0 of 1 workout')).toBeTruthy()
   })
 })

@@ -28,10 +28,15 @@ const sum = (series: VolumePoint[], key: 'done' | 'planned') => series.reduce((n
 /**
  * The chart in words: the minutes run against the planned ones. With `inProgress` the last point is
  * the week still going on, whose planned minutes are not all runnable yet, so the sums cover the
- * weeks before it (R3 M2); in week 1 only this week is told.
+ * weeks before it (R3 M2); in week 1 only this week is told. `known` false: the run history is still
+ * loading or could not be read, so no minutes does not mean no runs (final review I2).
  */
-export function volumeDescription(series: VolumePoint[], inProgress = false): string {
-  if (!sum(series, 'done')) return t('You haven’t logged a run in this plan yet. The bars show your minutes each week against the plan.')
+export function volumeDescription(series: VolumePoint[], inProgress = false, known = true): string {
+  if (!sum(series, 'done')) {
+    return known
+      ? t('You haven’t logged a run in this plan yet. The bars show your minutes each week against the plan.')
+      : t('The bars show your minutes each week against the plan.')
+  }
   const closed = inProgress ? series.slice(0, -1) : series
   if (!closed.length) return t('This week you ran {0} of {1} planned minutes', sum(series, 'done'), sum(series, 'planned'))
   const done = sum(closed, 'done')
@@ -78,8 +83,11 @@ export function WeekTooltip({ active, payload }: TooltipProps) {
   )
 }
 
-/** `inProgress`: the last point of `series` is the current week, not over yet. */
-export default function RunProgress({ series, inProgress = false }: { series: VolumePoint[]; inProgress?: boolean }) {
+/**
+ * `inProgress`: the last point of `series` is the current week, not over yet. `known` false: the run
+ * history is not all there (loading, or a failed read).
+ */
+export default function RunProgress({ series, inProgress = false, known = true }: { series: VolumePoint[]; inProgress?: boolean; known?: boolean }) {
   const reduce = useReducedMotion() ?? false
   const [table, setTable] = useState(false)
   const id = useId()
@@ -89,7 +97,7 @@ export default function RunProgress({ series, inProgress = false }: { series: Vo
     <section data-slot="run-progress" aria-labelledby={id}
       className={cn(RUN_CHART_CARD, 'animate-in fade-in-0 duration-200 motion-reduce:animate-none')}>
       <h3 id={id} className="flex h-7 items-center text-[15px] font-semibold text-foreground">{t('Minutes per week')}</h3>
-      <p className="min-h-8 text-xs leading-4 text-muted-foreground">{volumeDescription(series, inProgress)}</p>
+      <p className="min-h-8 text-xs leading-4 text-muted-foreground">{volumeDescription(series, inProgress, known)}</p>
 
       {table ? <VolumeTable series={series} /> : (
         <>

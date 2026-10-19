@@ -203,15 +203,41 @@ describe('Plan: suggestion and workouts done (phase 1e-b)', () => {
     expect(api.fetchMyRunCheckins).toHaveBeenCalledTimes(1)
   })
 
-  it('shows the suggestion at the top of the Plan', () => {
-    // A 10 km plan from 5 October without a run in week 1: this week (the 2nd) repeats it.
-    setS({ runPlan: plan({ goal: '10k', startDate: '2026-10-05', answers: { goal: '10k', weeks: 2, reference: { kind: 'none' }, days: 2, longDay: 0 } }) })
+  // A 10 km plan from 5 October without a run in week 1: this week (the 2nd) repeats it.
+  const weak = () => setS({ runPlan: plan({ goal: '10k', startDate: '2026-10-05', answers: { goal: '10k', weeks: 2, reference: { kind: 'none' }, days: 2, longDay: 0 } }) })
+
+  it('shows the suggestion at the top of the Plan once the runs are read', async () => {
+    weak()
+    useCheckins.setState({ userId: ME, mine: [] })
     render(<Plan />)
-    const card = screen.getByRole('region', { name: 'Repeat the week' })
+    const card = await screen.findByRole('region', { name: 'Repeat the week' })
     expect(within(card).getByText('Last week you did 0 of 1 workout.')).toBeTruthy()
     const entry = screen.getByTestId('run-plan-entry')
     expect(card.compareDocumentPosition(entry) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(card.compareDocumentPosition(screen.getByTestId('programs-entry')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('a guest sees no "Log run" and no weak week from runs it cannot log (final review I1)', () => {
+    weak()
+    render(<Plan />)
+    expect(screen.getByTestId('run-plan-entry')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Log run' })).toBeNull()
+    expect(screen.queryByRole('region', { name: 'Repeat the week' })).toBeNull()
+    expect(api.fetchMyRunCheckins).not.toHaveBeenCalled()
+  })
+
+  it('no weak week while the runs load, nor when the read fails (final review I2)', async () => {
+    weak()
+    useCheckins.setState({ userId: ME, mine: [] })
+    let fail
+    api.fetchMyRunCheckins.mockImplementationOnce(() => new Promise((_, reject) => { fail = reject }))
+    render(<Plan />)
+    await waitFor(() => expect(api.fetchMyRunCheckins).toHaveBeenCalledTimes(1))
+    expect(screen.getByRole('button', { name: 'Log run' })).toBeTruthy()
+    expect(screen.queryByRole('region', { name: 'Repeat the week' })).toBeNull()
+    fail(new Error('500'))
+    await waitFor(() => expect(useRunLogStore.getState().status).toBe('offline'))
+    expect(screen.queryByRole('region', { name: 'Repeat the week' })).toBeNull()
   })
 
   it('shows no suggestion for a maintain plan', () => {

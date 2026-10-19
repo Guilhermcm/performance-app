@@ -2966,4 +2966,10 @@ export default {
   "Last week you ran {0} of {1} planned minutes": "上周你跑了计划 {1} 分钟中的 {0} 分钟",
   "That time doesn’t fit this race. Type hours as h:mm:ss, like 1:52:30.": "这个成绩与这场比赛不符。小时请按 h:mm:ss 输入，例如 1:52:30。",
   "For example, 52:30 or 1:52:30.": "例如 52:30 或 1:52:30。",
+  // --- run: final review fixes (phase 1e-b) ---
+  "Race time saved": "比赛成绩已保存",
+  "Your paces stay as they were.": "你的配速保持不变。",
+  "Paces kept: the plan goes by feel.": "配速不变：计划仍按感觉进行。",
+  "Couldn’t load your run history. Only the runs saved on this phone are shown.": "无法加载你的跑步记录。仅显示保存在这部手机上的跑步。",
+  "The bars show your minutes each week against the plan.": "柱形显示你每周跑步的分钟数与计划的对比。",
 }

@@ -2,7 +2,9 @@
 // its minutes and km, the minutes per week against the plan (RunProgress, loaded on demand) and the
 // milestones: the longest Longão, the longest distance and the easy pace over the last 4 weeks.
 // Without runs the numbers stay at zero and the chart and the milestones say so in text (review
-// focus 5). `logs` come from useRunLogs.
+// focus 5). `logs` and `status` come from useRunLogs: when the read failed (`offline`) a short
+// notice says the runs shown are only the phone's, and while it loads or after a failure nothing
+// claims there are no runs (final review I2).
 import { lazy, Suspense } from 'react'
 import { t, tn } from '../../lib/i18n.js'
 import { todayISO, weekStartOf } from '../../lib/format.js'
@@ -10,7 +12,7 @@ import { useStore } from '../../store/useStore.js'
 import { milestones, volumeSeries, weekOffsetOf, weekSummary } from './progress'
 import { currentWeek, type RunState } from './run-actions'
 import { formatKm } from './run-detail'
-import type { RunLog } from './run-log'
+import type { RunLog, RunLogStatus } from './run-log'
 import { RunProgressSkeleton } from './RunProgressSkeleton'
 import type { RunPlan } from './types'
 import { formatPace } from './vdot'
@@ -23,8 +25,10 @@ type AppStore = { S: RunState }
 export const workoutsText = (done: number, planned: number) =>
   planned === 1 ? t('{0} of 1 workout', done) : tn(planned, '{0} of {1} workouts', done, planned)
 
-export default function RunTracking({ plan, logs }: { plan: RunPlan; logs: RunLog[] }) {
+export default function RunTracking({ plan, logs, status }: { plan: RunPlan; logs: RunLog[]; status: RunLogStatus }) {
   const ws = useStore((s: AppStore) => weekStartOf(s.S)) as 0 | 1
+  // Every run of the plan is in `logs`: read from the server, or none to read without an account.
+  const known = status === 'ready' || status === 'idle'
   const today = todayISO()
   const week = currentWeek(plan, today, ws)
   const offset = weekOffsetOf(plan, today, ws)
@@ -42,6 +46,11 @@ export default function RunTracking({ plan, logs }: { plan: RunPlan; logs: RunLo
   return (
     <section aria-labelledby="run-plan-tracking" className="flex flex-col gap-3">
       <h2 id="run-plan-tracking" className="text-lg font-semibold tracking-tight">{t('Tracking')}</h2>
+      {status === 'offline' && (
+        <p data-slot="run-history-offline" role="status" className="text-sm text-muted-foreground">
+          {t('Couldn’t load your run history. Only the runs saved on this phone are shown.')}
+        </p>
+      )}
 
       {week && (
         <div data-slot="run-week" className="flex flex-col gap-1 rounded-2xl border border-border bg-card px-4 py-3">
@@ -54,7 +63,7 @@ export default function RunTracking({ plan, logs }: { plan: RunPlan; logs: RunLo
       )}
 
       <Suspense fallback={<RunProgressSkeleton />}>
-        <RunProgress series={series} inProgress={inProgress} />
+        <RunProgress series={series} inProgress={inProgress} known={known} />
       </Suspense>
 
       <div className="flex flex-col gap-2">
@@ -71,7 +80,7 @@ export default function RunTracking({ plan, logs }: { plan: RunPlan; logs: RunLo
               </div>
             ))}
           </dl>
-          : <p className="text-sm text-muted-foreground">{t('No milestones yet. Log your runs with distance and time to see them here.')}</p>}
+          : known && <p className="text-sm text-muted-foreground">{t('No milestones yet. Log your runs with distance and time to see them here.')}</p>}
       </div>
     </section>
   )

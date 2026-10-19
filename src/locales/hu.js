@@ -2969,4 +2969,10 @@ export default {
   "Last week you ran {0} of {1} planned minutes": "Múlt héten {0} percet futottál a tervezett {1} percből",
   "That time doesn’t fit this race. Type hours as h:mm:ss, like 1:52:30.": "Ez az idő nem illik ehhez a versenyhez. Az órákat h:mm:ss formában írd, például 1:52:30.",
   "For example, 52:30 or 1:52:30.": "Például 52:30 vagy 1:52:30.",
+  // --- run: final review fixes (phase 1e-b) ---
+  "Race time saved": "Versenyidő elmentve",
+  "Your paces stay as they were.": "A tempóid változatlanok maradnak.",
+  "Paces kept: the plan goes by feel.": "A tempók maradnak: a terv érzésre megy.",
+  "Couldn’t load your run history. Only the runs saved on this phone are shown.": "Nem sikerült betölteni a futásaid előzményeit. Csak az ezen a telefonon mentett futások látszanak.",
+  "The bars show your minutes each week against the plan.": "Az oszlopok a heti perceidet mutatják a tervhez képest.",
 }

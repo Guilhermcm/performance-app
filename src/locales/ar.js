@@ -3019,4 +3019,10 @@ export default {
   "Last week you ran {0} of {1} planned minutes": "في الأسبوع الماضي جريت {0} من {1} دقيقة مخططة",
   "That time doesn’t fit this race. Type hours as h:mm:ss, like 1:52:30.": "هذا الوقت لا يناسب هذا السباق. اكتب الساعات بصيغة h:mm:ss، مثل 1:52:30.",
   "For example, 52:30 or 1:52:30.": "مثلًا 52:30 أو 1:52:30.",
+  // --- run: final review fixes (phase 1e-b) ---
+  "Race time saved": "تم حفظ زمن السباق",
+  "Your paces stay as they were.": "وتيراتك تبقى كما كانت.",
+  "Paces kept: the plan goes by feel.": "الوتيرات كما هي: الخطة تسير حسب الإحساس.",
+  "Couldn’t load your run history. Only the runs saved on this phone are shown.": "تعذّر تحميل سجل جرياتك. تظهر فقط الجريات المحفوظة على هذا الهاتف.",
+  "The bars show your minutes each week against the plan.": "تعرض الأعمدة دقائقك في كل أسبوع مقارنة بالخطة.",
 }

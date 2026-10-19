@@ -284,14 +284,27 @@ describe('RunPlanScreen: tracking and suggestions (phase 1e-b)', () => {
     expect(screen.queryByRole('region', { name: 'Repeat the week' })).toBeNull()
   })
 
-  it('shows the suggestion at the top, before the tracking', () => {
+  it('shows the suggestion at the top, before the tracking, once the runs are read', async () => {
     // The plan started a week earlier and nothing was run in week 1.
     setS({ runPlan: plan({ startDate: '2026-10-05' }) })
+    useCheckins.setState({ userId: ME, mine: [] })
+    api.fetchMyRunCheckins.mockResolvedValue([])
     render(<RunPlanScreen />)
-    const card = screen.getByRole('region', { name: 'Repeat the week' })
+    const card = await screen.findByRole('region', { name: 'Repeat the week' })
     expect(card.compareDocumentPosition(region('Tracking')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     fireEvent.click(within(card).getByRole('button', { name: 'Not now' }))
     expect(S().runPlan.dismissed).toEqual({ 'weak:2': '2026-10-14' })
+    expect(screen.queryByRole('region', { name: 'Repeat the week' })).toBeNull()
+  })
+
+  it('after a failed read: no weak week and a notice in the tracking (final review I2)', async () => {
+    setS({ runPlan: plan({ startDate: '2026-10-05' }) })
+    useCheckins.setState({ userId: ME, mine: [] })
+    api.fetchMyRunCheckins.mockRejectedValue(new Error('500'))
+    render(<RunPlanScreen />)
+    const box = region('Tracking')
+    expect(await within(box).findByRole('status')).toBeTruthy()
+    expect(within(box).getByRole('status').textContent).toContain('Couldn’t load your run history')
     expect(screen.queryByRole('region', { name: 'Repeat the week' })).toBeNull()
   })
 

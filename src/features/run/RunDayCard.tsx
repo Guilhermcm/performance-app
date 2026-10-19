@@ -5,7 +5,9 @@
 // on with the warnings each move would bring. A move changes only that week. On race day it shows
 // the race with its distance; in the race week, runs move only to days before the race, and race
 // day counts as a hard day for the warnings (final review I1 and M6). Today's card has "Log run",
-// which opens the check-in on running, linked to the day's workout (phase 1e-b). A workout done
+// which opens the check-in on running, linked to the day's workout (phase 1e-b), for a signed-in
+// account only: the check-in panel is mounted for one (App.jsx), so for a guest the button would
+// open nothing and leave the panel waiting to pop up after sign-in (1e-b final review I1). A workout done
 // (spec §8.1, progress.ts doneSessions) shows "Run done" with a check, from the screen's `logs`
 // (useRunLogs, read once by the Plan and passed down).
 import { useState } from 'react'
@@ -16,6 +18,7 @@ import { t } from '../../lib/i18n.js'
 import { DAYN, isoOf, startOfWeek, todayISO, weekDayOffset, weekOrder, weekStartOf } from '../../lib/format.js'
 import { useStore } from '../../store/useStore.js'
 import { openCheckin } from '../checkin/open-checkin'
+import { useCheckins } from '../checkin/useCheckins'
 import { moveWarnings, weekWarnings, type FitWarning } from './fit'
 import { fitWarningText, goalName, sessionName } from './labels'
 import { weekMinutes } from './models'
@@ -39,6 +42,8 @@ export default function RunDayCard({ day, iso, logs = [] }: { day: number; iso: 
   const S = useStore((s: AppStore) => s.S)
   const update = useStore((s: AppStore) => s.update)
   const [moving, setMoving] = useState<Session | null>(null)
+  // Check-ins need a signed-in account (the store is bound once its profile is in, App.jsx).
+  const canCheckIn = !!useCheckins(s => s.userId)
   const ws = weekStartOf(S)
   const plan = S.runPlan
   const week = currentWeek(plan, iso, ws)
@@ -96,7 +101,7 @@ export default function RunDayCard({ day, iso, logs = [] }: { day: number; iso: 
         </article>
       ))}
 
-      {iso === today && (
+      {iso === today && canCheckIn && (
         <Button size="sm" className="h-11 w-full rounded-lg" onClick={() => openCheckin({ activity: 'run' })}>{t('Log run')}</Button>
       )}
 

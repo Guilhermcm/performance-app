@@ -234,3 +234,15 @@ describe('nextSuggestion: priority and "Not now"', () => {
     expect(nextSuggestion(old as RunPlan, [log(W1)], day(weekFirst(2), 1), 1)).toMatchObject({ key: 'weak:2' })
   })
 })
+
+describe('nextSuggestion: history not known (final review I1 and I2)', () => {
+  it('without the logs (no account, loading, failed read) skips rules 2 to 4, never the race', () => {
+    // Nothing logged reads as a weak week; with the history unknown it must not.
+    expect(nextSuggestion(planOf(), [], day(weekFirst(3), 1), 1)).toMatchObject({ key: 'weak:3' })
+    expect(nextSuggestion(planOf(), null, day(weekFirst(3), 1), 1)).toBeNull()
+    // Nor the faster rule from a run the screen happens to hold.
+    expect(nextSuggestion(planOf({ vdot: 40, vdotSource: 'race' }), null, day(W1, 3), 1)).toBeNull()
+    const RACE = day(weekFirst(6), 6)
+    expect(nextSuggestion(planOf({ raceDate: RACE }), null, day(RACE, 1), 1)).toMatchObject({ kind: 'race_result' })
+  })
+})

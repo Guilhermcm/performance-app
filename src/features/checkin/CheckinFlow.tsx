@@ -50,6 +50,10 @@ export default function CheckinFlow() {
   const seq = useCheckinFlow(s => s.seq)
   const dropped = useCheckins(s => s.dropped)
 
+  // Without this host on the page (signed out, or the profile not in yet) nothing shows the panel,
+  // so it never stays open to pop up later (1e-b final review I1).
+  useEffect(() => () => { useCheckinFlow.setState({ open: false }) }, [])
+
   useEffect(() => {
     if (!dropped.length) return
     for (const m of droppedMessages(dropped)) toast(m)

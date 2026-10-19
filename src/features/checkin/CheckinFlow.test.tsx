@@ -162,6 +162,14 @@ describe('the check-in panel', () => {
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
+  it('closes the panel when its host leaves the page, so it never pops up later (final review I1)', () => {
+    setup()
+    open({ activity: 'run' })
+    expect(useCheckinFlow.getState().open).toBe(true)
+    cleanup()
+    expect(useCheckinFlow.getState().open).toBe(false)
+  })
+
   it('"Was it yesterday?" moves the day', async () => {
     setup()
     open(); pickPhoto()

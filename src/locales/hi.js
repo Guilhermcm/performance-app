@@ -2966,4 +2966,10 @@ export default {
   "Last week you ran {0} of {1} planned minutes": "पिछले हफ़्ते आप {1} में से {0} योजना वाले मिनट दौड़े",
   "That time doesn’t fit this race. Type hours as h:mm:ss, like 1:52:30.": "यह समय इस रेस से मेल नहीं खाता। घंटे h:mm:ss के रूप में लिखें, जैसे 1:52:30।",
   "For example, 52:30 or 1:52:30.": "उदाहरण: 52:30 या 1:52:30।",
+  // --- run: final review fixes (phase 1e-b) ---
+  "Race time saved": "रेस का समय सेव हुआ",
+  "Your paces stay as they were.": "आपके पेस पहले जैसे ही रहेंगे।",
+  "Paces kept: the plan goes by feel.": "पेस वही रहे: प्लान अहसास के हिसाब से चलता है।",
+  "Couldn’t load your run history. Only the runs saved on this phone are shown.": "आपका रन इतिहास लोड नहीं हो सका। सिर्फ़ इस फ़ोन पर सेव किए गए रन दिख रहे हैं।",
+  "The bars show your minutes each week against the plan.": "बार हर हफ़्ते आपके मिनट प्लान के मुकाबले दिखाते हैं।",
 }

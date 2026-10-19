@@ -138,29 +138,46 @@ export function updateVdot(S: RunState, vdot: number, source: 'race' | 'run', da
 
 /**
  * Records the race time, in minutes, of a race plan with a race date (plan Decision 10): the plan
- * keeps `raceResult` and takes the race's VDOT at the goal's distance, dated race day. A time whose
- * VDOT is out of range (raceVdotOf) changes nothing.
+ * keeps `raceResult` and, when the race's VDOT at the goal's distance is usable (raceVdotOf), takes
+ * it, dated race day. A slow honest time, a VDOT under MIN_VDOT, is kept with the VDOT unchanged, so
+ * the paces stay as they were (or the plan stays by feel). A time that does not fit the race
+ * (raceTimeFits) changes nothing.
  */
 export function recordRaceResult(S: RunState, minutes: number): void {
   const plan = S.runPlan
-  const vdot = raceVdotOf(plan, minutes)
-  if (!isReadable(plan) || !plan.raceDate || vdot == null) return
+  if (!isReadable(plan) || !raceTimeFits(plan, minutes)) return
   plan.raceResult = { minutes }
-  updateVdot(S, vdot, 'race', plan.raceDate)
+  const vdot = raceVdotOf(plan, minutes)
+  if (vdot != null) updateVdot(S, vdot, 'race', plan.raceDate!)
 }
 
-/**
- * The VDOT a race time of `minutes` gives at the goal's distance, or null when there is no race
- * (a race goal with a race date) or the time is not a plausible one: a VDOT under MIN_VDOT or above
- * MAX_VDOT, like "1:52" read as m:ss for a half marathon (R3 I1). recordRaceResult stores nothing
- * then.
- */
-export function raceVdotOf(plan: RunPlan | null | undefined, minutes: number): number | null {
+// The race's VDOT at the goal's distance, or null without a race (a race goal with a race date)
+// or a time in minutes.
+function rawRaceVdot(plan: RunPlan | null | undefined, minutes: number): number | null {
   if (!isReadable(plan) || !isRace(plan.goal) || !plan.raceDate || !Number.isFinite(minutes) || minutes <= 0) return null
   const distanceM = FAMILIES[plan.goal].distanceM
   if (!distanceM) return null
   const vdot = vdotFrom(distanceM, minutes)
-  return usable(vdot) ? vdot : null
+  return Number.isFinite(vdot) ? vdot : null
+}
+
+/**
+ * Whether `minutes` can be this plan's race time: there is a race and the time gives a VDOT of
+ * MAX_VDOT or less. A faster one is a typo, like "1:52" read as m:ss for a half marathon (R3 I1).
+ * A slow one fits: nobody is blamed for walking a race.
+ */
+export function raceTimeFits(plan: RunPlan | null | undefined, minutes: number): boolean {
+  const vdot = rawRaceVdot(plan, minutes)
+  return vdot != null && vdot <= MAX_VDOT
+}
+
+/**
+ * The VDOT the plan takes from a race time of `minutes`, or null when there is no race, the time
+ * does not fit it (raceTimeFits) or its VDOT is under MIN_VDOT, where the paces stay as they were.
+ */
+export function raceVdotOf(plan: RunPlan | null | undefined, minutes: number): number | null {
+  const vdot = rawRaceVdot(plan, minutes)
+  return vdot != null && usable(vdot) ? vdot : null
 }
 
 /** "Not now": the suggestion's key goes into `dismissed` with `today` (plan Decision 11). */

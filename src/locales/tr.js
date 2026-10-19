@@ -2966,4 +2966,10 @@ export default {
   "Last week you ran {0} of {1} planned minutes": "Geçen hafta planlanan {1} dakikanın {0} dakikasını koştun",
   "That time doesn’t fit this race. Type hours as h:mm:ss, like 1:52:30.": "Bu süre bu yarışa uymuyor. Saatleri s:dd:ss olarak yaz, örneğin 1:52:30.",
   "For example, 52:30 or 1:52:30.": "Örneğin 52:30 veya 1:52:30.",
+  // --- run: final review fixes (phase 1e-b) ---
+  "Race time saved": "Yarış süresi kaydedildi",
+  "Your paces stay as they were.": "Tempoların olduğu gibi kalıyor.",
+  "Paces kept: the plan goes by feel.": "Tempolar aynı: plan hisse göre ilerliyor.",
+  "Couldn’t load your run history. Only the runs saved on this phone are shown.": "Koşu geçmişin yüklenemedi. Yalnızca bu telefonda kayıtlı koşular gösteriliyor.",
+  "The bars show your minutes each week against the plan.": "Çubuklar her haftaki dakikalarını plana göre gösterir.",
 }

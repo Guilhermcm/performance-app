@@ -35,8 +35,8 @@ export default function Plan() {
   const week = useWeekTraining()
   const today = todayISO()
   // The run check-ins of the running plan (phase 1e-b), read once for this screen: the suggestion
-  // at the top and "Done" on the day cards.
-  const { logs: runLogs } = useRunLogs(S.runPlan)
+  // at the top and "Done" on the day cards. The suggestion waits for the read (`status` ready).
+  const { logs: runLogs, status: runStatus } = useRunLogs(S.runPlan)
 
   /* The Coach's only entry point in the app. Its screens have existed since the UI landed and
      nothing linked to them, so the feature was reachable only by typing the URL — enabled,
@@ -84,7 +84,7 @@ export default function Plan() {
       </div>
     </div>
     {/* The running plan's suggestion (phase 1e-b, spec 8.2), one at a time, at the top. */}
-    <div style={{ marginBottom: 14 }} className="empty:hidden"><RunSuggestionCard plan={S.runPlan ?? null} logs={runLogs} /></div>
+    <div style={{ marginBottom: 14 }} className="empty:hidden"><RunSuggestionCard plan={S.runPlan ?? null} logs={runLogs} status={runStatus} /></div>
     {showCoach && <button className="coach-cta" onClick={() => nav('/coach')}>
       <span className="coach-cta-av"><Icon name="sparkles" /></span>
       <span className="coach-cta-t">

@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { dismissSuggestion, raceVdotOf, recordRaceResult, repeatPreviousWeek, updateVdot } from './run-adjust'
+import { dismissSuggestion, raceTimeFits, raceVdotOf, recordRaceResult, repeatPreviousWeek, updateVdot } from './run-adjust'
 import { applyRunPlan, type RunState } from './run-actions'
 import { doneSessions, weekSummary } from './progress'
 import { nextSuggestion } from './suggestions'
 import { vdotFrom } from './vdot'
+import { MIN_VDOT } from './models'
 import type { Answers, Phase, RunPlan, Week } from './types'
 
 const SUN = 0, MON = 1, WED = 3
@@ -320,20 +321,40 @@ describe('recordRaceResult, updateVdot, dismissSuggestion', () => {
     expect(R).toEqual(r)
   })
 
-  it('refuses a race time whose VDOT is out of range, so no caller can store it (R3 I1)', () => {
+  it('refuses a race time whose VDOT is above the range, so no caller can store it (R3 I1)', () => {
     const S = state()
     applyRunPlan(S, { ...tenK(), goal: 'half', raceDate: '2027-02-28' }, W1)
     const before = clone(S)
     // "1:52" read as m:ss: 1.87 minutes for a half marathon, a VDOT in the thousands.
+    expect(raceTimeFits(plan(S), 1 + 52 / 60)).toBe(false)
     expect(raceVdotOf(plan(S), 1 + 52 / 60)).toBeNull()
     recordRaceResult(S, 1 + 52 / 60)
-    // Too slow to give a usable VDOT.
-    expect(raceVdotOf(plan(S), 999)).toBeNull()
-    recordRaceResult(S, 999)
     expect(S).toEqual(before)
+    expect(raceTimeFits(plan(S), 112)).toBe(true)
     expect(raceVdotOf(plan(S), 112)).toBe(vdotFrom(21097.5, 112))
     recordRaceResult(S, 112)
     expect(plan(S).raceResult).toEqual({ minutes: 112 })
+  })
+
+  it('keeps a slow race time with the VDOT unchanged (final review I3)', () => {
+    // A 5 km walked in 55 minutes: a VDOT under MIN_VDOT, honest, not a typo.
+    const S = state()
+    applyRunPlan(S, { ...tenK(), goal: '5k', raceDate: '2027-02-28', reference: { kind: 'race', distanceM: 5000, minutes: 25, date: '2026-10-01' } }, W1)
+    expect(vdotFrom(5000, 55)).toBeLessThan(MIN_VDOT)
+    const { vdot, vdotSource, vdotDate } = plan(S)
+    expect(vdot).toBe(vdotFrom(5000, 25))
+    expect(raceTimeFits(plan(S), 55)).toBe(true)
+    expect(raceVdotOf(plan(S), 55)).toBeNull()
+    recordRaceResult(S, 55)
+    expect(plan(S).raceResult).toEqual({ minutes: 55 })
+    expect(plan(S)).toMatchObject({ vdot, vdotSource, vdotDate })
+    // A plan by feel stays by feel.
+    const F = state()
+    applyRunPlan(F, { ...tenK(), goal: '5k', raceDate: '2027-02-28', reference: { kind: 'none' } }, W1)
+    expect(plan(F).vdot ?? null).toBeNull()
+    recordRaceResult(F, 55)
+    expect(plan(F).raceResult).toEqual({ minutes: 55 })
+    expect(plan(F).vdot ?? null).toBeNull()
   })
 
   it('raceVdotOf is null without a race goal', () => {

@@ -2966,4 +2966,10 @@ export default {
   "Last week you ran {0} of {1} planned minutes": "La semaine dernière, tu as couru {0} des {1} minutes prévues",
   "That time doesn’t fit this race. Type hours as h:mm:ss, like 1:52:30.": "Ce temps ne correspond pas à cette course. Saisis les heures au format h:mm:ss, par exemple 1:52:30.",
   "For example, 52:30 or 1:52:30.": "Par exemple, 52:30 ou 1:52:30.",
+  // --- run: final review fixes (phase 1e-b) ---
+  "Race time saved": "Temps de course enregistré",
+  "Your paces stay as they were.": "Tes allures restent les mêmes.",
+  "Paces kept: the plan goes by feel.": "Allures inchangées : le plan se fait aux sensations.",
+  "Couldn’t load your run history. Only the runs saved on this phone are shown.": "Impossible de charger ton historique de course. Seules les sorties enregistrées sur ce téléphone sont affichées.",
+  "The bars show your minutes each week against the plan.": "Les barres montrent tes minutes de chaque semaine par rapport au plan.",
 }

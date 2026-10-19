@@ -2,15 +2,19 @@
 // /plan/corrida and of /plan: the first suggestion of nextSuggestion, one at a time, with "Apply"
 // and "Not now". "Not now" puts its key away in `dismissed`, and the next rule that holds shows.
 //
-// - Race passed: asks for the race time (h:mm:ss or m:ss), refusing one no runner makes at that
-//   distance (raceVdotOf, R3 I1). Saving records it, which updates the
-//   paces; the card then shows the new paces and "Choose your next goal", which opens the
-//   questionnaire, and after a new plan the weekly days goal offer (spec §6.3).
+// - Race passed: asks for the race time (h:mm:ss or m:ss), refusing one too fast for any runner
+//   at that distance (raceTimeFits, R3 I1). Saving records it. A time with a usable VDOT updates
+//   the paces and the card shows the new ones; a slower one is kept with the paces as they were
+//   (or the plan by feel), and the card says so (final review I3). Either way it offers "Choose
+//   your next goal", which opens the questionnaire, and after a new plan the weekly days goal
+//   offer (spec §6.3).
 // - Weak week and high effort: this week gets last week's workouts again, on the days left. When
 //   the race date leaves no room (`tight`) and the goal is a target time, the card says the goal
 //   becomes finishing.
 // - Faster: a run points to a higher VDOT; applying updates the paces from it.
-// `logs` come from the screen's useRunLogs; the card reads none itself.
+// `logs` and `status` come from the screen's useRunLogs; the card reads none itself. Weak week, high
+// effort and faster wait for the history to be read (`ready`): without an account, while it loads
+// or when the read failed, missing runs would look like workouts not done (final review I1, I2).
 import { useId, useState, type ReactNode } from 'react'
 import { Lightbulb } from 'lucide-react'
 import { toast } from 'sonner'
@@ -23,9 +27,9 @@ import { parseClock } from './clock'
 import DaysGoalOffer from './DaysGoalOffer'
 import { dayText, zoneName } from './labels'
 import { weekOffsetOf, weekSummary } from './progress'
-import { dismissSuggestion, raceVdotOf, recordRaceResult, repeatPreviousWeek, updateVdot } from './run-adjust'
+import { dismissSuggestion, raceTimeFits, raceVdotOf, recordRaceResult, repeatPreviousWeek, updateVdot } from './run-adjust'
 import type { RunState } from './run-actions'
-import type { RunLog } from './run-log'
+import type { RunLog, RunLogStatus } from './run-log'
 import RunQuestionnaire from './RunQuestionnaire'
 import { nextSuggestion, type Suggestion } from './suggestions'
 import type { RunPlan } from './types'
@@ -37,27 +41,33 @@ type AppStore = { S: RunState; update: (mut: (S: RunState) => void) => void }
 const lastWeekText = (done: number, planned: number) =>
   planned === 1 ? t('Last week you did {0} of 1 workout.', done) : tn(planned, 'Last week you did {0} of {1} workouts.', done, planned)
 
-export default function RunSuggestionCard({ plan, logs }: { plan: RunPlan | null; logs: RunLog[] }) {
+// After the race time is saved: `paces` when it updated them, `kept` when they stay as they were.
+type Saved = 'paces' | 'kept' | null
+
+export default function RunSuggestionCard({ plan, logs, status }: { plan: RunPlan | null; logs: RunLog[]; status: RunLogStatus }) {
   const update = useStore((s: AppStore) => s.update)
   const ws = useStore((s: AppStore) => weekStartOf(s.S)) as 0 | 1
   const today = todayISO()
-  // The race time was saved: the card stays on the new paces until it is closed.
-  const [saved, setSaved] = useState(false)
+  // The race time was saved: the card stays on what it did until it is closed.
+  const [saved, setSaved] = useState<Saved>(null)
   const [asking, setAsking] = useState(false)
   const [offer, setOffer] = useState(false)
-  const s = saved ? null : nextSuggestion(plan, logs, today, ws)
+  const s = saved ? null : nextSuggestion(plan, status === 'ready' ? logs : null, today, ws)
 
   const notNow = (key: string) => update(S => { dismissSuggestion(S, key, today) })
   const questionnaire = (
     <RunQuestionnaire open={asking} onOpenChange={setAsking}
-      onCreated={() => { setSaved(false); setOffer(true) }} />
+      onCreated={() => { setSaved(null); setOffer(true) }} />
   )
 
   if (offer) return <DaysGoalOffer onClose={() => setOffer(false)} />
   if (saved && plan) {
-    const paces = plan.vdot != null ? zonePaces(plan.vdot) : null
+    const paces = saved === 'paces' && plan.vdot != null ? zonePaces(plan.vdot) : null
     return <>
-      <Card title={t('Your new paces')}>
+      <Card title={paces ? t('Your new paces') : t('Race time saved')}>
+        {!paces && <p className="text-sm text-muted-foreground">
+          {plan.vdot != null ? t('Your paces stay as they were.') : t('Paces kept: the plan goes by feel.')}
+        </p>}
         {paces && (
           <ul className="flex list-none flex-col gap-1">
             {(['easy', 'moderate', 'hard'] as const).map(z => (
@@ -70,7 +80,7 @@ export default function RunSuggestionCard({ plan, logs }: { plan: RunPlan | null
         )}
         <Actions>
           <Button className="h-11 rounded-xl" onClick={() => setAsking(true)}>{t('Choose your next goal')}</Button>
-          <Button variant="ghost" className="h-11 rounded-xl" onClick={() => setSaved(false)}>{t('Close')}</Button>
+          <Button variant="ghost" className="h-11 rounded-xl" onClick={() => setSaved(null)}>{t('Close')}</Button>
         </Actions>
       </Card>
       {questionnaire}
@@ -79,7 +89,12 @@ export default function RunSuggestionCard({ plan, logs }: { plan: RunPlan | null
   if (!plan || !s) return null
 
   if (s.kind === 'race_result') {
-    return <RaceResult key={s.key} plan={plan} onSave={minutes => { update(S => { recordRaceResult(S, minutes) }); setSaved(true) }}
+    const onSave = (minutes: number) => {
+      const changes = raceVdotOf(plan, minutes) != null
+      update(S => { recordRaceResult(S, minutes) })
+      setSaved(changes ? 'paces' : 'kept')
+    }
+    return <RaceResult key={s.key} plan={plan} onSave={onSave}
       onNotNow={() => notNow(s.key)} />
   }
 
@@ -124,8 +139,9 @@ function bodyOf(s: Exclude<Suggestion, { kind: 'race_result' }>, plan: RunPlan, 
   return lines
 }
 
-// Why the race time was refused: not a time at all, or a time no runner makes at this distance,
-// like "1:52" typed for 1 h 52 and read as m:ss (R3 I1). The card stays open either way.
+// Why the race time was refused: not a time at all, or a time too fast for any runner at this
+// distance, like "1:52" typed for 1 h 52 and read as m:ss (R3 I1). The card stays open either way.
+// A slow time is never refused (final review I3).
 type Wrong = 'format' | 'implausible' | null
 
 function RaceResult({ plan, onSave, onNotNow }: { plan: RunPlan; onSave: (minutes: number) => void; onNotNow: () => void }) {
@@ -135,7 +151,7 @@ function RaceResult({ plan, onSave, onNotNow }: { plan: RunPlan; onSave: (minute
   const save = () => {
     const minutes = parseClock(text)
     if (minutes == null || minutes <= 0) { setWrong('format'); return }
-    if (raceVdotOf(plan, minutes) == null) { setWrong('implausible'); return }
+    if (!raceTimeFits(plan, minutes)) { setWrong('implausible'); return }
     onSave(minutes)
   }
   return (

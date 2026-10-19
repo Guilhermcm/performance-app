@@ -2357,6 +2357,12 @@ export const PT_BR_OVERRIDES = {
   "Last week you ran {0} of {1} planned minutes": "Na semana passada você correu {0} de {1} minutos planejados",
   "That time doesn’t fit this race. Type hours as h:mm:ss, like 1:52:30.": "Esse tempo não combina com a prova. Digite as horas como h:mm:ss, por exemplo 1:52:30.",
   "For example, 52:30 or 1:52:30.": "Por exemplo, 52:30 ou 1:52:30.",
+  // --- run: final review fixes (phase 1e-b) ---
+  "Race time saved": "Tempo da prova salvo",
+  "Your paces stay as they were.": "Seus ritmos continuam os mesmos.",
+  "Paces kept: the plan goes by feel.": "Ritmos mantidos: o plano segue pela sensação.",
+  "Couldn’t load your run history. Only the runs saved on this phone are shown.": "Não deu para carregar seu histórico de corridas. Aqui aparecem só as que estão salvas neste celular.",
+  "The bars show your minutes each week against the plan.": "As barras mostram quantos minutos você corre em cada semana, ao lado do planejado.",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

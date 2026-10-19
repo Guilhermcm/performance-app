@@ -2977,4 +2977,10 @@ export default {
   "Last week you ran {0} of {1} planned minutes": "สัปดาห์ที่แล้วคุณวิ่ง {0} จาก {1} นาทีที่วางแผนไว้",
   "That time doesn’t fit this race. Type hours as h:mm:ss, like 1:52:30.": "เวลานี้ไม่เข้ากับการแข่งนี้ ใส่ชั่วโมงเป็น h:mm:ss เช่น 1:52:30",
   "For example, 52:30 or 1:52:30.": "เช่น 52:30 หรือ 1:52:30",
+  // --- run: final review fixes (phase 1e-b) ---
+  "Race time saved": "บันทึกเวลาแข่งแล้ว",
+  "Your paces stay as they were.": "เพซของคุณยังเหมือนเดิม",
+  "Paces kept: the plan goes by feel.": "คงเพซไว้: แผนยังวิ่งตามความรู้สึก",
+  "Couldn’t load your run history. Only the runs saved on this phone are shown.": "โหลดประวัติการวิ่งไม่ได้ แสดงเฉพาะการวิ่งที่บันทึกไว้ในโทรศัพท์เครื่องนี้",
+  "The bars show your minutes each week against the plan.": "แท่งแสดงนาทีที่คุณวิ่งในแต่ละสัปดาห์เทียบกับแผน",
 }

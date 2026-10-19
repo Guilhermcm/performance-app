@@ -3059,4 +3059,10 @@ export default {
   "Last week you ran {0} of {1} planned minutes": "На прошлой неделе вы пробежали {0} из {1} запланированных минут",
   "That time doesn’t fit this race. Type hours as h:mm:ss, like 1:52:30.": "Это время не подходит для этого забега. Часы вводите как ч:мм:сс, например 1:52:30.",
   "For example, 52:30 or 1:52:30.": "Например, 52:30 или 1:52:30.",
+  // --- run: final review fixes (phase 1e-b) ---
+  "Race time saved": "Время забега сохранено",
+  "Your paces stay as they were.": "Ваши темпы остаются прежними.",
+  "Paces kept: the plan goes by feel.": "Темпы не меняются: план идёт по ощущениям.",
+  "Couldn’t load your run history. Only the runs saved on this phone are shown.": "Не удалось загрузить историю пробежек. Показаны только пробежки, сохранённые на этом телефоне.",
+  "The bars show your minutes each week against the plan.": "Столбцы показывают ваши минуты за каждую неделю в сравнении с планом.",
 }

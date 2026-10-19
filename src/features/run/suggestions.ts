@@ -11,7 +11,9 @@
 // never a maintain plan or maintain-phase weeks, and not once the plan is over (repeatOf). A key
 // holds what its condition is about (`race:{raceDate}`, `weak:{week}`, `effort:{week}` with the
 // current week's index, `faster:{check-in id}`), so a key put away in `dismissed` never comes back
-// and the next rule shows instead. There is no suggestion to move ahead a week. Pure, no React.
+// and the next rule shows instead. There is no suggestion to move ahead a week. Rules 2 to 4 read
+// the run history, so they wait for it: without an account, while it loads, or when the read
+// failed (`logs` null), only rule 1 can show (final review I1 and I2). Pure, no React.
 import { addDays } from './dates'
 import { MAX_VDOT, MIN_VDOT, isRace } from './models'
 import { weekSummary } from './progress'
@@ -62,10 +64,12 @@ function fasterRuns(plan: RunPlan, logs: RunLog[], today: string): { vdot: numbe
 
 /**
  * The suggestion to show on `today`, or null: the first rule that holds whose key is not in
- * `plan.dismissed`. `logs` are the person's run check-ins (useRunLogs); `weekStart` is S.weekStart,
- * the fallback for plans saved without their own.
+ * `plan.dismissed`. `logs` are the person's run check-ins (useRunLogs), or null when the history is
+ * not known (no account, still loading, or the read failed): then rules 2 to 4 are skipped, since
+ * missing runs would read as workouts not done. `weekStart` is S.weekStart, the fallback for plans
+ * saved without their own.
  */
-export function nextSuggestion(plan: RunPlan | null, logs: RunLog[], today: string, weekStart: 0 | 1): Suggestion | null {
+export function nextSuggestion(plan: RunPlan | null, logs: RunLog[] | null, today: string, weekStart: 0 | 1): Suggestion | null {
   if (!isReadable(plan)) return null
   const dismissed = plan.dismissed || {}
   const open = (s: Suggestion) => !(s.key in dismissed)
@@ -74,6 +78,7 @@ export function nextSuggestion(plan: RunPlan | null, logs: RunLog[], today: stri
     const s: Suggestion = { key: `race:${plan.raceDate}`, kind: 'race_result', raceDate: plan.raceDate }
     if (open(s)) return s
   }
+  if (!logs) return null
 
   const repeat = repeatOf(plan, today, weekStart)
   if (repeat) {
