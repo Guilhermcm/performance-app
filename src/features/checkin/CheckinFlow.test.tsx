@@ -523,6 +523,28 @@ describe('the run part of the check-in (phase 1e-b)', () => {
     expect(duration().value).toBe('')
   })
 
+  it('"Was it yesterday?" leaves the duration of a bike post alone after leaving a linked run (final review M1)', async () => {
+    runSetup()
+    fireEvent.click(radio('Done as planned'))
+    expect(duration().value).toBe('35')
+    fireEvent.click(radio('Cycling'))
+    fireEvent.click(screen.getByRole('switch', { name: 'Was it yesterday?' }))
+    expect(duration().value).toBe('35')
+    fireEvent.click(screen.getByRole('switch', { name: 'Was it yesterday?' }))
+    expect(duration().value).toBe('35')
+    // To a day without a run either: the bike's duration stays.
+    cleanup(); post.mockClear()
+    const plan = planOf()
+    plan.weeks[1].sessions = plan.weeks[1].sessions.filter(s => s.day === 6)
+    runSetup(plan)
+    fireEvent.click(radio('Done as planned'))
+    fireEvent.click(radio('Cycling'))
+    fireEvent.click(screen.getByRole('switch', { name: 'Was it yesterday?' }))
+    expect(duration().value).toBe('35')
+    const input = await sent()
+    expect(input).toMatchObject({ activity: 'bike', day: '2026-10-09', durationMin: 35, detail: null })
+  })
+
   it('a wrong distance left behind by another activity does not block the post unseen (R2 T4-M1)', async () => {
     runSetup(null)
     fireEvent.change(screen.getByLabelText('Distance (km)'), { target: { value: 'abc' } })

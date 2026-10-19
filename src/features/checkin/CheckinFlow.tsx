@@ -149,12 +149,15 @@ function Panel() {
   }
   const dropPhoto = () => setCheckinPhoto(null)
   // "Was it yesterday?" moves a linked run to that day's workout (Review Focus 3).
-  // A duration filled in from the old workout follows the new one, or goes without one (R2 T4-M2).
+  // A duration filled in from the old workout follows the new one, or goes without one (R2 T4-M2),
+  // only while the post is a linked run: after a switch to another activity the duration is that
+  // post's own, whatever the hidden run part does (1e-b final review M1).
   const changeDay = (y: boolean) => {
     setYesterday(y)
     const next = relinkRun(run, plannedOn(plan, y ? shiftDay(today, -1) : today, ws))
     setRun(next)
-    if (autoDuration !== null && duration === autoDuration) fillDuration(next?.planned ? plannedMinutes(next.planned.blocks) : null)
+    const linked = isRun && !!run?.planned
+    if (linked && autoDuration !== null && duration === autoDuration) fillDuration(next?.planned ? plannedMinutes(next.planned.blocks) : null)
   }
   // "Done as planned" fills an empty duration, or one it filled itself, with the workout's minutes.
   const fillDuration = (min: number | null) => {
