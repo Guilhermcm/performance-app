@@ -7,6 +7,7 @@ export type CheckinOpts = {
   visibility?: 'friends' | 'private'
   activity?: string
   note?: string | null
+  duration_min?: number | null
   detail?: unknown
 }
 
@@ -15,9 +16,9 @@ export type CheckinOpts = {
 export async function addCheckin(db: PGlite, uid: string, opts: CheckinOpts = {}): Promise<string> {
   const id = randomUUID()
   await asUser(db, uid, () => db.query(
-    `insert into public.checkins (id, day, activity, title, note, visibility, photo_path, detail)
-     values ($1, coalesce($2::date, public.my_local_today()), $3, 'Treino', $4, $5, $6, $7::jsonb)`,
+    `insert into public.checkins (id, day, activity, title, note, visibility, photo_path, detail, duration_min)
+     values ($1, coalesce($2::date, public.my_local_today()), $3, 'Treino', $4, $5, $6, $7::jsonb, $8)`,
     [id, opts.day ?? null, opts.activity ?? 'strength', opts.note ?? null, opts.visibility ?? 'friends',
-      `${uid}/${id}.jpg`, opts.detail === undefined ? null : JSON.stringify(opts.detail)]))
+      `${uid}/${id}.jpg`, opts.detail === undefined ? null : JSON.stringify(opts.detail), opts.duration_min ?? null]))
   return id
 }

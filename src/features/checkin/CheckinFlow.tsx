@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { Camera, Check, ImageIcon, LoaderCircle, Lock, Users } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
 import { t } from '../../lib/i18n.js'
-import { exCount } from '../../lib/format.js'
+import { exCount, weekStartOf } from '../../lib/format.js'
 import { effectiveRoutines } from '../../lib/history.js'
 import { useStore } from '../../store/useStore.js'
 import { useProfile } from '../profile/useProfile'
@@ -17,8 +17,11 @@ import { closeCheckin, registerCheckinCamera, setCheckinPhoto, useCheckinFlow } 
 import { droppedMessages, useCheckins, type CheckinInput } from './useCheckins'
 import { ingestCheckin, linkWorkout } from './ingest'
 import DetailSheet from './DetailSheet'
+import RunCheckinForm, { relinkRun } from '../run/RunCheckinForm'
+import { checkRunDetail, plannedMinutes, plannedOn, type RunDetail } from '../run/run-detail'
+import type { RunPlan } from '../run/types'
 import { Choice, Chip, Counted, DURATION_MAX, Group, TEXT_MAX, TITLE_MAX } from './fields'
-import type { CheckinActivity, CheckinDetail, CheckinVisibility } from './types'
+import type { CheckinActivity, CheckinVisibility, StrengthDetail } from './types'
 
 export { openCheckin, openCheckinCamera, closeCheckin, useCheckinFlow } from './open-checkin'
 export type { OpenCheckinOptions, CheckinDetail } from './open-checkin'
@@ -27,7 +30,7 @@ export { TITLE_MAX, TEXT_MAX } from './fields'
 
 type Routine = { id: string; name: string; ex: unknown[] }
 type LiveWorkout = { id: string; name?: string; routineId?: string | null; start?: number; end?: number }
-type AppStore = { S: { routines: Routine[]; workouts?: LiveWorkout[] } & Record<string, unknown> }
+type AppStore = { S: { routines: Routine[]; workouts?: LiveWorkout[]; runPlan?: RunPlan | null; weekStart?: number } & Record<string, unknown> }
 
 // "Musculação · Push · 55 min": the activity, the routine for strength training, and the duration
 // when there is one. Cut to the title's limit.
@@ -46,6 +49,10 @@ export default function CheckinFlow() {
   const open = useCheckinFlow(s => s.open)
   const seq = useCheckinFlow(s => s.seq)
   const dropped = useCheckins(s => s.dropped)
+
+  // Without this host on the page (signed out, or the profile not in yet) nothing shows the panel,
+  // so it never stays open to pop up later (1e-b final review I1).
+  useEffect(() => () => { useCheckinFlow.setState({ open: false }) }, [])
 
   useEffect(() => {
     if (!dropped.length) return
@@ -89,7 +96,7 @@ function Panel() {
   const photo = useCheckinFlow(s => s.photo)
   const [preview, setPreview] = useState<string | null>(null)
   const [activity, setActivity] = useState<CheckinActivity | null>(() =>
-    (opts.routineId || live || todays.length ? 'strength' : null))
+    opts.activity ?? (opts.routineId || live || todays.length ? 'strength' : null))
   const [routineId, setRoutineId] = useState(() => known(opts.routineId) || known(live?.routineId) || (todays[0]?.id ?? ''))
   const [title, setTitle] = useState<string | null>(null)
   const [duration, setDuration] = useState(() => {
@@ -100,8 +107,12 @@ function Panel() {
   const [note, setNote] = useState('')
   const [yesterday, setYesterday] = useState(false)
   const [visibility, setVisibility] = useState<CheckinVisibility>(() => (profile?.checkin_visibility === 'private' ? 'private' : 'friends'))
-  const [detail, setDetail] = useState<CheckinDetail | null>(opts.detail ?? null)
+  const [detail, setDetail] = useState<StrengthDetail | null>(opts.detail ?? null)
   const [detailOpen, setDetailOpen] = useState(false)
+  // The run part (phase 1e-b): what goes out as detail.run, null for nothing (plan decision 3).
+  const [run, setRun] = useState<RunDetail | null>(null)
+  // The duration last filled in from the planned workout; one the person typed is never replaced.
+  const [autoDuration, setAutoDuration] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
@@ -115,13 +126,20 @@ function Panel() {
   const strength = activity === 'strength'
   const routineName = strength ? routine?.name ?? (live && !routineId ? live.name ?? null : null) : null
   const day = yesterday ? shiftDay(today, -1) : today
+  // The running plan's workout of the check-in day, mapped with the plan's own week start.
+  const plan = S.runPlan ?? null
+  const ws = weekStartOf(S) as 0 | 1
+  const isRun = activity === 'run'
+  const planned = useMemo(() => (isRun ? plannedOn(plan, day, ws) : null), [isRun, plan, day, ws])
+  const runSent = isRun ? run : null
+  const runOk = !runSent || checkRunDetail(runSent, 'run')
   const durationMin = duration ? Number(duration) : null
   const durationOk = durationMin === null || (durationMin >= 1 && durationMin <= DURATION_MAX)
   const name = title ?? suggestTitle(activity, routineName, durationOk ? durationMin : null)
   // A detail belongs to strength training with a routine, or to the live workout it came from.
   const detailable = strength && (!!routine || !!live)
   const hint = !activity ? t('Pick an activity.') : !name.trim() ? t('Give it a title.') : ''
-  const ready = !!photo && !hint && durationOk && !busy
+  const ready = !!photo && !hint && durationOk && runOk && !busy
   const order = [...todays, ...routines.filter(r => !todays.some(x => x.id === r.id))]
 
   const pick = (e: ChangeEvent<HTMLInputElement>) => {
@@ -130,6 +148,24 @@ function Panel() {
     if (file) setCheckinPhoto(file)
   }
   const dropPhoto = () => setCheckinPhoto(null)
+  // "Was it yesterday?" moves a linked run to that day's workout (Review Focus 3).
+  // A duration filled in from the old workout follows the new one, or goes without one (R2 T4-M2),
+  // only while the post is a linked run: after a switch to another activity the duration is that
+  // post's own, whatever the hidden run part does (1e-b final review M1).
+  const changeDay = (y: boolean) => {
+    setYesterday(y)
+    const next = relinkRun(run, plannedOn(plan, y ? shiftDay(today, -1) : today, ws))
+    setRun(next)
+    const linked = isRun && !!run?.planned
+    if (linked && autoDuration !== null && duration === autoDuration) fillDuration(next?.planned ? plannedMinutes(next.planned.blocks) : null)
+  }
+  // "Done as planned" fills an empty duration, or one it filled itself, with the workout's minutes.
+  const fillDuration = (min: number | null) => {
+    const text = min === null ? '' : String(Math.min(min, DURATION_MAX))
+    if (duration && duration !== autoDuration) return
+    setDuration(text)
+    setAutoDuration(text || null)
+  }
   // The select is locked for a live workout, whose detail is its own; so this only runs without one.
   const changeRoutine = (id: string) => {
     setRoutineId(id)
@@ -143,7 +179,7 @@ function Panel() {
     const sent = detailable ? detail : null
     const input: CheckinInput = {
       day, activity, routineId: strength && routine ? routine.id : null, routineName, title: name.trim(),
-      caption, note, durationMin, visibility, photo, detail: sent
+      caption, note, durationMin, visibility, photo, detail: runSent ? { run: runSent } : sent
     }
     try {
       const id = await useCheckins.getState().post(input)
@@ -223,6 +259,11 @@ function Panel() {
             <Counted id="checkin-caption" label={t('Caption')} value={caption} max={TEXT_MAX} multiline onChange={setCaption} />
             <Counted id="checkin-note" label={t('Private note')} hint={t('Only you see this.')} value={note} max={TEXT_MAX} multiline onChange={setNote} />
 
+            {isRun && (
+              <RunCheckinForm planned={planned} value={run} onChange={setRun}
+                onPlannedMinutes={fillDuration} />
+            )}
+
             {detailable && (
               live ? (
                 <div className="flex items-center gap-3 rounded-2xl bg-card p-3">
@@ -254,7 +295,7 @@ function Panel() {
                 </p>
               </div>
               <Switch id="checkin-yesterday" className="relative after:absolute after:-inset-3" checked={yesterday}
-                aria-describedby="checkin-yesterday-note" onCheckedChange={setYesterday} />
+                aria-describedby="checkin-yesterday-note" onCheckedChange={changeDay} />
             </div>
 
             <Group label={t('Who sees it')}>

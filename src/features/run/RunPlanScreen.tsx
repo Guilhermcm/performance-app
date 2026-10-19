@@ -4,6 +4,8 @@
 // prediction from today's pace, and "Refit next weeks", "Redo questionnaire" and "End plan" (with a
 // confirmation; the strength week and the check-ins stay). A plan this build cannot read (another
 // version) offers only to redo the questionnaire; a plan waiting for its race says when it starts.
+// Phase 1e-b (spec §8): the suggestion card at the top and the tracking (RunTracking), from the
+// run check-ins read once per opening (useRunLogs).
 import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Flag } from 'lucide-react'
@@ -19,7 +21,10 @@ import DaysGoalOffer from './DaysGoalOffer'
 import { dayText, goalName, phaseName, sessionName, weeksText, zoneFeel, zoneName } from './labels'
 import { isRace, weekMinutes } from './models'
 import { currentWeek, endRunPlan, isReadable, planWeekStart, raceAhead, raceOn, raceWeeksStart, refitFuture, type RunState } from './run-actions'
+import { useRunLogs } from './run-log'
 import RunQuestionnaire from './RunQuestionnaire'
+import RunSuggestionCard from './RunSuggestionCard'
+import RunTracking from './RunTracking'
 import SessionBlocks, { zonesOf } from './SessionBlocks'
 import { formatPaceRange, predictMinutes, zonePaces } from './vdot'
 import type { Phase, RunPlan, Week } from './types'
@@ -62,6 +67,7 @@ export default function RunPlanScreen() {
   const plan = S.runPlan
   const readable = isReadable(plan)
   const forecast = readable ? predictions(plan) : []
+  const { logs, status } = useRunLogs(plan ?? null)
 
   const end = () => {
     update(draft => { endRunPlan(draft) })
@@ -98,6 +104,10 @@ export default function RunPlanScreen() {
       </>}
 
       {readable && <>
+        <RunSuggestionCard plan={plan} logs={logs} status={status} />
+
+        <RunTracking plan={plan} logs={logs} status={status} />
+
         <Part id="phases" title={t('Phases')}>
           <ol className="flex list-none flex-wrap gap-2">
             {phaseRuns(plan.weeks).map((r, i) => (
@@ -232,7 +242,9 @@ function Paces({ plan, today }: { plan: RunPlan; today: string }) {
         </li>
       ))}
     </ul>
-    {paces && plan.vdotDate && <p className="text-sm">{t('From your race on {0}.', dayText(plan.vdotDate, today))}</p>}
+    {paces && plan.vdotDate && <p className="text-sm">
+      {plan.vdotSource === 'run' ? t('From your run on {0}.', dayText(plan.vdotDate, today)) : t('From your race on {0}.', dayText(plan.vdotDate, today))}
+    </p>}
   </>
 }
 

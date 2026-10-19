@@ -9,7 +9,11 @@ vi.mock('@/components/ui/drawer', () => import('../social/test-drawer'))
 
 import { useStore } from '../../store/useStore.js'
 import RunDayCard, { weekDayIso } from './RunDayCard'
+import { useCheckinFlow } from '../checkin/open-checkin'
+import { useCheckins } from '../checkin/useCheckins'
+import { setLang } from '../../lib/i18n.js'
 import { formatPaceRange, zonePaces } from './vdot'
+import type { RunLog } from './run-log'
 import type { RunPlan, Session } from './types'
 
 type AnyState = Record<string, any>
@@ -46,7 +50,7 @@ beforeEach(() => {
   vi.setSystemTime(new Date('2026-10-14T15:00:00'))
   setS({ week: {}, routines: [LEGS], weekStart: 1, runPlan: planWith([long(SUN), intervals(WED), tempo(FRI)]) })
 })
-afterEach(() => { cleanup(); vi.useRealTimers() })
+afterEach(() => { cleanup(); vi.useRealTimers(); useCheckins.setState({ userId: null }) })
 
 describe('weekDayIso', () => {
   it('gives the date of a weekday in the week of today, for both week starts', () => {
@@ -127,6 +131,39 @@ describe('RunDayCard', () => {
     expect(screen.queryByRole('button', { name: /Change day/ })).toBeNull()
   })
 
+  it('on today\'s card offers "Log run", which opens the check-in on running', () => {
+    useCheckinFlow.setState({ open: false, opts: {} })
+    useCheckins.setState({ userId: 'u1' })
+    card(WED)
+    fireEvent.click(screen.getByRole('button', { name: 'Log run' }))
+    expect(useCheckinFlow.getState()).toMatchObject({ open: true, opts: { activity: 'run' } })
+    useCheckinFlow.setState({ open: false, opts: {} })
+  })
+
+  it('has no "Log run" for a guest, so nothing is left waiting to open (final review I1)', () => {
+    useCheckinFlow.setState({ open: false, opts: {} })
+    useCheckins.setState({ userId: null })
+    card(WED)
+    expect(screen.getByRole('heading', { name: 'Interval run' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Log run' })).toBeNull()
+    expect(useCheckinFlow.getState().open).toBe(false)
+  })
+
+  it('says "Log run" in the language of the app', async () => {
+    await setLang('pt-BR')
+    useCheckins.setState({ userId: 'u1' })
+    try {
+      card(WED)
+      expect(screen.getByRole('button', { name: 'Registrar corrida' })).toBeTruthy()
+    } finally { await setLang('en') }
+  })
+
+  it('has no "Log run" on another day', () => {
+    card(FRI)
+    expect(screen.getByRole('heading', { name: 'Tempo run' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Log run' })).toBeNull()
+  })
+
   it('maps dates with the week start the plan was made with, not the one of now (R2 M4-2)', () => {
     // Made with Monday weeks: Sunday the 18th is week 1's long run. The person now starts weeks on Sunday.
     setS({ weekStart: 0, runPlan: { ...planWith([long(SUN), intervals(WED), tempo(FRI)]), weekStart: 1 } })
@@ -141,6 +178,37 @@ describe('RunDayCard', () => {
   })
 })
 
+
+describe('RunDayCard: workouts done (spec §8.1)', () => {
+  const log = (id: string, day: string, run: RunLog['run'] = null): RunLog => ({ id, day, duration_min: 30, run })
+  const cardWith = (day: number, logs: RunLog[]) => render(<RunDayCard day={day} iso={weekDayIso('2026-10-14', 1, day)} logs={logs} />)
+  afterEach(async () => { await setLang('en') })
+
+  it('marks a workout done with an icon and the word, by its link or by its day', () => {
+    // An unlinked run on Monday counts for nothing; one on Wednesday counts for the intervals.
+    cardWith(WED, [log('a', '2026-10-12'), log('b', '2026-10-14')])
+    const done = screen.getByText('Run done')
+    expect(done.closest('[data-slot="run-done"]')!.querySelector('svg')).toBeTruthy()
+    cleanup()
+    // The tempo of Friday, run on Tuesday and linked to it.
+    cardWith(FRI, [log('c', '2026-10-13', { planned: { week: 1, session: 'w1-s3', type: 'tempo', blocks: [easy(30)] }, status: 'as_planned' })])
+    expect(screen.getByText('Run done')).toBeTruthy()
+  })
+
+  it('shows nothing for a workout not done yet, or without the logs', () => {
+    cardWith(WED, [log('a', '2026-10-12')])
+    expect(screen.queryByText('Run done')).toBeNull()
+    cleanup()
+    card(WED)
+    expect(screen.queryByText('Run done')).toBeNull()
+  })
+
+  it('says "Feito" in pt-BR', async () => {
+    await setLang('pt-BR')
+    cardWith(WED, [log('b', '2026-10-14')])
+    expect(screen.getByText('Feito')).toBeTruthy()
+  })
+})
 
 describe('RunDayCard on race week (final review I1 and M6)', () => {
   // The race is on Sunday the 18th, the last day of this Monday week.

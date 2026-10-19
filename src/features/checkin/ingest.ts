@@ -13,7 +13,7 @@ import { deleteWorkout } from '../../lib/session-edit.js'
 import { convertWeight } from '../../lib/units.js'
 import { snapWeight, weightIncrement } from '../../lib/progression.js'
 import { emit } from '../gamification/events'
-import type { CheckinDetail } from './types'
+import { entriesOf, isRunDetail, type CheckinDetail, type StrengthDetail } from './types'
 
 type Cfg = { id: string; sets?: number; reps?: number; weight?: number; mode?: string; inc?: number }
 type Unit = 'kg' | 'lb'
@@ -52,16 +52,18 @@ function weightIn(w: number, from: Unit | undefined, to: Unit, cfg: Cfg): number
 // The routine's exercises logged as weight × reps, with the sets of last time filled in (that
 // routine's own last session first, then any). An exercise never trained opens at the routine's
 // own sets, reps and weight. A detail already given reopens as it was, its skipped exercises off.
-export function draftFor(S: AppState, routineId: string | null | undefined, initial?: CheckinDetail | null): DraftEntry[] {
+// A run detail has no sets and opens as no detail.
+export function draftFor(S: AppState, routineId: string | null | undefined, given?: CheckinDetail | null): DraftEntry[] {
   const r = routineOf(S, routineId)
   if (!r) return []
   const unit = unitOf(S)
-  const given = new Map((initial?.entries ?? []).map(e => [e.id, e]))
+  const initial = isRunDetail(given) ? null : given
+  const mineOf = new Map(entriesOf(initial).map(e => [e.id, e]))
   const seen = new Set<string>()
   return r.ex
     .filter(cfg => modeOf(cfg) === 'reps' && !seen.has(cfg.id) && !!seen.add(cfg.id))
     .map(cfg => {
-      const mine = given.get(cfg.id)
+      const mine = mineOf.get(cfg.id)
       if (mine) return { id: cfg.id, on: true, sets: mine.sets.map(s => ({ w: weightIn(num(s.w), initial?.unit, unit, cfg), r: num(s.r) })) }
       const last = lastEntryFor(S, cfg.id, r.id) as { sets: Set[] } | null
       const sets = last?.sets?.length
@@ -75,7 +77,7 @@ export function draftFor(S: AppState, routineId: string | null | undefined, init
 const currentUnit = (): Unit => unitOf(useStore.getState().S as AppState)
 
 // What the check-in keeps: the exercises on, with the sets that have reps, and the unit they are in.
-export function detailOf(draft: DraftEntry[], unit: Unit = currentUnit()): CheckinDetail | null {
+export function detailOf(draft: DraftEntry[], unit: Unit = currentUnit()): StrengthDetail | null {
   const entries = draft
     .filter(e => e.on)
     .map(e => ({ id: e.id, sets: e.sets.filter(s => s.r > 0).map(s => ({ w: s.w, r: s.r, done: true as const })) }))
@@ -85,7 +87,7 @@ export function detailOf(draft: DraftEntry[], unit: Unit = currentUnit()): Check
 
 // The detail of a finished live workout: its done work sets of weight × reps. Warm-ups, timed holds
 // and cardio stay in the workout only.
-export function detailOfWorkout(w: { id?: string; entries?: Entry[] } | null | undefined, unit: Unit = currentUnit()): CheckinDetail | null {
+export function detailOfWorkout(w: { id?: string; entries?: Entry[] } | null | undefined, unit: Unit = currentUnit()): StrengthDetail | null {
   const entries = (w?.entries ?? [])
     .filter(e => modeOf(e.target ?? { id: e.id }) === 'reps')
     .map(e => ({
@@ -102,7 +104,7 @@ export type CheckinWorkoutInput = {
   routineId: string | null
   name: string
   durationMin: number | null
-  detail: CheckinDetail
+  detail: StrengthDetail
   now?: number
 }
 
@@ -119,7 +121,7 @@ export function checkinWorkout(S: AppState, input: CheckinWorkoutInput): Workout
   const start = durationMin && durationMin > 0 ? end - durationMin * 60000 : end
   const cfgOf = (exId: string) => r?.ex.find(c => c.id === exId)
   const unit = unitOf(S)
-  const entries = detail.entries.map(e => ({
+  const entries = entriesOf(detail).map(e => ({
     id: e.id,
     sets: e.sets.map(s => ({ w: weightIn(num(s.w), detail.unit, unit, cfgOf(e.id) ?? { id: e.id }), r: num(s.r), done: true })),
     target: { ...(cfgOf(e.id) ?? { id: e.id, mode: 'reps' }) },

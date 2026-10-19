@@ -105,7 +105,7 @@
 <main id="conteudo">
 <section id="pt" lang="pt-BR">
   <h1>Política de Privacidade</h1>
-  <p class="updated">Última atualização: 16 de outubro de 2026</p>
+  <p class="updated">Última atualização: 19 de outubro de 2026</p>
   <p class="lead">Esta página explica quais dados o Performance coleta, para que eles servem, quem mais tem acesso a eles e como pedir uma cópia ou a exclusão.</p>
   <p class="actions"><a class="cta" href="/">Abrir o app</a></p>
 
@@ -119,13 +119,13 @@
   <p>Do uso do app: rotinas, treinos, exercícios, séries, repetições e cargas, pesagens, exercícios personalizados e configurações. Para a parte de pontos, o app registra eventos de atividade: treino concluído, recorde pessoal, pesagem e dia de treino com check-in; com o pilar Nutrição ligado, dia registrado e dia na meta; com o pilar Sono ligado, noite registrada e noite no alvo; com o pilar Hábitos ligado, check de hábito, dia com check e semana na meta. Com esses eventos, o app calcula seu XP, níveis, sequência de semanas e conquistas.</p>
   <p>Da área social: convites de amizade, sua lista de amigos, os desafios que você cria ou dos quais participa, seu progresso neles, as reações e os comentários que você faz, os avisos que você recebe no app e os itens que você deixa aparecer no feed dos seus amigos.</p>
   <p>Dados técnicos: os serviços que hospedam o site e cuidam do login registram dados de acesso, como endereço IP, tipo de navegador e horário, como acontece em qualquer site.</p>
-  <p>No seu aparelho, o app guarda no armazenamento do navegador (localStorage e IndexedDB) a sessão de login, uma cópia dos seus dados para funcionar sem internet, cópias do perfil, do progresso e da área social, a fila de eventos que ainda não foram enviados, os check-ins e fotos que ainda não foram enviados e, quando você abre um link de convite antes de entrar, esse convite. O app não usa cookies de rastreamento.</p>
+  <p>No seu aparelho, o app guarda no armazenamento do navegador (localStorage e IndexedDB) a sessão de login, uma cópia dos seus dados para funcionar sem internet, cópias do perfil, do progresso, da área social e dos seus check-ins dos últimos 14 dias, a fila de eventos que ainda não foram enviados, os check-ins e fotos que ainda não foram enviados e, quando você abre um link de convite antes de entrar, esse convite. O app não usa cookies de rastreamento.</p>
   <div class="note"><p>Fotos e vídeos que você anexa a exercícios personalizados ou a treinos ficam só no aparelho. O app não envia esses arquivos para nenhum servidor. A foto do check-in é a exceção: ela sobe para o servidor, como explica a seção seguinte.</p></div>
 
   <h2>Check-ins com foto</h2>
   <p>Ao fazer um check-in, o app guarda a foto, a atividade, o dia, o título, a legenda, a duração, a visibilidade, uma observação privada e, se você escolher detalhar o treino, os exercícios com cargas e repetições.</p>
   <p>As fotos ficam no Supabase Storage, em um balde privado, sem endereço público. Para mostrar uma foto, o app pede ao servidor um link temporário de 1 hora, e o servidor só entrega esse link a quem pode ver o check-in. Antes de enviar, o app redesenha a foto no seu aparelho e a reduz. Isso remove os metadados que a câmera grava, como localização (GPS), data e modelo do aparelho.</p>
-  <p>Cada check-in é Amigos ou Só eu. O formulário começa na opção escolhida em "Visibilidade padrão dos check-ins", no Perfil. Essa opção vem marcada em Amigos, e você pode trocar em cada post. Em Amigos, seus amigos veem a foto, a atividade, o nome da rotina, o título, a legenda, o dia e a duração. Em Só eu, nenhuma outra conta vê a foto. Nos desafios, os outros participantes veem "Check-in privado" no lugar do post, e o dia continua contando no placar. Se você desfizer uma amizade ou mudar um check-in para Só eu, o acesso acaba na hora para novos pedidos. Um link de foto que já estava aberto expira em até 1 hora.</p>
+  <p>Cada check-in é Amigos ou Só eu. O formulário começa na opção escolhida em "Visibilidade padrão dos check-ins", no Perfil. Essa opção vem marcada em Amigos, e você pode trocar em cada post. Em Amigos, seus amigos veem a foto, a atividade, o nome da rotina, o título, a legenda, o dia e a duração e, num check-in de corrida, o tipo de treino e a distância. Em Só eu, nenhuma outra conta vê a foto. Nos desafios, os outros participantes veem "Check-in privado" no lugar do post, e o dia continua contando no placar. Se você desfizer uma amizade ou mudar um check-in para Só eu, o acesso acaba na hora para novos pedidos. Um link de foto que já estava aberto expira em até 1 hora.</p>
   <p>Só você vê a observação privada e o detalhe do treino. Esses dados nunca saem da sua conta. As reações e os comentários ficam visíveis para quem pode ver o check-in. Quem comenta apaga o próprio comentário, e o dono do check-in também pode apagá-lo.</p>
   <p>Ao apagar um check-in, a foto some do Supabase Storage junto com ele. Sem internet, o check-in e a foto ficam guardados no aparelho e sobem quando a conexão volta.</p>
 
@@ -151,6 +151,11 @@
   <p>Guarda cada tracker que você cria: o nome, o ícone, o tipo (número, duração ou rótulo), a unidade e, nos de rótulo, as opções. Guarda também os registros que você faz, cada um com o dia, a hora, o valor e uma nota opcional. Os trackers arquivados e seus registros continuam guardados, para o histórico. No aparelho ficam uma cópia dos trackers e dos registros recentes e o que ainda não chegou ao servidor.</p>
   <p>Só você vê seus trackers e seus registros. Nada deles vai para seus amigos, para o feed ou para os desafios, e eles não rendem XP.</p>
 
+  <h2>Corrida</h2>
+  <p>A corrida é opcional. O app só guarda um plano de corrida depois que você cria um, e você pode encerrá-lo quando quiser.</p>
+  <p>No plano, o app guarda a sua meta, o prazo, os seus ritmos e os treinos de cada semana. Num check-in de corrida, guarda também, se você registrar, o treino do plano ao qual ele se liga, a distância, o esforço de 1 a 10 e os blocos que você correu. O plano é sincronizado entre os seus aparelhos, como o resto dos seus dados. No aparelho ficam uma cópia do plano e dos seus check-ins recentes (os dos últimos 14 dias, com os dados de corrida), além dos check-ins de corrida que ainda não chegaram ao servidor.</p>
+  <p>Só você vê o plano, a meta, o prazo, os ritmos, o esforço e os blocos. Num check-in de corrida em Amigos, seus amigos veem apenas o tipo de treino e a distância, além do que já veem em qualquer check-in.</p>
+
   <h2>Para que usamos</h2>
   <p>Só para fazer o app funcionar: identificar você no login, guardar seus dados e sincronizá-los entre seus aparelhos, calcular XP, níveis, sequências, ranking e desafios, e mostrar aos seus amigos o que você permitiu.</p>
   <p>O app não tem anúncios. Seus dados não são vendidos nem passados a terceiros para marketing, e o app não usa ferramentas de analytics nem de rastreamento.</p>
@@ -161,7 +166,7 @@
   <p>Nos desafios, quem participa do mesmo desafio vê seu nome, sua foto e seu progresso nele. Em desafios de volume, você só entra se aceitar mostrar seu volume, e os outros participantes veem apenas o total em toneladas no período. No desafio de dias no alvo da Nutrição, você só entra se aceitar compartilhar essa contagem, e os outros participantes veem apenas quantos dias você ficou na meta, nunca o que comeu, suas metas, calorias ou macros. No desafio de noites no alvo do Sono, você só entra se aceitar compartilhar essa contagem, e os outros participantes veem apenas quantas noites você ficou no alvo, nunca seus horários, a duração, a qualidade ou as observações. No desafio de checks de hábitos, você só entra se aceitar compartilhar essa contagem, e os outros participantes veem apenas quantos checks você marcou dentro das metas, nunca seus hábitos, os ícones ou os dias.</p>
   <p>Seus check-ins em Amigos aparecem no feed dos seus amigos. Os em Só eu não aparecem para ninguém.</p>
   <p>Quem recebe um link de convite seu vê seu nome e sua foto, mesmo sem ter conta.</p>
-  <p>Ninguém vê seu e-mail, peso, altura, data de nascimento, sexo, pesagens, cargas, o detalhe das suas séries, a observação privada dos check-ins, o seu diário alimentar, as suas medidas caseiras, as suas noites de sono, os seus hábitos ou os seus trackers.</p>
+  <p>Ninguém vê seu e-mail, peso, altura, data de nascimento, sexo, pesagens, cargas, o detalhe das suas séries, a observação privada dos check-ins, o plano de corrida, o esforço e os blocos, o seu diário alimentar, as suas medidas caseiras, as suas noites de sono, os seus hábitos ou os seus trackers.</p>
 
   <h2>Onde os dados ficam</h2>
   <p>Estes serviços tratam dados em nome do app:</p>
@@ -213,7 +218,7 @@
 
 <section id="en" lang="en">
   <h1>Privacy Policy</h1>
-  <p class="updated">Last updated: October 16, 2026</p>
+  <p class="updated">Last updated: October 19, 2026</p>
   <p class="lead">This page explains what data Performance collects, what it is used for, who else handles it and how to ask for a copy or for deletion.</p>
   <p class="actions"><a class="cta" href="/">Open the app</a></p>
 
@@ -227,13 +232,13 @@
   <p>From using the app: routines, workouts, exercises, sets, reps and loads, weigh-ins, custom exercises and settings. For the points system, the app records activity events: workout finished, personal record, weigh-in and training day with a check-in; with the Nutrition pillar on, day logged and day on target; with the Sleep pillar on, night logged and night on target; with the Habits pillar on, habit check, day with a check and week on target. The app uses these events to work out your XP, levels, weekly streak and achievements.</p>
   <p>From the social area: friend invites, your friends list, the challenges you create or join, your progress in them, the reactions and comments you make, the notices you get in the app and the items you let show up in your friends' feed.</p>
   <p>Technical data: the services that host the site and handle sign-in log access data such as IP address, browser type and time, as with any website.</p>
-  <p>On your device, the app keeps in browser storage (localStorage and IndexedDB) your sign-in session, a copy of your data so it works offline, copies of your profile, progress and social data, the queue of events not yet sent, the check-ins and photos not yet sent and, if you open an invite link before signing in, that invite. The app does not use tracking cookies.</p>
+  <p>On your device, the app keeps in browser storage (localStorage and IndexedDB) your sign-in session, a copy of your data so it works offline, copies of your profile, progress and social data and of your check-ins from the last 14 days, the queue of events not yet sent, the check-ins and photos not yet sent and, if you open an invite link before signing in, that invite. The app does not use tracking cookies.</p>
   <div class="note"><p>Photos and videos you attach to custom exercises or workouts stay on your device. The app does not upload them to any server. The check-in photo is the exception: it goes up to the server, as the next section explains.</p></div>
 
   <h2>Photo check-ins</h2>
   <p>When you post a check-in, the app keeps the photo, the activity, the day, the title, the caption, the duration, the visibility, a private note and, if you choose to detail the workout, the exercises with loads and reps.</p>
   <p>Photos are kept in Supabase Storage, in a private bucket with no public address. To show a photo, the app asks the server for a temporary 1-hour link, and the server only gives that link to someone who can see the check-in. Before uploading, the app redraws the photo on your device and shrinks it. That removes the metadata the camera writes, such as location (GPS), date and device model.</p>
-  <p>Each check-in is Friends or Only me. The form starts on the option chosen in "Default check-in visibility" in Profile. That option starts on Friends, and you can change it on each post. With Friends, your friends see the photo, the activity, the routine name, the title, the caption, the day and the duration. With Only me, no other account sees the photo. In challenges, the other members see "Private check-in" in place of the post, and the day still counts on the board. If you remove a friend or switch a check-in to Only me, access ends right away for new requests. A photo link that was already open expires within 1 hour.</p>
+  <p>Each check-in is Friends or Only me. The form starts on the option chosen in "Default check-in visibility" in Profile. That option starts on Friends, and you can change it on each post. With Friends, your friends see the photo, the activity, the routine name, the title, the caption, the day and the duration and, on a running check-in, the workout type and the distance. With Only me, no other account sees the photo. In challenges, the other members see "Private check-in" in place of the post, and the day still counts on the board. If you remove a friend or switch a check-in to Only me, access ends right away for new requests. A photo link that was already open expires within 1 hour.</p>
   <p>Only you see the private note and the workout detail. They never leave your account. Reactions and comments are visible to whoever can see the check-in. Whoever comments can delete their own comment, and the owner of the check-in can delete it too.</p>
   <p>When you delete a check-in, the photo is removed from Supabase Storage with it. Without internet, the check-in and the photo stay saved on your device and go up when the connection is back.</p>
 
@@ -259,6 +264,11 @@
   <p>It keeps each tracker you create: the name, the icon, the type (number, duration or choice), the unit and, for choice trackers, the options. It also keeps the entries you log, each with the day, the time, the value and an optional note. Archived trackers and their entries stay saved, for your history. Your device keeps a copy of your trackers and recent entries and any that have not reached the server yet.</p>
   <p>Only you see your trackers and entries. None of it goes to your friends, the feed or challenges, and it earns no XP.</p>
 
+  <h2>Running</h2>
+  <p>Running is optional. The app keeps a running plan only after you create one, and you can end it at any time.</p>
+  <p>From the plan, the app keeps your goal, the deadline, your paces and each week's workouts. On a running check-in it also keeps, if you log them, the workout from the plan it is linked to, the distance, the effort from 1 to 10 and the blocks you ran. The plan is synced between your devices like the rest of your data. Your device keeps a copy of the plan and of your recent check-ins (those from the last 14 days, with their running data), plus any running check-ins that have not reached the server yet.</p>
+  <p>Only you see the plan, the goal, the deadline, the paces, the effort and the blocks. On a running check-in set to Friends, your friends see only the workout type and the distance, along with what they already see on any check-in.</p>
+
   <h2>What we use it for</h2>
   <p>Only to make the app work: to identify you at sign-in, store your data and sync it across your devices, work out XP, levels, streaks, rankings and challenges, and show your friends what you have allowed.</p>
   <p>The app has no ads. Your data is not sold or handed to third parties for marketing, and the app uses no analytics or tracking tools.</p>
@@ -269,7 +279,7 @@
   <p>In challenges, people in the same challenge see your name, photo and progress in it. You can only join a volume challenge if you agree to show your volume, and the other members see only your total in tonnes for the period. In the Nutrition days-on-target challenge, you can only join if you agree to share that count, and the other members see only how many days you were on target, never what you ate, your targets, calories or macros. In the Sleep nights-on-target challenge, you can only join if you agree to share that count, and the other members see only how many nights you were on target, never your times, duration, quality or notes. In the Habit checks challenge, you can only join if you agree to share that count, and the other members see only how many checks you marked within your goals, never your habits, their icons or the days.</p>
   <p>Your check-ins set to Friends show up in your friends' feed. The ones set to Only me show up for nobody.</p>
   <p>Anyone who gets one of your invite links sees your name and photo, even without an account.</p>
-  <p>Nobody sees your email, weight, height, date of birth, sex, weigh-ins, loads, the details of your sets, the private note on your check-ins, your food diary, your household measures, your sleep nights, your habits or your trackers.</p>
+  <p>Nobody sees your email, weight, height, date of birth, sex, weigh-ins, loads, the details of your sets, the private note on your check-ins, your running plan, effort and blocks, your food diary, your household measures, your sleep nights, your habits or your trackers.</p>
 
   <h2>Where the data is kept</h2>
   <p>These services handle data on the app's behalf:</p>

@@ -53,6 +53,8 @@ export type RunPlan = {
   vdot?: number
   vdotSource: 'race' | 'run' | null
   vdotDate?: string
+  // The race time the person gave after race day (spec §8.2 rule 1, plan Decision 10), in minutes.
+  raceResult?: { minutes: number }
   // The person's week start when the plan was made; dates map to plan weeks with it, so changing
   // S.weekStart later does not move sessions. Missing in plans saved before it: S.weekStart.
   weekStart?: 0 | 1

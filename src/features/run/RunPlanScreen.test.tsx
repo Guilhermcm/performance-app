@@ -2,13 +2,22 @@
 // /plan/corrida (spec §6.4): goal and deadline, the phases, the weeks with this one marked, the
 // paces by zone with the reference date, the race prediction, and refit, redo and end (with a
 // confirmation). An unknown plan version offers only to redo the questionnaire.
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 
 const h = vi.hoisted(() => ({ nav: vi.fn(), toast: vi.fn(), initial: undefined as unknown }))
 vi.mock('react-router-dom', () => ({ useNavigate: () => h.nav }))
 vi.mock('sonner', () => ({ toast: h.toast }))
 vi.mock('@/components/ui/drawer', () => import('../social/test-drawer'))
+vi.mock('recharts', async orig => {
+  const { cloneElement } = await import('react')
+  return {
+    ...(await orig<typeof import('recharts')>()),
+    ResponsiveContainer: ({ children }: { children: any }) => cloneElement(children, { width: 340, height: 184 }),
+  }
+})
+const api = vi.hoisted(() => ({ fetchMyRunCheckins: vi.fn() }))
+vi.mock('../checkin/checkin-api', async orig => ({ ...(await orig<typeof import('../checkin/checkin-api')>()), ...api }))
 vi.mock('./run-actions', async importOriginal => {
   const real = await importOriginal<typeof import('./run-actions')>()
   return { ...real, refitFuture: vi.fn(real.refitFuture) }
@@ -36,6 +45,8 @@ vi.mock('./RunQuestionnaire', async () => {
 
 import { useStore } from '../../store/useStore.js'
 import { useProfile } from '../profile/useProfile'
+import { useCheckins } from '../checkin/useCheckins'
+import { useRunLogStore } from './run-log'
 import { fmtDate } from '../../lib/format.js'
 import { refitFuture } from './run-actions'
 import { formatClock } from './clock'
@@ -68,6 +79,8 @@ function plan(over: Partial<RunPlan> = {}): RunPlan {
 }
 
 const save = vi.fn(async () => ({}))
+// The chart loads on demand: load its chunk once up front so the lazy import settles at once.
+beforeAll(async () => { await import('./RunProgress') }, 20000)
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(new Date('2026-10-14T15:00:00'))
@@ -75,7 +88,10 @@ beforeEach(() => {
   setS({ week: { 1: ['upper'] }, routines: [UPPER], weekStart: 1, runPlan: plan() })
   useProfile.setState({ profile: { id: 'u1', days_per_week: 3 } as never, save } as never)
 })
-afterEach(() => { cleanup(); vi.useRealTimers(); useProfile.setState({ profile: null }) })
+afterEach(() => {
+  cleanup(); vi.useRealTimers(); useProfile.setState({ profile: null })
+  useCheckins.setState({ userId: null, mine: [] }); useRunLogStore.getState().reset(); api.fetchMyRunCheckins.mockReset()
+})
 
 const region = (name: string) => screen.getByRole('region', { name })
 
@@ -237,3 +253,64 @@ describe('RunPlanScreen', () => {
   })
 })
 
+describe('RunPlanScreen: tracking and suggestions (phase 1e-b)', () => {
+  const ME = '00000000-0000-4000-8000-00000000000a'
+  const run = (id: string, day: string, duration_min: number, run: unknown) => ({ id, day, duration_min, run })
+
+  it('reads the runs once and shows this week, the chart and the milestones', async () => {
+    useCheckins.setState({ userId: ME, mine: [] })
+    api.fetchMyRunCheckins.mockResolvedValue([
+      // The tempo of Wednesday by its day, the easy run of Friday linked early: 2 of 3.
+      run('a', '2026-10-14', 40, { status: 'unplanned', distance_km: 8 }),
+      run('b', '2026-10-13', 30, { status: 'as_planned', distance_km: 5, planned: { week: 1, session: 'w1-s3', type: 'easy', blocks: [easy(30)] } }),
+    ])
+    render(<RunPlanScreen />)
+    const box = region('Tracking')
+    expect(await within(box).findByText('2 of 3 workouts')).toBeTruthy()
+    expect(within(box).getByText('70 min · 13 km')).toBeTruthy()
+    expect(await within(box).findByText('This week you ran 70 of 110 planned minutes')).toBeTruthy()
+    expect(within(box).getByText('Longest distance')).toBeTruthy()
+    expect(within(box).getByText('Average pace on easy runs')).toBeTruthy()
+    expect(api.fetchMyRunCheckins).toHaveBeenCalledTimes(1)
+    expect(api.fetchMyRunCheckins).toHaveBeenCalledWith('2026-10-12')
+  })
+
+  it('a new plan without runs: zeros, the empty texts and no suggestion (review focus 5)', async () => {
+    render(<RunPlanScreen />)
+    const box = region('Tracking')
+    expect(within(box).getByText('0 of 3 workouts')).toBeTruthy()
+    expect(within(box).getByText('No milestones yet. Log your runs with distance and time to see them here.')).toBeTruthy()
+    expect(await within(box).findByText(/You haven’t logged a run in this plan yet/)).toBeTruthy()
+    expect(screen.queryByRole('region', { name: 'Repeat the week' })).toBeNull()
+  })
+
+  it('shows the suggestion at the top, before the tracking, once the runs are read', async () => {
+    // The plan started a week earlier and nothing was run in week 1.
+    setS({ runPlan: plan({ startDate: '2026-10-05' }) })
+    useCheckins.setState({ userId: ME, mine: [] })
+    api.fetchMyRunCheckins.mockResolvedValue([])
+    render(<RunPlanScreen />)
+    const card = await screen.findByRole('region', { name: 'Repeat the week' })
+    expect(card.compareDocumentPosition(region('Tracking')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    fireEvent.click(within(card).getByRole('button', { name: 'Not now' }))
+    expect(S().runPlan.dismissed).toEqual({ 'weak:2': '2026-10-14' })
+    expect(screen.queryByRole('region', { name: 'Repeat the week' })).toBeNull()
+  })
+
+  it('after a failed read: no weak week and a notice in the tracking (final review I2)', async () => {
+    setS({ runPlan: plan({ startDate: '2026-10-05' }) })
+    useCheckins.setState({ userId: ME, mine: [] })
+    api.fetchMyRunCheckins.mockRejectedValue(new Error('500'))
+    render(<RunPlanScreen />)
+    const box = region('Tracking')
+    expect(await within(box).findByRole('status')).toBeTruthy()
+    expect(within(box).getByRole('status').textContent).toContain('Couldn’t load your run history')
+    expect(screen.queryByRole('region', { name: 'Repeat the week' })).toBeNull()
+  })
+
+  it('names a run as the source of the paces when they came from one', () => {
+    setS({ runPlan: plan({ vdotSource: 'run', vdotDate: '2026-10-13' }) })
+    render(<RunPlanScreen />)
+    expect(within(region('Paces')).getByText('From your run on ' + fmtDate('2026-10-13') + '.')).toBeTruthy()
+  })
+})

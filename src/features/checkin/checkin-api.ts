@@ -8,7 +8,8 @@ import { SocialError } from '../social/social-api'
 import type {
   ChallengeFeedPage, CheckinFeedCursor, CheckinFeedPage, CheckinView, NoticesPage, SocialErrorCode
 } from '../social/types'
-import type { CheckinDetail, CheckinRow } from './types'
+import type { RunLog } from '../run/run-log'
+import { isRunDetail, type CheckinDetail, type CheckinRow } from './types'
 
 const BUCKET = 'checkins'
 // A signed link lives an hour on the server; it is reused for 55 minutes, so none shown expires.
@@ -182,6 +183,22 @@ export async function fetchMyCheckins(from: string, to: string): Promise<Checkin
   const rows = await read<Row[]>(supabase.from('checkins').select('*').gte('day', from).lte('day', to)
     .order('created_at', { ascending: false }) as never)
   return (rows ?? []).map(toRow)
+}
+
+/** A run check-in as the run history reads it: the day, the duration and the run detail, if any. */
+export const runLogOf = (r: Pick<CheckinRow, 'id' | 'day' | 'duration_min' | 'detail'>): RunLog => ({
+  id: r.id, day: r.day, duration_min: r.duration_min == null ? null : Number(r.duration_min),
+  run: isRunDetail(r.detail) ? r.detail.run : null
+})
+
+// My run check-ins from `from` on (plan decision 7): RLS lets only my own rows through.
+export async function fetchMyRunCheckins(from: string): Promise<RunLog[]> {
+  const rows = await read<Row[]>(supabase.from('checkins').select('id, day, duration_min, detail')
+    .eq('activity', 'run').gte('day', from) as never)
+  return (rows ?? []).map(r => runLogOf({
+    id: r.id as string, day: r.day as string, duration_min: r.duration_min as number | null,
+    detail: (r.detail as CheckinDetail | null) ?? null
+  }))
 }
 
 export async function hideCheckin(id: string): Promise<void> {

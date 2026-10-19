@@ -4,19 +4,28 @@
 // session of the week, Decision 3) and "Change day", which lists the days of this week from today
 // on with the warnings each move would bring. A move changes only that week. On race day it shows
 // the race with its distance; in the race week, runs move only to days before the race, and race
-// day counts as a hard day for the warnings (final review I1 and M6).
+// day counts as a hard day for the warnings (final review I1 and M6). Today's card has "Log run",
+// which opens the check-in on running, linked to the day's workout (phase 1e-b), for a signed-in
+// account only: the check-in panel is mounted for one (App.jsx), so for a guest the button would
+// open nothing and leave the panel waiting to pop up after sign-in (1e-b final review I1). A workout done
+// (spec §8.1, progress.ts doneSessions) shows "Run done" with a check, from the screen's `logs`
+// (useRunLogs, read once by the Plan and passed down).
 import { useState } from 'react'
-import { Flag, TriangleAlert } from 'lucide-react'
+import { CircleCheck, Flag, TriangleAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { t } from '../../lib/i18n.js'
 import { DAYN, isoOf, startOfWeek, todayISO, weekDayOffset, weekOrder, weekStartOf } from '../../lib/format.js'
 import { useStore } from '../../store/useStore.js'
+import { openCheckin } from '../checkin/open-checkin'
+import { useCheckins } from '../checkin/useCheckins'
 import { moveWarnings, weekWarnings, type FitWarning } from './fit'
 import { fitWarningText, goalName, sessionName } from './labels'
 import { weekMinutes } from './models'
 import { weekStartDate } from './dates'
+import { doneSessions, weekOffsetOf } from './progress'
 import { currentWeek, moveSession, planWeekStart, raceBounds, raceOn, sessionsOn, strengthWeek, type RunState } from './run-actions'
+import type { RunLog } from './run-log'
 import SessionBlocks from './SessionBlocks'
 import type { Session, Week } from './types'
 
@@ -29,10 +38,12 @@ export function weekDayIso(today: string, ws: number, day: number): string {
   return isoOf(d)
 }
 
-export default function RunDayCard({ day, iso }: { day: number; iso: string }) {
+export default function RunDayCard({ day, iso, logs = [] }: { day: number; iso: string; logs?: RunLog[] }) {
   const S = useStore((s: AppStore) => s.S)
   const update = useStore((s: AppStore) => s.update)
   const [moving, setMoving] = useState<Session | null>(null)
+  // Check-ins need a signed-in account (the store is bound once its profile is in, App.jsx).
+  const canCheckIn = !!useCheckins(s => s.userId)
   const ws = weekStartOf(S)
   const plan = S.runPlan
   const week = currentWeek(plan, iso, ws)
@@ -41,6 +52,7 @@ export default function RunDayCard({ day, iso }: { day: number; iso: string }) {
   if (!plan || (!race && (!week || !sessions.length))) return null
   // The run's plan week, on the week start the plan was made with (it may differ from S.weekStart).
   const pws = planWeekStart(plan, ws)
+  const done = doneSessions(plan, weekOffsetOf(plan, iso, ws), logs, ws)
 
   const strength = strengthWeek(S)
   const routines = S.routines || []
@@ -75,6 +87,11 @@ export default function RunDayCard({ day, iso }: { day: number; iso: string }) {
             <h3 id={`run-${iso}-${s.id}`} className="text-[15px] font-semibold">{sessionName(s.type)}</h3>
             <span className="shrink-0 font-mono text-sm text-muted-foreground tabular-nums">{t('{0} min', weekMinutes({ sessions: [s] }))}</span>
           </div>
+          {done.has(s.id) && (
+            <span data-slot="run-done" className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-foreground">
+              <CircleCheck aria-hidden className="size-4 shrink-0 text-primary" />{t('Run done')}
+            </span>
+          )}
           <div className="mt-1"><SessionBlocks session={s} vdot={plan.vdot} /></div>
           <Warnings list={warnings[s.id]} type={s.type} />
           {targets(s).length > 0 && (
@@ -83,6 +100,10 @@ export default function RunDayCard({ day, iso }: { day: number; iso: string }) {
           )}
         </article>
       ))}
+
+      {iso === today && canCheckIn && (
+        <Button size="sm" className="h-11 w-full rounded-lg" onClick={() => openCheckin({ activity: 'run' })}>{t('Log run')}</Button>
+      )}
 
       <Drawer open={!!moving} onOpenChange={o => { if (!o) setMoving(null) }}>
         <DrawerContent>

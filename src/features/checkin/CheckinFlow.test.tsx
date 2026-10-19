@@ -13,6 +13,7 @@ import { useProfile } from '../profile/useProfile'
 import { DEF, useStore } from '../../store/useStore.js'
 import { setLang } from '../../lib/i18n.js'
 import { closeDrawer } from '../social/test-drawer'
+import type { Item, RunPlan, Session } from '../run/types'
 
 const ME = '00000000-0000-4000-8000-00000000000a'
 const BENCH = '0025'
@@ -30,8 +31,8 @@ const radio = (name: string) => screen.getByRole('radio', { name })
 const titleField = () => screen.getByLabelText('Title') as HTMLInputElement
 const settle = () => act(async () => { await Promise.resolve(); await Promise.resolve(); await Promise.resolve() })
 
-function setup({ week = { 6: ['r1', 'r2'] } as Record<number, string[]>, visibility = 'friends', share = false, workouts = [] as unknown[] } = {}) {
-  useStore.setState({ S: { ...JSON.parse(JSON.stringify(DEF)), unit: 'kg', routines: [PUSH, LEGS], week, dayPlan: {}, workouts, exWeights: {} }, user: { id: ME } })
+function setup({ week = { 6: ['r1', 'r2'] } as Record<number, string[]>, visibility = 'friends', share = false, workouts = [] as unknown[], runPlan = null as RunPlan | null } = {}) {
+  useStore.setState({ S: { ...JSON.parse(JSON.stringify(DEF)), unit: 'kg', routines: [PUSH, LEGS], week, dayPlan: {}, workouts, exWeights: {}, weekStart: 1, runPlan }, user: { id: ME } })
   useProfile.setState({ profile: { id: ME, timezone: 'America/Sao_Paulo', checkin_visibility: visibility, share_activity: share } as never })
   render(<CheckinFlow />)
 }
@@ -159,6 +160,14 @@ describe('the check-in panel', () => {
     expect(h.toast.success).toHaveBeenCalledWith('Check-in posted.')
     expect(useCheckinFlow.getState().open).toBe(false)
     expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('closes the panel when its host leaves the page, so it never pops up later (final review I1)', () => {
+    setup()
+    open({ activity: 'run' })
+    expect(useCheckinFlow.getState().open).toBe(true)
+    cleanup()
+    expect(useCheckinFlow.getState().open).toBe(false)
   })
 
   it('"Was it yesterday?" moves the day', async () => {
@@ -330,5 +339,262 @@ describe('the check-in panel', () => {
     act(() => useCheckins.setState({ dropped: [{ id: 'x', reason: 'edit_refused', title: 'Corrida' }] }))
     expect(h.toast).toHaveBeenCalledWith('Couldn’t save a change to a check-in.')
     expect(useCheckins.getState().dropped).toEqual([])
+  })
+})
+
+describe('the run part of the check-in (phase 1e-b)', () => {
+  // Weeks start on Monday: week 2 runs from 5 to 11 October. Saturday the 10th (today) has the
+  // interval run; Friday the 9th (yesterday) the easy run.
+  const INTERVALS: Item[] = [{ zone: 'easy', min: 10 }, { repeat: 5, blocks: [{ zone: 'hard', min: 2 }, { zone: 'easy', min: 2 }] }, { zone: 'easy', min: 5 }]
+  const sessions = (w: number, sat: Item[] = INTERVALS): Session[] => [
+    { id: `w${w}-s1`, type: 'intervals', day: 6, blocks: sat },
+    { id: `w${w}-s2`, type: 'easy', day: 5, blocks: [{ zone: 'easy', min: 30 }] },
+  ]
+  const planOf = (sat?: Item[]): RunPlan => ({
+    version: 1, goal: '10k', goalType: 'finish', startDate: '2026-09-28', weekStart: 1,
+    answers: { goal: '10k', goalType: 'finish', weeks: 2, reference: { kind: 'none' }, days: 2, longDay: 0 },
+    vdotSource: null, dismissed: {},
+    weeks: [{ index: 1, phase: 'build', recovery: false, sessions: sessions(1, sat) }, { index: 2, phase: 'build', recovery: false, sessions: sessions(2, sat) }],
+  })
+  const PLANNED = { week: 2, session: 'w2-s1', type: 'intervals', blocks: INTERVALS }
+  const runSetup = (runPlan: RunPlan | null = planOf(), gallery = 'Choose from gallery') => {
+    setup({ week: {}, runPlan }); open({ activity: 'run' })
+    fireEvent.change(screen.getByLabelText(gallery), { target: { files: [photo()] } })
+  }
+  const duration = () => screen.getByLabelText('Duration (min)') as HTMLInputElement
+  const sent = async () => { fireEvent.click(postButton()!); await settle(); return post.mock.calls[0][0] }
+  const DIST_NOTE = 'Distance goes from 0.1 to 100 km, with two decimals at most.'
+
+  it('opens on running when asked, with the day\'s workout instead of "Detail workout"', () => {
+    runSetup()
+    expect(radio('Running').getAttribute('aria-checked')).toBe('true')
+    expect(screen.getByText('Interval run')).toBeTruthy()
+    expect(screen.getByText('10 easy + 5 × (2 hard, 2 easy) + 5 easy')).toBeTruthy()
+    expect(radio('Done as planned')).toBeTruthy()
+    expect(radio('Adjust')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Detail workout' })).toBeNull()
+    expect(screen.queryByText('Off the plan')).toBeNull()
+  })
+
+  it('also shows it when running is picked by hand on a strength day', () => {
+    setup({ runPlan: planOf() })
+    open(); pickPhoto()
+    expect(radio('Strength training').getAttribute('aria-checked')).toBe('true')
+    expect(screen.queryByText('Interval run')).toBeNull()
+    fireEvent.click(radio('Running'))
+    expect(screen.getByText('Interval run')).toBeTruthy()
+    expect(screen.queryByLabelText('Routine')).toBeNull()
+  })
+
+  it('"Done as planned" links the run to a copy of the workout and fills an empty duration with its minutes', async () => {
+    runSetup()
+    expect(duration().value).toBe('')
+    fireEvent.click(radio('Done as planned'))
+    expect(duration().value).toBe('35')
+    expect(titleField().value).toBe('Running · 35 min')
+    const input = await sent()
+    expect(input).toMatchObject({ day: '2026-10-10', activity: 'run', routineId: null, durationMin: 35 })
+    expect(input.detail).toEqual({ run: { planned: PLANNED, status: 'as_planned' } })
+    // A copy: the plan itself is not what went out.
+    const plan = (useStore.getState().S as { runPlan: RunPlan }).runPlan
+    expect((input.detail as { run: { planned: { blocks: Item[] } } }).run.planned.blocks).not.toBe(plan.weeks[1].sessions[0].blocks)
+  })
+
+  it('keeps a duration already typed, and never fills more than 600 minutes', () => {
+    runSetup()
+    fireEvent.change(duration(), { target: { value: '42' } })
+    fireEvent.click(radio('Done as planned'))
+    expect(duration().value).toBe('42')
+    cleanup()
+    runSetup(planOf([{ zone: 'easy', min: 300 }, { zone: 'easy', min: 300 }, { zone: 'easy', min: 100 }]))
+    fireEvent.click(radio('Done as planned'))
+    expect(duration().value).toBe('600')
+    expect(postButton()!.disabled).toBe(false)
+  })
+
+  it('"Adjust" opens the workout\'s blocks, and a change posts as adjusted with the blocks run', async () => {
+    runSetup()
+    fireEvent.click(radio('Adjust'))
+    const first = screen.getByRole('group', { name: 'Part 1' })
+    expect((within(first).getByLabelText('Minutes') as HTMLInputElement).value).toBe('10')
+    fireEvent.change(within(screen.getByRole('group', { name: 'Part 2.1' })).getByLabelText('Zone'), { target: { value: 'moderate' } })
+    fireEvent.change(within(first).getByLabelText('Minutes'), { target: { value: '15' } })
+    const input = await sent()
+    expect(input.detail).toEqual({ run: { planned: PLANNED, status: 'adjusted', blocks: [
+      { zone: 'easy', min: 15 }, { repeat: 5, blocks: [{ zone: 'moderate', min: 2 }, { zone: 'easy', min: 2 }] }, { zone: 'easy', min: 5 },
+    ] } })
+  })
+
+  it('a block out of range says why and stops the post', () => {
+    runSetup()
+    fireEvent.click(radio('Adjust'))
+    const minutes = within(screen.getByRole('group', { name: 'Part 3' })).getByLabelText('Minutes')
+    fireEvent.change(minutes, { target: { value: '0' } })
+    expect(screen.getByText('Minutes go from 1 to 300.')).toBeTruthy()
+    expect(postButton()!.disabled).toBe(true)
+    fireEvent.change(minutes, { target: { value: '301' } })
+    expect(postButton()!.disabled).toBe(true)
+    fireEvent.change(minutes, { target: { value: '5' } })
+    expect(postButton()!.disabled).toBe(false)
+    const repeats = within(screen.getByRole('group', { name: 'Part 2' })).getByLabelText('Repeats')
+    fireEvent.change(repeats, { target: { value: '1' } })
+    expect(screen.getByText('Repeats go from 2 to 20.')).toBeTruthy()
+    expect(postButton()!.disabled).toBe(true)
+    fireEvent.change(repeats, { target: { value: '21' } })
+    expect(postButton()!.disabled).toBe(true)
+    fireEvent.change(repeats, { target: { value: '6' } })
+    expect(postButton()!.disabled).toBe(false)
+  })
+
+  it('without a workout that day: "Off the plan", and a distance posts as unplanned', async () => {
+    runSetup(null)
+    expect(screen.getByText('Off the plan')).toBeTruthy()
+    expect(screen.queryByRole('radio', { name: 'Done as planned' })).toBeNull()
+    fireEvent.change(screen.getByLabelText('Distance (km)'), { target: { value: '5' } })
+    expect((await sent()).detail).toEqual({ run: { status: 'unplanned', distance_km: 5 } })
+  })
+
+  it('off the plan with no distance and no effort, the run goes with no detail (Decision 3)', async () => {
+    runSetup(null)
+    expect((await sent()).detail).toBeNull()
+  })
+
+  it('on a plan day that was not linked, the run goes off the plan with its effort', async () => {
+    runSetup()
+    fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Effort' })).getByRole('radio', { name: '6' }))
+    expect((await sent()).detail).toEqual({ run: { status: 'unplanned', rpe: 6 } })
+  })
+
+  it('a distance the database would refuse says why and stops the post (Review Focus 2)', () => {
+    runSetup()
+    const field = screen.getByLabelText('Distance (km)')
+    for (const text of ['0,05', '100,5', '6,255', 'abc']) {
+      fireEvent.change(field, { target: { value: text } })
+      expect(screen.getByText(DIST_NOTE), text).toBeTruthy()
+      expect(postButton()!.disabled, text).toBe(true)
+    }
+    for (const text of ['6,25', '6.2', '']) {
+      fireEvent.change(field, { target: { value: text } })
+      expect(screen.queryByText(DIST_NOTE), text).toBeNull()
+      expect(postButton()!.disabled, text).toBe(false)
+    }
+  })
+
+  it('"Was it yesterday?" links the run to yesterday\'s workout (Review Focus 3)', async () => {
+    runSetup()
+    fireEvent.click(radio('Done as planned'))
+    fireEvent.click(screen.getByRole('switch', { name: 'Was it yesterday?' }))
+    expect(screen.getByText('Easy run')).toBeTruthy()
+    expect(screen.queryByText('Interval run')).toBeNull()
+    expect(radio('Done as planned').getAttribute('aria-checked')).toBe('true')
+    const input = await sent()
+    expect(input.day).toBe('2026-10-09')
+    expect(input.detail).toEqual({ run: { planned: { week: 2, session: 'w2-s2', type: 'easy', blocks: [{ zone: 'easy', min: 30 }] }, status: 'as_planned' } })
+  })
+
+  it('"Was it yesterday?" refills a duration filled from the workout, but not one typed (R2 T4-M2)', async () => {
+    runSetup()
+    fireEvent.click(radio('Done as planned'))
+    expect(duration().value).toBe('35')
+    const day = screen.getByRole('switch', { name: 'Was it yesterday?' })
+    fireEvent.click(day)
+    expect(duration().value).toBe('30')
+    fireEvent.click(day)
+    expect(duration().value).toBe('35')
+    fireEvent.click(day)
+    const input = await sent()
+    expect(input).toMatchObject({ day: '2026-10-09', durationMin: 30 })
+    cleanup(); post.mockClear()
+    runSetup()
+    fireEvent.click(radio('Done as planned'))
+    fireEvent.change(duration(), { target: { value: '41' } })
+    fireEvent.click(screen.getByRole('switch', { name: 'Was it yesterday?' }))
+    expect(duration().value).toBe('41')
+  })
+
+  it('"Was it yesterday?" to a day with no workout clears the duration filled from the workout', () => {
+    const plan = planOf()
+    plan.weeks[1].sessions = plan.weeks[1].sessions.filter(s => s.day === 6)
+    runSetup(plan)
+    fireEvent.click(radio('Done as planned'))
+    expect(duration().value).toBe('35')
+    fireEvent.click(screen.getByRole('switch', { name: 'Was it yesterday?' }))
+    expect(screen.getByText('Off the plan')).toBeTruthy()
+    expect(duration().value).toBe('')
+  })
+
+  it('"Was it yesterday?" leaves the duration of a bike post alone after leaving a linked run (final review M1)', async () => {
+    runSetup()
+    fireEvent.click(radio('Done as planned'))
+    expect(duration().value).toBe('35')
+    fireEvent.click(radio('Cycling'))
+    fireEvent.click(screen.getByRole('switch', { name: 'Was it yesterday?' }))
+    expect(duration().value).toBe('35')
+    fireEvent.click(screen.getByRole('switch', { name: 'Was it yesterday?' }))
+    expect(duration().value).toBe('35')
+    // To a day without a run either: the bike's duration stays.
+    cleanup(); post.mockClear()
+    const plan = planOf()
+    plan.weeks[1].sessions = plan.weeks[1].sessions.filter(s => s.day === 6)
+    runSetup(plan)
+    fireEvent.click(radio('Done as planned'))
+    fireEvent.click(radio('Cycling'))
+    fireEvent.click(screen.getByRole('switch', { name: 'Was it yesterday?' }))
+    expect(duration().value).toBe('35')
+    const input = await sent()
+    expect(input).toMatchObject({ activity: 'bike', day: '2026-10-09', durationMin: 35, detail: null })
+  })
+
+  it('a wrong distance left behind by another activity does not block the post unseen (R2 T4-M1)', async () => {
+    runSetup(null)
+    fireEvent.change(screen.getByLabelText('Distance (km)'), { target: { value: 'abc' } })
+    expect(postButton()!.disabled).toBe(true)
+    fireEvent.click(radio('Cycling'))
+    fireEvent.click(radio('Running'))
+    expect((screen.getByLabelText('Distance (km)') as HTMLInputElement).value).toBe('')
+    expect(screen.queryByText(DIST_NOTE)).toBeNull()
+    expect(postButton()!.disabled).toBe(false)
+    expect((await sent()).detail).toBeNull()
+  })
+
+  it('a distance still being typed after its separator keeps the post off without a note (R2 T4-M3)', () => {
+    runSetup(null)
+    const field = screen.getByLabelText('Distance (km)')
+    fireEvent.focus(field)
+    fireEvent.change(field, { target: { value: '6,' } })
+    expect(screen.queryByText(DIST_NOTE)).toBeNull()
+    expect(postButton()!.disabled).toBe(true)
+    fireEvent.change(field, { target: { value: '6,2' } })
+    expect(postButton()!.disabled).toBe(false)
+  })
+
+  it('"Was it yesterday?" picked first links to yesterday\'s workout too', async () => {
+    runSetup()
+    fireEvent.click(screen.getByRole('switch', { name: 'Was it yesterday?' }))
+    fireEvent.click(radio('Done as planned'))
+    expect((await sent()).detail).toMatchObject({ run: { planned: { session: 'w2-s2' }, status: 'as_planned' } })
+  })
+
+  it('a run detail never goes with another activity', async () => {
+    runSetup()
+    fireEvent.click(radio('Done as planned'))
+    fireEvent.click(radio('Cycling'))
+    const input = await sent()
+    expect(input).toMatchObject({ activity: 'bike', detail: null })
+  })
+
+  it('speaks the language of the app', async () => {
+    await setLang('pt-BR')
+    try {
+      runSetup(planOf(), 'Escolher da galeria')
+      expect(screen.getByRole('radio', { name: 'Fiz como planejado' })).toBeTruthy()
+      expect(screen.getByRole('radio', { name: 'Ajustar' })).toBeTruthy()
+      expect(screen.getByRole('radiogroup', { name: 'Esforço' })).toBeTruthy()
+      fireEvent.change(screen.getByLabelText('Distância (km)'), { target: { value: 'abc' } })
+      expect(screen.getByText('Distância de 0,1 a 100 km, até duas casas.')).toBeTruthy()
+      cleanup()
+      runSetup(null, 'Escolher da galeria')
+      expect(screen.getByText('Fora do plano')).toBeTruthy()
+    } finally { await setLang('en') }
   })
 })

@@ -123,6 +123,20 @@ function fitPlanWeek(fit: Fit, sessions: PlanSession[], weekFirst: string, raceD
   return fit(trimmed(sessions, days.length, offEve), days, race.raceDay)
 }
 
+/**
+ * Fits `sessions` into the plan week that begins on `weekFirst` with the strength week of now, on
+ * the weekdays of `allowed` only (the days left in the current week) and, in the race week, before
+ * the race. With fewer days than sessions the Longão goes first, then the extra easy runs, as in
+ * the race week; the quality run always stays. Used by run-adjust.ts (plan Decision 9).
+ */
+export function fitRestOfWeek(S: RunState, plan: RunPlan, sessions: PlanSession[], weekFirst: string, allowed: number[]): Session[] {
+  const fit = fitter(S, plan.answers?.longDay ?? 0)
+  const raceDate = isRace(plan.goal) ? plan.raceDate : undefined
+  if (raceBounds(raceDate, weekFirst)) return fitPlanWeek(fit, sessions, weekFirst, raceDate, allowed)
+  if (!allowed.length) return []
+  return fit(trimmed(sessions, allowed.length, allowed.length), allowed)
+}
+
 // The day two days before the race: the last day a quality run can take, so the plan's last week
 // is the week holding it (a race on the first or second day of the week ends the plan the week before).
 const raceWeekOf = (raceDate: string, ws: number) => weekStartDate(addDays(raceDate, -2), ws)
@@ -174,11 +188,12 @@ export function raceStartOf(answers: Answers, today: string, ws: number): { race
   return { raceStart, waitWeeks: weeksBetween(first.start, raceStart) }
 }
 
-// Race weeks after `offset` bridge weeks: indexes and ids (w{week}-s{position}) move along.
-const shifted = (weeks: PlanWeek[], offset: number): PlanWeek[] => weeks.map(w => {
-  const index = w.index + offset
-  return { ...w, index, sessions: w.sessions.map(s => ({ ...s, id: s.id.replace(/^w\d+-/, `w${index}-`) })) }
-})
+/** Week `w` as plan week `index`: the index and the week part of its ids (w{week}-s{k}) move along. */
+export const renumberWeek = <T extends { index: number; sessions: { id: string }[] }>(w: T, index: number): T =>
+  ({ ...w, index, sessions: w.sessions.map(s => ({ ...s, id: s.id.replace(/^w\d+-/, `w${index}-`) })) })
+
+// Race weeks after `offset` bridge weeks: indexes and ids move along.
+const shifted = (weeks: PlanWeek[], offset: number): PlanWeek[] => weeks.map(w => renumberWeek(w, w.index + offset))
 
 /**
  * Builds the plan from the answers, fits every week around the strength week and stores it in

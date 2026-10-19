@@ -22,8 +22,8 @@ describe('privacy policy page', () => {
 
   it('has the English version and the update date', () => {
     expect(html).toContain('id="en"')
-    expect(visible).toContain('Última atualização: 16 de outubro de 2026')
-    expect(visible).toContain('Last updated: October 16, 2026')
+    expect(visible).toContain('Última atualização: 19 de outubro de 2026')
+    expect(visible).toContain('Last updated: October 19, 2026')
   })
 
   it('covers the sleep pillar: what is kept, that it is optional and who sees it, in both languages', () => {
@@ -124,6 +124,41 @@ describe('privacy policy page', () => {
     expect(en).toContain('trackers with their entries')
     expect(en).toContain('your sleep nights, your habits or your trackers')
     expect(en).toContain('your sleep nights and your tracker entries can say something about your health')
+  })
+
+  it('covers running: what is kept, what only you see and what friends see, in both languages', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('A corrida é opcional')
+    expect(pt).toContain('a sua meta, o prazo, os seus ritmos e os treinos de cada semana')
+    expect(pt).toContain('a distância, o esforço de 1 a 10 e os blocos que você correu')
+    expect(pt).toContain('Só você vê o plano, a meta, o prazo, os ritmos, o esforço e os blocos')
+    expect(pt).toContain('seus amigos veem apenas o tipo de treino e a distância')
+    expect(pt).toContain('os check-ins de corrida que ainda não chegaram ao servidor')
+    expect(en).toContain('Running is optional')
+    expect(en).toContain('your goal, the deadline, your paces and each week\'s workouts')
+    expect(en).toContain('the distance, the effort from 1 to 10 and the blocks you ran')
+    expect(en).toContain('Only you see the plan, the goal, the deadline, the paces, the effort and the blocks')
+    expect(en).toContain('your friends see only the workout type and the distance')
+    expect(en).toContain('running check-ins that have not reached the server yet')
+  })
+
+  it('says the device keeps a copy of the recent check-ins, 14 days with the run data (1e-b final review M4)', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('da área social e dos seus check-ins dos últimos 14 dias')
+    expect(pt).toContain('uma cópia do plano e dos seus check-ins recentes (os dos últimos 14 dias, com os dados de corrida)')
+    expect(en).toContain('social data and of your check-ins from the last 14 days')
+    expect(en).toContain('a copy of the plan and of your recent check-ins (those from the last 14 days, with their running data)')
+  })
+
+  it('lists the running plan, effort and blocks among what nobody sees, and the run type and distance among what friends see', () => {
+    const pt = visible.slice(0, visible.indexOf('Privacy Policy'))
+    const en = visible.slice(visible.indexOf('Privacy Policy'))
+    expect(pt).toContain('a observação privada dos check-ins, o plano de corrida, o esforço e os blocos, o seu diário alimentar')
+    expect(en).toContain('the private note on your check-ins, your running plan, effort and blocks, your food diary')
+    expect(pt).toContain('o dia e a duração e, num check-in de corrida, o tipo de treino e a distância')
+    expect(en).toContain('the day and the duration and, on a running check-in, the workout type and the distance')
   })
 
   it('covers the nutrition pillar and Open Food Facts in both languages', () => {

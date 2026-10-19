@@ -231,6 +231,25 @@ describe('check-in rows', () => {
     expect(out[0]).toMatchObject({ id: ID, note: 'joelho ok', duration_min: 55 })
   })
 
+  it('reads my run check-ins from a day on, with only what the run history needs', async () => {
+    const run = { status: 'unplanned', distance_km: 6.2, rpe: 7 }
+    const c = chain({ data: [
+      { id: ID, day: '2026-10-10', duration_min: '38', detail: { run } },
+      { id: 'old', day: '2026-10-11', duration_min: null, detail: null }
+    ], error: null }); h.from.mockReturnValue(c.proxy)
+    await expect(api.fetchMyRunCheckins('2026-10-05')).resolves.toEqual([
+      { id: ID, day: '2026-10-10', duration_min: 38, run },
+      { id: 'old', day: '2026-10-11', duration_min: null, run: null }
+    ])
+    expect(h.from).toHaveBeenCalledWith('checkins')
+    expect(arg(c, 'select')).toEqual(['id, day, duration_min, detail'])
+    expect(c.calls).toContainEqual(['eq', ['activity', 'run']])
+    expect(c.calls).toContainEqual(['gte', ['day', '2026-10-05']])
+
+    h.from.mockReturnValue(chain({ data: null, error: { message: 'Failed to fetch' } }).proxy)
+    await expect(api.fetchMyRunCheckins('2026-10-05')).rejects.toMatchObject({ code: 'network' })
+  })
+
   it('hides a post for me; hiding it twice is fine', async () => {
     const c = chain({ data: null, error: null }); h.from.mockReturnValue(c.proxy)
     await api.hideCheckin(ID)

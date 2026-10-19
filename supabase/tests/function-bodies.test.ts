@@ -91,6 +91,18 @@ const REDEFINED: { fn: string; base: string; in: string; changed: string[] }[] =
     fn: 'join_challenge', base: '0024_sleep_challenge.sql', in: '0029_habits_challenge.sql',
     changed: ["share_sleep = (v_c.template = 'sleep_nights_on_target')"],
   },
+  // Running check-ins (1e-b): the guard validates detail.run, a run with distance or effort is a
+  // detailed day, and the feed item and get_checkin gain run_type and distance_km.
+  { fn: 'checkins_guard', base: '0020_checkin_feed.sql', in: '0032_run.sql', changed: [] },
+  {
+    fn: 'close_training_days', base: '0019_training_days.sql', in: '0032_run.sql',
+    changed: [
+      "coalesce(bool_or(jsonb_typeof(detail -> 'entries') = 'array'",
+      "and jsonb_array_length(detail -> 'entries') > 0), false)",
+    ],
+  },
+  { fn: 'checkin_feed_item', base: '0020_checkin_feed.sql', in: '0032_run.sql', changed: [] },
+  { fn: 'get_checkin', base: '0018_checkin_social.sql', in: '0032_run.sql', changed: [] },
 ]
 
 describe('redefined function bodies', () => {

@@ -5,7 +5,7 @@ vi.mock('../gamification/events', () => ({ emit: vi.fn(), flush: vi.fn(async () 
 import { DEF, useStore } from '../../store/useStore.js'
 import { emit } from '../gamification/events'
 import { checkinWorkout, detailOf, detailOfWorkout, draftFor, dropCheckinWorkout, ingestCheckin, linkWorkout, workoutOfCheckin } from './ingest'
-import type { CheckinDetail } from './types'
+import type { CheckinDetail, StrengthDetail } from './types'
 
 const BENCH = '0025', ROW = '0027', RUN = 'treadmill'
 const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v))
@@ -41,7 +41,7 @@ describe('draftFor', () => {
   })
 
   it('reopens a detail already given, with the skipped exercises off', () => {
-    const given: CheckinDetail = { entries: [{ id: BENCH, sets: [done(50, 5)] as { w: number; r: number; done: true }[] }] }
+    const given: StrengthDetail = { entries: [{ id: BENCH, sets: [done(50, 5)] as { w: number; r: number; done: true }[] }] }
     expect(draftFor(stateWith(), 'r1', given)).toEqual([
       { id: BENCH, on: true, sets: [{ w: 50, r: 5 }] },
       { id: ROW, on: false, sets: [{ w: 0, r: 10 }, { w: 0, r: 10 }] }
@@ -49,7 +49,7 @@ describe('draftFor', () => {
   })
 
   it('reopens a detail given in the other unit in the profile’s unit', () => {
-    const given: CheckinDetail = { unit: 'kg', entries: [{ id: BENCH, sets: [done(60, 8)] as { w: number; r: number; done: true }[] }] }
+    const given: StrengthDetail = { unit: 'kg', entries: [{ id: BENCH, sets: [done(60, 8)] as { w: number; r: number; done: true }[] }] }
     // 60 kg = 132.5 lb, on the 5 lb grid of a bench: 135
     expect(draftFor(stateWith({ unit: 'lb' }), 'r1', given)[0]).toEqual({ id: BENCH, on: true, sets: [{ w: 135, r: 8 }] })
     expect(draftFor(stateWith({ unit: 'kg' }), 'r1', given)[0]).toEqual({ id: BENCH, on: true, sets: [{ w: 60, r: 8 }] })
@@ -58,6 +58,12 @@ describe('draftFor', () => {
   it('is empty without a routine', () => {
     expect(draftFor(stateWith(), null)).toEqual([])
     expect(draftFor(stateWith(), 'gone')).toEqual([])
+  })
+
+  it('opens as with no detail for a run detail, which has no sets', () => {
+    const run: CheckinDetail = { run: { status: 'unplanned', distance_km: 6.2 } }
+    const S = stateWith({ workouts: [past('w1', '2026-10-03', [done(42.5, 8)])] })
+    expect(draftFor(S, 'r1', run)).toEqual(draftFor(S, 'r1'))
   })
 })
 
@@ -97,7 +103,7 @@ describe('detailOfWorkout', () => {
 })
 
 describe('the session a detailed check-in writes', () => {
-  const detail: CheckinDetail = { entries: [{ id: BENCH, sets: [done(45, 8), done(45, 6)] as { w: number; r: number; done: true }[] }] }
+  const detail: StrengthDetail = { entries: [{ id: BENCH, sets: [done(45, 8), done(45, 6)] as { w: number; r: number; done: true }[] }] }
 
   it('has the shape of a finished workout, with the check-in id', () => {
     const w = checkinWorkout(stateWith(), { id: 'c1', day: '2026-10-10', routineId: 'r1', name: 'Push', durationMin: 55, detail })
@@ -136,6 +142,13 @@ describe('the session a detailed check-in writes', () => {
     expect(workoutOfCheckin(S, 'c1')!.entries[0].sets).toEqual([{ w: 47.5, r: 5, done: true }])
   })
 
+  it('writes no sets for a run detail that reaches it', () => {
+    const run = { run: { status: 'unplanned', rpe: 5 } } as unknown as StrengthDetail
+    const w = checkinWorkout(stateWith(), { id: 'c3', day: '2026-10-10', routineId: null, name: 'Corrida', durationMin: 30, detail: run })
+    expect(w.entries).toEqual([])
+    expect(w.prs).toEqual([])
+  })
+
   it('links a finished live workout to its check-in instead of writing a second session', () => {
     useStore.setState({ S: stateWith({ workouts: [past('live', '2026-10-10', [done(40, 8)])] }) })
     linkWorkout('live', 'c7')
@@ -147,7 +160,7 @@ describe('the session a detailed check-in writes', () => {
 })
 
 describe('when the check-in goes', () => {
-  const detail: CheckinDetail = { entries: [{ id: BENCH, sets: [done(45, 8)] as { w: number; r: number; done: true }[] }] }
+  const detail: StrengthDetail = { entries: [{ id: BENCH, sets: [done(45, 8)] as { w: number; r: number; done: true }[] }] }
 
   it('its own session leaves the history, and the kept weight it set goes back', () => {
     useStore.setState({ S: stateWith({ workouts: [past('w1', '2026-10-03', [done(42.5, 8)])], exWeights: { [BENCH]: { w: 42.5, d: '2026-10-03' } } }) })
@@ -180,7 +193,7 @@ describe('when the check-in goes', () => {
 describe('PRs of a detailed check-in', () => {
   it('send the same pr events as the end of a live workout, keyed by the check-in', () => {
     useStore.setState({ S: stateWith({ workouts: [past('w1', '2026-10-03', [done(42.5, 8)])] }) })
-    const detail: CheckinDetail = { entries: [
+    const detail: StrengthDetail = { entries: [
       { id: BENCH, sets: [done(45, 8)] as { w: number; r: number; done: true }[] },
       { id: ROW, sets: [done(30, 10)] as { w: number; r: number; done: true }[] }
     ] }
@@ -204,21 +217,21 @@ describe('PRs of a detailed check-in', () => {
 describe('the unit of a detail', () => {
   const sets = (...ws: number[]) => ws.map(w => done(w, 8)) as { w: number; r: number; done: true }[]
   const SQUAT = '0043'
-  const input = (detail: CheckinDetail) => ({ id: 'c1', day: '2026-10-10', routineId: 'r1', name: 'Push', durationMin: 50, detail })
-  const weights = (S: ReturnType<typeof stateWith>, detail: CheckinDetail) =>
+  const input = (detail: StrengthDetail) => ({ id: 'c1', day: '2026-10-10', routineId: 'r1', name: 'Push', durationMin: 50, detail })
+  const weights = (S: ReturnType<typeof stateWith>, detail: StrengthDetail) =>
     checkinWorkout(S, input(detail)).entries.map(e => e.sets.map(s => s.w))
 
   it('kg into an lb profile: convertWeight, then snapped to the lb step of each exercise', () => {
     const S = stateWith({ unit: 'lb' })
     // bench 62.5 kg = 138 lb, 5 lb step: 140. A squat steps by 10 lb: 100 kg = 220.5 lb, 220.
-    const detail: CheckinDetail = { unit: 'kg', entries: [{ id: BENCH, sets: sets(62.5, 61) }, { id: SQUAT, sets: sets(100) }] }
+    const detail: StrengthDetail = { unit: 'kg', entries: [{ id: BENCH, sets: sets(62.5, 61) }, { id: SQUAT, sets: sets(100) }] }
     expect(weights(S, detail)).toEqual([[140, 135], [220]])
   })
 
   it('lb into a kg profile, with the step of the routine’s own config when it sets one', () => {
     const S = stateWith({ unit: 'kg', routines: [{ ...clone(PUSH), ex: [{ ...PUSH.ex[0], inc: 1 }, PUSH.ex[1]] }] })
     // 135 lb = 61.25 kg; bench steps by 1 here: 61. The row by its default 5: 100 lb = 45.25 kg, 45.
-    const detail: CheckinDetail = { unit: 'lb', entries: [{ id: BENCH, sets: sets(135) }, { id: ROW, sets: sets(100) }] }
+    const detail: StrengthDetail = { unit: 'lb', entries: [{ id: BENCH, sets: sets(135) }, { id: ROW, sets: sets(100) }] }
     expect(weights(S, detail)).toEqual([[61], [45]])
   })
 
@@ -230,7 +243,7 @@ describe('the unit of a detail', () => {
 
   it('ingesting the same detail twice gives the same history', () => {
     useStore.setState({ S: stateWith({ unit: 'lb' }) })
-    const detail: CheckinDetail = { unit: 'kg', entries: [{ id: BENCH, sets: sets(62.5, 60) }] }
+    const detail: StrengthDetail = { unit: 'kg', entries: [{ id: BENCH, sets: sets(62.5, 60) }] }
     const frozen = clone(detail)
     ingestCheckin(input(detail))
     const once = clone(useStore.getState().S.workouts)

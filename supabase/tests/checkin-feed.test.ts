@@ -17,8 +17,9 @@ type Next = { before: string; before_key: string } | null
 type Feed = { items: any[]; next: Next }
 
 const DETAIL = { entries: [{ id: 'bench', sets: [{ w: 60, r: 8, done: true }] }] }
-const CHECKIN_KEYS = ['activity', 'at', 'caption', 'comments_count', 'context', 'day', 'duration_min', 'key',
-  'photo_path', 'reactions', 'title', 'type', 'user', 'visibility']
+// run_type and distance_km since 0032 (null off a run).
+const CHECKIN_KEYS = ['activity', 'at', 'caption', 'comments_count', 'context', 'day', 'distance_km', 'duration_min',
+  'key', 'photo_path', 'reactions', 'run_type', 'title', 'type', 'user', 'visibility']
 
 const feed = (uid: string | null, next: Next = null) => next
   ? one<Feed>(db, uid, 'select public.get_checkin_feed($1::timestamptz, $2) as v', [next.before, next.before_key])

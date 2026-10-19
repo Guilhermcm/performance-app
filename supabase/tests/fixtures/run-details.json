@@ -1,0 +1,1768 @@
+{
+  "cases": [
+    {
+      "name": "unplanned with a distance",
+      "activity": "run",
+      "run": {
+        "status": "unplanned",
+        "distance_km": 5
+      },
+      "valid": true
+    },
+    {
+      "name": "unplanned with an effort",
+      "activity": "run",
+      "run": {
+        "status": "unplanned",
+        "rpe": 7
+      },
+      "valid": true
+    },
+    {
+      "name": "unplanned with nothing else",
+      "activity": "run",
+      "run": {
+        "status": "unplanned"
+      },
+      "valid": true
+    },
+    {
+      "name": "as planned, linked to an interval workout, with a distance",
+      "activity": "run",
+      "run": {
+        "status": "as_planned",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        },
+        "distance_km": 6.2
+      },
+      "valid": true
+    },
+    {
+      "name": "as planned with distance and effort",
+      "activity": "run",
+      "run": {
+        "status": "as_planned",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        },
+        "distance_km": 6.2,
+        "rpe": 8
+      },
+      "valid": true
+    },
+    {
+      "name": "adjusted with the planned workout and the blocks run",
+      "activity": "run",
+      "run": {
+        "status": "adjusted",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        },
+        "blocks": [
+          {
+            "zone": "easy",
+            "min": 12
+          },
+          {
+            "repeat": 4,
+            "blocks": [
+              {
+                "zone": "hard",
+                "min": 2
+              },
+              {
+                "zone": "walk",
+                "min": 2
+              }
+            ]
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          }
+        ],
+        "distance_km": 5.8,
+        "rpe": 9
+      },
+      "valid": true
+    },
+    {
+      "name": "distance 0.1 (the least)",
+      "activity": "run",
+      "run": {
+        "status": "unplanned",
+        "distance_km": 0.1
+      },
+      "valid": true
+    },
+    {
+      "name": "distance 100 (the most)",
+      "activity": "run",
+      "run": {
+        "status": "unplanned",
+        "distance_km": 100
+      },
+      "valid": true
+    },
+    {
+      "name": "distance 12.34 (two decimals)",
+      "activity": "run",
+      "run": {
+        "status": "unplanned",
+        "distance_km": 12.34
+      },
+      "valid": true
+    },
+    {
+      "name": "effort 1",
+      "activity": "run",
+      "run": {
+        "status": "unplanned",
+        "rpe": 1
+      },
+      "valid": true
+    },
+    {
+      "name": "effort 10",
+      "activity": "run",
+      "run": {
+        "status": "unplanned",
+        "rpe": 10
+      },
+      "valid": true
+    },
+    {
+      "name": "blocks with 12 items",
+      "activity": "run",
+      "run": {
+        "status": "adjusted",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        },
+        "blocks": [
+          {
+            "zone": "easy",
+            "min": 5
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "name": "block minutes 1 and 300",
+      "activity": "run",
+      "run": {
+        "status": "adjusted",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        },
+        "blocks": [
+          {
+            "zone": "easy",
+            "min": 1
+          },
+          {
+            "zone": "moderate",
+            "min": 300
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "name": "repeat 2 and 20, a repeat of 4 blocks",
+      "activity": "run",
+      "run": {
+        "status": "adjusted",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        },
+        "blocks": [
+          {
+            "repeat": 2,
+            "blocks": [
+              {
+                "zone": "hard",
+                "min": 1
+              }
+            ]
+          },
+          {
+            "repeat": 20,
+            "blocks": [
+              {
+                "zone": "easy",
+                "min": 1
+              },
+              {
+                "zone": "moderate",
+                "min": 1
+              },
+              {
+                "zone": "hard",
+                "min": 1
+              },
+              {
+                "zone": "walk",
+                "min": 1
+              }
+            ]
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "name": "planned week 1, run and walk",
+      "activity": "run",
+      "run": {
+        "status": "as_planned",
+        "planned": {
+          "week": 1,
+          "session": "w1-s1",
+          "type": "runwalk",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        }
+      },
+      "valid": true
+    },
+    {
+      "name": "planned week 64, long run",
+      "activity": "run",
+      "run": {
+        "status": "as_planned",
+        "planned": {
+          "week": 64,
+          "session": "w64-s4",
+          "type": "long",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 90
+            }
+          ]
+        }
+      },
+      "valid": true
+    },
+    {
+      "name": "planned easy run",
+      "activity": "run",
+      "run": {
+        "status": "as_planned",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "easy",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 30
+            }
+          ]
+        }
+      },
+      "valid": true
+    },
+    {
+      "name": "planned tempo run",
+      "activity": "run",
+      "run": {
+        "status": "as_planned",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "tempo",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        }
+      },
+      "valid": true
+    },
+    {
+      "name": "planned session of 16 characters",
+      "activity": "run",
+      "run": {
+        "status": "as_planned",
+        "planned": {
+          "week": 3,
+          "session": "w12345678-s12345",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        }
+      },
+      "valid": true
+    },
+    {
+      "name": "unplanned with blocks (only planned is ruled out)",
+      "activity": "run",
+      "run": {
+        "status": "unplanned",
+        "blocks": [
+          {
+            "zone": "easy",
+            "min": 30
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "name": "distance 0.05",
+      "activity": "run",
+      "run": {
+        "status": "unplanned",
+        "distance_km": 0.05
+      },
+      "valid": false
+    },
+    {
+      "name": "distance 100.01",
+      "activity": "run",
+      "run": {
+        "status": "unplanned",
+        "distance_km": 100.01
+      },
+      "valid": false
+    },
+    {
+      "name": "distance 6.255 (three decimals)",
+      "activity": "run",
+      "run": {
+        "status": "unplanned",
+        "distance_km": 6.255
+      },
+      "valid": false
+    },
+    {
+      "name": "distance as text \"6,2\"",
+      "activity": "run",
+      "run": {
+        "status": "unplanned",
+        "distance_km": "6,2"
+      },
+      "valid": false
+    },
+    {
+      "name": "distance null",
+      "activity": "run",
+      "run": {
+        "status": "unplanned",
+        "distance_km": null
+      },
+      "valid": false
+    },
+    {
+      "name": "effort 0",
+      "activity": "run",
+      "run": {
+        "status": "unplanned",
+        "rpe": 0
+      },
+      "valid": false
+    },
+    {
+      "name": "effort 11",
+      "activity": "run",
+      "run": {
+        "status": "unplanned",
+        "rpe": 11
+      },
+      "valid": false
+    },
+    {
+      "name": "effort 7.5",
+      "activity": "run",
+      "run": {
+        "status": "unplanned",
+        "rpe": 7.5
+      },
+      "valid": false
+    },
+    {
+      "name": "effort as text \"8\"",
+      "activity": "run",
+      "run": {
+        "status": "unplanned",
+        "rpe": "8"
+      },
+      "valid": false
+    },
+    {
+      "name": "status missing",
+      "activity": "run",
+      "run": {
+        "distance_km": 5
+      },
+      "valid": false
+    },
+    {
+      "name": "status done",
+      "activity": "run",
+      "run": {
+        "status": "done",
+        "distance_km": 5
+      },
+      "valid": false
+    },
+    {
+      "name": "unknown key pace",
+      "activity": "run",
+      "run": {
+        "status": "unplanned",
+        "distance_km": 5,
+        "pace": 6
+      },
+      "valid": false
+    },
+    {
+      "name": "blocks with 13 items",
+      "activity": "run",
+      "run": {
+        "status": "adjusted",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        },
+        "blocks": [
+          {
+            "zone": "easy",
+            "min": 5
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "blocks empty",
+      "activity": "run",
+      "run": {
+        "status": "adjusted",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        },
+        "blocks": []
+      },
+      "valid": false
+    },
+    {
+      "name": "block of 0 min",
+      "activity": "run",
+      "run": {
+        "status": "adjusted",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        },
+        "blocks": [
+          {
+            "zone": "easy",
+            "min": 0
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "block of 301 min",
+      "activity": "run",
+      "run": {
+        "status": "adjusted",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        },
+        "blocks": [
+          {
+            "zone": "easy",
+            "min": 301
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "block of 2.5 min",
+      "activity": "run",
+      "run": {
+        "status": "adjusted",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        },
+        "blocks": [
+          {
+            "zone": "easy",
+            "min": 2.5
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "zone fast",
+      "activity": "run",
+      "run": {
+        "status": "adjusted",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        },
+        "blocks": [
+          {
+            "zone": "fast",
+            "min": 10
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "block with an unknown key",
+      "activity": "run",
+      "run": {
+        "status": "adjusted",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        },
+        "blocks": [
+          {
+            "zone": "easy",
+            "min": 10,
+            "pace": 6
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "repeat 1",
+      "activity": "run",
+      "run": {
+        "status": "adjusted",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        },
+        "blocks": [
+          {
+            "repeat": 1,
+            "blocks": [
+              {
+                "zone": "easy",
+                "min": 2
+              }
+            ]
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "repeat 21",
+      "activity": "run",
+      "run": {
+        "status": "adjusted",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        },
+        "blocks": [
+          {
+            "repeat": 21,
+            "blocks": [
+              {
+                "zone": "easy",
+                "min": 2
+              }
+            ]
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "repeat of 5 blocks",
+      "activity": "run",
+      "run": {
+        "status": "adjusted",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        },
+        "blocks": [
+          {
+            "repeat": 2,
+            "blocks": [
+              {
+                "zone": "easy",
+                "min": 1
+              },
+              {
+                "zone": "easy",
+                "min": 1
+              },
+              {
+                "zone": "easy",
+                "min": 1
+              },
+              {
+                "zone": "easy",
+                "min": 1
+              },
+              {
+                "zone": "easy",
+                "min": 1
+              }
+            ]
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "repeat inside a repeat",
+      "activity": "run",
+      "run": {
+        "status": "adjusted",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        },
+        "blocks": [
+          {
+            "repeat": 2,
+            "blocks": [
+              {
+                "repeat": 2,
+                "blocks": [
+                  {
+                    "zone": "easy",
+                    "min": 1
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "as planned without planned",
+      "activity": "run",
+      "run": {
+        "status": "as_planned",
+        "distance_km": 5
+      },
+      "valid": false
+    },
+    {
+      "name": "as planned with blocks",
+      "activity": "run",
+      "run": {
+        "status": "as_planned",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        },
+        "blocks": [
+          {
+            "zone": "easy",
+            "min": 12
+          },
+          {
+            "repeat": 4,
+            "blocks": [
+              {
+                "zone": "hard",
+                "min": 2
+              },
+              {
+                "zone": "walk",
+                "min": 2
+              }
+            ]
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "adjusted without blocks",
+      "activity": "run",
+      "run": {
+        "status": "adjusted",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        },
+        "distance_km": 5
+      },
+      "valid": false
+    },
+    {
+      "name": "adjusted without planned",
+      "activity": "run",
+      "run": {
+        "status": "adjusted",
+        "blocks": [
+          {
+            "zone": "easy",
+            "min": 12
+          },
+          {
+            "repeat": 4,
+            "blocks": [
+              {
+                "zone": "hard",
+                "min": 2
+              },
+              {
+                "zone": "walk",
+                "min": 2
+              }
+            ]
+          },
+          {
+            "zone": "easy",
+            "min": 5
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "unplanned with planned",
+      "activity": "run",
+      "run": {
+        "status": "unplanned",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        },
+        "distance_km": 5
+      },
+      "valid": false
+    },
+    {
+      "name": "planned week 0",
+      "activity": "run",
+      "run": {
+        "status": "as_planned",
+        "planned": {
+          "week": 0,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "planned week 65",
+      "activity": "run",
+      "run": {
+        "status": "as_planned",
+        "planned": {
+          "week": 65,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "planned session \"x\"",
+      "activity": "run",
+      "run": {
+        "status": "as_planned",
+        "planned": {
+          "week": 3,
+          "session": "x",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "planned session longer than 16",
+      "activity": "run",
+      "run": {
+        "status": "as_planned",
+        "planned": {
+          "week": 3,
+          "session": "w12345678-s123456",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "planned type race",
+      "activity": "run",
+      "run": {
+        "status": "as_planned",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "race",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "planned without blocks",
+      "activity": "run",
+      "run": {
+        "status": "as_planned",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals"
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "planned with an unknown key",
+      "activity": "run",
+      "run": {
+        "status": "as_planned",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ],
+          "day": 2
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "an empty block",
+      "activity": "run",
+      "run": {
+        "status": "adjusted",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        },
+        "blocks": [
+          {}
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "an empty block inside a repeat",
+      "activity": "run",
+      "run": {
+        "status": "adjusted",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "intervals",
+          "blocks": [
+            {
+              "zone": "easy",
+              "min": 10
+            },
+            {
+              "repeat": 5,
+              "blocks": [
+                {
+                  "zone": "hard",
+                  "min": 2
+                },
+                {
+                  "zone": "easy",
+                  "min": 2
+                }
+              ]
+            },
+            {
+              "zone": "easy",
+              "min": 5
+            }
+          ]
+        },
+        "blocks": [
+          {
+            "repeat": 3,
+            "blocks": [
+              {}
+            ]
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "an empty block in planned.blocks",
+      "activity": "run",
+      "run": {
+        "status": "as_planned",
+        "planned": {
+          "week": 3,
+          "session": "w3-s2",
+          "type": "easy",
+          "blocks": [
+            {}
+          ]
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "planned empty",
+      "activity": "run",
+      "run": {
+        "status": "as_planned",
+        "planned": {}
+      },
+      "valid": false
+    },
+    {
+      "name": "run as text",
+      "activity": "run",
+      "run": "fast",
+      "valid": false
+    },
+    {
+      "name": "run as an array",
+      "activity": "run",
+      "run": [
+        {
+          "status": "unplanned"
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "run null",
+      "activity": "run",
+      "run": null,
+      "valid": false
+    },
+    {
+      "name": "a valid run on a strength check-in",
+      "activity": "strength",
+      "run": {
+        "status": "unplanned",
+        "distance_km": 5
+      },
+      "valid": false
+    }
+  ]
+}
