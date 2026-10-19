@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { dismissSuggestion, recordRaceResult, repeatPreviousWeek, updateVdot } from './run-adjust'
 import { applyRunPlan, type RunState } from './run-actions'
+import { doneSessions, weekSummary } from './progress'
 import { nextSuggestion } from './suggestions'
 import { vdotFrom } from './vdot'
 import type { Answers, Phase, RunPlan, Week } from './types'
@@ -34,7 +35,9 @@ const plan = (S: RunState) => S.runPlan as RunPlan
 const types = (w: Week) => w.sessions.map(s => s.type)
 // A week with its index and ids taken off, to compare weeks that moved.
 const bare = (w: Week) => ({ phase: w.phase, recovery: w.recovery, sessions: w.sessions.map(s => ({ type: s.type, blocks: s.blocks, day: s.day })) })
-const idsOk = (w: Week) => w.sessions.every((s, k) => s.id === `w${w.index}-s${k + 1}`)
+// Every id names the week, and no two are the same.
+const idsOk = (w: Week) => w.sessions.every(s => new RegExp(`^w${w.index}-s[1-9][0-9]*$`).test(s.id)) &&
+  new Set(w.sessions.map(s => s.id)).size === w.sessions.length
 const strengthKept = (S: RunState) => {
   expect(S.week).toEqual({ [MON]: ['leg'], [WED]: ['upper'] })
   expect(S.routines).toEqual([LEG, UPPER])
@@ -171,6 +174,75 @@ describe('repeatPreviousWeek without a race date', () => {
     const week = plan(T).weeks[6]
     expect(types(week).sort()).toEqual(['easy', 'intervals'])
     expect(new Set(week.sessions.map(s => s.day)).size).toBe(2)
+  })
+})
+
+describe('repeatPreviousWeek: the rebuilt week takes new ids (R2 T6-I1)', () => {
+  // Week 5's first workout, run on Monday and linked to it.
+  const mondayRun = (S: RunState) => {
+    const s1 = plan(S).weeks[4].sessions[0]
+    return { id: 'c1', day: weekFirst(5), duration_min: 30, run: { planned: { week: 5, session: 'w5-s1', type: s1.type, blocks: s1.blocks }, status: 'as_planned' as const, distance_km: 5 } }
+  }
+  const maxK = (w: Week) => Math.max(...w.sessions.map(s => Number(s.id.split('-s')[1])))
+
+  it('insert: a check-in linked earlier this week matches no new workout and counts once', () => {
+    const S = weeksState()
+    const replaced = clone(plan(S).weeks[4])
+    const logs = [mondayRun(S)]
+    repeatPreviousWeek(S, day(weekFirst(5), 2))
+    const week = plan(S).weeks[4]
+    expect(week.sessions.map(s => s.id)).toEqual(week.sessions.map((_, k) => `w5-s${maxK(replaced) + k + 1}`))
+    expect(week.sessions.some(s => replaced.sessions.some(r => r.id === s.id))).toBe(false)
+    expect(doneSessions(plan(S), 4, logs, 1).size).toBe(0)
+    expect(weekSummary(plan(S), 4, logs, 1)).toMatchObject({ done: 0, minutes: 30, km: 5 })
+    // The old week 5 is now week 6 with its own ids: the check-in is not counted there either.
+    expect(doneSessions(plan(S), 5, logs, 1).size).toBe(0)
+  })
+
+  it('swap: the same holds', () => {
+    const S = raceState()
+    // Week 8 has no base week ahead: the repeat swaps it.
+    const p = plan(S)
+    const s1 = p.weeks[7].sessions[0]
+    const logs = [{ id: 'c1', day: weekFirst(8), duration_min: 30, run: { planned: { week: 8, session: 'w8-s1', type: s1.type, blocks: s1.blocks }, status: 'as_planned' as const } }]
+    repeatPreviousWeek(S, day(weekFirst(8), 2))
+    const week = plan(S).weeks[7]
+    expect(week.sessions.every(s => /^w8-s[1-9][0-9]*$/.test(s.id) && s.id !== 'w8-s1')).toBe(true)
+    expect(doneSessions(plan(S), 7, logs, 1).size).toBe(0)
+  })
+
+  it('a second repeat of the same week keeps the ids unique', () => {
+    const S = weeksState()
+    repeatPreviousWeek(S, day(weekFirst(5), 2))
+    const first = plan(S).weeks[4].sessions.map(s => s.id)
+    plan(S).dismissed = {}
+    repeatPreviousWeek(S, day(weekFirst(5), 3))
+    const again = plan(S).weeks[4].sessions.map(s => s.id)
+    expect(again.some(id => first.includes(id))).toBe(false)
+    expect(again.every(id => id.length <= 16)).toBe(true)
+  })
+})
+
+describe('repeatPreviousWeek: dismissed keys move with the weeks (R2 T6-M2)', () => {
+  it('without a race date, the keys of the weeks ahead shift by one', () => {
+    const S = weeksState()
+    plan(S).dismissed = { 'weak:2': 'a', 'effort:5': 'b', 'weak:7': 'c', 'race:2027-01-10': 'd', 'faster:c9': 'e' }
+    const today = day(weekFirst(3), 2)
+    repeatPreviousWeek(S, today)
+    expect(plan(S).dismissed).toEqual({ 'weak:2': 'a', 'effort:6': 'b', 'weak:8': 'c', 'race:2027-01-10': 'd', 'faster:c9': 'e', 'weak:3': today, 'effort:3': today })
+  })
+
+  it('with a race date, only the weeks that moved take their keys; the removed week\'s key goes', () => {
+    const S = raceState()
+    const phases: Phase[] = ['base', 'build', 'build', 'base', 'specific', 'taper']
+    const p = plan(S)
+    p.weeks = p.weeks.slice(0, 6).map((w, i) => ({ ...w, phase: phases[i] }))
+    p.raceDate = day(weekFirst(6), 6)
+    p.dismissed = { 'weak:3': 'a', 'weak:4': 'b', 'effort:5': 'c' }
+    const today = day(weekFirst(2), 0)
+    repeatPreviousWeek(S, today)
+    // Old week 3 is week 4; old week 4 (base) is gone; week 5 stays.
+    expect(plan(S).dismissed).toEqual({ 'weak:4': 'a', 'effort:5': 'c', 'weak:2': today, 'effort:2': today })
   })
 })
 

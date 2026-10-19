@@ -9,11 +9,13 @@
 // current position and the first base week ahead of it goes, so the race stays in the last week;
 // with no base week ahead the current week is swapped in place and the goal becomes finishing.
 // Without a race date the plan grows a week, up to 64 weeks (at 64 the week is swapped). Weeks
-// after the change get new indexes and ids (w{index}-s{k}); the weeks before never change.
+// after the change get new indexes and ids (w{index}-s{k}), and their `weak:` and `effort:` keys in
+// `dismissed` move with them; the weeks before never change. The rebuilt week numbers its workouts
+// after the replaced week's highest k, so no check-in linked to the replaced week matches them.
 import { weekOrder, weekStartOf } from '../../lib/format.js'
 import { weekStartDate, weeksBetween, weekdayOf } from './dates'
 import { FAMILIES, MIN_VDOT, isRace } from './models'
-import { fitRestOfWeek, isReadable, planWeekStart, weekDate, type RunState } from './run-actions'
+import { fitRestOfWeek, isReadable, planWeekStart, renumberWeek, weekDate, type RunState } from './run-actions'
 import type { RunPlan, Week } from './types'
 import { vdotFrom } from './vdot'
 
@@ -53,10 +55,27 @@ export function repeatOf(plan: RunPlan | null | undefined, today: string, weekSt
   return { offset, mode: weeks.length < MAX_WEEKS ? 'insert' : 'swap', tight: false }
 }
 
-// Week `w` as plan week `index`: the index and the ids move along, the rest stays.
-const renumbered = (w: Week, index: number): Week => ({
-  ...w, index, sessions: w.sessions.map(s => ({ ...s, id: s.id.replace(/^w\d+-/, `w${index}-`) }))
-})
+// The highest k of the ids w{n}-s{k} of week `w` (0 without sessions).
+const lastK = (w: Week) => Math.max(0, ...w.sessions.map(s => Number(/-s(\d+)$/.exec(s.id)?.[1] ?? 0)))
+
+const WEEK_KEY = /^(weak|effort):(\d+)$/
+
+// The `weak:{n}` and `effort:{n}` keys follow their weeks when an insertion renumbers them
+// (`moved`: old index to new index). A key of an index another week now holds goes; the others stay.
+function movedKeys(dismissed: Record<string, string>, moved: Map<number, number>): Record<string, string> {
+  const taken = new Set(moved.values())
+  const out: Record<string, string> = {}
+  for (const [key, date] of Object.entries(dismissed)) {
+    const m = WEEK_KEY.exec(key)
+    if (!m || (!moved.has(Number(m[2])) && !taken.has(Number(m[2])))) out[key] = date
+  }
+  for (const [key, date] of Object.entries(dismissed)) {
+    const m = WEEK_KEY.exec(key)
+    const to = m && moved.get(Number(m[2]))
+    if (m && to) out[`${m[1]}:${to}`] = date
+  }
+  return out
+}
 
 /**
  * Repeats the previous week on `today` (plan Decision 9; see the top of this file). The new week
@@ -76,7 +95,10 @@ export function repeatPreviousWeek(S: RunState, today: string): void {
   // The days left in the current week, today included.
   const pws = planWeekStart(plan, ws)
   const left = weekOrder(pws).slice((weekdayOf(today) - pws + 7) % 7)
-  const sessions = prev.sessions.map((s, k) => ({ id: `w${index}-s${k + 1}`, type: s.type, blocks: JSON.parse(JSON.stringify(s.blocks)) }))
+  // New ids after the replaced week's: a check-in linked earlier this week to one of its workouts
+  // must not match a workout of the new week (plan decision 8 matches by week index and id).
+  const k0 = lastK(plan.weeks[offset])
+  const sessions = prev.sessions.map((s, k) => ({ id: `w${index}-s${k0 + k + 1}`, type: s.type, blocks: JSON.parse(JSON.stringify(s.blocks)) }))
   const week: Week = { index, phase: prev.phase, recovery: prev.recovery, sessions: fitRestOfWeek(S, plan, sessions, first, left) }
 
   if (how.mode === 'swap') {
@@ -88,7 +110,12 @@ export function repeatPreviousWeek(S: RunState, today: string): void {
   } else {
     const weeks = [...plan.weeks.slice(0, offset), week, ...plan.weeks.slice(offset)]
     if (raceDateOf(plan)) weeks.splice(weeks.findIndex((w, i) => i > offset && w.phase === 'base'), 1)
-    plan.weeks = weeks.map((w, i) => (i > offset ? renumbered(w, i + 1) : w))
+    // The weeks ahead of the current one that moved, by their old index. The old current week
+    // moves too, but its keys stay with the current position, which keeps the same previous week.
+    const moved = new Map<number, number>()
+    weeks.forEach((w, i) => { if (i > offset && w.index > index && w.index !== i + 1) moved.set(w.index, i + 1) })
+    plan.weeks = weeks.map((w, i) => (i > offset ? renumberWeek(w, i + 1) : w))
+    plan.dismissed = movedKeys(plan.dismissed || {}, moved)
   }
   plan.dismissed = { ...(plan.dismissed || {}), [`weak:${index}`]: today, [`effort:${index}`]: today }
 }
