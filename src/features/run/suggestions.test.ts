@@ -173,6 +173,15 @@ describe('nextSuggestion: faster', () => {
     expect(nextSuggestion(plan, [run(5, 8, null as unknown as number)], TODAY, 1)).toBeNull()
   })
 
+  it('a VDOT above 85 is a typo, never offered (R2 T6-M3)', () => {
+    // 10 km in 20 min.
+    expect(vdotFrom(10000, 20)).toBeGreaterThan(85)
+    expect(nextSuggestion(planOf({ vdot: 40, vdotSource: 'race' }), [run(10, 8, 20)], TODAY, 1)).toBeNull()
+    // The typo does not hide a real run behind it.
+    const real = run(5, 8, 21)
+    expect(nextSuggestion(planOf(), [run(10, 8, 20), real], TODAY, 1)).toMatchObject({ checkinId: real.id })
+  })
+
   it('a plan without a VDOT takes it; a maintain plan too', () => {
     const r = run(5, 8, 30)
     expect(nextSuggestion(planOf(), [r], TODAY, 1)).toMatchObject({ kind: 'faster', vdot: vdotFrom(5000, 30), checkinId: r.id })

@@ -5,7 +5,7 @@
 // 3. High effort: in each of the two weeks before this one, two or more Leve or Longão runs linked
 //    to the plan with rpe 8 or more → step back a week.
 // 4. Faster: a run of 3 km or more at rpe 8 or more whose VDOT (distance and duration) is above the
-//    plan's, or a plan without one → update the paces.
+//    plan's, or a plan without one → update the paces. A VDOT above 85 is a typo and never offered.
 //
 // Rules 2 and 3 judge whole calendar weeks behind the current one (plan decision 8, progress.ts),
 // never a maintain plan or maintain-phase weeks, and not once the plan is over (repeatOf). A key
@@ -30,6 +30,8 @@ export type Suggestion =
 // The rpe from which a run counts as hard (rules 3 and 4), and the shortest run rule 4 reads.
 const HARD_RPE = 8
 const MIN_KM = 3
+// Above this VDOT a run is a typo in its distance or duration (R2 T6-M3): about the world record.
+const MAX_VDOT = 85
 
 // The Leve and Longão workouts linked to the plan, run at rpe 8 or more, in the calendar week at
 // `offset`. Two check-ins for one workout count it once.
@@ -54,7 +56,7 @@ function fasterRuns(plan: RunPlan, logs: RunLog[], today: string): { vdot: numbe
     if (l.day < plan.startDate || l.day > today || !km || km < MIN_KM || (l.run?.rpe ?? 0) < HARD_RPE) continue
     if (typeof min !== 'number' || !(min > 0)) continue
     const vdot = vdotFrom(km * 1000, min)
-    if (!Number.isFinite(vdot) || vdot < MIN_VDOT || (plan.vdot != null && vdot <= plan.vdot)) continue
+    if (!Number.isFinite(vdot) || vdot < MIN_VDOT || vdot > MAX_VDOT || (plan.vdot != null && vdot <= plan.vdot)) continue
     out.push({ vdot, log: l })
   }
   return out.sort((a, b) => b.vdot - a.vdot || (a.log.day < b.log.day ? 1 : a.log.day > b.log.day ? -1 : 0))

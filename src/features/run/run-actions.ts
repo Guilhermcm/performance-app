@@ -188,11 +188,12 @@ export function raceStartOf(answers: Answers, today: string, ws: number): { race
   return { raceStart, waitWeeks: weeksBetween(first.start, raceStart) }
 }
 
-// Race weeks after `offset` bridge weeks: indexes and ids (w{week}-s{position}) move along.
-const shifted = (weeks: PlanWeek[], offset: number): PlanWeek[] => weeks.map(w => {
-  const index = w.index + offset
-  return { ...w, index, sessions: w.sessions.map(s => ({ ...s, id: s.id.replace(/^w\d+-/, `w${index}-`) })) }
-})
+/** Week `w` as plan week `index`: the index and the week part of its ids (w{week}-s{k}) move along. */
+export const renumberWeek = <T extends { index: number; sessions: { id: string }[] }>(w: T, index: number): T =>
+  ({ ...w, index, sessions: w.sessions.map(s => ({ ...s, id: s.id.replace(/^w\d+-/, `w${index}-`) })) })
+
+// Race weeks after `offset` bridge weeks: indexes and ids move along.
+const shifted = (weeks: PlanWeek[], offset: number): PlanWeek[] => weeks.map(w => renumberWeek(w, w.index + offset))
 
 /**
  * Builds the plan from the answers, fits every week around the strength week and stores it in
