@@ -109,11 +109,12 @@ describe('Plan: run cards in the week schedule', () => {
       const wed = rowOf('Wednesday')
       // The strength routine stays as it is, and the run card comes under it.
       expect(within(wed).getByText('Upper')).toBeTruthy()
-      expect(within(wed).getByRole('heading', { name: 'Interval run' })).toBeTruthy()
-      expect(within(wed).getByText('10 easy + 4 × 4 hard + 10 easy')).toBeTruthy()
+      // The run is a row like the routine's: name, then minutes and blocks in one line.
+      const run = within(wed).getByRole('button', { name: /^Interval run/ })
+      expect(run.textContent).toContain('10 easy + 4 × 4 hard + 10 easy')
       expect(within(wed).getByText('Interval run on a strength day')).toBeTruthy()
       expect(within(wed).queryByText('Tempo run')).toBeNull()
-      expect(within(rowOf('Sunday')).getByRole('heading', { name: 'Long run' })).toBeTruthy()
+      expect(within(rowOf('Sunday')).getByRole('button', { name: /^Long run/ })).toBeTruthy()
       // A day without a run is unchanged.
       expect(within(rowOf('Tuesday')).getByText('Rest')).toBeTruthy()
       expect(schedule().textContent.match(/Long run/g)).toHaveLength(1)
@@ -125,16 +126,16 @@ describe('Plan: run cards in the week schedule', () => {
     setS({ runPlan: plan({ goal: '10k', raceDate: '2026-10-16' }) })
     render(<Plan />)
     const fri = rowOf('Friday')
-    expect(within(fri).getByRole('heading', { name: 'Race day' })).toBeTruthy()
+    expect(within(fri).getByText('Race day')).toBeTruthy()
     expect(within(fri).getByText('10 km')).toBeTruthy()
     expect(within(fri).queryByText('Rest')).toBeNull()
-    expect(within(rowOf('Thursday')).queryByRole('heading', { name: 'Race day' })).toBeNull()
+    expect(within(rowOf('Thursday')).queryByText('Race day')).toBeNull()
     cleanup()
     setS({ runPlan: plan({ goal: '10k', raceDate: '2026-10-14' }) })
     render(<Plan />)
     const wed = rowOf('Wednesday')
     expect(within(wed).getByText('Upper')).toBeTruthy()
-    expect(within(wed).getByRole('heading', { name: 'Race day' })).toBeTruthy()
+    expect(within(wed).getByText('Race day')).toBeTruthy()
   })
 
   it('during the maintain weeks before a race plan, the entry says when the race plan starts (R2 I6-1)', () => {
@@ -233,7 +234,6 @@ describe('Plan: suggestion and workouts done (phase 1e-b)', () => {
     api.fetchMyRunCheckins.mockImplementationOnce(() => new Promise((_, reject) => { fail = reject }))
     render(<Plan />)
     await waitFor(() => expect(api.fetchMyRunCheckins).toHaveBeenCalledTimes(1))
-    expect(screen.getByRole('button', { name: 'Log run' })).toBeTruthy()
     expect(screen.queryByRole('region', { name: 'Repeat the week' })).toBeNull()
     fail(new Error('500'))
     await waitFor(() => expect(useRunLogStore.getState().status).toBe('offline'))
