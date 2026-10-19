@@ -152,6 +152,67 @@ describe('editing a posted check-in', () => {
     expect((useStore.getState() as { S: { workouts: unknown[] } }).S.workouts).toEqual([])
   })
 
+  describe('a run check-in (phase 1e-b)', () => {
+    const PLANNED = { week: 2, session: 'w2-s1', type: 'intervals' as const, blocks: [{ zone: 'easy' as const, min: 30 }] }
+    const runRow = (run: object | null) =>
+      rowOf({ activity: 'run', routine_id: null, routine_name: null, title: 'Corrida', detail: run ? { run } as CheckinRow['detail'] : null })
+
+    it('edits the distance and the effort, and keeps the workout it was linked to and how it went', async () => {
+      const row = runRow({ planned: PLANNED, status: 'as_planned', distance_km: 6.2, rpe: 7 })
+      setup(row)
+      expect(screen.getByText('Interval run')).toBeTruthy()
+      expect(screen.getByRole('radio', { name: 'Done as planned' }).getAttribute('aria-checked')).toBe('true')
+      expect(field('Distance (km)').value).toBe('6.2')
+      // Nothing changed yet.
+      expect(save().disabled).toBe(true)
+      fireEvent.change(field('Distance (km)'), { target: { value: '7,5' } })
+      fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Effort' })).getByRole('radio', { name: '8' }))
+      await act(async () => { fireEvent.click(save()) })
+      const next = { run: { planned: PLANNED, status: 'as_planned', distance_km: 7.5, rpe: 8 } }
+      expect(edit).toHaveBeenCalledWith('c1', { detail: next }, row)
+      expect(onSaved).toHaveBeenCalledWith({ ...row, detail: next })
+      // A run has no session in the strength history.
+      expect((useStore.getState() as { S: { workouts: unknown[] } }).S.workouts).toEqual([])
+    })
+
+    it('keeps the blocks of an adjusted run', async () => {
+      const blocks = [{ zone: 'moderate' as const, min: 35 }]
+      setup(runRow({ planned: PLANNED, blocks, status: 'adjusted' }))
+      fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Effort' })).getByRole('radio', { name: '5' }))
+      await act(async () => { fireEvent.click(save()) })
+      expect(edit).toHaveBeenCalledWith('c1', { detail: { run: { planned: PLANNED, blocks, status: 'adjusted', rpe: 5 } } }, expect.anything())
+    })
+
+    it('a run posted with no detail gains one off the plan, and clearing it all goes back to none', async () => {
+      setup(runRow(null))
+      expect(screen.getByText('Off the plan')).toBeTruthy()
+      fireEvent.change(field('Distance (km)'), { target: { value: '5' } })
+      fireEvent.change(field('Distance (km)'), { target: { value: '' } })
+      // Back to what was posted: nothing to save.
+      expect(save().disabled).toBe(true)
+      fireEvent.change(field('Distance (km)'), { target: { value: '5' } })
+      await act(async () => { fireEvent.click(save()) })
+      expect(edit).toHaveBeenCalledWith('c1', { detail: { run: { status: 'unplanned', distance_km: 5 } } }, expect.anything())
+    })
+
+    it('does not save a distance the database would refuse', () => {
+      setup(runRow({ status: 'unplanned', distance_km: 5 }))
+      fireEvent.change(field('Distance (km)'), { target: { value: '6,255' } })
+      expect(screen.getByText('Distance goes from 0.1 to 100 km, with two decimals at most.')).toBeTruthy()
+      expect(save().disabled).toBe(true)
+      fireEvent.change(field('Title'), { target: { value: 'Another title' } })
+      expect(save().disabled).toBe(true)
+    })
+
+    it('does not count a saved detail written in another key order as a change', () => {
+      // jsonb comes back with its keys in its own order.
+      setup(runRow({ rpe: 7, status: 'as_planned', planned: { blocks: PLANNED.blocks, session: 'w2-s1', type: 'intervals', week: 2 }, distance_km: 6.2 }))
+      fireEvent.change(field('Distance (km)'), { target: { value: '6' } })
+      fireEvent.change(field('Distance (km)'), { target: { value: '6.2' } })
+      expect(save().disabled).toBe(true)
+    })
+  })
+
   it('reads the check-in from the server when this phone does not have it', async () => {
     const row = rowOf({ day: '2026-08-01' })
     api.fetchMyCheckins.mockResolvedValue([rowOf({ id: 'other', day: '2026-08-01' }), row])

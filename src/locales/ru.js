@@ -3003,4 +3003,16 @@ export default {
   "Race day": "День забега",
   // --- run: run check-in in the feed (phase 1e-b) ---
   "{0} km": "{0} км",
+  // --- run: run check-in (phase 1e-b) ---
+  "Done as planned": "Как по плану",
+  "Adjust": "Изменить",
+  "Off the plan": "Вне плана",
+  "Distance goes from 0.1 to 100 km, with two decimals at most.": "Дистанция от 0,1 до 100 км, не больше двух знаков после запятой.",
+  "1 is very light and 10 is your limit.": "1 значит очень легко, а 10 значит ваш предел.",
+  "Log run": "Записать пробежку",
+  "Part {0}": "Часть {0}",
+  "Zone": "Зона",
+  "Repeats": "Повторы",
+  "Minutes go from 1 to 300.": "Минут от 1 до 300.",
+  "Repeats go from 2 to 20.": "Повторов от 2 до 20.",
 }

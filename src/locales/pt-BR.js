@@ -2304,6 +2304,18 @@ export const PT_BR_OVERRIDES = {
   "Race day": "Dia da prova",
   // --- run: run check-in in the feed (phase 1e-b) ---
   "{0} km": "{0} km",
+  // --- run: run check-in (phase 1e-b) ---
+  "Done as planned": "Fiz como planejado",
+  "Adjust": "Ajustar",
+  "Off the plan": "Fora do plano",
+  "Distance goes from 0.1 to 100 km, with two decimals at most.": "Distância de 0,1 a 100 km, até duas casas.",
+  "1 is very light and 10 is your limit.": "1 é bem leve e 10 é o seu limite.",
+  "Log run": "Registrar corrida",
+  "Part {0}": "Parte {0}",
+  "Zone": "Zona",
+  "Repeats": "Repetições",
+  "Minutes go from 1 to 300.": "Os minutos vão de 1 a 300.",
+  "Repeats go from 2 to 20.": "As repetições vão de 2 a 20.",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

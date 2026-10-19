@@ -2916,4 +2916,16 @@ export default {
   "Race day": "Verseny napja",
   // --- run: run check-in in the feed (phase 1e-b) ---
   "{0} km": "{0} km",
+  // --- run: run check-in (phase 1e-b) ---
+  "Done as planned": "Terv szerint",
+  "Adjust": "Módosítás",
+  "Off the plan": "Terven kívül",
+  "Distance goes from 0.1 to 100 km, with two decimals at most.": "A táv 0,1 és 100 km között lehet, legfeljebb két tizedesjeggyel.",
+  "1 is very light and 10 is your limit.": "Az 1 nagyon könnyű, a 10 a határod.",
+  "Log run": "Futás rögzítése",
+  "Part {0}": "{0}. rész",
+  "Zone": "Zóna",
+  "Repeats": "Ismétlések",
+  "Minutes go from 1 to 300.": "A perc 1 és 300 között lehet.",
+  "Repeats go from 2 to 20.": "Az ismétlések száma 2 és 20 között lehet.",
 }

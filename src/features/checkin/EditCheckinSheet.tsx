@@ -14,6 +14,8 @@ import { dropCheckinWorkout, ingestCheckin, workoutOfCheckin } from './ingest'
 import { activityLabel } from './activities'
 import { Choice, Counted, Group, TEXT_MAX, TITLE_MAX } from './fields'
 import DetailSheet from './DetailSheet'
+import RunCheckinForm from '../run/RunCheckinForm'
+import { checkRunDetail, type RunDetail } from '../run/run-detail'
 import { isRunDetail, type CheckinRow, type CheckinVisibility, type StrengthDetail } from './types'
 
 type Props = {
@@ -31,11 +33,16 @@ type Props = {
 type AppStore = { S: Record<string, any> }
 
 const blank = (s: string) => (s.trim() ? s.trim() : null)
+// JSON with its keys sorted: a detail read back from jsonb has them in another order.
+const sorted = (v: unknown): unknown => Array.isArray(v) ? v.map(sorted)
+  : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).sort().map(k => [k, sorted((v as Record<string, unknown>)[k])])) : v
+const same = (a: unknown, b: unknown) => JSON.stringify(sorted(a ?? null)) === JSON.stringify(sorted(b ?? null))
 const longDay = (iso: string) => new Date(iso + 'T12:00:00').toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })
 
 // Editing a posted check-in (spec 3.2): title, caption, private note, who sees it and the detail can
-// change at any time; the day, the activity and the photo are shown locked (to change them, delete
-// and post again). Same fields and limits as a new check-in (fields.tsx). Saving goes through the
+// change at any time (for a run, its distance, effort and how it went against the workout it was
+// saved with); the day, the activity and the photo are shown locked (to change them, delete and
+// post again). Same fields and limits as a new check-in (fields.tsx). Saving goes through the
 // queue (useCheckins.edit) with only what changed; a refused edit is told by the panel host.
 export default function EditCheckinSheet({ open, onOpenChange, id, day, row, onSaved }: Props) {
   const fromStore = useCheckins(s => s.mine.find(r => r.id === id) ?? null)
@@ -88,8 +95,11 @@ function Form({ base, onDone }: { base: CheckinRow; onDone: (row: CheckinRow) =>
   const [caption, setCaption] = useState(base.caption ?? '')
   const [note, setNote] = useState(base.note ?? '')
   const [visibility, setVisibility] = useState<CheckinVisibility>(base.visibility)
-  // Only strength training is detailed here; a run detail stays as it is.
   const [detail, setDetail] = useState<StrengthDetail | null>(() => (isRunDetail(base.detail) ? null : base.detail))
+  // A run check-in's part (phase 1e-b): the workout it was linked to stays the one saved.
+  const isRun = base.activity === 'run'
+  const savedRun = isRun && isRunDetail(base.detail) ? base.detail.run : null
+  const [run, setRun] = useState<RunDetail | null>(savedRun)
   const [detailOpen, setDetailOpen] = useState(false)
   const [busy, setBusy] = useState(false)
 
@@ -105,8 +115,10 @@ function Form({ base, onDone }: { base: CheckinRow; onDone: (row: CheckinRow) =>
   if (blank(note) !== (base.note ?? null)) patch.note = blank(note)
   if (visibility !== base.visibility) patch.visibility = visibility
   if (detailable && !live && JSON.stringify(detail) !== JSON.stringify(base.detail)) patch.detail = detail
+  if (isRun && !same(run ? { run } : null, base.detail)) patch.detail = run ? { run } : null
+  const runOk = !run || checkRunDetail(run, 'run')
   const hint = title.trim() ? '' : t('Give it a title.')
-  const ready = !hint && Object.keys(patch).length > 0 && !busy
+  const ready = !hint && runOk && Object.keys(patch).length > 0 && !busy
 
   const save = async () => {
     if (!ready) return
@@ -114,7 +126,7 @@ function Form({ base, onDone }: { base: CheckinRow; onDone: (row: CheckinRow) =>
     try {
       await useCheckins.getState().edit(base.id, patch, base)
       // The history session follows the detail (plan decision 7): replaced, or gone with it.
-      if ('detail' in patch) {
+      if ('detail' in patch && !isRun) {
         if (detail) {
           ingestCheckin({ id: base.id, day: base.day, routineId: base.routine_id, name: base.routine_name ?? patch.title ?? base.title,
             durationMin: base.duration_min, detail })
@@ -148,6 +160,8 @@ function Form({ base, onDone }: { base: CheckinRow; onDone: (row: CheckinRow) =>
         <Counted id="edit-title" label={t('Title')} value={title} max={TITLE_MAX} onChange={setTitle} />
         <Counted id="edit-caption" label={t('Caption')} value={caption} max={TEXT_MAX} multiline onChange={setCaption} />
         <Counted id="edit-note" label={t('Private note')} hint={t('Only you see this.')} value={note} max={TEXT_MAX} multiline onChange={setNote} />
+
+        {isRun && <RunCheckinForm planned={savedRun?.planned ?? null} value={run} onChange={setRun} />}
 
         {detailable && (
           live ? (

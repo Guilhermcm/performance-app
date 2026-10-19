@@ -2913,4 +2913,16 @@ export default {
   "Race day": "比赛日",
   // --- run: run check-in in the feed (phase 1e-b) ---
   "{0} km": "{0} 公里",
+  // --- run: run check-in (phase 1e-b) ---
+  "Done as planned": "按计划完成",
+  "Adjust": "调整",
+  "Off the plan": "计划外",
+  "Distance goes from 0.1 to 100 km, with two decimals at most.": "距离需在 0.1 到 100 公里之间，最多两位小数。",
+  "1 is very light and 10 is your limit.": "1 表示非常轻松，10 表示你的极限。",
+  "Log run": "记录跑步",
+  "Part {0}": "第 {0} 部分",
+  "Zone": "区间",
+  "Repeats": "重复次数",
+  "Minutes go from 1 to 300.": "分钟数需在 1 到 300 之间。",
+  "Repeats go from 2 to 20.": "重复次数需在 2 到 20 之间。",
 }

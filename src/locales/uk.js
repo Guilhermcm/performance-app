@@ -3000,4 +3000,16 @@ export default {
   "Race day": "День забігу",
   // --- run: run check-in in the feed (phase 1e-b) ---
   "{0} km": "{0} км",
+  // --- run: run check-in (phase 1e-b) ---
+  "Done as planned": "Як за планом",
+  "Adjust": "Змінити",
+  "Off the plan": "Поза планом",
+  "Distance goes from 0.1 to 100 km, with two decimals at most.": "Дистанція від 0,1 до 100 км, не більше двох знаків після коми.",
+  "1 is very light and 10 is your limit.": "1 означає дуже легко, а 10 означає вашу межу.",
+  "Log run": "Записати пробіжку",
+  "Part {0}": "Частина {0}",
+  "Zone": "Зона",
+  "Repeats": "Повтори",
+  "Minutes go from 1 to 300.": "Хвилин від 1 до 300.",
+  "Repeats go from 2 to 20.": "Повторів від 2 до 20.",
 }

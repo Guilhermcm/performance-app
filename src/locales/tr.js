@@ -2913,4 +2913,16 @@ export default {
   "Race day": "Yarış günü",
   // --- run: run check-in in the feed (phase 1e-b) ---
   "{0} km": "{0} km",
+  // --- run: run check-in (phase 1e-b) ---
+  "Done as planned": "Planlandığı gibi",
+  "Adjust": "Ayarla",
+  "Off the plan": "Plan dışı",
+  "Distance goes from 0.1 to 100 km, with two decimals at most.": "Mesafe 0,1 ile 100 km arasında olmalı, en fazla iki ondalıkla.",
+  "1 is very light and 10 is your limit.": "1 çok hafif, 10 ise senin sınırın.",
+  "Log run": "Koşuyu kaydet",
+  "Part {0}": "Bölüm {0}",
+  "Zone": "Bölge",
+  "Repeats": "Tekrar",
+  "Minutes go from 1 to 300.": "Dakika 1 ile 300 arasında olmalı.",
+  "Repeats go from 2 to 20.": "Tekrar sayısı 2 ile 20 arasında olmalı.",
 }

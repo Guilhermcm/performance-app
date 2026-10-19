@@ -2966,4 +2966,16 @@ export default {
   "Race day": "يوم السباق",
   // --- run: run check-in in the feed (phase 1e-b) ---
   "{0} km": "{0} كم",
+  // --- run: run check-in (phase 1e-b) ---
+  "Done as planned": "كما في الخطة",
+  "Adjust": "تعديل",
+  "Off the plan": "خارج الخطة",
+  "Distance goes from 0.1 to 100 km, with two decimals at most.": "المسافة من 0.1 إلى 100 كم، بخانتين عشريتين على الأكثر.",
+  "1 is very light and 10 is your limit.": "1 خفيف جدًا و10 هو أقصى حد لك.",
+  "Log run": "تسجيل الجري",
+  "Part {0}": "الجزء {0}",
+  "Zone": "المنطقة",
+  "Repeats": "التكرارات",
+  "Minutes go from 1 to 300.": "الدقائق من 1 إلى 300.",
+  "Repeats go from 2 to 20.": "التكرارات من 2 إلى 20.",
 }

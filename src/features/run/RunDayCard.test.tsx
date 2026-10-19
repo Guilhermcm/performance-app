@@ -9,6 +9,8 @@ vi.mock('@/components/ui/drawer', () => import('../social/test-drawer'))
 
 import { useStore } from '../../store/useStore.js'
 import RunDayCard, { weekDayIso } from './RunDayCard'
+import { useCheckinFlow } from '../checkin/open-checkin'
+import { setLang } from '../../lib/i18n.js'
 import { formatPaceRange, zonePaces } from './vdot'
 import type { RunPlan, Session } from './types'
 
@@ -125,6 +127,28 @@ describe('RunDayCard', () => {
     render(<RunDayCard day={SUN} iso="2026-10-18" />)
     expect(screen.getByRole('heading', { name: 'Long run' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: /Change day/ })).toBeNull()
+  })
+
+  it('on today\'s card offers "Log run", which opens the check-in on running', () => {
+    useCheckinFlow.setState({ open: false, opts: {} })
+    card(WED)
+    fireEvent.click(screen.getByRole('button', { name: 'Log run' }))
+    expect(useCheckinFlow.getState()).toMatchObject({ open: true, opts: { activity: 'run' } })
+    useCheckinFlow.setState({ open: false, opts: {} })
+  })
+
+  it('says "Log run" in the language of the app', async () => {
+    await setLang('pt-BR')
+    try {
+      card(WED)
+      expect(screen.getByRole('button', { name: 'Registrar corrida' })).toBeTruthy()
+    } finally { await setLang('en') }
+  })
+
+  it('has no "Log run" on another day', () => {
+    card(FRI)
+    expect(screen.getByRole('heading', { name: 'Tempo run' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Log run' })).toBeNull()
   })
 
   it('maps dates with the week start the plan was made with, not the one of now (R2 M4-2)', () => {

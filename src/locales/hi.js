@@ -2913,4 +2913,16 @@ export default {
   "Race day": "रेस का दिन",
   // --- run: run check-in in the feed (phase 1e-b) ---
   "{0} km": "{0} किमी",
+  // --- run: run check-in (phase 1e-b) ---
+  "Done as planned": "योजना के अनुसार किया",
+  "Adjust": "बदलें",
+  "Off the plan": "योजना से बाहर",
+  "Distance goes from 0.1 to 100 km, with two decimals at most.": "दूरी 0.1 से 100 किमी तक होती है, ज़्यादा से ज़्यादा दो दशमलव तक।",
+  "1 is very light and 10 is your limit.": "1 बहुत हल्का है और 10 आपकी सीमा है।",
+  "Log run": "दौड़ दर्ज करें",
+  "Part {0}": "भाग {0}",
+  "Zone": "ज़ोन",
+  "Repeats": "दोहराव",
+  "Minutes go from 1 to 300.": "मिनट 1 से 300 तक होते हैं।",
+  "Repeats go from 2 to 20.": "दोहराव 2 से 20 तक होते हैं।",
 }

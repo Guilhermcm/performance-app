@@ -4,7 +4,8 @@
 // session of the week, Decision 3) and "Change day", which lists the days of this week from today
 // on with the warnings each move would bring. A move changes only that week. On race day it shows
 // the race with its distance; in the race week, runs move only to days before the race, and race
-// day counts as a hard day for the warnings (final review I1 and M6).
+// day counts as a hard day for the warnings (final review I1 and M6). Today's card has "Log run",
+// which opens the check-in on running, linked to the day's workout (phase 1e-b).
 import { useState } from 'react'
 import { Flag, TriangleAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -12,6 +13,7 @@ import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, D
 import { t } from '../../lib/i18n.js'
 import { DAYN, isoOf, startOfWeek, todayISO, weekDayOffset, weekOrder, weekStartOf } from '../../lib/format.js'
 import { useStore } from '../../store/useStore.js'
+import { openCheckin } from '../checkin/open-checkin'
 import { moveWarnings, weekWarnings, type FitWarning } from './fit'
 import { fitWarningText, goalName, sessionName } from './labels'
 import { weekMinutes } from './models'
@@ -83,6 +85,10 @@ export default function RunDayCard({ day, iso }: { day: number; iso: string }) {
           )}
         </article>
       ))}
+
+      {iso === today && (
+        <Button size="sm" className="h-11 w-full rounded-lg" onClick={() => openCheckin({ activity: 'run' })}>{t('Log run')}</Button>
+      )}
 
       <Drawer open={!!moving} onOpenChange={o => { if (!o) setMoving(null) }}>
         <DrawerContent>

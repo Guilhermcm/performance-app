@@ -2933,4 +2933,16 @@ export default {
   "Race day": "Wettkampftag",
   // --- run: run check-in in the feed (phase 1e-b) ---
   "{0} km": "{0} km",
+  // --- run: run check-in (phase 1e-b) ---
+  "Done as planned": "Wie geplant",
+  "Adjust": "Anpassen",
+  "Off the plan": "Außerhalb des Plans",
+  "Distance goes from 0.1 to 100 km, with two decimals at most.": "Die Distanz liegt zwischen 0,1 und 100 km, mit höchstens zwei Nachkommastellen.",
+  "1 is very light and 10 is your limit.": "1 ist sehr leicht und 10 ist dein Limit.",
+  "Log run": "Lauf eintragen",
+  "Part {0}": "Teil {0}",
+  "Zone": "Zone",
+  "Repeats": "Wiederholungen",
+  "Minutes go from 1 to 300.": "Die Minuten liegen zwischen 1 und 300.",
+  "Repeats go from 2 to 20.": "Die Wiederholungen liegen zwischen 2 und 20.",
 }

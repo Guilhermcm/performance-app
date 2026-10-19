@@ -1,13 +1,14 @@
 import { create } from 'zustand'
-import type { CheckinDetail, StrengthDetail } from './types'
+import type { CheckinActivity, CheckinDetail, StrengthDetail } from './types'
 
 export type { CheckinDetail }
 
-// How the check-in panel opens. `routineId` picks strength training with that routine; `detail`
+// How the check-in panel opens. `activity` picks it (the Plan's "Log run" opens on running);
+// `routineId` picks strength training with that routine; `detail`
 // comes filled in; `fromWorkout` is the id of the live workout that just finished, which already is
 // the session in the history (no second one is written, the check-in is linked to it). `onClose`
 // runs once when the panel closes, posted or not (the workout summary waits for it).
-export type OpenCheckinOptions = { routineId?: string; detail?: StrengthDetail; fromWorkout?: string; onClose?: () => void }
+export type OpenCheckinOptions = { activity?: CheckinActivity; routineId?: string; detail?: StrengthDetail; fromWorkout?: string; onClose?: () => void }
 
 // `photo`: the one picked for this opening, from the camera the tap opened or from the panel.
 type FlowState = { open: boolean; seq: number; opts: OpenCheckinOptions; photo: File | null }

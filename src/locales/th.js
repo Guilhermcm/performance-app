@@ -2924,4 +2924,16 @@ export default {
   "Race day": "วันแข่ง",
   // --- run: run check-in in the feed (phase 1e-b) ---
   "{0} km": "{0} กม.",
+  // --- run: run check-in (phase 1e-b) ---
+  "Done as planned": "ทำตามแผน",
+  "Adjust": "ปรับ",
+  "Off the plan": "นอกแผน",
+  "Distance goes from 0.1 to 100 km, with two decimals at most.": "ระยะทางต้องอยู่ระหว่าง 0.1 ถึง 100 กม. ทศนิยมไม่เกินสองตำแหน่ง",
+  "1 is very light and 10 is your limit.": "1 คือเบามาก และ 10 คือขีดจำกัดของคุณ",
+  "Log run": "บันทึกการวิ่ง",
+  "Part {0}": "ส่วนที่ {0}",
+  "Zone": "โซน",
+  "Repeats": "จำนวนรอบ",
+  "Minutes go from 1 to 300.": "นาทีต้องอยู่ระหว่าง 1 ถึง 300",
+  "Repeats go from 2 to 20.": "จำนวนรอบต้องอยู่ระหว่าง 2 ถึง 20",
 }

@@ -2913,4 +2913,16 @@ export default {
   "Race day": "레이스 당일",
   // --- run: run check-in in the feed (phase 1e-b) ---
   "{0} km": "{0}km",
+  // --- run: run check-in (phase 1e-b) ---
+  "Done as planned": "계획대로 했어요",
+  "Adjust": "조정",
+  "Off the plan": "계획 외",
+  "Distance goes from 0.1 to 100 km, with two decimals at most.": "거리는 0.1~100km, 소수점 둘째 자리까지 입력해요.",
+  "1 is very light and 10 is your limit.": "1은 아주 가볍고 10은 한계예요.",
+  "Log run": "달리기 기록",
+  "Part {0}": "파트 {0}",
+  "Zone": "존",
+  "Repeats": "반복",
+  "Minutes go from 1 to 300.": "분은 1~300이어야 해요.",
+  "Repeats go from 2 to 20.": "반복은 2~20회여야 해요.",
 }
