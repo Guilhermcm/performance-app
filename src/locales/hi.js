@@ -2962,4 +2962,8 @@ export default {
   "Paces updated.": "पेस अपडेट हो गए।",
   "Week updated.": "हफ़्ता अपडेट हो गया।",
   "From your run on {0}.": "{0} की आपकी दौड़ से।",
+  // --- run: R3 fixes (phase 1e-b) ---
+  "Last week you ran {0} of {1} planned minutes": "पिछले हफ़्ते आप {1} में से {0} योजना वाले मिनट दौड़े",
+  "That time doesn’t fit this race. Type hours as h:mm:ss, like 1:52:30.": "यह समय इस रेस से मेल नहीं खाता। घंटे h:mm:ss के रूप में लिखें, जैसे 1:52:30।",
+  "For example, 52:30 or 1:52:30.": "उदाहरण: 52:30 या 1:52:30।",
 }

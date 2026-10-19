@@ -2353,6 +2353,10 @@ export const PT_BR_OVERRIDES = {
   "Paces updated.": "Ritmos atualizados.",
   "Week updated.": "Semana atualizada.",
   "From your run on {0}.": "Com base na sua corrida de {0}.",
+  // --- run: R3 fixes (phase 1e-b) ---
+  "Last week you ran {0} of {1} planned minutes": "Na semana passada você correu {0} de {1} minutos planejados",
+  "That time doesn’t fit this race. Type hours as h:mm:ss, like 1:52:30.": "Esse tempo não combina com a prova. Digite as horas como h:mm:ss, por exemplo 1:52:30.",
+  "For example, 52:30 or 1:52:30.": "Por exemplo, 52:30 ou 1:52:30.",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

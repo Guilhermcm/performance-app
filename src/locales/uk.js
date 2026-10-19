@@ -3052,4 +3052,8 @@ export default {
   "Over the last {0} weeks you ran {1} of {2} planned minutes|one": "За останній {0} тиждень ви пробігли {1} з {2} запланованих хвилин",
   "Over the last {0} weeks you ran {1} of {2} planned minutes|few": "За останні {0} тижні ви пробігли {1} з {2} запланованих хвилин",
   "Over the last {0} weeks you ran {1} of {2} planned minutes|many": "За останні {0} тижнів ви пробігли {1} з {2} запланованих хвилин",
+  // --- run: R3 fixes (phase 1e-b) ---
+  "Last week you ran {0} of {1} planned minutes": "Минулого тижня ви пробігли {0} з {1} запланованих хвилин",
+  "That time doesn’t fit this race. Type hours as h:mm:ss, like 1:52:30.": "Цей час не підходить для цього забігу. Години вводьте як г:хх:сс, наприклад 1:52:30.",
+  "For example, 52:30 or 1:52:30.": "Наприклад, 52:30 або 1:52:30.",
 }

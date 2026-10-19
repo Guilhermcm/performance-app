@@ -27,8 +27,11 @@ export default function RunTracking({ plan, logs }: { plan: RunPlan; logs: RunLo
   const ws = useStore((s: AppStore) => weekStartOf(s.S)) as 0 | 1
   const today = todayISO()
   const week = currentWeek(plan, today, ws)
-  const summary = weekSummary(plan, weekOffsetOf(plan, today, ws), logs, ws)
+  const offset = weekOffsetOf(plan, today, ws)
+  const summary = weekSummary(plan, offset, logs, ws)
   const series = volumeSeries(plan, logs, ws, today)
+  // The chart's last week is this one, still going on (not once the plan is over).
+  const inProgress = series.length > 0 && series.length - 1 === offset
   const marks = milestones(plan, logs, ws, today)
   const items = [
     marks.longestLong != null && { label: t('Longest long run'), value: t('{0} min', marks.longestLong) },
@@ -51,7 +54,7 @@ export default function RunTracking({ plan, logs }: { plan: RunPlan; logs: RunLo
       )}
 
       <Suspense fallback={<RunProgressSkeleton />}>
-        <RunProgress series={series} />
+        <RunProgress series={series} inProgress={inProgress} />
       </Suspense>
 
       <div className="flex flex-col gap-2">

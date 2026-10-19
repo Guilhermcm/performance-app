@@ -2962,4 +2962,8 @@ export default {
   "Paces updated.": "配速已更新。",
   "Week updated.": "本周已更新。",
   "From your run on {0}.": "根据你在 {0} 的跑步。",
+  // --- run: R3 fixes (phase 1e-b) ---
+  "Last week you ran {0} of {1} planned minutes": "上周你跑了计划 {1} 分钟中的 {0} 分钟",
+  "That time doesn’t fit this race. Type hours as h:mm:ss, like 1:52:30.": "这个成绩与这场比赛不符。小时请按 h:mm:ss 输入，例如 1:52:30。",
+  "For example, 52:30 or 1:52:30.": "例如 52:30 或 1:52:30。",
 }

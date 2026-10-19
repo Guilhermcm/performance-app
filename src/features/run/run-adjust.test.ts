@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dismissSuggestion, recordRaceResult, repeatPreviousWeek, updateVdot } from './run-adjust'
+import { dismissSuggestion, raceVdotOf, recordRaceResult, repeatPreviousWeek, updateVdot } from './run-adjust'
 import { applyRunPlan, type RunState } from './run-actions'
 import { doneSessions, weekSummary } from './progress'
 import { nextSuggestion } from './suggestions'
@@ -320,6 +320,27 @@ describe('recordRaceResult, updateVdot, dismissSuggestion', () => {
     expect(R).toEqual(r)
   })
 
+  it('refuses a race time whose VDOT is out of range, so no caller can store it (R3 I1)', () => {
+    const S = state()
+    applyRunPlan(S, { ...tenK(), goal: 'half', raceDate: '2027-02-28' }, W1)
+    const before = clone(S)
+    // "1:52" read as m:ss: 1.87 minutes for a half marathon, a VDOT in the thousands.
+    expect(raceVdotOf(plan(S), 1 + 52 / 60)).toBeNull()
+    recordRaceResult(S, 1 + 52 / 60)
+    // Too slow to give a usable VDOT.
+    expect(raceVdotOf(plan(S), 999)).toBeNull()
+    recordRaceResult(S, 999)
+    expect(S).toEqual(before)
+    expect(raceVdotOf(plan(S), 112)).toBe(vdotFrom(21097.5, 112))
+    recordRaceResult(S, 112)
+    expect(plan(S).raceResult).toEqual({ minutes: 112 })
+  })
+
+  it('raceVdotOf is null without a race goal', () => {
+    expect(raceVdotOf(plan(weeksState()), 50)).toBeNull()
+    expect(raceVdotOf(null, 50)).toBeNull()
+  })
+
   it('updateVdot rounds to one decimal and records where it came from', () => {
     const S = weeksState()
     updateVdot(S, 45.678, 'run', '2026-10-20')
@@ -327,6 +348,8 @@ describe('recordRaceResult, updateVdot, dismissSuggestion', () => {
     // A VDOT under the plan's usable floor, or not a number, changes nothing.
     updateVdot(S, 12, 'run', '2026-10-21')
     updateVdot(S, Number.POSITIVE_INFINITY, 'run', '2026-10-21')
+    // Above 85 is a typo, never a pace (R3 I1).
+    updateVdot(S, 85.1, 'race', '2026-10-21')
     expect(plan(S)).toMatchObject({ vdot: 45.7, vdotDate: '2026-10-20' })
     strengthKept(S)
   })

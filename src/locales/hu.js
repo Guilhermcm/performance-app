@@ -2965,4 +2965,8 @@ export default {
   "Paces updated.": "Tempók frissítve.",
   "Week updated.": "Hét frissítve.",
   "From your run on {0}.": "A {0} napi futásod alapján.",
+  // --- run: R3 fixes (phase 1e-b) ---
+  "Last week you ran {0} of {1} planned minutes": "Múlt héten {0} percet futottál a tervezett {1} percből",
+  "That time doesn’t fit this race. Type hours as h:mm:ss, like 1:52:30.": "Ez az idő nem illik ehhez a versenyhez. Az órákat h:mm:ss formában írd, például 1:52:30.",
+  "For example, 52:30 or 1:52:30.": "Például 52:30 vagy 1:52:30.",
 }

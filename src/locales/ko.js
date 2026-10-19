@@ -2962,4 +2962,8 @@ export default {
   "Paces updated.": "페이스를 업데이트했어요.",
   "Week updated.": "주간 계획을 업데이트했어요.",
   "From your run on {0}.": "{0}의 달리기 기준.",
+  // --- run: R3 fixes (phase 1e-b) ---
+  "Last week you ran {0} of {1} planned minutes": "지난주에 계획한 {1}분 중 {0}분을 달렸어요",
+  "That time doesn’t fit this race. Type hours as h:mm:ss, like 1:52:30.": "이 레이스에 맞지 않는 기록이에요. 시간은 h:mm:ss 형식으로 입력하세요(예: 1:52:30).",
+  "For example, 52:30 or 1:52:30.": "예: 52:30 또는 1:52:30",
 }

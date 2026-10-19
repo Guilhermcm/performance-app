@@ -81,6 +81,13 @@ describe('RunTracking', () => {
     expect(await screen.findByText(/You haven’t logged a run in this plan yet/)).toBeTruthy()
   })
 
+  it('the chart text leaves this week, still going on, out of the sums (R3 M2)', async () => {
+    // From Monday 5 October: week 1 is over, this is week 2. A 40 min run in week 1.
+    const logs: RunLog[] = [...LOGS, { id: 'w1', day: '2026-10-07', duration_min: 40, run: null }]
+    render(<RunTracking plan={plan({ startDate: '2026-10-05' })} logs={logs} />)
+    expect(await screen.findByText('Last week you ran 40 of 110 planned minutes')).toBeTruthy()
+  })
+
   it('in pt-BR', async () => {
     await setLang('pt-BR')
     render(<RunTracking plan={plan()} logs={LOGS} />)

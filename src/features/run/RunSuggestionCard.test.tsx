@@ -119,6 +119,13 @@ describe('RunSuggestionCard', () => {
     expect(S().runPlan.targetTime).toBeUndefined()
   })
 
+  it('a tight week with the goal already finishing says nothing about changing it (R3 M3)', () => {
+    setS({ runPlan: plan(['base', 'build', 'build', 'taper'], { raceDate: '2026-11-01', goalType: 'finish', targetTime: undefined }) })
+    render(<Host logs={[]} />)
+    expect(screen.getByRole('region', { name: 'Repeat the week' })).toBeTruthy()
+    expect(screen.queryByText(/goal becomes finishing/)).toBeNull()
+  })
+
   it('high effort: "Step back a week"', () => {
     vi.setSystemTime(new Date('2026-10-21T15:00:00'))
     const hard = (id: string, day: string, week: number, k: number, type: 'easy' | 'long'): RunLog =>
@@ -177,6 +184,33 @@ describe('RunSuggestionCard', () => {
       type('1:52:30')
       expect(recordRaceResult).toHaveBeenCalledWith(expect.anything(), 112.5)
       expect(S().runPlan.raceResult).toEqual({ minutes: 112.5 })
+    })
+
+    it('refuses "1:52" on a half (read as m:ss), says why and keeps the card open (R3 I1)', () => {
+      race()
+      setS({ runPlan: { ...S().runPlan, goal: 'half' } })
+      render(<Host logs={[]} />)
+      type('1:52')
+      expect(screen.getByRole('alert').textContent).toBe('That time doesn’t fit this race. Type hours as h:mm:ss, like 1:52:30.')
+      expect(screen.getByLabelText('Race time').getAttribute('aria-invalid')).toBe('true')
+      expect(S().runPlan.raceResult).toBeUndefined()
+      expect(S().runPlan.vdot).toBe(38.3)
+      expect(screen.getByRole('region', { name: 'How did the race go?' })).toBeTruthy()
+      // As h:mm:ss it goes in.
+      type('1:52:00')
+      expect(S().runPlan.raceResult).toEqual({ minutes: 112 })
+      expect(S().runPlan.vdot).toBe(vdotFrom(21097.5, 112))
+      expect(screen.getByRole('region', { name: 'Your new paces' })).toBeTruthy()
+    })
+
+    it('the field shows an example and opens a text keyboard with ":" (R3 M5)', () => {
+      race()
+      render(<Host logs={[]} />)
+      const field = screen.getByLabelText('Race time')
+      expect(field.getAttribute('inputmode')).toBe('text')
+      expect(field.getAttribute('placeholder')).toBe('1:52:30')
+      const hint = screen.getByText('For example, 52:30 or 1:52:30.')
+      expect(field.getAttribute('aria-describedby')).toContain(hint.id)
     })
 
     it('"Not now" puts the race away', () => {

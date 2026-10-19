@@ -2962,4 +2962,8 @@ export default {
   "Paces updated.": "Allures mises à jour.",
   "Week updated.": "Semaine mise à jour.",
   "From your run on {0}.": "D’après ta course du {0}.",
+  // --- run: R3 fixes (phase 1e-b) ---
+  "Last week you ran {0} of {1} planned minutes": "La semaine dernière, tu as couru {0} des {1} minutes prévues",
+  "That time doesn’t fit this race. Type hours as h:mm:ss, like 1:52:30.": "Ce temps ne correspond pas à cette course. Saisis les heures au format h:mm:ss, par exemple 1:52:30.",
+  "For example, 52:30 or 1:52:30.": "Par exemple, 52:30 ou 1:52:30.",
 }

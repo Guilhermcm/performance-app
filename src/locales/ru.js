@@ -3055,4 +3055,8 @@ export default {
   "Over the last {0} weeks you ran {1} of {2} planned minutes|one": "За последнюю {0} неделю вы пробежали {1} из {2} запланированных минут",
   "Over the last {0} weeks you ran {1} of {2} planned minutes|few": "За последние {0} недели вы пробежали {1} из {2} запланированных минут",
   "Over the last {0} weeks you ran {1} of {2} planned minutes|many": "За последние {0} недель вы пробежали {1} из {2} запланированных минут",
+  // --- run: R3 fixes (phase 1e-b) ---
+  "Last week you ran {0} of {1} planned minutes": "На прошлой неделе вы пробежали {0} из {1} запланированных минут",
+  "That time doesn’t fit this race. Type hours as h:mm:ss, like 1:52:30.": "Это время не подходит для этого забега. Часы вводите как ч:мм:сс, например 1:52:30.",
+  "For example, 52:30 or 1:52:30.": "Например, 52:30 или 1:52:30.",
 }

@@ -2973,4 +2973,8 @@ export default {
   "Paces updated.": "อัปเดตเพซแล้ว",
   "Week updated.": "อัปเดตสัปดาห์แล้ว",
   "From your run on {0}.": "จากการวิ่งเมื่อ {0}",
+  // --- run: R3 fixes (phase 1e-b) ---
+  "Last week you ran {0} of {1} planned minutes": "สัปดาห์ที่แล้วคุณวิ่ง {0} จาก {1} นาทีที่วางแผนไว้",
+  "That time doesn’t fit this race. Type hours as h:mm:ss, like 1:52:30.": "เวลานี้ไม่เข้ากับการแข่งนี้ ใส่ชั่วโมงเป็น h:mm:ss เช่น 1:52:30",
+  "For example, 52:30 or 1:52:30.": "เช่น 52:30 หรือ 1:52:30",
 }

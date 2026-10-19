@@ -14,7 +14,7 @@
 // after the replaced week's highest k, so no check-in linked to the replaced week matches them.
 import { weekOrder, weekStartOf } from '../../lib/format.js'
 import { weekStartDate, weeksBetween, weekdayOf } from './dates'
-import { FAMILIES, MIN_VDOT, isRace } from './models'
+import { FAMILIES, MAX_VDOT, MIN_VDOT, isRace } from './models'
 import { fitRestOfWeek, isReadable, planWeekStart, renumberWeek, weekDate, type RunState } from './run-actions'
 import type { RunPlan, Week } from './types'
 import { vdotFrom } from './vdot'
@@ -120,14 +120,17 @@ export function repeatPreviousWeek(S: RunState, today: string): void {
   plan.dismissed = { ...(plan.dismissed || {}), [`weak:${index}`]: today, [`effort:${index}`]: today }
 }
 
+// A VDOT the plan can take: a number from MIN_VDOT (a walk) to MAX_VDOT (a typo above it).
+const usable = (vdot: number) => Number.isFinite(vdot) && vdot >= MIN_VDOT && vdot <= MAX_VDOT
+
 /**
  * Sets the plan's VDOT, with one decimal, from a race (`source` race) or a run, dated `date`. The
  * zone paces of every workout follow it (spec §5.3). A VDOT under the plan's usable floor
- * (MIN_VDOT), or not a number, changes nothing.
+ * (MIN_VDOT), above MAX_VDOT, or not a number, changes nothing.
  */
 export function updateVdot(S: RunState, vdot: number, source: 'race' | 'run', date: string): void {
   const plan = S.runPlan
-  if (!isReadable(plan) || !Number.isFinite(vdot) || vdot < MIN_VDOT) return
+  if (!isReadable(plan) || !usable(vdot)) return
   plan.vdot = Math.round(vdot * 10) / 10
   plan.vdotSource = source
   plan.vdotDate = date
@@ -135,14 +138,29 @@ export function updateVdot(S: RunState, vdot: number, source: 'race' | 'run', da
 
 /**
  * Records the race time, in minutes, of a race plan with a race date (plan Decision 10): the plan
- * keeps `raceResult` and takes the race's VDOT at the goal's distance, dated race day.
+ * keeps `raceResult` and takes the race's VDOT at the goal's distance, dated race day. A time whose
+ * VDOT is out of range (raceVdotOf) changes nothing.
  */
 export function recordRaceResult(S: RunState, minutes: number): void {
   const plan = S.runPlan
-  if (!isReadable(plan) || !isRace(plan.goal) || !plan.raceDate || !Number.isFinite(minutes) || minutes <= 0) return
+  const vdot = raceVdotOf(plan, minutes)
+  if (!isReadable(plan) || !plan.raceDate || vdot == null) return
   plan.raceResult = { minutes }
+  updateVdot(S, vdot, 'race', plan.raceDate)
+}
+
+/**
+ * The VDOT a race time of `minutes` gives at the goal's distance, or null when there is no race
+ * (a race goal with a race date) or the time is not a plausible one: a VDOT under MIN_VDOT or above
+ * MAX_VDOT, like "1:52" read as m:ss for a half marathon (R3 I1). recordRaceResult stores nothing
+ * then.
+ */
+export function raceVdotOf(plan: RunPlan | null | undefined, minutes: number): number | null {
+  if (!isReadable(plan) || !isRace(plan.goal) || !plan.raceDate || !Number.isFinite(minutes) || minutes <= 0) return null
   const distanceM = FAMILIES[plan.goal].distanceM
-  if (distanceM) updateVdot(S, vdotFrom(distanceM, minutes), 'race', plan.raceDate)
+  if (!distanceM) return null
+  const vdot = vdotFrom(distanceM, minutes)
+  return usable(vdot) ? vdot : null
 }
 
 /** "Not now": the suggestion's key goes into `dismissed` with `today` (plan Decision 11). */

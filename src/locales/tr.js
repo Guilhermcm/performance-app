@@ -2962,4 +2962,8 @@ export default {
   "Paces updated.": "Tempolar güncellendi.",
   "Week updated.": "Hafta güncellendi.",
   "From your run on {0}.": "{0} tarihli koşuna göre.",
+  // --- run: R3 fixes (phase 1e-b) ---
+  "Last week you ran {0} of {1} planned minutes": "Geçen hafta planlanan {1} dakikanın {0} dakikasını koştun",
+  "That time doesn’t fit this race. Type hours as h:mm:ss, like 1:52:30.": "Bu süre bu yarışa uymuyor. Saatleri s:dd:ss olarak yaz, örneğin 1:52:30.",
+  "For example, 52:30 or 1:52:30.": "Örneğin 52:30 veya 1:52:30.",
 }

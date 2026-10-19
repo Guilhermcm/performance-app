@@ -36,6 +36,16 @@ describe('volumeDescription', () => {
     expect(volumeDescription(SERIES.slice(0, 1))).toBe('This week you ran 30 of 30 planned minutes')
   })
 
+  it('leaves the week still in progress out of the sums (R3 M2)', () => {
+    const now = [...SERIES, { index: 7, planned: 90, done: 20 }]
+    expect(volumeDescription(now, true)).toBe('Over the last 6 weeks you ran 150 of 180 planned minutes')
+    expect(volumeDescription(now.slice(5), true)).toBe('Last week you ran 30 of 30 planned minutes')
+    // Week 1 in progress: only this week to tell.
+    expect(volumeDescription([{ index: 1, planned: 90, done: 20 }], true)).toBe('This week you ran 20 of 90 planned minutes')
+    // A finished plan has no week in progress: every week counts.
+    expect(volumeDescription(now, false)).toBe('Over the last 7 weeks you ran 170 of 270 planned minutes')
+  })
+
   it('without a minute run says where the bars will come from (review focus 5)', () => {
     const empty = 'You haven’t logged a run in this plan yet. The bars show your minutes each week against the plan.'
     expect(volumeDescription([])).toBe(empty)

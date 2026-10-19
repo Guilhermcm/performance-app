@@ -12,6 +12,8 @@ export type PlanWeek = Omit<Week, 'sessions'> & { sessions: PlanSession[] }
 // A reference VDOT below this is not a usable pace (a typo such as "6:00" for 6 minutes in an h:mm
 // field, or a walk): the plan goes by feel, as with `continuous` and `none`.
 export const MIN_VDOT = 15
+// Above this VDOT a time or a run is a typo, not a pace: about the world record (R2 T6-M3, R3 I1).
+export const MAX_VDOT = 85
 
 export type RaceGoal = '5k' | '10k' | 'half'
 export const isRace = (g: RunGoal | null | undefined): g is RaceGoal => g === '5k' || g === '10k' || g === 'half'

@@ -23,13 +23,25 @@ const CONFIG = {
 // Axis text in the theme's text colour (chart.tsx's selector misses Recharts 3.10's tick labels).
 const AXIS_TEXT = { fill: 'var(--muted-foreground)' }
 
-/** The chart in words: the minutes run against the planned ones over the weeks shown. */
-export function volumeDescription(series: VolumePoint[]): string {
-  const done = series.reduce((n, p) => n + p.done, 0)
-  const planned = series.reduce((n, p) => n + p.planned, 0)
-  if (!done) return t('You haven’t logged a run in this plan yet. The bars show your minutes each week against the plan.')
-  if (series.length === 1) return t('This week you ran {0} of {1} planned minutes', done, planned)
-  return tn(series.length, 'Over the last {0} weeks you ran {1} of {2} planned minutes', series.length, done, planned)
+const sum = (series: VolumePoint[], key: 'done' | 'planned') => series.reduce((n, p) => n + p[key], 0)
+
+/**
+ * The chart in words: the minutes run against the planned ones. With `inProgress` the last point is
+ * the week still going on, whose planned minutes are not all runnable yet, so the sums cover the
+ * weeks before it (R3 M2); in week 1 only this week is told.
+ */
+export function volumeDescription(series: VolumePoint[], inProgress = false): string {
+  if (!sum(series, 'done')) return t('You haven’t logged a run in this plan yet. The bars show your minutes each week against the plan.')
+  const closed = inProgress ? series.slice(0, -1) : series
+  if (!closed.length) return t('This week you ran {0} of {1} planned minutes', sum(series, 'done'), sum(series, 'planned'))
+  const done = sum(closed, 'done')
+  const planned = sum(closed, 'planned')
+  if (closed.length === 1) {
+    return inProgress
+      ? t('Last week you ran {0} of {1} planned minutes', done, planned)
+      : t('This week you ran {0} of {1} planned minutes', done, planned)
+  }
+  return tn(closed.length, 'Over the last {0} weeks you ran {1} of {2} planned minutes', closed.length, done, planned)
 }
 
 // The minutes axis: 0 to at least an hour, in steps of 30, 60 or 120 minutes.
@@ -66,7 +78,8 @@ export function WeekTooltip({ active, payload }: TooltipProps) {
   )
 }
 
-export default function RunProgress({ series }: { series: VolumePoint[] }) {
+/** `inProgress`: the last point of `series` is the current week, not over yet. */
+export default function RunProgress({ series, inProgress = false }: { series: VolumePoint[]; inProgress?: boolean }) {
   const reduce = useReducedMotion() ?? false
   const [table, setTable] = useState(false)
   const id = useId()
@@ -76,7 +89,7 @@ export default function RunProgress({ series }: { series: VolumePoint[] }) {
     <section data-slot="run-progress" aria-labelledby={id}
       className={cn(RUN_CHART_CARD, 'animate-in fade-in-0 duration-200 motion-reduce:animate-none')}>
       <h3 id={id} className="flex h-7 items-center text-[15px] font-semibold text-foreground">{t('Minutes per week')}</h3>
-      <p className="min-h-8 text-xs leading-4 text-muted-foreground">{volumeDescription(series)}</p>
+      <p className="min-h-8 text-xs leading-4 text-muted-foreground">{volumeDescription(series, inProgress)}</p>
 
       {table ? <VolumeTable series={series} /> : (
         <>

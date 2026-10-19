@@ -13,7 +13,7 @@
 // current week's index, `faster:{check-in id}`), so a key put away in `dismissed` never comes back
 // and the next rule shows instead. There is no suggestion to move ahead a week. Pure, no React.
 import { addDays } from './dates'
-import { MIN_VDOT, isRace } from './models'
+import { MAX_VDOT, MIN_VDOT, isRace } from './models'
 import { weekSummary } from './progress'
 import { repeatOf } from './run-adjust'
 import { isReadable, weekDate } from './run-actions'
@@ -30,8 +30,6 @@ export type Suggestion =
 // The rpe from which a run counts as hard (rules 3 and 4), and the shortest run rule 4 reads.
 const HARD_RPE = 8
 const MIN_KM = 3
-// Above this VDOT a run is a typo in its distance or duration (R2 T6-M3): about the world record.
-const MAX_VDOT = 85
 
 // The Leve and Longão workouts linked to the plan, run at rpe 8 or more, in the calendar week at
 // `offset`. Two check-ins for one workout count it once.

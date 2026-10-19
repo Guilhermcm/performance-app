@@ -3048,4 +3048,8 @@ export default {
   "Paces updated.": "Tempa zaktualizowane.",
   "Week updated.": "Tydzień zaktualizowany.",
   "From your run on {0}.": "Na podstawie biegu z {0}.",
+  // --- run: R3 fixes (phase 1e-b) ---
+  "Last week you ran {0} of {1} planned minutes": "W zeszłym tygodniu przebiegnięto {0} z {1} zaplanowanych minut",
+  "That time doesn’t fit this race. Type hours as h:mm:ss, like 1:52:30.": "Ten czas nie pasuje do tych zawodów. Godziny wpisz jako h:mm:ss, na przykład 1:52:30.",
+  "For example, 52:30 or 1:52:30.": "Na przykład 52:30 lub 1:52:30.",
 }

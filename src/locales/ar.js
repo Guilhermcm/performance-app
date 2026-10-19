@@ -3015,4 +3015,8 @@ export default {
   "Paces updated.": "تم تحديث الوتيرات.",
   "Week updated.": "تم تحديث الأسبوع.",
   "From your run on {0}.": "من جريك في {0}.",
+  // --- run: R3 fixes (phase 1e-b) ---
+  "Last week you ran {0} of {1} planned minutes": "في الأسبوع الماضي جريت {0} من {1} دقيقة مخططة",
+  "That time doesn’t fit this race. Type hours as h:mm:ss, like 1:52:30.": "هذا الوقت لا يناسب هذا السباق. اكتب الساعات بصيغة h:mm:ss، مثل 1:52:30.",
+  "For example, 52:30 or 1:52:30.": "مثلًا 52:30 أو 1:52:30.",
 }

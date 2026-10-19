@@ -2,11 +2,13 @@
 // /plan/corrida and of /plan: the first suggestion of nextSuggestion, one at a time, with "Apply"
 // and "Not now". "Not now" puts its key away in `dismissed`, and the next rule that holds shows.
 //
-// - Race passed: asks for the race time (h:mm:ss or m:ss). Saving records it, which updates the
+// - Race passed: asks for the race time (h:mm:ss or m:ss), refusing one no runner makes at that
+//   distance (raceVdotOf, R3 I1). Saving records it, which updates the
 //   paces; the card then shows the new paces and "Choose your next goal", which opens the
 //   questionnaire, and after a new plan the weekly days goal offer (spec §6.3).
 // - Weak week and high effort: this week gets last week's workouts again, on the days left. When
-//   the race date leaves no room (`tight`) the card says so, and that the goal becomes finishing.
+//   the race date leaves no room (`tight`) and the goal is a target time, the card says the goal
+//   becomes finishing.
 // - Faster: a run points to a higher VDOT; applying updates the paces from it.
 // `logs` come from the screen's useRunLogs; the card reads none itself.
 import { useId, useState, type ReactNode } from 'react'
@@ -21,7 +23,7 @@ import { parseClock } from './clock'
 import DaysGoalOffer from './DaysGoalOffer'
 import { dayText, zoneName } from './labels'
 import { weekOffsetOf, weekSummary } from './progress'
-import { dismissSuggestion, recordRaceResult, repeatPreviousWeek, updateVdot } from './run-adjust'
+import { dismissSuggestion, raceVdotOf, recordRaceResult, repeatPreviousWeek, updateVdot } from './run-adjust'
 import type { RunState } from './run-actions'
 import type { RunLog } from './run-log'
 import RunQuestionnaire from './RunQuestionnaire'
@@ -77,7 +79,7 @@ export default function RunSuggestionCard({ plan, logs }: { plan: RunPlan | null
   if (!plan || !s) return null
 
   if (s.kind === 'race_result') {
-    return <RaceResult key={s.key} onSave={minutes => { update(S => { recordRaceResult(S, minutes) }); setSaved(true) }}
+    return <RaceResult key={s.key} plan={plan} onSave={minutes => { update(S => { recordRaceResult(S, minutes) }); setSaved(true) }}
       onNotNow={() => notNow(s.key)} />
   }
 
@@ -117,17 +119,23 @@ function bodyOf(s: Exclude<Suggestion, { kind: 'race_result' }>, plan: RunPlan, 
     ? (() => { const last = weekSummary(plan, weekOffsetOf(plan, today, ws) - 1, logs, ws); return lastWeekText(last.done, last.planned) })()
     : t('Over the last two weeks your easy and long runs felt hard.')]
   lines.push(t('This week gets last week’s workouts again, on the days you have left.'))
-  if (s.tight) lines.push(t('The time to the race got tight, so the goal becomes finishing it.'))
+  // The goal changes only from a target time; a goal of finishing stays as it is (R3 M3).
+  if (s.tight && plan.goalType === 'time') lines.push(t('The time to the race got tight, so the goal becomes finishing it.'))
   return lines
 }
 
-function RaceResult({ onSave, onNotNow }: { onSave: (minutes: number) => void; onNotNow: () => void }) {
+// Why the race time was refused: not a time at all, or a time no runner makes at this distance,
+// like "1:52" typed for 1 h 52 and read as m:ss (R3 I1). The card stays open either way.
+type Wrong = 'format' | 'implausible' | null
+
+function RaceResult({ plan, onSave, onNotNow }: { plan: RunPlan; onSave: (minutes: number) => void; onNotNow: () => void }) {
   const id = useId()
   const [text, setText] = useState('')
-  const [wrong, setWrong] = useState(false)
+  const [wrong, setWrong] = useState<Wrong>(null)
   const save = () => {
     const minutes = parseClock(text)
-    if (minutes == null || minutes <= 0) { setWrong(true); return }
+    if (minutes == null || minutes <= 0) { setWrong('format'); return }
+    if (raceVdotOf(plan, minutes) == null) { setWrong('implausible'); return }
     onSave(minutes)
   }
   return (
@@ -135,12 +143,16 @@ function RaceResult({ onSave, onNotNow }: { onSave: (minutes: number) => void; o
       <p className="text-sm text-muted-foreground">{t('Enter your race time to update your paces.')}</p>
       <div className="flex flex-col gap-1.5">
         <label htmlFor={`${id}-time`} className="text-sm font-medium text-foreground">{t('Race time')}</label>
-        <Input id={`${id}-time`} value={text} placeholder="h:mm:ss" autoComplete="off" spellCheck={false}
-          aria-invalid={wrong || undefined} aria-describedby={wrong ? `${id}-error` : undefined}
+        {/* inputMode text: the numeric keyboards of iOS have no ":" (R3 M5). */}
+        <Input id={`${id}-time`} value={text} inputMode="text" placeholder="1:52:30" autoComplete="off" spellCheck={false}
+          aria-invalid={wrong ? true : undefined} aria-describedby={wrong ? `${id}-hint ${id}-error` : `${id}-hint`}
           className="h-11 font-mono tabular-nums"
-          onChange={e => { setText(e.target.value); setWrong(false) }}
+          onChange={e => { setText(e.target.value); setWrong(null) }}
           onKeyDown={e => { if (e.key === 'Enter') save() }} />
-        {wrong && <p id={`${id}-error`} role="alert" className="text-sm text-destructive">{t('Enter the time as h:mm:ss or m:ss.')}</p>}
+        <p id={`${id}-hint`} className="text-xs text-muted-foreground">{t('For example, 52:30 or 1:52:30.')}</p>
+        {wrong && <p id={`${id}-error`} role="alert" className="text-sm text-destructive">
+          {wrong === 'format' ? t('Enter the time as h:mm:ss or m:ss.') : t('That time doesn’t fit this race. Type hours as h:mm:ss, like 1:52:30.')}
+        </p>}
       </div>
       <Actions>
         <Button className="h-11 rounded-xl" onClick={save}>{t('Save')}</Button>
